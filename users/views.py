@@ -6,24 +6,12 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from .serializers import UserSerializer
 from django.contrib.auth import login, logout, authenticate
 
-# Registration View
-@api_view(['POST'])  # Only allow POST requests for registration
-@permission_classes([AllowAny])  # Anyone can register
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
 def register_user(request):
     """
     Handles new user registration with profile information.
-    
-    Parameters:
-        request.data (dict): Contains user registration data including:
-            - username
-            - email
-            - password
-            - current_role (optional)
-            - experience_level (optional)
-            - bio (optional)
-    
-    Returns:
-        Response: User creation status and ID if successful
     """
     try:
         serializer = UserSerializer(data=request.data)
@@ -32,17 +20,14 @@ def register_user(request):
             return Response({
                 'message': 'User registered successfully',
                 'user_id': user.id,
-                'username': user.username  # Added for confirmation
+                'username': user.username
             }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
-        # Handle unexpected errors gracefully
         return Response({
             'error': 'Registration failed',
             'details': str(e)
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
 
 # Login View
 @api_view(['POST'])  # Added missing decorator
