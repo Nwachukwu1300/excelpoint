@@ -6,90 +6,111 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from .serializers import UserSerializer
 from django.contrib.auth import login, logout, authenticate
 
-
-@api_view(['POST'])
+@api_view(['GET', 'POST'])
 @permission_classes([AllowAny])
 def register_user(request):
-    """
-    Handles new user registration with profile information.
-    """
-    try:
-        serializer = UserSerializer(data=request.data)
-        if serializer.is_valid():
-            user = serializer.save()
-            return Response({
-                'message': 'User registered successfully',
-                'user_id': user.id,
-                'username': user.username
-            }, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    except Exception as e:
-        return Response({
-            'error': 'Registration failed',
-            'details': str(e)
-        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+   """
+   Registration endpoint.
+   GET: Shows template
+   POST: Creates new user
+   """
+   if request.method == 'GET':
+       default_content = {
+           "username": "gbemi",
+           "email": "gbemi@example.com", 
+           "password": "test123.",
+           "password2": "test123.",
+           
+           "current_role": "Software Developer",
+           "experience_level": "senior" 
+       }
+       return Response(default_content)
+
+   if request.method == 'POST':
+       serializer = UserSerializer(data=request.data)
+       if serializer.is_valid():
+           user = serializer.save()
+           return Response({
+               'message': 'User registered successfully',
+               'user_id': user.id,
+               'username': user.username
+           }, status=status.HTTP_201_CREATED)
+       
+       return Response({
+           'status': 'error', 
+           'errors': serializer.errors
+       }, status=status.HTTP_400_BAD_REQUEST)
+
+
 
 # Login View
-@api_view(['POST'])  # Added missing decorator
-@permission_classes([AllowAny])  # Added missing decorator
+@api_view(['GET', 'POST'])
+@permission_classes([AllowAny])
 def login_user(request):
     """
-    Authenticates user and creates session.
-    
-    Parameters:
-        request.data (dict):
-            - username: User's username
-            - password: User's password
-    
-    Returns:
-        Response: User profile and career information if login successful
+    Handles both login and logout.
     """
-    try:
-        username = request.data.get('username')
-        password = request.data.get('password')
-        
-        # Input validation with specific messages
-        if not username:
-            return Response({
-                'error': 'Username is required'
-            }, status=status.HTTP_400_BAD_REQUEST)
-            
-        if not password:
-            return Response({
-                'error': 'Password is required'
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
-        user = authenticate(request, username=username, password=password)
-        
-        if user is not None:
-            login(request, user)
-            
-            # Structured user data response
-            return Response({
-                'status': 'success',
-                'message': 'Login successful',
-                'user_info': {
-                    'id': user.id,
-                    'username': user.username,
-                    'current_role': user.current_role,
-                    'experience_level': user.experience_level,
-                    'bio': user.bio,
-                },
-                'profile_completion': calculate_profile_completion(user)
-            })
-        
-        return Response({
-            'error': 'Invalid credentials'
-        }, status=status.HTTP_401_UNAUTHORIZED)
-        
-    except Exception as e:
-        # Handle unexpected errors
-        return Response({
-            'error': 'Login failed',
-            'details': str(e)
-        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    if request.method == 'GET':
+        default_content = {
+            "action": "login",  # or "logout"
+            "username": "enter_username",
+            "password": "enter_password"
+        }
+        return Response(default_content)
 
+    if request.method == 'POST':
+        try:
+            # Check if this is a logout request
+            action = request.data.get('action', 'login')
+            
+            if action == 'logout':
+                logout(request)
+                return Response({
+                    'status': 'success',
+                    'message': 'Successfully logged out'
+                })
 
+            # Handle login
+            username = request.data.get('username')
+            password = request.data.get('password')
+            
+            # Input validation
+            if not username:
+                return Response({
+                    'error': 'Username is required'
+                }, status=status.HTTP_400_BAD_REQUEST)
+                
+            if not password:
+                return Response({
+                    'error': 'Password is required'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            user = authenticate(request, username=username, password=password)
+            
+            if user is not None:
+                login(request, user)
+                return Response({
+                    'status': 'success',
+                    'message': 'Login successful',
+                    'user_info': {
+                        'id': user.id,
+                        'username': user.username,
+                        'current_role': user.current_role,
+                        'experience_level': user.experience_level,
+                        'bio': user.bio,
+                    }
+                })
+            
+            return Response({
+                'error': 'Invalid credentials'
+            }, status=status.HTTP_401_UNAUTHORIZED)
+            
+        except Exception as e:
+            return Response({
+                'error': 'Operation failed',
+                'details': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
 def calculate_profile_completion(user):
     """
     Calculates the percentage of profile completion.
