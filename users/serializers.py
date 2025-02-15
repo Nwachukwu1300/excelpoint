@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
+from django.core.validators import EmailValidator 
+import re
 
 class UserSerializer(serializers.ModelSerializer):
     """
@@ -20,6 +22,10 @@ class UserSerializer(serializers.ModelSerializer):
         required=True
     )
 
+    email = serializers.EmailField(
+        required=True,
+        validators=[EmailValidator(message="Enter a valid email address")])
+
     class Meta:
         model = get_user_model()
         fields = [
@@ -29,7 +35,8 @@ class UserSerializer(serializers.ModelSerializer):
         ]
         # Extra kwargs to make certain fields optional
         extra_kwargs = {
-            'email': {'required': True},
+            'email': {'required': True, 
+                      'allow_blank': False},
             'bio': {'required': False},
             'linkedin_profile': {'required': False},
             'github_profile': {'required': False}
@@ -71,3 +78,15 @@ class UserSerializer(serializers.ModelSerializer):
         
         user.save()
         return user
+    
+
+    def validate_email(self, value):
+        # Basic email pattern
+        if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', value):
+            raise serializers.ValidationError("Please enter a valid email address")
+        
+        # Check if email already exists
+        if get_user_model().objects.filter(email=value).exists():
+            raise serializers.ValidationError("This email is already registered")
+            
+        return value
