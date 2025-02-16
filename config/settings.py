@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'learning',
     'rest_framework',
     'rest_framework_simplejwt',
+    'requests',
 ]
 
 MIDDLEWARE = [
@@ -165,9 +166,24 @@ SESSION_COOKIE_HTTPONLY = True
 
 
 
-API_KEYS = {
-    'LINKEDIN_API_KEY': 'your_key_here',
-    'GLASSDOOR_API_KEY': 'your_key_here',
-    'COURSERA_API_KEY': 'your_key_here',
-    'UDEMY_API_KEY': 'your_key_here'
+API_CONFIGS = {
+    'LINKEDIN': {
+        'CLIENT_ID': 'your_linkedin_client_id',
+        'CLIENT_SECRET': 'your_linkedin_client_secret',
+        'BASE_URL': 'https://api.linkedin.com/v2',
+    },
+    'GLASSDOOR': {
+        'API_KEY': 'your_glassdoor_api_key',
+        'PARTNER_ID': 'your_glassdoor_partner_id',
+        'BASE_URL': 'https://api.glassdoor.com/v1',
+    },
+    'COURSERA': {
+        'API_KEY': 'your_coursera_api_key',
+        'BASE_URL': 'https://api.coursera.org/api/courses.v1',
+    },
+    'UDEMY': {
+        'CLIENT_ID': 'your_udemy_client_id',
+        'CLIENT_SECRET': 'your_udemy_client_secret',
+        'BASE_URL': 'https://api.udemy.com/api-2.0',
+    }
 }
