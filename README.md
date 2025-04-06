@@ -31,13 +31,3 @@ CareerNexus is a comprehensive career development platform that helps users mana
 - **Authentication**: Session-based
 - **API Framework**: Django REST Framework
 
-## Project Structure
-
-career_nexus/
-├── users/                 # User authentication and profiles
-│   ├── models.py         # User model
-│   ├── serializers.py    # Data serialization
-│   ├── views.py          # View logic
-│   └── urls.py           # URL routing
-├── config/               # Project configuration
-└── manage.py            # Django management
