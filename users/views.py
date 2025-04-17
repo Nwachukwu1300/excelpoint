@@ -155,28 +155,52 @@ def logout_user(request):
 
 
 
-@api_view(['PUT'])
+@api_view(['GET', 'PUT'])
 @permission_classes([IsAuthenticated])
 def update_profile(request):
     """
     Updates the profile of the currently logged-in user.
+    GET: View profile data for editing
+    PUT: Save profile changes
     """
-    try:
-        serializer = UserSerializer(request.user, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
+    if request.method == 'GET':
+        try:
+            user = request.user
+            serializer = UserSerializer(user)
             return Response({
                 'status': 'success',
-                'message': 'Profile updated successfully',
-                'profile': serializer.data
+                'profile': serializer.data,
+                'update_template': {
+                    'current_role': user.current_role or 'enter_role',
+                    'experience_level': user.experience_level,
+                    'bio': user.bio or 'enter_bio',
+                    'linkedin_profile': user.linkedin_profile or '',
+                    'github_profile': user.github_profile or ''
+                }
             })
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    except Exception as e:
-        return Response({
-            'error': 'Profile update failed',
-            'details': str(e)
-        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception as e:
+            return Response({
+                'error': 'Failed to fetch profile',
+                'details': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
+    elif request.method == 'PUT':
+        try:
+            serializer = UserSerializer(request.user, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response({
+                    'status': 'success',
+                    'message': 'Profile updated successfully',
+                    'profile': serializer.data
+                })
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({
+                'error': 'Profile update failed',
+                'details': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 @api_view(['GET', 'PUT', 'POST'])
 @permission_classes([IsAuthenticated])
