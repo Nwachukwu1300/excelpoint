@@ -1,0 +1,59 @@
+{
+  "success": true,
+  "data": {
+    "contact_info": {
+      "email": "john.doe@example.com",
+      "phone": "(123) 456-7890",
+      "linkedin": "linkedin.com/in/johndoe",
+      "github": "github.com/johndoe"
+    },
+    "summary": "",
+    "education": [],
+    "experience": [],
+    "skills": [
+      {
+        "category": "technical",
+        "skills": [
+          "agile",
+          "aws",
+          "ci/cd",
+          "css",
+          "devops",
+          "django",
+          "docker",
+          "express",
+          "flask",
+          "git",
+          "html",
+          "java",
+          "javascript",
+          "jenkins",
+          "jira",
+          "kubernetes",
+          "mongodb",
+          "mysql",
+          "node.js",
+          "php",
+          "postgresql",
+          "python",
+          "react",
+          "redis",
+          "scrum",
+          "sql",
+          "tdd",
+          "terraform",
+          "typescript"
+        ]
+      },
+      {
+        "category": "soft",
+        "skills": [
+          "problem-solving"
+        ]
+      }
+    ],
+    "certifications": [],
+    "projects": [],
+    "languages": []
+  }
+}

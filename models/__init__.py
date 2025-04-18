@@ -7,6 +7,10 @@ This package contains various models for data analysis and prediction.
 from . import skills
 
 # Expose commonly used classes
-from .skills import SkillExtractor, SkillAnalyzer
+from .skills import SkillExtractor
 
-__all__ = ['skills', 'SkillExtractor', 'SkillAnalyzer'] 
+# Models package
+
+# Let Django discover the models package
+# Avoid explicit imports here to prevent circular dependencies 
+__all__ = [] 

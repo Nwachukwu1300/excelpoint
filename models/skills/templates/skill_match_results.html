@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}Skill Match Results{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-12">
+            <h1 class="mb-4">Skill Match Results</h1>
+            
+            {% if messages %}
+            <div class="messages mb-4">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            {% if match_result %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h2 class="h5 mb-0">Match Summary</h2>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 text-center mb-3">
+                            <div class="mb-3">
+                                <h3 class="h6">Overall Match</h3>
+                                <div class="display-4 fw-bold">{{ match_result.overall_match }}%</div>
+                            </div>
+                            <div class="progress mb-2" style="height: 10px;">
+                                <div class="progress-bar bg-primary" role="progressbar" 
+                                     style="width: {{ match_result.overall_match }}%;" 
+                                     aria-valuenow="{{ match_result.overall_match }}" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center mb-3">
+                            <div class="mb-3">
+                                <h3 class="h6">Required Skills Match</h3>
+                                <div class="display-4 fw-bold">{{ match_result.required_match }}%</div>
+                            </div>
+                            <div class="progress mb-2" style="height: 10px;">
+                                <div class="progress-bar bg-success" role="progressbar" 
+                                     style="width: {{ match_result.required_match }}%;" 
+                                     aria-valuenow="{{ match_result.required_match }}" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center mb-3">
+                            <div class="mb-3">
+                                <h3 class="h6">Preferred Skills Match</h3>
+                                <div class="display-4 fw-bold">{{ match_result.preferred_match }}%</div>
+                            </div>
+                            <div class="progress mb-2" style="height: 10px;">
+                                <div class="progress-bar bg-info" role="progressbar" 
+                                     style="width: {{ match_result.preferred_match }}%;" 
+                                     aria-valuenow="{{ match_result.preferred_match }}" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h2 class="h5 mb-0">Matched Skills</h2>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <h3 class="h6">Required Skills</h3>
+                                <div class="d-flex flex-wrap">
+                                    {% if match_result.matched_required_skills %}
+                                        {% for skill in match_result.matched_required_skills %}
+                                        <span class="badge bg-success me-2 mb-2">{{ skill }}</span>
+                                        {% endfor %}
+                                    {% else %}
+                                        <p class="text-muted">No required skills matched</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h3 class="h6">Preferred Skills</h3>
+                                <div class="d-flex flex-wrap">
+                                    {% if match_result.matched_preferred_skills %}
+                                        {% for skill in match_result.matched_preferred_skills %}
+                                        <span class="badge bg-info me-2 mb-2">{{ skill }}</span>
+                                        {% endfor %}
+                                    {% else %}
+                                        <p class="text-muted">No preferred skills matched</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h2 class="h5 mb-0">Missing Skills</h2>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <h3 class="h6">Missing Required Skills</h3>
+                                <div class="d-flex flex-wrap">
+                                    {% if match_result.missing_required_skills %}
+                                        {% for skill in match_result.missing_required_skills %}
+                                        <span class="badge bg-danger me-2 mb-2">{{ skill }}</span>
+                                        {% endfor %}
+                                    {% else %}
+                                        <p class="text-success">All required skills matched!</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h3 class="h6">Missing Preferred Skills</h3>
+                                <div class="d-flex flex-wrap">
+                                    {% if match_result.missing_preferred_skills %}
+                                        {% for skill in match_result.missing_preferred_skills %}
+                                        <span class="badge bg-warning text-dark me-2 mb-2">{{ skill }}</span>
+                                        {% endfor %}
+                                    {% else %}
+                                        <p class="text-success">All preferred skills matched!</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-between">
+                <a href="{% url 'resume_parser' %}" class="btn btn-secondary">Back to Parser</a>
+                <a href="{% url 'resume_results' %}" class="btn btn-primary">Back to Resume Results</a>
+            </div>
+            
+            {% else %}
+            <div class="alert alert-danger">
+                <h2 class="h4">No Match Data</h2>
+                <p>No skill match data is available.</p>
+                <a href="{% url 'resume_parser' %}" class="btn btn-primary mt-3">Back to Resume Parser</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

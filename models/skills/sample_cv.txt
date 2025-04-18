@@ -1,102 +1,93 @@
-JOHN SMITH
-Software Engineer
+Michael Johnson
+Senior Full Stack Developer
 
-Email: john.smith@example.com
-Phone: (555) 123-4567
-LinkedIn: linkedin.com/in/johnsmith
-GitHub: github.com/johnsmith
+Email: michael.johnson@example.com
+Phone: 073334534235
+LinkedIn: linkedin.com/in/michaeljohnson
+GitHub: github.com/mjohnson-dev
+Location: London, UK
 
 SUMMARY
------------
-Experienced Software Engineer with 8+ years of expertise in building scalable web applications and microservices. Proficient in Python, JavaScript, and cloud technologies with a passion for clean code, performance optimization, and mentoring junior developers. Strong track record of delivering high-quality software solutions in fast-paced, collaborative environments.
+Innovative Full Stack Developer with 6+ years of experience building scalable web applications and APIs. Passionate about clean code, user experience, and delivering high-quality software solutions. Seeking to leverage my technical expertise and leadership skills in a challenging role.
 
-SKILLS
------------
-Programming Languages: Python, JavaScript, TypeScript, Java, SQL, HTML, CSS
-Frameworks & Libraries: Django, Flask, React, Node.js, Express, Redux, jQuery, Bootstrap
-Cloud & DevOps: AWS (EC2, S3, Lambda, CloudFront), Docker, Kubernetes, CI/CD, Jenkins
-Databases: PostgreSQL, MongoDB, Redis, SQLite, MySQL
-Testing: Jest, Pytest, Selenium, JUnit
-Tools: Git, JIRA, Confluence, Postman, VS Code, IntelliJ
-Methodologies: Agile/Scrum, TDD, BDD, Microservices architecture
+EXPERIENCE
 
-PROFESSIONAL EXPERIENCE
------------
-SENIOR SOFTWARE ENGINEER
-TechInnovate Inc., San Francisco, CA | 2020 - Present
+Senior Full Stack Developer
+TechInnovate Solutions, January 2020 - Present
+• Led a team of 5 developers to create a microservices architecture that improved system scalability by 200%
+• Developed and maintained RESTful APIs using Django REST Framework and PostgreSQL
+• Implemented CI/CD pipelines with GitHub Actions, reducing deployment time by 40%
+• Architected and built a React-based dashboard that increased user engagement by 35%
+• Optimized database queries and implemented caching strategies, improving application performance by 60%
 
-- Led the redesign and implementation of the company's customer-facing API platform, resulting in a 40% improvement in response times and 99.9% uptime
-- Architected and developed a real-time data processing pipeline using AWS Lambda and Kinesis, processing over 10 million events daily
-- Mentored junior developers through code reviews, pair programming sessions, and technical workshops
-- Implemented comprehensive test automation strategy, increasing test coverage from 65% to 92%
-- Collaborated with product managers and UX designers to create intuitive user interfaces using React and Redux
-- Optimized database queries and implemented caching strategies, reducing database load by 30%
-- Technologies used: Python, Django, React, AWS, Docker, PostgreSQL, Redis
+Full Stack Developer
+WebFusion Technologies, March 2017 - December 2019
+• Developed full-stack web applications using Python, Django, JavaScript, and React
+• Created responsive UIs with modern CSS frameworks and implemented pixel-perfect designs
+• Collaborated with UX designers to improve user flows and implement intuitive interfaces
+• Implemented OAuth 2.0 authentication system for secure API access
+• Built a recommendation engine using machine learning algorithms that increased user conversion by 25%
 
-SOFTWARE ENGINEER
-DataSolutions Corp., Seattle, WA | 2017 - 2020
-
-- Developed and maintained RESTful APIs for the company's data analytics platform using Flask and SQLAlchemy
-- Implemented authentication and authorization services using OAuth 2.0 and JWT
-- Created dashboards and data visualization components using D3.js and Chart.js
-- Integrated third-party APIs and services such as Stripe, Twilio, and Google Maps
-- Participated in agile development processes, including sprint planning, daily stand-ups, and retrospectives
-- Reduced application load time by 45% through code optimization and implementing lazy loading techniques
-- Technologies used: Python, Flask, JavaScript, MongoDB, AWS, Docker
-
-JUNIOR SOFTWARE DEVELOPER
-WebTech Solutions, Portland, OR | 2015 - 2017
-
-- Developed and maintained front-end components for e-commerce applications using JavaScript and jQuery
-- Created responsive web designs using HTML5, CSS3, and Bootstrap
-- Collaborated with back-end developers to integrate front-end components with Java-based services
-- Fixed bugs and implemented new features for existing web applications
-- Participated in code reviews and knowledge-sharing sessions
-- Technologies used: JavaScript, HTML, CSS, jQuery, Java, Spring, MySQL
+Junior Web Developer
+Digital Creations, June 2015 - February 2017
+• Developed and maintained client websites using HTML, CSS, JavaScript, and PHP
+• Implemented responsive design patterns for mobile-first applications
+• Collaborated with designers to translate wireframes into functional websites
+• Performed code reviews and maintained code quality standards
+• Assisted in database design and optimization for web applications
 
 EDUCATION
------------
-MASTER OF SCIENCE IN COMPUTER SCIENCE
-Stanford University, Stanford, CA | 2015
 
-BACHELOR OF SCIENCE IN COMPUTER ENGINEERING
-University of Washington, Seattle, WA | 2013
+Master of Science in Computer Science
+Stanford University, 2015
+• Specialization in Machine Learning and Artificial Intelligence
+• GPA: 3.8/4.0
+• Thesis: "Neural Networks for Natural Language Processing Applications"
+
+Bachelor of Science in Software Engineering
+University of California, Berkeley, 2013
+• Minor in Data Science
+• GPA: 3.7/4.0
+• Dean's List: 2010-2013
+
+SKILLS
+
+Programming Languages: Python, JavaScript (ES6+), TypeScript, HTML5, CSS3, SQL, PHP
+Frameworks & Libraries: Django, React, Node.js, Express, Redux, jQuery, Bootstrap, Material-UI
+Databases: PostgreSQL, MongoDB, MySQL, Redis
+Tools & Technologies: Git, Docker, Kubernetes, AWS, Azure, CI/CD, RESTful APIs, GraphQL
+Methodologies: Agile/Scrum, Test-Driven Development, DevOps, Microservices Architecture
 
 CERTIFICATIONS
------------
-- AWS Certified Solutions Architect (2022)
-- Professional Scrum Master I (PSM I) (2021)
-- MongoDB Certified Developer (2019)
-- Oracle Certified Professional, Java SE 8 Programmer (2016)
+
+AWS Certified Solutions Architect - Associate, 2022
+Google Cloud Professional Developer, 2021
+Microsoft Certified: Azure Developer Associate, 2020
 
 PROJECTS
------------
-OPEN SOURCE CONTRIBUTION - DJANGO REST FRAMEWORK
-- Contributed several bug fixes and feature enhancements
-- Improved documentation and test coverage
-- Implemented performance optimizations for serialization of large datasets
 
-PERSONAL PROJECT - TASK MANAGEMENT APPLICATION
-- Built a full-stack task management application using React, Node.js, and MongoDB
-- Implemented features such as task categorization, due dates, reminders, and sharing
-- Deployed the application on AWS using containerization with Docker and Kubernetes
-- GitHub repository: github.com/johnsmith/task-manager
+Personal Finance Dashboard
+2021
+• Built a full-stack application for personal finance management using React, Django, and PostgreSQL
+• Implemented data visualization with D3.js and integrated with multiple banking APIs
+• Deployed on AWS using containerization and CI/CD pipelines
+• GitHub: github.com/mjohnson-dev/finance-dashboard
 
-COMMUNITY INVOLVEMENT
------------
-TECHNICAL MENTOR
-Code For America | 2019 - Present
-- Mentor coding bootcamp graduates and self-taught developers
-- Provide guidance on technical challenges and career development
-- Conduct mock interviews and resume reviews
+AI-Powered Task Manager
+2020
+• Developed a task management application with AI prioritization algorithms
+• Used Python, Django REST Framework, React, and TensorFlow
+• Implemented natural language processing for task extraction from text
+• Featured on ProductHunt with over 1,000 upvotes
 
-CONFERENCE SPEAKER
-- "Scaling Microservices with Kubernetes" - PyCon 2022
-- "Building Resilient APIs with Django" - DjangoCon 2021
-- "Front-end Performance Optimization Techniques" - JSConf 2020
+Open Source Contributions
+• Django REST Framework: Contributed to documentation and fixed bugs
+• React Testing Library: Added new testing utilities and improved examples
+• Pandas: Fixed data handling edge cases and improved performance
 
 LANGUAGES
------------
-- English (Native)
-- Spanish (Conversational)
-- French (Basic) 
+
+English - Native
+Spanish - Fluent
+French - Intermediate
+German - Basic 

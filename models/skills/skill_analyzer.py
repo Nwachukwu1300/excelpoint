@@ -4,7 +4,7 @@ from typing import List, Dict, Optional
 from collections import Counter
 
 # Import the skill extractor
-from skill_extractor import SkillExtractor
+from .skill_extractor import SkillExtractor
 
 class SkillAnalyzer:
     """

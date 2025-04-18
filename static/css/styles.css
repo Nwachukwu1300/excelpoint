@@ -1,0 +1,58 @@
+/* Main styles for Career Nexus */
+
+/* Progress bars styling */
+.progress {
+    height: 20px;
+    margin-bottom: 10px;
+}
+
+.progress-bar {
+    color: white;
+    text-align: center;
+    font-weight: 500;
+}
+
+/* Form styling */
+.form-control {
+    margin-bottom: 1rem;
+}
+
+/* Table styling */
+.table-responsive {
+    margin-top: 1rem;
+}
+
+/* Range slider styling */
+.range-container {
+    display: flex;
+    align-items: center;
+}
+
+.range-container .badge {
+    margin-left: 10px;
+}
+
+/* Card styling */
+.card {
+    margin-bottom: 1.5rem;
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+}
+
+/* Skill badge styling */
+.skill-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: 0.25rem;
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+} 

@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Resume Parser{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-12">
+            <h1 class="mb-4">Resume Parser & Skill Extractor</h1>
+            
+            {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h2 class="h5 mb-0">Upload Resume</h2>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data" action="{% url 'resume_parser' %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            {{ resume_form.resume.label_tag }}
+                            {{ resume_form.resume }}
+                            <div class="form-text">{{ resume_form.resume.help_text }}</div>
+                            {% if resume_form.resume.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ resume_form.resume.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <button type="submit" class="btn btn-primary">Upload & Parse</button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="h5 mb-0">Job Skill Matching</h2>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{% url 'job_skill_match' %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            {{ job_form.job_title.label_tag }}
+                            {{ job_form.job_title }}
+                            {% if job_form.job_title.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ job_form.job_title.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            {{ job_form.company.label_tag }}
+                            {{ job_form.company }}
+                            {% if job_form.company.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ job_form.company.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            {{ job_form.job_description.label_tag }}
+                            {{ job_form.job_description }}
+                            {% if job_form.job_description.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ job_form.job_description.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <button type="submit" class="btn btn-primary">Calculate Skill Match</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

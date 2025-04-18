@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Job Skill Matching{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-12">
+            <h1 class="mb-4">Job Skill Matching</h1>
+            
+            {% if messages %}
+            <div class="messages mb-4">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="h5 mb-0">Enter Job Details</h2>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{% url 'job_skill_match' %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            {{ job_form.job_title.label_tag }}
+                            {{ job_form.job_title }}
+                            {% if job_form.job_title.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ job_form.job_title.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            {{ job_form.company.label_tag }}
+                            {{ job_form.company }}
+                            {% if job_form.company.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ job_form.company.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            {{ job_form.job_description.label_tag }}
+                            {{ job_form.job_description }}
+                            {% if job_form.job_description.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ job_form.job_description.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'resume_results' %}" class="btn btn-secondary">Back to Resume</a>
+                            <button type="submit" class="btn btn-primary">Calculate Skill Match</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

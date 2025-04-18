@@ -6,8 +6,8 @@ Run this script to see how the skill extraction works in practice.
 
 import json
 import argparse
-from skill_extractor import SkillExtractor
-from skill_analyzer import SkillAnalyzer
+from .skill_extractor import SkillExtractor
+from .skill_analyzer import SkillAnalyzer
 
 def test_extraction(text, verbose=False, min_confidence=0.0):
     """Test the skill extractor on a sample text."""

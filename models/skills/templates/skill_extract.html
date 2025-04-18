@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}Skill Extractor{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-12">
+            <h1 class="mb-4">Skill Extractor</h1>
+            
+            {% if messages %}
+            <div class="messages mb-4">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h2 class="h5 mb-0">Extract Skills from Text</h2>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="skill-extraction-form">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            {{ form.text.label_tag }}
+                            {{ form.text }}
+                            {% if form.text.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.text.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.min_confidence.label_tag }}
+                            {{ form.min_confidence }}
+                            {% if form.min_confidence.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.min_confidence.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">Extract Skills</button>
+                    </form>
+                </div>
+            </div>
+            
+            {% if skills %}
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="h5 mb-0">Extracted Skills ({{ skills_count }})</h2>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="mb-2">Filter by minimum confidence:</label>
+                        <div class="range-container">
+                            <input type="range" class="form-range" id="confidence-filter" min="0.0" max="1.0" step="0.05" value="0.7">
+                            <span id="confidence-value" class="badge bg-secondary">0.7</span>
+                        </div>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-striped" id="skills-table">
+                            <thead>
+                                <tr>
+                                    <th>Skill</th>
+                                    <th>Confidence</th>
+                                    <th>Category</th>
+                                    <th>Method</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for skill in skills %}
+                                <tr data-confidence="{{ skill.confidence }}">
+                                    <td>{{ skill.skill }}</td>
+                                    <td>
+                                        {% with confidence_val=skill.confidence|floatformat:2 %}
+                                        {% with confidence_pct=skill.confidence|floatformat:2|cut:'0.'|add:'0' %}
+                                        <div class="progress" style="height: 20px;">
+                                            <div 
+                                                class="progress-bar {% if skill.confidence >= 0.85 %}bg-success{% elif skill.confidence >= 0.7 %}bg-primary{% else %}bg-info{% endif %}"
+                                                role="progressbar" 
+                                                style="width: {{ confidence_pct }}%" 
+                                                aria-valuenow="{{ confidence_val }}" 
+                                                aria-valuemin="0" 
+                                                aria-valuemax="1">
+                                                {{ confidence_val }}
+                                            </div>
+                                        </div>
+                                        {% endwith %}
+                                        {% endwith %}
+                                    </td>
+                                    <td>{{ skill.category|default:"Unknown"|title }}</td>
+                                    <td>{{ skill.extraction_method|default:"Unknown"|title }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if skills %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const confidenceFilter = document.getElementById('confidence-filter');
+        const confidenceValue = document.getElementById('confidence-value');
+        const skillRows = document.querySelectorAll('#skills-table tbody tr');
+        
+        // Initialize with current value
+        confidenceValue.textContent = confidenceFilter.value;
+        
+        confidenceFilter.addEventListener('input', function() {
+            const minConfidence = parseFloat(this.value);
+            confidenceValue.textContent = minConfidence.toFixed(2);
+            
+            // Filter rows based on confidence
+            skillRows.forEach(row => {
+                const confidence = parseFloat(row.dataset.confidence);
+                if (confidence >= minConfidence) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    });
+</script>
+{% endif %}
+{% endblock %} 
