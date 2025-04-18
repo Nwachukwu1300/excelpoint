@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}My Skills{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-12">
+            <h1 class="mb-4">My Skills</h1>
+            
+            {% if messages %}
+            <div class="messages mb-4">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h2 class="h5 mb-0">Skills by Category</h2>
+                    <a href="{% url 'users:add_custom_skill' %}" class="btn btn-sm btn-primary">
+                        <i class="bi bi-plus-circle"></i> Add New Skill
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if skills_by_category %}
+                        {% for category, skills in skills_by_category.items %}
+                        <div class="mb-4">
+                            <h3 class="h6 border-bottom pb-2">{{ category }}</h3>
+                            <div class="d-flex flex-wrap mt-2">
+                                {% for skill in skills %}
+                                <div class="skill-badge me-2 mb-2 {% if skill in direct_skills %}owned{% endif %}">
+                                    <span class="badge {% if skill in direct_skills %}bg-success{% else %}bg-primary{% endif %} p-2">
+                                        {{ skill.name }}
+                                        {% if skill in direct_skills %}
+                                        <i class="bi bi-person-check ms-1" title="Directly owned skill"></i>
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-center py-4">
+                            <i class="bi bi-exclamation-circle fs-4 d-block mb-3 text-muted"></i>
+                            You haven't added any skills yet. You can add skills manually or by uploading your resume.
+                        </p>
+                        <div class="text-center">
+                            <a href="{% url 'resume_parser' %}" class="btn btn-outline-primary me-2">
+                                <i class="bi bi-file-earmark-text"></i> Upload Resume
+                            </a>
+                            <a href="{% url 'users:add_custom_skill' %}" class="btn btn-primary">
+                                <i class="bi bi-plus-circle"></i> Add Skills Manually
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h2 class="h5 mb-0">My Direct Skills</h2>
+                        </div>
+                        <div class="card-body">
+                            {% if direct_skills %}
+                                <div class="d-flex flex-wrap">
+                                    {% for skill in direct_skills %}
+                                    <span class="badge bg-success me-2 mb-2 p-2">{{ skill.name }}</span>
+                                    {% endfor %}
+                                </div>
+                                <p class="mt-3 small text-muted">
+                                    <i class="bi bi-info-circle"></i> Direct skills are owned by you and not shared with other users.
+                                </p>
+                            {% else %}
+                                <p class="text-muted">You don't have any directly owned skills yet.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h2 class="h5 mb-0">Associated Skills</h2>
+                        </div>
+                        <div class="card-body">
+                            {% if m2m_skills %}
+                                <div class="d-flex flex-wrap">
+                                    {% for skill in m2m_skills %}
+                                    <span class="badge bg-primary me-2 mb-2 p-2">{{ skill.name }}</span>
+                                    {% endfor %}
+                                </div>
+                                <p class="mt-3 small text-muted">
+                                    <i class="bi bi-info-circle"></i> Associated skills are shared general skills that may be used by multiple users.
+                                </p>
+                            {% else %}
+                                <p class="text-muted">You don't have any associated skills yet.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-3">
+                <a href="{% url 'resume_parser' %}" class="btn btn-outline-primary">
+                    <i class="bi bi-file-earmark-text"></i> Extract Skills from Resume
+                </a>
+                <a href="{% url 'user_profile' %}" class="btn btn-secondary ms-2">
+                    <i class="bi bi-person"></i> Back to Profile
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .skill-badge.owned .badge {
+        position: relative;
+    }
+    .skill-badge.owned .badge:before {
+        content: "";
+        position: absolute;
+        top: -3px;
+        right: -3px;
+        width: 8px;
+        height: 8px;
+        background-color: #ffc107;
+        border-radius: 50%;
+    }
+</style>
+{% endblock %} 

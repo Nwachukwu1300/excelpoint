@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 
 class Skill(models.Model):
     """
@@ -6,7 +7,6 @@ class Skill(models.Model):
     """
     name = models.CharField(
         max_length=100,
-        unique=True,
         help_text="Name of the skill"
     )
     
@@ -20,6 +20,21 @@ class Skill(models.Model):
         blank=True,
         help_text="Category of skill (e.g., Technical, Soft Skills, etc.)"
     )
+    
+    # Add direct relationship to user
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='user_skills_direct',
+        null=True,
+        blank=True,
+        help_text="User who owns this skill"
+    )
+    
+    class Meta:
+        # Only one skill with a specific name per user
+        # But different users can have skills with the same name
+        unique_together = ('name', 'user')
     
     def __str__(self):
         return self.name

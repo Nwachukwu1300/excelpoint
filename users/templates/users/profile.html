@@ -1,0 +1,37 @@
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="h5 mb-0">Skills</h2>
+                        </div>
+                        <div class="card-body">
+                            {% if user.skills.all %}
+                            <div class="d-flex flex-wrap mb-3">
+                                {% for skill in user.skills.all|slice:":10" %}
+                                <span class="badge bg-primary me-2 mb-2">{{ skill.name }}</span>
+                                {% endfor %}
+                                {% if user.skills.all.count > 10 %}
+                                <a href="{% url 'users:user_skills' %}" class="badge bg-secondary text-decoration-none">
+                                    + {{ user.skills.all.count|add:"-10" }} more
+                                </a>
+                                {% endif %}
+                            </div>
+                            <div class="d-flex">
+                                <a href="{% url 'users:user_skills' %}" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-eye"></i> View All Skills
+                                </a>
+                                <a href="{% url 'users:add_custom_skill' %}" class="btn btn-sm btn-outline-primary ms-2">
+                                    <i class="bi bi-plus-circle"></i> Add Skill
+                                </a>
+                            </div>
+                            {% else %}
+                            <p class="text-muted mb-3">No skills added yet.</p>
+                            <div class="d-flex">
+                                <a href="{% url 'resume_parser' %}" class="btn btn-sm btn-primary me-2">
+                                    <i class="bi bi-file-earmark-text"></i> Extract from Resume
+                                </a>
+                                <a href="{% url 'users:add_custom_skill' %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-plus-circle"></i> Add Manually
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div> 

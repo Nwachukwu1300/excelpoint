@@ -3,6 +3,15 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.core.validators import EmailValidator 
 import re
+from skills.models import Skill
+
+class SkillSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Skill model to use in UserSerializer
+    """
+    class Meta:
+        model = Skill
+        fields = ['id', 'name', 'category', 'description']
 
 class UserSerializer(serializers.ModelSerializer):
     """
@@ -25,13 +34,16 @@ class UserSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(
         required=True,
         validators=[EmailValidator(message="Enter a valid email address")])
+        
+    # Add skills to the serializer
+    skills = SkillSerializer(many=True, read_only=True)
 
     class Meta:
         model = get_user_model()
         fields = [
             'id', 'email', 'username', 'password', 'password2',
             'current_role', 'experience_level', 'bio',
-            'linkedin_profile', 'github_profile'
+            'linkedin_profile', 'github_profile', 'skills'
         ]
         # Extra kwargs to make certain fields optional
         extra_kwargs = {

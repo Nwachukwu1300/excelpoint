@@ -30,6 +30,7 @@ class User(AbstractUser):
     skills = models.ManyToManyField(
         'skills.Skill', 
         blank=True,
+        related_name='user_skills',
         help_text="Skills associated with the user")
     
     bio = models.TextField(

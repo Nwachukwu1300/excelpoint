@@ -8,6 +8,9 @@ from django.core.files.base import ContentFile
 from .resume_parser import ResumeParser
 from .skill_extractor import SkillExtractor
 
+# Import the Skill model
+from skills.models import Skill
+
 class ResumeProcessingService:
     """Service for processing resume files within Django."""
     
@@ -114,9 +117,11 @@ class ResumeProcessingService:
         preferred_skills = []
         
         for skill in all_skills:
-            if skill['confidence'] >= 0.85:
+            # Safely check confidence
+            confidence = skill.get('confidence', 0)
+            if confidence >= 0.85:
                 required_skills.append(skill)
-            elif skill['confidence'] >= 0.7:
+            elif confidence >= 0.7:
                 preferred_skills.append(skill)
         
         return {
@@ -140,21 +145,48 @@ class ResumeProcessingService:
         resume_skills = self.extract_skills_from_text(resume_text, min_confidence=0.7)
         job_skills = self.get_skills_for_job_posting(job_description)
         
-        # Extract skill names
-        resume_skill_names = set(s['skill'].lower() for s in resume_skills)
-        required_skill_names = set(s['skill'].lower() for s in job_skills['required_skills'])
-        preferred_skill_names = set(s['skill'].lower() for s in job_skills['preferred_skills'])
+        # Extract skill names (safely)
+        resume_skill_names = set(s.get('skill', '').lower() for s in resume_skills if 'skill' in s)
+        required_skill_names = set(s.get('skill', '').lower() for s in job_skills['required_skills'] if 'skill' in s)
+        preferred_skill_names = set(s.get('skill', '').lower() for s in job_skills['preferred_skills'] if 'skill' in s)
         
         # Calculate matches
         required_matches = resume_skill_names.intersection(required_skill_names)
         preferred_matches = resume_skill_names.intersection(preferred_skill_names)
         
-        # Calculate statistics
-        required_match_percent = (len(required_matches) / max(len(required_skill_names), 1)) * 100
-        preferred_match_percent = (len(preferred_matches) / max(len(preferred_skill_names), 1)) * 100
+        # Calculate statistics - ensure we don't divide by zero
+        required_match_percent = 0
+        if required_skill_names:
+            required_match_percent = (len(required_matches) / len(required_skill_names)) * 100
+        elif len(required_matches) > 0:
+            # If no required skills were found in job but we have matches
+            required_match_percent = 100
+            
+        preferred_match_percent = 0
+        if preferred_skill_names:
+            preferred_match_percent = (len(preferred_matches) / len(preferred_skill_names)) * 100
+        elif len(preferred_matches) > 0:
+            # If no preferred skills were found in job but we have matches
+            preferred_match_percent = 100
         
         # Overall match (weighted)
-        overall_match = (required_match_percent * 0.7) + (preferred_match_percent * 0.3)
+        if required_skill_names or preferred_skill_names:
+            # If we have any skills from job posting, use weighted average
+            total_weight = 0
+            weighted_sum = 0
+            
+            if required_skill_names:
+                weighted_sum += required_match_percent * 0.7
+                total_weight += 0.7
+                
+            if preferred_skill_names:
+                weighted_sum += preferred_match_percent * 0.3
+                total_weight += 0.3
+                
+            overall_match = weighted_sum / total_weight if total_weight > 0 else 0
+        else:
+            # If no skills found in job posting
+            overall_match = 0
         
         return {
             'overall_match': round(overall_match, 1),
@@ -164,4 +196,97 @@ class ResumeProcessingService:
             'matched_preferred_skills': list(preferred_matches),
             'missing_required_skills': list(required_skill_names - resume_skill_names),
             'missing_preferred_skills': list(preferred_skill_names - resume_skill_names)
+        }
+    
+    def save_skills_to_user(self, user, text_or_skills, min_confidence=0.7):
+        """
+        Extract skills from text and save them to the user's profile.
+        
+        Args:
+            user: Django User object
+            text_or_skills: Either text to extract skills from or a list of already extracted skills
+            min_confidence: Minimum confidence threshold (0.0-1.0)
+            
+        Returns:
+            Dictionary with results of the operation
+        """
+        # Determine if input is text or already extracted skills
+        if isinstance(text_or_skills, str):
+            # Extract skills from text
+            extracted_skills = self.extract_skills_from_text(text_or_skills, min_confidence)
+        else:
+            # Input is already extracted skills
+            # Add safety check for confidence key
+            extracted_skills = []
+            for s in text_or_skills:
+                # Skip items without 'skill' key
+                if 'skill' not in s:
+                    continue
+                    
+                if 'confidence' in s and s['confidence'] >= min_confidence:
+                    extracted_skills.append(s)
+                elif 'confidence' not in s:
+                    # If confidence is missing, add with default confidence
+                    s_copy = s.copy()
+                    s_copy['confidence'] = min_confidence
+                    extracted_skills.append(s_copy)
+        
+        # Keep track of added skills
+        added_skills = []
+        
+        # Process each extracted skill
+        for skill_data in extracted_skills:
+            # Skip items without 'skill' key as a safety check
+            if 'skill' not in skill_data:
+                continue
+                
+            skill_name = skill_data['skill']
+            
+            # First check if the user already has this skill (either directly or via M2M)
+            user_direct_skills = [s.name.lower() for s in user.user_skills_direct.all()]
+            user_m2m_skills = [s.name.lower() for s in user.skills.all()]
+            
+            if skill_name.lower() in user_direct_skills or skill_name.lower() in user_m2m_skills:
+                continue
+                
+            # Check if we have an existing skill with the same name but no user
+            try:
+                existing_skill = Skill.objects.get(name__iexact=skill_name, user__isnull=True)
+                # If it exists but has no user, assign it to this user and update it
+                existing_skill.user = user
+                existing_skill.save()
+                # Add to M2M relationship
+                user.skills.add(existing_skill)
+                added_skills.append(skill_name)
+                continue
+            except Skill.DoesNotExist:
+                # Skill doesn't exist, we'll create it below
+                pass
+            except Skill.MultipleObjectsReturned:
+                # Multiple skills with same name but no user - use the first one
+                existing_skill = Skill.objects.filter(name__iexact=skill_name, user__isnull=True).first()
+                existing_skill.user = user
+                existing_skill.save()
+                # Add to M2M relationship
+                user.skills.add(existing_skill)
+                added_skills.append(skill_name)
+                continue
+                
+            # Create a new skill directly associated with this user
+            skill = Skill.objects.create(
+                name=skill_name,
+                category=skill_data.get('category', ''),
+                description=f"Extracted with confidence: {skill_data.get('confidence', min_confidence):.2f}",
+                user=user  # Make sure user is explicitly set
+            )
+            
+            # Also add to the M2M relationship for backward compatibility
+            user.skills.add(skill)
+            
+            added_skills.append(skill_name)
+        
+        return {
+            'success': True,
+            'added_skills': added_skills,
+            'total_skills': len(added_skills)
         } 
