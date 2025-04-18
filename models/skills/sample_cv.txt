@@ -1,0 +1,102 @@
+JOHN SMITH
+Software Engineer
+
+Email: john.smith@example.com
+Phone: (555) 123-4567
+LinkedIn: linkedin.com/in/johnsmith
+GitHub: github.com/johnsmith
+
+SUMMARY
+-----------
+Experienced Software Engineer with 8+ years of expertise in building scalable web applications and microservices. Proficient in Python, JavaScript, and cloud technologies with a passion for clean code, performance optimization, and mentoring junior developers. Strong track record of delivering high-quality software solutions in fast-paced, collaborative environments.
+
+SKILLS
+-----------
+Programming Languages: Python, JavaScript, TypeScript, Java, SQL, HTML, CSS
+Frameworks & Libraries: Django, Flask, React, Node.js, Express, Redux, jQuery, Bootstrap
+Cloud & DevOps: AWS (EC2, S3, Lambda, CloudFront), Docker, Kubernetes, CI/CD, Jenkins
+Databases: PostgreSQL, MongoDB, Redis, SQLite, MySQL
+Testing: Jest, Pytest, Selenium, JUnit
+Tools: Git, JIRA, Confluence, Postman, VS Code, IntelliJ
+Methodologies: Agile/Scrum, TDD, BDD, Microservices architecture
+
+PROFESSIONAL EXPERIENCE
+-----------
+SENIOR SOFTWARE ENGINEER
+TechInnovate Inc., San Francisco, CA | 2020 - Present
+
+- Led the redesign and implementation of the company's customer-facing API platform, resulting in a 40% improvement in response times and 99.9% uptime
+- Architected and developed a real-time data processing pipeline using AWS Lambda and Kinesis, processing over 10 million events daily
+- Mentored junior developers through code reviews, pair programming sessions, and technical workshops
+- Implemented comprehensive test automation strategy, increasing test coverage from 65% to 92%
+- Collaborated with product managers and UX designers to create intuitive user interfaces using React and Redux
+- Optimized database queries and implemented caching strategies, reducing database load by 30%
+- Technologies used: Python, Django, React, AWS, Docker, PostgreSQL, Redis
+
+SOFTWARE ENGINEER
+DataSolutions Corp., Seattle, WA | 2017 - 2020
+
+- Developed and maintained RESTful APIs for the company's data analytics platform using Flask and SQLAlchemy
+- Implemented authentication and authorization services using OAuth 2.0 and JWT
+- Created dashboards and data visualization components using D3.js and Chart.js
+- Integrated third-party APIs and services such as Stripe, Twilio, and Google Maps
+- Participated in agile development processes, including sprint planning, daily stand-ups, and retrospectives
+- Reduced application load time by 45% through code optimization and implementing lazy loading techniques
+- Technologies used: Python, Flask, JavaScript, MongoDB, AWS, Docker
+
+JUNIOR SOFTWARE DEVELOPER
+WebTech Solutions, Portland, OR | 2015 - 2017
+
+- Developed and maintained front-end components for e-commerce applications using JavaScript and jQuery
+- Created responsive web designs using HTML5, CSS3, and Bootstrap
+- Collaborated with back-end developers to integrate front-end components with Java-based services
+- Fixed bugs and implemented new features for existing web applications
+- Participated in code reviews and knowledge-sharing sessions
+- Technologies used: JavaScript, HTML, CSS, jQuery, Java, Spring, MySQL
+
+EDUCATION
+-----------
+MASTER OF SCIENCE IN COMPUTER SCIENCE
+Stanford University, Stanford, CA | 2015
+
+BACHELOR OF SCIENCE IN COMPUTER ENGINEERING
+University of Washington, Seattle, WA | 2013
+
+CERTIFICATIONS
+-----------
+- AWS Certified Solutions Architect (2022)
+- Professional Scrum Master I (PSM I) (2021)
+- MongoDB Certified Developer (2019)
+- Oracle Certified Professional, Java SE 8 Programmer (2016)
+
+PROJECTS
+-----------
+OPEN SOURCE CONTRIBUTION - DJANGO REST FRAMEWORK
+- Contributed several bug fixes and feature enhancements
+- Improved documentation and test coverage
+- Implemented performance optimizations for serialization of large datasets
+
+PERSONAL PROJECT - TASK MANAGEMENT APPLICATION
+- Built a full-stack task management application using React, Node.js, and MongoDB
+- Implemented features such as task categorization, due dates, reminders, and sharing
+- Deployed the application on AWS using containerization with Docker and Kubernetes
+- GitHub repository: github.com/johnsmith/task-manager
+
+COMMUNITY INVOLVEMENT
+-----------
+TECHNICAL MENTOR
+Code For America | 2019 - Present
+- Mentor coding bootcamp graduates and self-taught developers
+- Provide guidance on technical challenges and career development
+- Conduct mock interviews and resume reviews
+
+CONFERENCE SPEAKER
+- "Scaling Microservices with Kubernetes" - PyCon 2022
+- "Building Resilient APIs with Django" - DjangoCon 2021
+- "Front-end Performance Optimization Techniques" - JSConf 2020
+
+LANGUAGES
+-----------
+- English (Native)
+- Spanish (Conversational)
+- French (Basic) 

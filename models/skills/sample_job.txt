@@ -1,0 +1,67 @@
+SENIOR FULL-STACK DEVELOPER
+CloudTech Solutions
+
+ABOUT US
+-----------
+CloudTech Solutions is a rapidly growing technology company specializing in cloud-native applications and enterprise solutions. We help businesses transform their operations through innovative software solutions built on modern technology stacks. With offices in major tech hubs and a remote-friendly culture, we're looking for talented developers to join our expanding team.
+
+POSITION OVERVIEW
+-----------
+We are seeking an experienced Senior Full-Stack Developer who is passionate about building innovative, scalable, and high-performance web applications. The ideal candidate will have a strong background in both front-end and back-end technologies, with a focus on cloud-native development and microservices architecture.
+
+RESPONSIBILITIES
+-----------
+- Design, develop, and maintain scalable and efficient web applications using modern technologies and frameworks
+- Collaborate with cross-functional teams including product managers, designers, and other developers
+- Architect and implement RESTful APIs and microservices
+- Optimize application performance and ensure high availability
+- Implement security best practices and data protection measures
+- Write clean, maintainable, and well-tested code
+- Contribute to technical design discussions and architectural decisions
+- Mentor junior developers and conduct code reviews
+- Stay updated with emerging technologies and industry trends
+- Troubleshoot production issues and implement robust solutions
+
+REQUIRED QUALIFICATIONS
+-----------
+- Bachelor's degree in Computer Science, Engineering, or related field (or equivalent practical experience)
+- 5+ years of professional software development experience
+- Strong proficiency in Python and JavaScript/TypeScript
+- Experience with at least one modern JavaScript framework (React, Angular, or Vue.js)
+- Experience with back-end frameworks like Django, Flask, or Express
+- Solid understanding of database design and SQL (PostgreSQL or MySQL)
+- Experience with NoSQL databases (MongoDB, Redis)
+- Proficiency in version control systems, particularly Git
+- Experience with cloud platforms (AWS, Azure, or GCP)
+- Knowledge of containerization (Docker) and orchestration (Kubernetes)
+- Understanding of CI/CD pipelines and DevOps practices
+- Excellent problem-solving and communication skills
+
+PREFERRED QUALIFICATIONS
+-----------
+- Master's degree in Computer Science or related field
+- Experience with GraphQL and REST API design
+- Knowledge of serverless architectures (AWS Lambda, Azure Functions)
+- Experience with real-time communication technologies (WebSockets, Socket.io)
+- Understanding of message queuing systems (Kafka, RabbitMQ)
+- Experience with data streaming and processing
+- Familiarity with machine learning concepts and frameworks
+- Contributions to open-source projects
+- Experience with Agile/Scrum methodologies
+
+BENEFITS
+-----------
+- Competitive salary and equity package
+- Comprehensive health, dental, and vision insurance
+- 401(k) matching program
+- Flexible remote work policy
+- Professional development budget
+- Home office stipend
+- Unlimited PTO policy
+- Paid parental leave
+- Regular team events and annual retreats
+- Employee wellness programs
+
+CloudTech Solutions is an equal opportunity employer. We celebrate diversity and are committed to creating an inclusive environment for all employees.
+
+To apply, please submit your resume and a cover letter explaining your interest in the position. 
