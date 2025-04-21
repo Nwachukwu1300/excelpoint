@@ -3,8 +3,8 @@ import json
 from typing import List, Dict, Optional
 from collections import Counter
 
-# Import the skill extractor
-from .skill_extractor import SkillExtractor
+# Import the skill extractor using absolute import to avoid circular references
+from models.skills.skill_extractor import SkillExtractor
 
 class SkillAnalyzer:
     """

@@ -3,11 +3,10 @@ Skills extraction and analysis module.
 This package provides tools for extracting skills from text and analyzing them.
 """
 
-# Import core components
-from .skill_extractor import SkillExtractor
-from .resume_parser import ResumeParser
+# Don't import modules here to avoid circular imports
+# Applications should import specific modules as needed
 
-# Expose public API
+# Define what should be exported by default
 __all__ = ['SkillExtractor', 'ResumeParser']
 
 # Note: SkillAnalyzer imported conditionally to avoid circular imports

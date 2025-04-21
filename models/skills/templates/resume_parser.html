@@ -39,45 +39,6 @@
                     </form>
                 </div>
             </div>
-            
-            <div class="card">
-                <div class="card-header">
-                    <h2 class="h5 mb-0">Job Skill Matching</h2>
-                </div>
-                <div class="card-body">
-                    <form method="post" action="{% url 'job_skill_match' %}">
-                        {% csrf_token %}
-                        <div class="mb-3">
-                            {{ job_form.job_title.label_tag }}
-                            {{ job_form.job_title }}
-                            {% if job_form.job_title.errors %}
-                            <div class="invalid-feedback d-block">
-                                {{ job_form.job_title.errors }}
-                            </div>
-                            {% endif %}
-                        </div>
-                        <div class="mb-3">
-                            {{ job_form.company.label_tag }}
-                            {{ job_form.company }}
-                            {% if job_form.company.errors %}
-                            <div class="invalid-feedback d-block">
-                                {{ job_form.company.errors }}
-                            </div>
-                            {% endif %}
-                        </div>
-                        <div class="mb-3">
-                            {{ job_form.job_description.label_tag }}
-                            {{ job_form.job_description }}
-                            {% if job_form.job_description.errors %}
-                            <div class="invalid-feedback d-block">
-                                {{ job_form.job_description.errors }}
-                            </div>
-                            {% endif %}
-                        </div>
-                        <button type="submit" class="btn btn-primary">Calculate Skill Match</button>
-                    </form>
-                </div>
-            </div>
         </div>
     </div>
 </div>

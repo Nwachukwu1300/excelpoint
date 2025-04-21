@@ -40,9 +40,12 @@
                             Skills
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <li><a class="dropdown-item" href="/skills/models/api/extract-skills/">Skill Extractor</a></li>
+                            <li><a class="dropdown-item" href="{% url 'skills:dream_job_path' %}">Dream Job Path</a></li>
+                            <li><a class="dropdown-item" href="{% url 'skills:skill_gap_analysis' %}">Skill Gap Analysis</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/skills/models/api/basic-extract-skills/">Basic Skill Extractor</a></li>
+                            <li><a class="dropdown-item" href="/skills/models/api/extract-skills/">Advanced Skill Extractor</a></li>
                             <li><a class="dropdown-item" href="/skills/models/parser/">Resume Parser</a></li>
-                            <li><a class="dropdown-item" href="/skills/models/match/">Job Skill Matcher</a></li>
                         </ul>
                     </li>
                 </ul>
@@ -53,12 +56,16 @@
                             User
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                            <li><a class="dropdown-item" href="/users/login/">Login</a></li>
-                            <li><a class="dropdown-item" href="/users/register/">Register</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="/users/profile/">Profile</a></li>
-                            <li><a class="dropdown-item" href="/users/profile/update/">Update Profile</a></li>
-                            <li><a class="dropdown-item" href="/users/logout/">Logout</a></li>
+                            {% if user.is_authenticated %}
+                                <li><a class="dropdown-item" href="{% url 'users:profile' %}">My Profile</a></li>
+                                <li><a class="dropdown-item" href="{% url 'users:manage_skills' %}">Manage Skills</a></li>
+                                <li><a class="dropdown-item" href="{% url 'users:update_profile' %}">Edit Profile</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{% url 'users:logout' %}">Logout</a></li>
+                            {% else %}
+                                <li><a class="dropdown-item" href="{% url 'users:login' %}">Login</a></li>
+                                <li><a class="dropdown-item" href="{% url 'users:register' %}">Register</a></li>
+                            {% endif %}
                         </ul>
                     </li>
                 </ul>

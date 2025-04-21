@@ -18,6 +18,20 @@
             </div>
             {% endif %}
             
+            {% if skills_added %}
+            <div class="alert alert-success">
+                <h4 class="alert-heading">Skills Added to Your Profile!</h4>
+                <p>These skills have been added to your user profile:</p>
+                <div class="d-flex flex-wrap mb-2">
+                    {% for skill in skills_added.added_skills %}
+                    <span class="badge bg-success me-2 mb-1">{{ skill }}</span>
+                    {% endfor %}
+                </div>
+                <hr>
+                <p class="mb-0">You can now use these skills when searching for jobs or in your job applications.</p>
+            </div>
+            {% endif %}
+            
             {% if result.success %}
             <div class="card mb-4">
                 <div class="card-header">
@@ -67,8 +81,16 @@
             <div class="row">
                 <div class="col-md-6">
                     <div class="card mb-4">
-                        <div class="card-header">
+                        <div class="card-header d-flex justify-content-between align-items-center">
                             <h2 class="h5 mb-0">Skills</h2>
+                            {% if result.data.skills %}
+                            <form method="post" action="{% url 'resume_results' %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-plus-circle"></i> Add to My Profile
+                                </button>
+                            </form>
+                            {% endif %}
                         </div>
                         <div class="card-body">
                             {% if result.data.skills %}
@@ -169,7 +191,12 @@
                 <a href="{% url 'resume_parser' %}" class="btn btn-secondary">Back to Parser</a>
                 
                 {% if result.data.skills %}
-                <a href="{% url 'job_skill_match' %}" class="btn btn-primary">Match with Job</a>
+                <form method="post" action="{% url 'resume_results' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success">
+                        Save Skills to Profile
+                    </button>
+                </form>
                 {% endif %}
             </div>
             

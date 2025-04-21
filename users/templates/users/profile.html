@@ -21,6 +21,9 @@
                                 <a href="{% url 'users:add_custom_skill' %}" class="btn btn-sm btn-outline-primary ms-2">
                                     <i class="bi bi-plus-circle"></i> Add Skill
                                 </a>
+                                <a href="{% url 'skills:skill_gap_analysis' %}" class="btn btn-sm btn-outline-success ms-2">
+                                    <i class="bi bi-bar-chart"></i> Analyze Gap
+                                </a>
                             </div>
                             {% else %}
                             <p class="text-muted mb-3">No skills added yet.</p>

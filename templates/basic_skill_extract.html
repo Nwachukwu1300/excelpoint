@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-12">
+            <h1>{{ title }}</h1>
+            <p class="lead">{{ description }}</p>
+            
+            {% if not results %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Extract Skills</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{% url 'api_basic_extract_skills' %}">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.text.id_for_label }}" class="form-label">{{ form.text.label }}</label>
+                            {{ form.text }}
+                            <div class="form-text">{{ form.text.help_text }}</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.min_confidence.id_for_label }}" class="form-label">{{ form.min_confidence.label }}</label>
+                            {{ form.min_confidence }}
+                            <div class="form-text">{{ form.min_confidence.help_text }}</div>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">Extract Skills</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% else %}
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">Extract Skills</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="post" action="{% url 'api_basic_extract_skills' %}">
+                                {% csrf_token %}
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.text.id_for_label }}" class="form-label">{{ form.text.label }}</label>
+                                    {{ form.text }}
+                                    <div class="form-text">{{ form.text.help_text }}</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.min_confidence.id_for_label }}" class="form-label">{{ form.min_confidence.label }}</label>
+                                    {{ form.min_confidence }}
+                                    <div class="form-text">{{ form.min_confidence.help_text }}</div>
+                                </div>
+                                
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary">Extract Skills</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">Results</h5>
+                            <span class="badge bg-primary">{{ results.skills_count }} skills found</span>
+                            {% if results.spacy_available %}
+                                <span class="badge bg-success">spaCy available</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark">spaCy not available</span>
+                            {% endif %}
+                        </div>
+                        <div class="card-body">
+                            {% if skills_by_category %}
+                                <h6>Skills by Category</h6>
+                                <div class="accordion" id="skillsAccordion">
+                                    {% for category, skills in skills_by_category.items %}
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="heading{{ forloop.counter }}">
+                                            <button class="accordion-button {% if not forloop.first %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ forloop.counter }}" aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}" aria-controls="collapse{{ forloop.counter }}">
+                                                {{ category|title }} ({{ skills|length }})
+                                            </button>
+                                        </h2>
+                                        <div id="collapse{{ forloop.counter }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" aria-labelledby="heading{{ forloop.counter }}" data-bs-parent="#skillsAccordion">
+                                            <div class="accordion-body">
+                                                <ul class="list-group">
+                                                    {% for skill in skills %}
+                                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                        {{ skill.skill }}
+                                                        <span class="badge bg-primary rounded-pill">{{ skill.confidence|floatformat:2 }}</span>
+                                                    </li>
+                                                    {% endfor %}
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="alert alert-warning">No skills found.</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">API Usage</h5>
+                </div>
+                <div class="card-body">
+                    <h6>Endpoint</h6>
+                    <code>POST /skills/models/api/basic-extract-skills/</code>
+                    
+                    <h6 class="mt-3">Request Format</h6>
+                    <pre><code>{
+  "text": "Your text to analyze",
+  "min_confidence": 0.7
+}</code></pre>
+                    
+                    <h6 class="mt-3">Response Format</h6>
+                    <pre><code>{
+  "success": true,
+  "skills_count": 5,
+  "skills": [
+    {
+      "skill": "Python",
+      "confidence": 0.85,
+      "category": "technical",
+      ...
+    },
+    ...
+  ],
+  "skills_by_category": {
+    "technical": ["Python", "Django", ...],
+    "soft": ["Communication", ...]
+  },
+  "spacy_available": false
+}</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

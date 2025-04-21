@@ -29,63 +29,38 @@ class ResumeUploadForm(forms.Form):
                 
         return resume
 
-class JobPostingForm(forms.Form):
-    """Form for submitting job postings."""
-    
-    job_title = forms.CharField(
-        label="Job Title",
-        max_length=100,
-        widget=forms.TextInput(attrs={'class': 'form-control'})
-    )
-    
-    job_description = forms.CharField(
-        label="Job Description",
-        widget=forms.Textarea(attrs={
-            'class': 'form-control',
-            'rows': 10,
-            'placeholder': 'Paste the full job description here...'
-        })
-    )
-    
-    company = forms.CharField(
-        label="Company",
-        max_length=100,
-        required=False,
-        widget=forms.TextInput(attrs={'class': 'form-control'})
-    )
-    
-    def clean_job_description(self):
-        """Validate the job description."""
-        job_description = self.cleaned_data.get('job_description')
-        
-        if job_description:
-            # Check minimum length (at least 100 characters)
-            if len(job_description) < 100:
-                raise forms.ValidationError(
-                    "Job description is too short. Please provide a more detailed description."
-                )
-                
-        return job_description
-
 class SkillExtractionForm(forms.Form):
-    """Form for extracting skills from text."""
+    """Form for text-based skill extraction."""
     
     text = forms.CharField(
-        label="Text",
-        widget=forms.Textarea(attrs={
-            'class': 'form-control',
-            'rows': 8,
-            'placeholder': 'Enter text to extract skills from...'
-        })
+        widget=forms.Textarea(attrs={'rows': 5, 'class': 'form-control'}),
+        label="Text to analyze",
+        help_text="Enter text from which to extract skills"
     )
     
     min_confidence = forms.FloatField(
-        label="Minimum Confidence",
         min_value=0.0,
         max_value=1.0,
         initial=0.7,
-        widget=forms.NumberInput(attrs={
-            'class': 'form-control',
-            'step': 0.05
-        })
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.05'}),
+        label="Minimum confidence",
+        help_text="Minimum confidence threshold for extracted skills (0.0-1.0)"
+    )
+
+class BasicSkillExtractionForm(forms.Form):
+    """Form for basic text-based skill extraction (no spaCy required)."""
+    
+    text = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 5, 'class': 'form-control'}),
+        label="Text to analyze",
+        help_text="Enter text from which to extract skills (using pattern-based extraction)"
+    )
+    
+    min_confidence = forms.FloatField(
+        min_value=0.0,
+        max_value=1.0,
+        initial=0.7,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.05'}),
+        label="Minimum confidence",
+        help_text="Minimum confidence threshold for extracted skills (0.0-1.0)"
     ) 

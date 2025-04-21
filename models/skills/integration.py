@@ -30,13 +30,16 @@ def extract_skills_view(request):
         extractor = SkillExtractor()
         skills = extractor.extract_skills(text)
         
-        # Filter by confidence
-        skills = [s for s in skills if s['confidence'] >= confidence]
+        # Filter by confidence - safely handle missing confidence key
+        filtered_skills = []
+        for s in skills:
+            if 'confidence' in s and s['confidence'] >= confidence:
+                filtered_skills.append(s)
         
         return JsonResponse({
             'success': True,
-            'skills': skills,
-            'count': len(skills)
+            'skills': filtered_skills,
+            'count': len(filtered_skills)
         })
     
     return JsonResponse({'success': False, 'error': 'POST request required'})
@@ -64,9 +67,9 @@ class JobPosting(models.Model):
         # Extract and categorize skills
         job_skills = service.get_skills_for_job_posting(self.description)
         
-        # Update fields
-        self.required_skills = [s['skill'] for s in job_skills['required_skills']]
-        self.preferred_skills = [s['skill'] for s in job_skills['preferred_skills']]
+        # Update fields - handle possible missing 'skill' keys
+        self.required_skills = [s['skill'] for s in job_skills['required_skills'] if 'skill' in s]
+        self.preferred_skills = [s['skill'] for s in job_skills['preferred_skills'] if 'skill' in s]
         self.save(update_fields=['required_skills', 'preferred_skills'])
     
     def save(self, *args, **kwargs):
@@ -118,11 +121,15 @@ def process_resume_task(file_path, user_id):
                 # Flatten skills by category into a list
                 all_skills = []
                 for category in skills_data:
-                    all_skills.extend(category.get('skills', []))
+                    # Safely get skills and check they have the expected format
+                    skills_list = category.get('skills', [])
+                    if isinstance(skills_list, list):
+                        all_skills.extend(skills_list)
                 
-                # Save to profile
-                user.profile.skills = all_skills
-                user.profile.save()
+                # Save to profile if skill field exists
+                if hasattr(user.profile, 'skills'):
+                    user.profile.skills = all_skills
+                    user.profile.save()
             
             # Save the parsing result for later reference
             json_path = f'parsed_resumes/{os.path.splitext(os.path.basename(file_path))[0]}.json'

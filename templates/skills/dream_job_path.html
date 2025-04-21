@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+
+{% block title %}Your Dream Job Path{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-12 mb-4">
+            <h1 class="display-5">Your Dream Job Path</h1>
+            <p class="lead">Select your dream job and we'll create a personalized learning path to help you get there.</p>
+        </div>
+    </div>
+    
+    {% if messages %}
+    <div class="row mb-4">
+        <div class="col-12">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="h5 mb-0">Select Your Dream Job</h2>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{% url 'skills:dream_job_path' %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            {{ form.role.label_tag }}
+                            {{ form.role }}
+                            {% if form.role.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.role.errors }}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">Choose the role you aspire to have</div>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">Create My Learning Path</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            {% if recommended_roles %}
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="h5 mb-0">Recommended Roles</h2>
+                </div>
+                <div class="card-body">
+                    <p class="card-text text-muted">Based on your current skills:</p>
+                    <div class="list-group">
+                        {% for role in recommended_roles %}
+                        <a href="{% url 'skills:dream_job_path' %}?role={{ role.id }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            {{ role.name }}
+                            <span class="badge bg-primary rounded-pill">{{ role.match_percentage }}% match</span>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        {% if analysis_result and analysis_result.success %}
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h2 class="h5 mb-0">{{ selected_role.name }} - Role Analysis</h2>
+                        <span class="badge bg-light text-dark">{{ match_percentage }}% Match</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <p>{{ selected_role.description }}</p>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h3 class="h6">Your Current Skills</h3>
+                            {% if analysis_result.user_skills %}
+                            <ul class="list-group">
+                                {% for skill in analysis_result.user_skills %}
+                                <li class="list-group-item">{{ skill }}</li>
+                                {% endfor %}
+                            </ul>
+                            {% else %}
+                            <p class="text-muted">No skills found in your profile. <a href="{% url 'users:user_skills' %}">Add some skills</a> to your profile!</p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <h3 class="h6">Missing Skills</h3>
+                            {% if analysis_result.total_missing > 0 %}
+                            <div class="accordion" id="missingSkillsAccordion">
+                                {% if analysis_result.missing_skills.essential %}
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="essentialHeading">
+                                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#essentialCollapse" aria-expanded="true" aria-controls="essentialCollapse">
+                                            Essential Skills ({{ analysis_result.missing_skills.essential|length }})
+                                        </button>
+                                    </h2>
+                                    <div id="essentialCollapse" class="accordion-collapse collapse show" aria-labelledby="essentialHeading" data-bs-parent="#missingSkillsAccordion">
+                                        <div class="accordion-body">
+                                            <ul class="list-group">
+                                                {% for skill in analysis_result.missing_skills.essential %}
+                                                <li class="list-group-item">{{ skill }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                
+                                {% if analysis_result.missing_skills.important %}
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="importantHeading">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#importantCollapse" aria-expanded="false" aria-controls="importantCollapse">
+                                            Important Skills ({{ analysis_result.missing_skills.important|length }})
+                                        </button>
+                                    </h2>
+                                    <div id="importantCollapse" class="accordion-collapse collapse" aria-labelledby="importantHeading" data-bs-parent="#missingSkillsAccordion">
+                                        <div class="accordion-body">
+                                            <ul class="list-group">
+                                                {% for skill in analysis_result.missing_skills.important %}
+                                                <li class="list-group-item">{{ skill }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                
+                                {% if analysis_result.missing_skills.nice_to_have %}
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="niceToHaveHeading">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#niceToHaveCollapse" aria-expanded="false" aria-controls="niceToHaveCollapse">
+                                            Nice-to-Have Skills ({{ analysis_result.missing_skills.nice_to_have|length }})
+                                        </button>
+                                    </h2>
+                                    <div id="niceToHaveCollapse" class="accordion-collapse collapse" aria-labelledby="niceToHaveHeading" data-bs-parent="#missingSkillsAccordion">
+                                        <div class="accordion-body">
+                                            <ul class="list-group">
+                                                {% for skill in analysis_result.missing_skills.nice_to_have %}
+                                                <li class="list-group-item">{{ skill }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% else %}
+                            <p class="text-success">Great! You already have all the skills needed for this role.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            {% if learning_path %}
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="h5 mb-0">Your Personalized Learning Path</h2>
+                </div>
+                <div class="card-body">
+                    <div class="learning-path">
+                        {% for phase in learning_path %}
+                        <div class="learning-phase mb-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="phase-number rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">{{ phase.phase }}</div>
+                                <h3 class="h5 mb-0 ms-3">{{ phase.title }}</h3>
+                            </div>
+                            <p class="text-muted">{{ phase.description }}</p>
+                            
+                            <div class="skills-to-learn mb-3">
+                                <h4 class="h6">Skills to learn:</h4>
+                                <div class="d-flex flex-wrap gap-2">
+                                    {% for skill in phase.skills %}
+                                    <span class="badge bg-light text-dark">{{ skill }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            
+                            <h4 class="h6">Recommended Courses:</h4>
+                            <div class="row">
+                                {% for skill_name, courses in phase.courses.items %}
+                                <div class="col-12 mb-3">
+                                    <div class="card border-0 bg-light">
+                                        <div class="card-header bg-secondary text-white">
+                                            <h5 class="h6 mb-0">{{ skill_name }}</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            {% if courses %}
+                                            <div class="list-group">
+                                                {% for course in courses %}
+                                                <a href="{{ course.url }}" target="_blank" class="list-group-item list-group-item-action">
+                                                    <div class="d-flex w-100 justify-content-between">
+                                                        <h6 class="mb-1">{{ course.title }}</h6>
+                                                        <small>{{ course.provider }}</small>
+                                                    </div>
+                                                    <p class="mb-1 small">{{ course.description|truncatechars:100 }}</p>
+                                                    <small class="d-flex justify-content-between">
+                                                        <span>Difficulty: {{ course.difficulty }}</span>
+                                                        <span>Duration: {{ course.duration }}</span>
+                                                        <span>{% if course.is_free %}Free{% else %}Paid{% endif %}</span>
+                                                    </small>
+                                                </a>
+                                                {% endfor %}
+                                            </div>
+                                            {% else %}
+                                            <p class="text-muted">No courses found for {{ skill_name }}. Try searching on learning platforms directly.</p>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% if not forloop.last %}
+                        <hr class="my-4">
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.phase-number {
+    flex-shrink: 0;
+}
+</style>
+{% endblock %} 
