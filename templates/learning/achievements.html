@@ -1,0 +1,138 @@
+<!-- templates/learning/achievements.html -->
+{% extends "base.html" %}
+
+{% block title %}My Achievements{% endblock %}
+
+{% block extra_head %}
+<style>
+    .achievement-card {
+        transition: transform 0.3s;
+    }
+    
+    .achievement-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .achievement-icon {
+        width: 70px;
+        height: 70px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        margin: 0 auto 1rem auto;
+        font-size: 2rem;
+    }
+    
+    .earned .achievement-icon {
+        background-color: #28a745;
+        color: white;
+    }
+    
+    .unearned .achievement-icon {
+        background-color: #f8f9fa;
+        color: #6c757d;
+    }
+    
+    .progress {
+        height: 8px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>My Achievements</h1>
+        <a href="{% url 'learning:dashboard' %}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+        </a>
+    </div>
+    
+    <!-- Achievement Stats -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <h3 class="display-4">{{ earned_achievements.count }}</h3>
+                    <p class="lead">Achievements Earned</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <h3 class="display-4">{{ unearned_achievements|length }}</h3>
+                    <p class="lead">Achievements to Unlock</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <h3 class="display-4">{{ earned_achievements.count|add:unearned_achievements|length }}</h3>
+                    <p class="lead">Total Achievements</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Earned Achievements -->
+    {% if earned_achievements %}
+    <h2 class="mb-3">Earned Achievements</h2>
+    <div class="row mb-5">
+        {% for user_achievement in earned_achievements %}
+        <div class="col-md-4 mb-4">
+            <div class="card achievement-card earned h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="achievement-icon">
+                        <i class="fas {{ user_achievement.achievement.icon }}"></i>
+                    </div>
+                    <h3 class="h5">{{ user_achievement.achievement.name }}</h3>
+                    <p>{{ user_achievement.achievement.description }}</p>
+                    <div class="mt-auto text-muted">
+                        Earned on {{ user_achievement.date_earned|date:"M d, Y" }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <!-- Unearned Achievements -->
+    {% if unearned_achievements %}
+    <h2 class="mb-3">Achievements to Unlock</h2>
+    <div class="row">
+        {% for achievement_data in unearned_achievements %}
+        <div class="col-md-4 mb-4">
+            <div class="card achievement-card unearned h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="achievement-icon">
+                        <i class="fas {{ achievement_data.achievement.icon }}"></i>
+                    </div>
+                    <h3 class="h5">{{ achievement_data.achievement.name }}</h3>
+                    <p>{{ achievement_data.achievement.description }}</p>
+                    <div class="mt-auto">
+                        <div class="progress mb-2">
+                            <div class="progress-bar bg-info" role="progressbar" style='width:{{ achievement_data.progress }}%;'
+                                aria-valuenow="{{ achievement_data.progress }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        <small class="text-muted">{{ achievement_data.progress }}% progress</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    {% if not earned_achievements and not unearned_achievements %}
+    <div class="alert alert-info text-center p-5">
+        <i class="fas fa-info-circle fa-3x mb-3"></i>
+        <h4>No Achievements Available</h4>
+        <p>Achievements will be added soon! Keep learning to prepare for upcoming achievements.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

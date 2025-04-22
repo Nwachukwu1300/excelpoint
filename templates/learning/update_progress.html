@@ -1,0 +1,102 @@
+<!-- templates/learning/update_progress.html -->
+{% extends "base.html" %}
+
+{% block title %}Update Course Progress{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="h5 mb-0"><i class="fas fa-edit me-2"></i>Update Progress</h2>
+                </div>
+                <div class="card-body">
+                    <div class="course-info mb-4">
+                        <h3>{{ course.title }}</h3>
+                        <div class="d-flex mb-2">
+                            <span class="badge bg-secondary me-2">{{ course.provider }}</span>
+                            <span class="badge bg-info me-2">{{ course.difficulty }}</span>
+                            {% if course.is_free %}
+                            <span class="badge bg-success">Free</span>
+                            {% else %}
+                            <span class="badge bg-warning text-dark">Paid</span>
+                            {% endif %}
+                        </div>
+                        <p>{{ course.description }}</p>
+                        <a href="{{ course.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-external-link-alt me-1"></i> View Course
+                        </a>
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="status" class="form-label">Status</label>
+                            <select class="form-select" id="status" name="status" required>
+                                <option value="not_started" {% if progress.status == 'not_started' %}selected{% endif %}>Not Started</option>
+                                <option value="in_progress" {% if progress.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                                <option value="completed" {% if progress.status == 'completed' %}selected{% endif %}>Completed</option>
+                                <option value="paused" {% if progress.status == 'paused' %}selected{% endif %}>Paused</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="progress_percent" class="form-label">Progress (0-100%)</label>
+                            <input type="range" class="form-range" id="progress_range" min="0" max="100" 
+                                  value="{{ progress.progress_percent|default:0 }}" oninput="updateProgressValue(this.value)">
+                            <div class="d-flex justify-content-between">
+                                <span>0%</span>
+                                <span id="progress_value">{{ progress.progress_percent|default:0 }}%</span>
+                                <span>100%</span>
+                            </div>
+                            <input type="hidden" id="progress_percent" name="progress_percent" 
+                                   value="{{ progress.progress_percent|default:0 }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="hours_spent" class="form-label">Hours Spent</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="hours_spent" name="hours_spent" 
+                                       min="0" step="0.5" value="{{ progress.estimated_hours_spent|default:0 }}">
+                                <span class="input-group-text">hours</span>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">Notes</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="3" 
+                                      placeholder="What have you learned so far? Any challenges?">{{ progress.notes|default:'' }}</textarea>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'learning:dashboard' %}" class="btn btn-outline-secondary me-md-2">
+                                <i class="fas fa-times me-1"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i> Save Progress
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function updateProgressValue(value) {
+        document.getElementById('progress_value').textContent = value + '%';
+        document.getElementById('progress_percent').value = value;
+    }
+    
+    // Auto-update progress percent when status changes to completed
+    document.getElementById('status').addEventListener('change', function() {
+        if (this.value === 'completed') {
+            document.getElementById('progress_range').value = 100;
+            updateProgressValue(100);
+        }
+    });
+</script>
+{% endblock %}

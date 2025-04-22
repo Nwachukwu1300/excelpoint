@@ -182,3 +182,11 @@ def dream_job_path(request):
         'form': form,
         'recommended_roles': recommended_roles
     })
+
+def list_courses(request):
+    """View for listing all available courses"""
+    courses = Course.objects.all().order_by('provider', 'title')
+    
+    return render(request, 'skills/courses_list.html', {
+        'courses': courses
+    })

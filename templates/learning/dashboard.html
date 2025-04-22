@@ -1,0 +1,323 @@
+<!-- templates/learning/dashboard.html -->
+{% extends "base.html" %}
+
+{% block title %}Learning Dashboard{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    .achievement-icon {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background-color: #f8f9fa;
+        color: #28a745;
+    }
+    
+    .streak-display {
+        padding: 1rem;
+    }
+    
+    .card-stats {
+        transition: transform 0.3s;
+    }
+    
+    .card-stats:hover {
+        transform: translateY(-5px);
+    }
+    
+    .progress {
+        height: 10px;
+        border-radius: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>My Learning Dashboard</h1>
+        <a href="{% url 'skills:dream_job_path' %}" class="btn btn-outline-primary">
+            <i class="fas fa-graduation-cap"></i> Find New Courses
+        </a>
+    </div>
+    
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card card-stats bg-primary text-white h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-check-circle fa-2x mb-2"></i>
+                    <h3 class="display-4">{{ progress_stats.completed_courses }}</h3>
+                    <p class="lead">Courses Completed</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card card-stats bg-info text-white h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-spinner fa-2x mb-2"></i>
+                    <h3 class="display-4">{{ progress_stats.in_progress_courses }}</h3>
+                    <p class="lead">Courses In Progress</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card card-stats bg-success text-white h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-brain fa-2x mb-2"></i>
+                    <h3 class="display-4">{{ progress_stats.skills_acquired }}</h3>
+                    <p class="lead">Skills Acquired</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card card-stats bg-warning text-dark h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-clock fa-2x mb-2"></i>
+                    <h3 class="display-4">{{ progress_stats.total_hours }}</h3>
+                    <p class="lead">Learning Hours</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Streak & Achievements -->
+    <div class="row mb-4">
+        <div class="col-md-6 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="h5 mb-0"><i class="fas fa-fire me-2"></i>Learning Streak</h2>
+                </div>
+                <div class="card-body text-center">
+                    <div class="streak-display">
+                        <div class="current-streak">
+                            <h1 class="display-3">{{ streak.current_streak }}</h1>
+                            <p class="lead">Current Streak (days)</p>
+                        </div>
+                        <div class="longest-streak mt-3">
+                            <h3>{{ streak.longest_streak }}</h3>
+                            <p>Longest Streak</p>
+                        </div>
+                        <div class="streak-message mt-3">
+                            {% if streak.current_streak > 0 %}
+                            <div class="alert alert-success">
+                                <i class="fas fa-trophy me-2"></i>Keep it up! You've been learning for {{ streak.current_streak }} days in a row.
+                            </div>
+                            {% else %}
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-circle me-2"></i>Start your learning streak today by making progress on a course!
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h2 class="h5 mb-0"><i class="fas fa-medal me-2"></i>Recent Achievements</h2>
+                </div>
+                <div class="card-body">
+                    {% if recent_achievements %}
+                    <div class="list-group">
+                        {% for achievement in recent_achievements %}
+                        <div class="list-group-item list-group-item-action">
+                            <div class="d-flex align-items-center">
+                                <div class="achievement-icon me-3">
+                                    <i class="fas {{ achievement.achievement.icon }}"></i>
+                                </div>
+                                <div>
+                                    <h5 class="mb-1">{{ achievement.achievement.name }}</h5>
+                                    <p class="mb-1 small">{{ achievement.achievement.description }}</p>
+                                    <small class="text-muted">Earned {{ achievement.date_earned|date:"M d, Y" }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="mt-3 text-end">
+                        <a href="{% url 'learning:achievements' %}" class="btn btn-outline-success btn-sm">
+                            <i class="fas fa-trophy me-1"></i> View All Achievements
+                        </a>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>You haven't earned any achievements yet. Keep learning to unlock them!
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Skill Growth Chart -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h2 class="h5 mb-0"><i class="fas fa-chart-line me-2"></i>Skill Growth Over Time</h2>
+                </div>
+                <div class="card-body">
+                    <canvas id="skillChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- In Progress Courses -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h2 class="h5 mb-0"><i class="fas fa-spinner me-2"></i>Courses In Progress</h2>
+                    <a href="{% url 'skills:list_courses' %}" class="btn btn-sm btn-light">Add Courses</a>
+                </div>
+                <div class="card-body">
+                    {% if in_progress_courses %}
+                    <div class="list-group">
+                        {% for progress in in_progress_courses %}
+                        <div class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between align-items-center mb-2">
+                                <div>
+                                    <h5 class="mb-1">{{ progress.course.title }}</h5>
+                                    <div>
+                                        <span class="badge bg-secondary me-2">{{ progress.course.provider }}</span>
+                                        <span class="badge bg-info me-2">{{ progress.course.difficulty }}</span>
+                                        {% if progress.course.is_free %}
+                                        <span class="badge bg-success">Free</span>
+                                        {% else %}
+                                        <span class="badge bg-warning text-dark">Paid</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div>
+                                    <a href="{{ progress.course.url }}" target="_blank" class="btn btn-sm btn-outline-secondary me-2">
+                                        <i class="fas fa-external-link-alt"></i> View
+                                    </a>
+                                    <a href="{% url 'learning:update_progress' progress.course.id %}" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-edit"></i> Update
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1 me-3">
+                                    <div class="progress">
+                                        <div class="progress-bar bg-primary" role="progressbar" style="width: {{ progress.progress_percent }}%;" 
+                                             aria-valuenow="{{ progress.progress_percent }}" aria-valuemin="0" aria-valuemax="100">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="min-width: 40px;">
+                                    {{ progress.progress_percent }}%
+                                </div>
+                            </div>
+                            {% if progress.notes %}
+                            <div class="mt-2 small text-muted">
+                                <i class="fas fa-sticky-note me-1"></i> {{ progress.notes|truncatechars:100 }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>You don't have any courses in progress. 
+                        <a href="{% url 'skills:list_courses' %}" class="alert-link">Browse courses</a> to get started!
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Completed Courses -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h2 class="h5 mb-0"><i class="fas fa-check-circle me-2"></i>Completed Courses</h2>
+                </div>
+                <div class="card-body">
+                    {% if completed_courses %}
+                    <div class="list-group">
+                        {% for progress in completed_courses %}
+                        <div class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <div>
+                                    <h5 class="mb-1">{{ progress.course.title }}</h5>
+                                    <div>
+                                        <span class="badge bg-secondary me-2">{{ progress.course.provider }}</span>
+                                        <span class="badge bg-info me-2">{{ progress.course.difficulty }}</span>
+                                        <small class="text-muted ms-2">Completed on {{ progress.date_completed|date:"M d, Y" }}</small>
+                                    </div>
+                                </div>
+                                <div>
+                                    <span class="badge bg-success p-2">
+                                        <i class="fas fa-check-circle me-1"></i> Completed
+                                    </span>
+                                </div>
+                            </div>
+                            {% if progress.estimated_hours_spent > 0 %}
+                            <div class="mt-2 small text-muted">
+                                <i class="fas fa-clock me-1"></i> {{ progress.estimated_hours_spent }} hours spent
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>You haven't completed any courses yet. Work through your in-progress courses to see results here!
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Skill Growth Chart
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('skillChart').getContext('2d');
+        const skillChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [{% for item in skill_acquisition %}'{{ item.month }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+                datasets: [{
+                    label: 'Skills Acquired',
+                    data: [{% for item in skill_acquisition %}{{ item.count }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                    fill: true,
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        precision: 0
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            title: function(tooltipItems) {
+                                return tooltipItems[0].label + ' Skills';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

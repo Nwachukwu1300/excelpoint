@@ -27,6 +27,6 @@ urlpatterns = [
     path('skills/', include('skills.urls')),  # Django app skills URLs
     path('skills/models/', include('models.skills.urls')),  # Model-based skills URLs
     path('jobs/', include('jobs.urls')),
-    path('learning/', include('learning.urls')),
+    path('learning/', include('learning.urls', namespace='learning')),
     path('', TemplateView.as_view(template_name='home.html'), name='home'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
