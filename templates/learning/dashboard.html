@@ -5,97 +5,115 @@
 {% block title %}Learning Dashboard{% endblock %}
 
 {% block extra_head %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-    .dashboard-summary {
-        display: flex;
-        gap: 2rem;
-        flex-wrap: wrap;
-        margin-bottom: 2rem;
+    body {
+        background: #f5f6fa;
     }
-    .summary-card {
-        flex: 1 1 200px;
-        background: #fff;
-        border-radius: 12px;
+    .dashboard-summary .card {
+        border-radius: 16px;
         box-shadow: 0 2px 12px rgba(0,0,0,0.07);
-        padding: 2rem 1.5rem;
         text-align: center;
-        min-width: 200px;
-        margin-bottom: 1rem;
+        transition: box-shadow 0.2s;
+        margin-bottom: 1.5rem;
+    }
+    .dashboard-summary .card:hover {
+        box-shadow: 0 4px 24px rgba(0,0,0,0.12);
     }
     .summary-icon {
         font-size: 2.5rem;
         margin-bottom: 0.5rem;
     }
-    .section-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1rem;
-    }
     .see-all-link {
         font-size: 0.95rem;
-        color: #000DFF;
+        color: #6c63ff;
         text-decoration: none;
+        font-weight: 500;
+        border: none;
+        background: none;
+        padding: 0;
+        cursor: pointer;
     }
     .see-all-link:hover {
         text-decoration: underline;
+        color: #4834d4;
     }
-    .card-section {
-        margin-bottom: 2rem;
-    }
-    .achievement-icon {
-        width: 40px;
-        height: 40px;
+    .my-courses-scroll {
         display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 50%;
-        background-color: #f8f9fa;
-        color: #28a745;
+        gap: 1.5rem;
+        overflow-x: auto;
+        padding-bottom: 0.5rem;
+        margin-bottom: 1rem;
     }
-    
-    .streak-display {
-        padding: 1rem;
+    .course-card {
+        min-width: 260px;
+        background: #fff;
+        border-radius: 14px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+        padding: 1.2rem 1rem;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        transition: box-shadow 0.2s;
+        border: none;
+        text-decoration: none;
+        color: inherit;
     }
-    
-    .card-stats {
-        transition: transform 0.3s;
+    .course-card:hover {
+        box-shadow: 0 4px 16px rgba(76, 110, 245, 0.13);
+        background: #f3f0ff;
+        color: #4834d4;
     }
-    
-    .card-stats:hover {
-        transform: translateY(-5px);
+    .course-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 0.3rem;
     }
-    
-    .progress {
-        height: 10px;
-        border-radius: 5px;
+    .course-status {
+        font-size: 0.95rem;
+        border-radius: 12px;
+        padding: 0.2rem 0.7rem;
+        background: #e0e7ff;
+        color: #4834d4;
+        font-weight: 500;
+        margin-top: 0.5rem;
     }
-
-    .achievement-card {
-        border: 1px solid #dee2e6;
+    .course-provider {
+        font-size: 0.9rem;
+        color: #888;
+        margin-bottom: 0.2rem;
+    }
+    .course-action {
+        margin-top: auto;
+        width: 100%;
+        display: flex;
+        justify-content: flex-end;
+    }
+    .btn-view-details {
+        background: #6c63ff;
+        color: #fff;
+        border: none;
         border-radius: 8px;
-        transition: all 0.3s ease;
+        padding: 0.4rem 1.1rem;
+        font-weight: 500;
+        font-size: 1rem;
+        transition: background 0.2s;
+        text-decoration: none;
     }
-
-    .achievement-card.earned {
-        background-color: #f8f9fa;
+    .btn-view-details:hover {
+        background: #4834d4;
+        color: #fff;
     }
-
-    .achievement-card.locked {
-        opacity: 0.6;
-    }
-
     .timeline {
         position: relative;
         padding: 20px 0;
     }
-
     .timeline-item {
         display: flex;
         margin-bottom: 20px;
+        align-items: flex-start;
     }
-
     .timeline-icon {
         width: 40px;
         height: 40px;
@@ -106,130 +124,273 @@
         justify-content: center;
         margin-right: 15px;
         flex-shrink: 0;
+        font-size: 1.3rem;
     }
-
     .timeline-content {
         flex-grow: 1;
+    }
+    .achievement-icon {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background-color: #f8f9fa;
+        color: #28a745;
+        font-size: 1.5rem;
+    }
+    .achievement-card {
+        border: 1px solid #dee2e6;
+        border-radius: 12px;
+        transition: box-shadow 0.2s, background 0.2s;
+        background: #fff;
+        padding: 1rem 0.5rem;
+        min-height: 140px;
+    }
+    .achievement-card.earned {
+        background-color: #eafaf1;
+        border-color: #b2f2bb;
+    }
+    .achievement-card.locked {
+        opacity: 0.6;
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<h1 class="mb-4">Learning Dashboard</h1>
-
-<!-- Dashboard Summary -->
-<div class="dashboard-summary">
-    <div class="summary-card">
-        <div class="summary-icon">🔥</div>
-        <div class="h3 mb-0">{{ streak.current_streak }}</div>
-        <div class="text-muted">Day Streak</div>
-    </div>
-    <div class="summary-card">
-        <div class="summary-icon"><i class="fas fa-lightbulb"></i></div>
-        <div class="h3 mb-0">{{ user.user_skills.count }}</div>
-        <div class="text-muted">Skills</div>
-        <a href="{% url 'users:user_skills' %}" class="see-all-link">See All</a>
-    </div>
-    <div class="summary-card">
-        <div class="summary-icon"><i class="fas fa-trophy"></i></div>
-        <div class="h3 mb-0">{{ achievements|length }}</div>
-        <div class="text-muted">Achievements</div>
-        <a href="{% url 'learning:achievements' %}" class="see-all-link">See All</a>
-    </div>
-</div>
-
-<!-- Recent Activity (summary) -->
-<div class="card-section">
-    <div class="section-header">
-        <h5 class="mb-0">Recent Activity</h5>
-        <a href="{% url 'learning:recent_activity' %}" class="see-all-link">See All</a>
-    </div>
-    <div class="card">
-        <div class="card-body">
-            <div class="timeline">
-                {% for activity in recent_activity|slice:":3" %}
-                <div class="timeline-item">
-                    <div class="timeline-icon">{{ activity.icon }}</div>
-                    <div class="timeline-content">
-                        <h6 class="mb-1">{{ activity.title }}</h6>
-                        <p class="text-muted mb-0">{{ activity.description }}</p>
-                        <small class="text-muted">{{ activity.timestamp|timesince }} ago</small>
-                    </div>
-                </div>
-                {% empty %}
-                <p class="text-muted">No recent activity to show.</p>
-                {% endfor %}
+<div class="container-fluid px-0">
+    <h1 class="mb-4">Learning Dashboard</h1>
+    <!-- Dashboard Summary -->
+    <div class="row dashboard-summary mb-4">
+        <div class="col-md-4">
+            <div class="card p-4">
+                <div class="summary-icon">🔥</div>
+                <div class="h3 mb-0">{{ streak.current_streak }}</div>
+                <div class="text-muted">Day Streak</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card p-4">
+                <div class="summary-icon"><i class="fas fa-lightbulb"></i></div>
+                <div class="h3 mb-0">{{ user.user_skills.count }}</div>
+                <div class="text-muted">Skills</div>
+                <a href="{% url 'users:user_skills' %}" class="see-all-link">See All</a>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card p-4">
+                <div class="summary-icon"><i class="fas fa-trophy"></i></div>
+                <div class="h3 mb-0">{{ achievements|length }}</div>
+                <div class="text-muted">Achievements</div>
+                <a href="{% url 'learning:achievements' %}" class="see-all-link">See All</a>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Achievements (summary) -->
-<div class="card-section">
-    <div class="section-header">
-        <h5 class="mb-0">Achievements</h5>
-        <a href="{% url 'learning:achievements' %}" class="see-all-link">See All</a>
-    </div>
-    <div class="row">
-        {% for achievement in achievements|slice:":4" %}
-        <div class="col-6 col-md-3 mb-3">
-            <div class="achievement-card p-2 text-center {% if achievement.is_earned %}earned{% else %}locked{% endif %}">
-                <div class="achievement-icon mb-2">{{ achievement.achievement.icon }}</div>
-                <h6 class="mb-1">{{ achievement.achievement.name }}</h6>
-                <p class="small text-muted mb-0">{{ achievement.achievement.description }}</p>
-            </div>
+    <!-- My Courses Horizontal Scroll -->
+    <div class="card-section mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="mb-0"><i class="fas fa-book-open me-2"></i>My Courses</h5>
+            <span class="see-all-link d-none d-md-inline">&rarr; Scroll</span>
         </div>
-        {% endfor %}
-    </div>
-</div>
-
-<!-- Skill Growth Chart (summary) -->
-<div class="card-section">
-    <div class="section-header">
-        <h5 class="mb-0">Skill Growth</h5>
-    </div>
-    <div class="card">
-        <div class="card-body">
-            <canvas id="skillGrowthChart"></canvas>
-        </div>
-    </div>
-</div>
-
-<div class="my-4">
-  <h3>My Courses</h3>
-  <div class="card mb-3">
-    <div class="card-body">
-      {% with tracked_courses=course_progress|dictsortreversed:"last_activity_date" %}
-      {% if tracked_courses %}
-        <ul class="list-group list-group-flush">
+        <div class="my-courses-scroll p-2" style="background: #f8f9fb; border-radius: 14px; min-height: 180px;">
+          {% with tracked_courses=course_progress|dictsortreversed:"last_activity_date" %}
           {% for progress in tracked_courses %}
             {% if progress.status != 'not_started' %}
-            <li class="list-group-item d-flex justify-content-between align-items-center">
-              <a href="{% url 'learning:course_detail' progress.course.id %}">
-                {{ progress.course.title }}
-              </a>
-              <span class="badge bg-info">{{ progress.get_status_display }}</span>
-            </li>
+            <a href="{% url 'learning:course_detail' progress.course.id %}" class="course-card shadow-sm">
+                <div class="d-flex align-items-center mb-2 w-100">
+                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3" style="width:48px;height:48px;font-size:1.5rem;">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="course-title">{{ progress.course.title }}</div>
+                        <div class="course-provider">{{ progress.course.provider }}</div>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center w-100 mb-2">
+                    <span class="course-status me-2 {% if progress.status == 'completed' %}bg-success text-white{% elif progress.status == 'in_progress' %}bg-warning text-dark{% else %}bg-info text-white{% endif %}">
+                        {{ progress.get_status_display }}
+                    </span>
+                </div>
+                <div class="course-action w-100">
+                    <span class="btn-view-details">View Details <i class="fas fa-arrow-right"></i></span>
+                </div>
+            </a>
             {% endif %}
+          {% empty %}
+            <p class="text-muted">You are not currently tracking any courses.</p>
           {% endfor %}
-        </ul>
-      {% else %}
-        <p class="text-muted">You are not currently tracking any courses.</p>
-      {% endif %}
-      {% endwith %}
+          {% endwith %}
+        </div>
     </div>
-  </div>
-</div>
 
+    <!-- Recent Activity (summary) -->
+    <div class="card-section mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="mb-0">Recent Activity</h5>
+            <a href="{% url 'learning:recent_activity' %}" class="see-all-link">See All</a>
+        </div>
+        <div class="card">
+            <div class="card-body">
+                <div class="timeline">
+                    {% for activity in recent_activity|slice:':3' %}
+                    <div class="timeline-item">
+                        <div class="timeline-icon">{{ activity.icon }}</div>
+                        <div class="timeline-content">
+                            <h6 class="mb-1">{{ activity.title }}</h6>
+                            <p class="text-muted mb-0">{{ activity.description }}</p>
+                            <small class="text-muted">{{ activity.timestamp|timesince }} ago</small>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted">No recent activity to show.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Achievements (summary) -->
+    <div class="card-section mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="mb-0">Achievements</h5>
+            <a href="{% url 'learning:achievements' %}" class="see-all-link">See All</a>
+        </div>
+        <div class="row">
+            {% for achievement in achievements|slice:':4' %}
+            <div class="col-6 col-md-3 mb-3">
+                <div class="achievement-card p-2 text-center {% if achievement.is_earned %}earned{% else %}locked{% endif %}">
+                    <div class="achievement-icon mb-2">{{ achievement.achievement.icon }}</div>
+                    <h6 class="mb-1">{{ achievement.achievement.name }}</h6>
+                    <p class="small text-muted mb-0">{{ achievement.achievement.description }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Skill Growth Chart (summary) -->
+    <div class="card-section mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="mb-0">Skill Growth</h5>
+        </div>
+        <div class="card">
+            <div class="card-body">
+                <canvas id="skillGrowthChart"></canvas>
+                <script id="skill-growth-data" type="application/json">{{ skill_growth_data_json|safe }}</script>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Progress Analytics Section -->
+    <h3 class="mb-3">Progress Analytics</h3>
+    
+    <!-- Key Metrics Row -->
+    <div class="row mb-4">
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card h-100 border-0 shadow-sm" style="border-radius:16px;">
+                <div class="card-body text-center">
+                    <h6 class="text-muted mb-2">Course Completion Rate</h6>
+                    <div class="d-flex align-items-center justify-content-center">
+                        <div style="width:120px;height:120px;" class="position-relative">
+                            <div class="position-absolute top-50 start-50 translate-middle">
+                                <span style="font-size:2rem;font-weight:bold;color:#6c63ff;">{{ analytics_data.completion_rate }}%</span>
+                            </div>
+                            <canvas id="completionRateChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <span class="badge bg-success">{{ analytics_data.completed_courses }} completed</span>
+                        <span class="badge bg-warning text-dark">{{ analytics_data.in_progress_courses }} in progress</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card h-100 border-0 shadow-sm" style="border-radius:16px;">
+                <div class="card-body text-center">
+                    <h6 class="text-muted mb-2">Total Learning Hours</h6>
+                    <div class="d-flex justify-content-center align-items-center" style="height:120px;">
+                        <div>
+                            <i class="fas fa-clock" style="font-size:2.5rem;color:#6c63ff;"></i>
+                            <h3 class="mt-2">{{ analytics_data.total_hours }}</h3>
+                            <p class="text-muted">hours</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card h-100 border-0 shadow-sm" style="border-radius:16px;">
+                <div class="card-body text-center">
+                    <h6 class="text-muted mb-2">Avg. Hours Per Course</h6>
+                    <div class="d-flex justify-content-center align-items-center" style="height:120px;">
+                        <div>
+                            <i class="fas fa-book" style="font-size:2.5rem;color:#6c63ff;"></i>
+                            <h3 class="mt-2">{{ analytics_data.avg_hours_per_course }}</h3>
+                            <p class="text-muted">hours/course</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card h-100 border-0 shadow-sm" style="border-radius:16px;">
+                <div class="card-body text-center">
+                    <h6 class="text-muted mb-2">Avg. Completion Time</h6>
+                    <div class="d-flex justify-content-center align-items-center" style="height:120px;">
+                        <div>
+                            <i class="fas fa-calendar-check" style="font-size:2.5rem;color:#6c63ff;"></i>
+                            <h3 class="mt-2">{{ analytics_data.avg_completion_days }}</h3>
+                            <p class="text-muted">days</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Charts Row -->
+    <div class="row mb-4">
+        <div class="col-md-6 mb-3">
+            <div class="card border-0 shadow-sm" style="border-radius:16px;">
+                <div class="card-header bg-white" style="border-radius:16px 16px 0 0;">
+                    <h6 class="mb-0">Weekly Learning Hours</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="weeklyHoursChart" height="250"></canvas>
+                    <script id="weekly-hours-data" type="application/json">{{ analytics_data.weekly_hours_json|safe }}</script>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 mb-3">
+            <div class="card border-0 shadow-sm" style="border-radius:16px;">
+                <div class="card-header bg-white" style="border-radius:16px 16px 0 0;">
+                    <h6 class="mb-0">Learning by Platform</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="platformChart" height="250"></canvas>
+                    <script id="platform-data" type="application/json">{{ analytics_data.platform_json|safe }}</script>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Skill Growth Chart
     const chartEl = document.getElementById('skillGrowthChart');
     if (chartEl) {
         const ctx = chartEl.getContext('2d');
-        const skillGrowthData = {{ skill_growth_data|safe }};
+        const skillGrowthData = JSON.parse(document.getElementById('skill-growth-data').textContent);
         new Chart(ctx, {
             type: 'line',
             data: {
@@ -248,6 +409,103 @@ document.addEventListener('DOMContentLoaded', function() {
                         beginAtZero: true,
                         ticks: {
                             stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Completion Rate Chart (Doughnut Chart)
+    const completionRateEl = document.getElementById('completionRateChart');
+    if (completionRateEl) {
+        const completionRate = {{ analytics_data.completion_rate }};
+        const ctx = completionRateEl.getContext('2d');
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Completed', 'Remaining'],
+                datasets: [{
+                    data: [completionRate, 100 - completionRate],
+                    backgroundColor: ['#6c63ff', '#e0e0e0'],
+                    borderWidth: 0,
+                    cutout: '75%'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        enabled: false
+                    }
+                }
+            }
+        });
+    }
+    
+    // Weekly Hours Chart (Bar Chart)
+    const weeklyHoursEl = document.getElementById('weeklyHoursChart');
+    if (weeklyHoursEl) {
+        const ctx = weeklyHoursEl.getContext('2d');
+        const weeklyHoursData = JSON.parse(document.getElementById('weekly-hours-data').textContent);
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: weeklyHoursData.labels,
+                datasets: [{
+                    label: 'Hours',
+                    data: weeklyHoursData.data,
+                    backgroundColor: '#6c63ff',
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Hours'
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Platform Chart (Pie Chart)
+    const platformEl = document.getElementById('platformChart');
+    if (platformEl) {
+        const ctx = platformEl.getContext('2d');
+        const platformData = JSON.parse(document.getElementById('platform-data').textContent);
+        new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: platformData.labels,
+                datasets: [{
+                    data: platformData.data,
+                    backgroundColor: [
+                        '#6c63ff', '#50c878', '#ff6b81', '#ffd166', 
+                        '#06d6a0', '#118ab2', '#073b4c', '#7209b7'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'right'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.label}: ${context.raw} hours`;
+                            }
                         }
                     }
                 }

@@ -6,6 +6,7 @@ from django.utils import timezone
 from django.db.models import Count, Q, Sum
 from django.db.models.functions import TruncMonth
 from datetime import timedelta
+import json
 
 from skills.models import Course, UserSkill
 from .models import CourseProgress, LearningStreak, SavedResource, Achievement, UserAchievement
@@ -52,6 +53,9 @@ def learning_dashboard(request):
         if month_str in skill_growth_data['labels']:
             index = skill_growth_data['labels'].index(month_str)
             skill_growth_data['data'][index] = item['count']
+    
+    # Serialize to JSON for template
+    skill_growth_data_json = json.dumps(skill_growth_data)
     
     # Get achievements data
     earned_achievements = UserAchievement.objects.filter(
@@ -118,13 +122,116 @@ def learning_dashboard(request):
                 'courses': courses
             })
     
+    # ----------------- ANALYTICS DATA -----------------
+    # Calculate key metrics for analytics
+    total_courses = course_progress.count()
+    completed_courses = course_progress.filter(status='completed').count()
+    in_progress_courses = course_progress.filter(status='in_progress').count()
+    paused_courses = course_progress.filter(status='paused').count()
+    
+    # Completion rate
+    completion_rate = 0
+    if total_courses > 0:
+        completion_rate = int((completed_courses / total_courses) * 100)
+        
+    # Total learning hours
+    total_hours = course_progress.aggregate(Sum('estimated_hours_spent'))['estimated_hours_spent__sum'] or 0
+    
+    # Average hours per course
+    avg_hours_per_course = 0
+    if total_courses > 0:
+        avg_hours_per_course = round(total_hours / total_courses, 1)
+    
+    # Average time to complete
+    avg_completion_days = 0
+    completed_with_dates = course_progress.filter(
+        status='completed', 
+        date_started__isnull=False,
+        date_completed__isnull=False
+    )
+    
+    if completed_with_dates.exists():
+        total_days = 0
+        for progress in completed_with_dates:
+            days = (progress.date_completed - progress.date_started).days
+            if days < 1:  # Handle same-day completion
+                days = 1
+            total_days += days
+        avg_completion_days = round(total_days / completed_with_dates.count(), 1)
+    
+    # Weekly learning hours (last 4 weeks)
+    four_weeks_ago = timezone.now().date() - timedelta(days=28)
+    weekly_hours_data = {
+        'labels': [],
+        'data': []
+    }
+    
+    # Initialize data for 4 weeks
+    for i in range(4):
+        week_start = four_weeks_ago + timedelta(days=i*7)
+        week_end = week_start + timedelta(days=6)
+        week_label = f"{week_start.strftime('%b %d')} - {week_end.strftime('%b %d')}"
+        weekly_hours_data['labels'].append(week_label)
+        weekly_hours_data['data'].append(0)
+    
+    # For each course progress, look at notes history to estimate weekly hours
+    # This is a simplified approach; you might want more precise tracking
+    for progress in course_progress:
+        if progress.estimated_hours_spent > 0:
+            # If updated in the last 4 weeks, add to the appropriate week
+            if progress.last_activity_date.date() >= four_weeks_ago:
+                days_ago = (timezone.now().date() - progress.last_activity_date.date()).days
+                week_index = min(3, days_ago // 7)  # 0-3 for the 4 weeks
+                weekly_hours_data['data'][week_index] += float(progress.estimated_hours_spent)
+    
+    weekly_hours_json = json.dumps(weekly_hours_data)
+    
+    # Learning by platform (course provider)
+    platform_data = {
+        'labels': [],
+        'data': []
+    }
+    
+    platforms = {}
+    for progress in course_progress:
+        platform = progress.course.provider
+        if platform not in platforms:
+            platforms[platform] = 0
+        platforms[platform] += float(progress.estimated_hours_spent)
+    
+    # Sort by hours spent
+    sorted_platforms = sorted(platforms.items(), key=lambda x: x[1], reverse=True)
+    
+    for platform, hours in sorted_platforms:
+        platform_data['labels'].append(platform)
+        platform_data['data'].append(round(hours, 1))
+    
+    platform_json = json.dumps(platform_data)
+    
+    # Get all analytics data
+    analytics_data = {
+        'total_courses': total_courses,
+        'completed_courses': completed_courses,
+        'in_progress_courses': in_progress_courses,
+        'paused_courses': paused_courses,
+        'completion_rate': completion_rate,
+        'total_hours': total_hours,
+        'avg_hours_per_course': avg_hours_per_course,
+        'avg_completion_days': avg_completion_days,
+        'weekly_hours_json': weekly_hours_json,
+        'platform_json': platform_json,
+    }
+    
+    # -------------------- END ANALYTICS --------------------
+    
     return render(request, 'learning/dashboard.html', {
         'course_progress': course_progress,
         'streak': streak,
-        'skill_growth_data': skill_growth_data,
+        'skill_growth_data_json': skill_growth_data_json,
         'achievements': achievements_data,
         'recent_activity': recent_activity,
         'skill_courses': skill_courses,
+        'analytics_data': analytics_data,
     })
 
 @login_required
