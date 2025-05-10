@@ -402,7 +402,7 @@ def add_resource(request):
             resource.user = request.user
             resource.save()
             messages.success(request, 'Resource saved successfully!')
-            return redirect('resource_library')
+            return redirect('learning:resource_library')
     else:
         form = SavedResourceForm()
     
@@ -420,7 +420,7 @@ def edit_resource(request, resource_id):
         if form.is_valid():
             form.save()
             messages.success(request, 'Resource updated successfully!')
-            return redirect('resource_library')
+            return redirect('learning:resource_library')
     else:
         form = SavedResourceForm(instance=resource)
     
@@ -437,7 +437,7 @@ def delete_resource(request, resource_id):
     if request.method == 'POST':
         resource.delete()
         messages.success(request, 'Resource deleted successfully!')
-        return redirect('resource_library')
+        return redirect('learning:resource_library')
     
     return render(request, 'learning/delete_resource.html', {
         'resource': resource
