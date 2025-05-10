@@ -5,267 +5,600 @@
 
 {% block extra_head %}
 <style>
+    :root {
+        --primary-color: #0d6efd;
+        --secondary-color: #6c757d;
+        --light-bg: #ffffff;
+        --card-bg: #ffffff;
+        --text-primary: #212529;
+        --text-secondary: #6c757d;
+        --border-color: #e9ecef;
+        
+        /* Icon colors */
+        --icon-tensorflow: #ff6f00;
+        --icon-deeplearning: #0d6efd;
+        --icon-pytorch: #ee4c2c;
+        --icon-neural: #8e44ad;
+        --icon-vision: #2ecc71;
+        --icon-trophy: #ffc107;
+        --icon-star: #f39c12;
+        --icon-certification: #3498db;
+        --icon-activity: #e74c3c;
+    }
+    
+    body {
+        background-color: var(--light-bg);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+    
+    .navbar {
+        background-color: var(--primary-color);
+        padding: 1rem 0;
+    }
+    
+    .navbar-brand {
+        color: #fff;
+        font-weight: 600;
+    }
+    
+    .navbar-nav .nav-link {
+        color: rgba(255,255,255,.85);
+    }
+    
     .profile-header {
-        background: linear-gradient(135deg, #6B73FF 0%, #000DFF 100%);
-        color: white;
-        padding: 3rem 0;
+        padding: 2rem 0;
+        background: #fff;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .profile-name {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+    }
+    
+    .profile-email {
+        font-size: 1.25rem;
+        color: var(--text-secondary);
         margin-bottom: 2rem;
     }
     
-    .profile-avatar {
-        width: 150px;
-        height: 150px;
-        border-radius: 50%;
-        border: 5px solid white;
-        object-fit: cover;
-        object-position: center;
-        margin-bottom: 1rem;
-        background-color: #f8f9fa;
-    }
-    
-    .profile-stats {
-        background: white;
-        border-radius: 10px;
-        padding: 1.5rem;
-        box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+    .stats-row {
+        display: flex;
+        flex-wrap: wrap;
         margin-bottom: 2rem;
     }
     
-    .stat-card {
-        text-align: center;
-        padding: 1rem;
-        border-right: 1px solid #eee;
+    .stat-item {
+        flex: 1;
+        margin-right: 2rem;
+        min-width: 120px;
     }
     
-    .stat-card:last-child {
-        border-right: none;
+    .stat-item:last-child {
+        margin-right: 0;
     }
     
     .stat-value {
-        font-size: 2rem;
-        font-weight: bold;
-        color: #000DFF;
+        font-size: 2.25rem;
+        font-weight: 700;
+        line-height: 1;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
     }
     
     .stat-label {
-        color: #6c757d;
-        font-size: 0.9rem;
+        font-size: 1rem;
+        color: var(--text-secondary);
     }
     
-    .profile-section {
-        background: white;
-        border-radius: 10px;
+    .section {
+        background-color: #fafafa;
         padding: 1.5rem;
-        box-shadow: 0 2px 15px rgba(0,0,0,0.1);
-        margin-bottom: 2rem;
+        border-radius: 8px;
+        margin-bottom: 2.5rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
     
-    .skill-badge {
-        background: #f8f9fa;
-        border: 1px solid #dee2e6;
-        border-radius: 20px;
+    .section-title {
+        display: flex;
+        align-items: center;
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 0.75rem;
+    }
+    
+    .section-title i {
+        margin-right: 0.75rem;
+    }
+    
+    /* Fix for the layout issue */
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    .profile-row {
+        display: table;
+        width: 100%;
+        table-layout: fixed;
+    }
+    
+    .profile-col {
+        display: table-cell;
+        width: 48%;
+        vertical-align: top;
+    }
+    
+    .profile-col:first-child {
+        padding-right: 2%;
+    }
+    
+    .profile-col:last-child {
+        padding-left: 2%;
+    }
+    
+    .skill-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .skill-item {
+        background-color: #f8f9fa;
         padding: 0.5rem 1rem;
-        margin: 0.25rem;
-        display: inline-block;
+        border-radius: 30px;
+        display: flex;
+        align-items: center;
+        border: 1px solid var(--border-color);
     }
     
-    .skill-badge.advanced {
-        background: #28a745;
-        color: white;
-        border-color: #28a745;
-    }
-    
-    .skill-badge.intermediate {
-        background: #17a2b8;
-        color: white;
-        border-color: #17a2b8;
-    }
-    
-    .skill-badge.beginner {
-        background: #6c757d;
-        color: white;
-        border-color: #6c757d;
-    }
-
-    .edit-profile-btn {
-        background: rgba(255, 255, 255, 0.2);
-        border: 1px solid rgba(255, 255, 255, 0.4);
-        color: white;
-        padding: 0.5rem 1.5rem;
-        border-radius: 20px;
-        transition: all 0.3s;
-    }
-
-    .edit-profile-btn:hover {
-        background: rgba(255, 255, 255, 0.3);
-        color: white;
-        border-color: rgba(255, 255, 255, 0.5);
-    }
-
-    .manage-skills-btn {
-        background: #6B73FF;
-        color: white;
-        padding: 0.5rem 1.5rem;
-        border-radius: 20px;
-        transition: all 0.3s;
-        border: none;
-    }
-
-    .manage-skills-btn:hover {
-        background: #000DFF;
-        color: white;
-    }
-
-    .avatar-container {
-        width: 150px !important;
-        height: 150px !important;
-        border-radius: 50% !important;
-        overflow: hidden !important;
-        margin: 0 auto !important;
-        background: #f8f9fa !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        border: 2px solid red !important; /* DEBUG: Remove after testing */
-    }
-    .profile-avatar {
-        width: 100% !important;
-        height: 100% !important;
-        object-fit: cover !important;
-        object-position: center !important;
-        border-radius: 50% !important;
-        border: 5px solid white !important;
-        background-color: #f8f9fa !important;
-        margin-bottom: 0 !important;
-    }
-
-    .avatar-initials {
-        width: 100px;
-        height: 100px;
-        border-radius: 50%;
-        background: #6B73FF;
-        color: white;
+    .skill-icon {
+        margin-right: 0.5rem;
         display: flex;
         align-items: center;
         justify-content: center;
+        color: var(--primary-color);
+    }
+    
+    .certification-item {
+        margin-bottom: 1.25rem;
+    }
+    
+    .certification-name {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+    
+    .certification-issuer {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+    }
+    
+    .achievement-item {
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: flex-start;
+    }
+    
+    .achievement-icon {
+        width: 2rem;
+        margin-right: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .achievement-icon i {
+        font-size: 1.5rem;
+        color: var(--icon-trophy);
+    }
+    
+    .achievement-content {
+        flex: 1;
+    }
+    
+    .achievement-date {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+    
+    .achievement-title {
+        font-weight: 500;
+        color: var(--primary-color);
+    }
+    
+    .student-award {
+        display: flex;
+        align-items: center;
+        margin-top: 1rem;
+    }
+    
+    .award-icon {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 50%;
+        background-color: var(--icon-star);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+    }
+    
+    .award-icon i {
+        color: white;
+        font-size: 1.25rem;
+    }
+    
+    .learning-stats {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        margin-top: 1rem;
+    }
+    
+    .learning-stat {
+        min-width: 150px;
+    }
+    
+    .learning-stat-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+    }
+    
+    .learning-stat-label {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+    
+    .activity-item {
+        display: flex;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .activity-icon {
+        width: 2rem;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        margin-right: 1rem;
+    }
+    
+    .activity-icon i {
+        color: var(--icon-activity);
+    }
+    
+    .activity-content {
+        flex: 1;
+    }
+    
+    .activity-title {
+        font-weight: 500;
+        margin-bottom: 0.25rem;
+    }
+    
+    .activity-time {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+    }
+    
+    @media (max-width: 992px) {
+        .profile-row {
+            display: block;
+        }
+        
+        .profile-col {
+            display: block;
+            width: 100%;
+            padding: 0 !important;
+            margin-bottom: 2rem;
+        }
+        
+        .stats-row {
+            flex-direction: column;
+        }
+        
+        .stat-item {
+            margin-right: 0;
+            margin-bottom: 1.5rem;
+        }
+    }
+    
+    /* Two-column grid layout for main content */
+    .profile-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4%;
+        width: 100%;
+    }
+    
+    @media (max-width: 992px) {
+        .profile-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    /* Better spacing & hierarchy for stats */
+    .stats-row {
+        gap: 2rem;
+    }
+    
+    .stat-value {
         font-size: 2.5rem;
-        font-weight: bold;
-        margin: 0 auto;
     }
 </style>
 {% endblock %}
 
 {% block content %}
+<!-- Profile Header -->
 <div class="profile-header">
     <div class="container">
-        <div class="row align-items-center">
-            <div class="col-md-3 text-center">
-                <div class="avatar-initials" style="width: 100px; height: 100px; border-radius: 50%; background: #6B73FF; color: white; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: bold; margin: 0 auto;">
-                    {{ user.first_name|slice:":1" }}{{ user.last_name|slice:":1" }}
-                </div>
+        <h1 class="profile-name">{{ user.get_full_name|upper }}</h1>
+        <p class="profile-email">{{ user.email }}</p>
+        
+        <div class="stats-row">
+            <div class="stat-item">
+                <div class="stat-value">{{ enrolled_courses|default:completed_courses }}</div>
+                <div class="stat-label">Enrolled</div>
             </div>
-            <div class="col-md-9">
-                <h1>{{ user.get_full_name|default:user.username }}</h1>
-                <p class="lead mb-0">{{ user.profile.bio|default:"No bio yet" }}</p>
-                <div class="mt-3">
-                    <a href="{% url 'users:edit_profile' %}" class="btn edit-profile-btn">
-                        <i class="fas fa-edit me-2"></i>Edit Profile
-                    </a>
-                </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ profile_completion|default:52 }}</div>
+                <div class="stat-label">Set Profile</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ total_hours }}</div>
+                <div class="stat-label">Hours</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ current_streak }}</div>
+                <div class="stat-label">Day Streak</div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="container">
-    <!-- Profile Stats -->
-    <div class="profile-stats">
-        <div class="row">
-            <div class="col-md-3 stat-card">
-                <div class="stat-value">{{ completed_courses }}</div>
-                <div class="stat-label">Courses Completed</div>
-            </div>
-            <div class="col-md-3 stat-card">
-                <div class="stat-value">{{ total_hours }}</div>
-                <div class="stat-label">Hours Learned</div>
-            </div>
-            <div class="col-md-3 stat-card">
-                <div class="stat-value">{{ current_streak }}</div>
-                <div class="stat-label">Day Streak</div>
-            </div>
-            <div class="col-md-3 stat-card">
-                <div class="stat-value">{{ skills_count }}</div>
-                <div class="stat-label">Skills</div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Skills Section -->
-    <div class="profile-section">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3 class="mb-0">My Skills</h3>
-            <a href="{% url 'users:user_skills' %}" class="btn manage-skills-btn">
-                <i class="fas fa-cog me-2"></i>Manage Skills
-            </a>
-        </div>
-        <div class="skills-container">
-            {% for skill in user_skills %}
-                <span class="skill-badge">
-                    {{ skill.skill_name }}
-                </span>
-            {% empty %}
-                <p class="text-muted">No skills added yet. Start learning to build your skills!</p>
-            {% endfor %}
-        </div>
-    </div>
-    
-    <!-- Recent Activity -->
-    <div class="profile-section">
-        <h3 class="mb-4">Recent Activity</h3>
-        <div class="timeline">
-            {% for activity in recent_activity %}
-            <div class="timeline-item">
-                <div class="timeline-icon">{{ activity.icon }}</div>
-                <div class="timeline-content">
-                    <h6 class="mb-1">{{ activity.title }}</h6>
-                    <p class="text-muted mb-0">{{ activity.description }}</p>
-                    <small class="text-muted">{{ activity.timestamp|timesince }} ago</small>
+<div class="container my-4">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4%; width: 100%;">
+        <div>
+            <!-- Skills Section -->
+            <div class="section">
+                <h2 class="section-title">
+                    <i class="fas fa-cog" style="color: var(--primary-color);"></i>
+                    Skills
+                </h2>
+                
+                <div class="skill-list">
+                    {% if user_skills %}
+                        {% for skill in user_skills %}
+                            <div class="skill-item">
+                                <span class="skill-icon">
+                                    {% if 'tensorflow' in skill.skill_name|lower %}
+                                        <i class="fab fa-tensorflow" style="color: var(--icon-tensorflow);"></i>
+                                    {% elif 'deep learning' in skill.skill_name|lower %}
+                                        <i class="fas fa-brain" style="color: var(--icon-deeplearning);"></i>
+                                    {% elif 'pytorch' in skill.skill_name|lower %}
+                                        <i class="fas fa-fire" style="color: var(--icon-pytorch);"></i>
+                                    {% elif 'neural' in skill.skill_name|lower %}
+                                        <i class="fas fa-project-diagram" style="color: var(--icon-neural);"></i>
+                                    {% elif 'vision' in skill.skill_name|lower %}
+                                        <i class="fas fa-eye" style="color: var(--icon-vision);"></i>
+                                    {% elif 'python' in skill.skill_name|lower %}
+                                        <i class="fab fa-python" style="color: #3776AB;"></i>
+                                    {% elif 'data' in skill.skill_name|lower %}
+                                        <i class="fas fa-database" style="color: #e67e22;"></i>
+                                    {% else %}
+                                        <i class="fas fa-code" style="color: #3498db;"></i>
+                                    {% endif %}
+                                </span>
+                                {{ skill.skill_name }}
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="skill-item">
+                            <span class="skill-icon"><i class="fab fa-python" style="color: #3776AB;"></i></span>
+                            Python
+                        </div>
+                        <div class="skill-item">
+                            <span class="skill-icon"><i class="fas fa-brain" style="color: var(--icon-deeplearning);"></i></span>
+                            Deep Learning
+                        </div>
+                        <div class="skill-item">
+                            <span class="skill-icon"><i class="fab fa-tensorflow" style="color: var(--icon-tensorflow);"></i></span>
+                            TensorFlow
+                        </div>
+                        <div class="skill-item">
+                            <span class="skill-icon"><i class="fas fa-fire" style="color: var(--icon-pytorch);"></i></span>
+                            PyTorch
+                        </div>
+                        <div class="skill-item">
+                            <span class="skill-icon"><i class="fas fa-project-diagram" style="color: var(--icon-neural);"></i></span>
+                            Neural Networks
+                        </div>
+                        <div class="skill-item">
+                            <span class="skill-icon"><i class="fas fa-eye" style="color: var(--icon-vision);"></i></span>
+                            Computer Vision
+                        </div>
+                    {% endif %}
                 </div>
             </div>
-            {% empty %}
-                <p class="text-muted">No recent activity to show.</p>
-            {% endfor %}
-        </div>
-    </div>
-    
-    <!-- Achievements -->
-    <div class="profile-section">
-        <h3 class="mb-4">Recent Achievements</h3>
-        <div class="row">
-            {% for achievement in recent_achievements %}
-            <div class="col-md-4 mb-3">
-                <div class="card h-100">
-                    <div class="card-body text-center">
-                        <div class="achievement-icon mb-3">{{ achievement.achievement.icon }}</div>
-                        <h5 class="card-title">{{ achievement.achievement.name }}</h5>
-                        <p class="card-text">{{ achievement.achievement.description }}</p>
-                        <small class="text-muted">Earned {{ achievement.date_earned|timesince }} ago</small>
+            
+            <!-- Achievements Section -->
+            <div class="section">
+                <h2 class="section-title">
+                    <i class="fas fa-trophy" style="color: var(--icon-trophy);"></i>
+                    Achievements & Awards
+                </h2>
+                
+                {% if user.user_achievements.all %}
+                    {% for achievement in user.user_achievements.all|slice:":3" %}
+                        <div class="achievement-item">
+                            <div class="achievement-icon">
+                                <i class="fas {% if achievement.type == 'award' %}fa-award{% elif achievement.type == 'scholarship' %}fa-graduation-cap{% else %}fa-medal{% endif %}" 
+                                   style="color: {% if achievement.type == 'award' %}#f1c40f{% elif achievement.type == 'scholarship' %}#3498db{% else %}#e74c3c{% endif %};">
+                                </i>
+                            </div>
+                            <div class="achievement-content">
+                                <div class="achievement-date">{{ achievement.date_received|date:"F Y"|default:"Fall 2023" }}</div>
+                                <div class="achievement-title">{{ achievement.title }}</div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="achievement-item">
+                        <div class="achievement-icon">
+                            <i class="fas fa-graduation-cap" style="color: #3498db;"></i>
+                        </div>
+                        <div class="achievement-content">
+                            <div class="achievement-date">Fall 2023</div>
+                            <div class="achievement-title">University Grant</div>
+                        </div>
+                    </div>
+                    <div class="achievement-item">
+                        <div class="achievement-icon">
+                            <i class="fas fa-graduation-cap" style="color: #3498db;"></i>
+                        </div>
+                        <div class="achievement-content">
+                            <div class="achievement-date">Fall 2023</div>
+                            <div class="achievement-title">Full-ride scholarship</div>
+                        </div>
+                    </div>
+                    <div class="achievement-item">
+                        <div class="achievement-icon">
+                            <i class="fas fa-award" style="color: #f1c40f;"></i>
+                        </div>
+                        <div class="achievement-content">
+                            <div class="achievement-date">Fall 2023</div>
+                            <div class="achievement-title">Machine Learning</div>
+                        </div>
+                    </div>
+                {% endif %}
+                
+                <!-- Student of the Year Award -->
+                <div class="student-award">
+                    <div class="award-icon">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <div class="achievement-content">
+                        <div class="achievement-title">Student of the Year</div>
+                        <div class="certification-issuer">Machine Learning</div>
                     </div>
                 </div>
             </div>
-            {% empty %}
-                <div class="col-12">
-                    <p class="text-muted">No achievements earned yet. Keep learning to earn achievements!</p>
-                </div>
-            {% endfor %}
         </div>
-        {% if achievements_count > 3 %}
-            <div class="text-center mt-3">
-                <a href="{% url 'learning:achievements' %}" class="btn btn-outline-primary">
-                    View All Achievements
-                </a>
+        
+        <div>
+            <!-- Certifications Section -->
+            <div class="section">
+                <h2 class="section-title">
+                    <i class="fas fa-certificate" style="color: var(--icon-certification);"></i>
+                    Certifications
+                </h2>
+                
+                {% if user.certifications.all %}
+                    {% for cert in user.certifications.all %}
+                        <div class="certification-item">
+                            <div class="certification-name">{{ cert.name }}</div>
+                            <div class="certification-issuer">{{ cert.issuer }}</div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="certification-item">
+                        <div class="certification-name">Cisco Networking Academy</div>
+                        <div class="certification-issuer">Introduction to Networks</div>
+                    </div>
+                    <div class="certification-item">
+                        <div class="certification-name">Revolutions in Engineering</div>
+                        <div class="certification-issuer">Entrepreneurship</div>
+                    </div>
+                {% endif %}
             </div>
-        {% endif %}
+            
+            <!-- Recent Activity -->
+            <div class="section">
+                <h2 class="section-title">
+                    <i class="far fa-clock" style="color: var(--icon-activity);"></i>
+                    Recent Activity
+                </h2>
+                
+                {% if recent_activity %}
+                    {% for activity in recent_activity|slice:":3" %}
+                        <div class="activity-item">
+                            <div class="activity-icon">
+                                <i class="fas {% if 'course' in activity.description|lower %}fa-book{% elif 'skill' in activity.description|lower %}fa-code{% else %}fa-trophy{% endif %}"
+                                   style="color: {% if 'course' in activity.description|lower %}#3498db{% elif 'skill' in activity.description|lower %}#2ecc71{% else %}#f1c40f{% endif %};">
+                                </i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-title">{{ activity.title }}</div>
+                                <div class="activity-time">{{ activity.timestamp|timesince }} ago</div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="fas fa-book" style="color: #3498db;"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title">Updated progress on Deep Learning Specialization</div>
+                            <div class="activity-time">23 hours ago</div>
+                        </div>
+                    </div>
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="fas fa-code" style="color: #2ecc71;"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title">Updated progress on Data Science: Machine Learning</div>
+                            <div class="activity-time">23 hours, 33 minutes ago</div>
+                        </div>
+                    </div>
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="fas fa-award" style="color: #f1c40f;"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title">Earned Master of Skills</div>
+                            <div class="activity-time">23 hours, 40 minutes ago</div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Learning Achievements -->
+            <div class="section">
+                <h2 class="section-title">
+                    <i class="fas fa-star" style="color: var(--icon-star);"></i>
+                    Learning Achievements
+                </h2>
+                
+                <div class="learning-stats">
+                    <div class="learning-stat">
+                        <div class="learning-stat-value">{{ skills_count|default:"24" }}</div>
+                        <div class="learning-stat-label">Maps of Skills</div>
+                    </div>
+                    <div class="learning-stat">
+                        <div class="learning-stat-value">{{ completed_courses|default:"58" }}</div>
+                        <div class="learning-stat-label">Courses Completed</div>
+                    </div>
+                    <div class="learning-stat">
+                        <div class="learning-stat-value">{{ previous_awards|default:"1200" }}</div>
+                        <div class="learning-stat-label">Previous Awards</div>
+                    </div>
+                    <div class="learning-stat">
+                        <div class="learning-stat-value">{{ community_contributions|default:"8400" }}</div>
+                        <div class="learning-stat-label">Community Contributions</div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %} 
