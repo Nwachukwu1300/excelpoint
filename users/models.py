@@ -27,6 +27,15 @@ class User(AbstractUser):
         help_text="User's current experience level"
     )
 
+    dream_job = models.ForeignKey(
+        'skills.CareerRole',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='aspiring_users',
+        help_text="User's target career role"
+    )
+
     skills = models.ManyToManyField(
         'skills.Skill', 
         blank=True,
@@ -41,3 +50,38 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.username
+
+class UserProfile(models.Model):
+    """
+    User profile model for storing additional user information.
+    """
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name='profile'
+    )
+    
+    avatar = models.ImageField(
+        upload_to='avatars/',
+        null=True,
+        blank=True,
+        help_text="User's profile picture"
+    )
+    
+    bio = models.TextField(
+        blank=True,
+        help_text="Professional summary and background"
+    )
+    
+    linkedin_profile = models.URLField(
+        blank=True,
+        help_text="LinkedIn profile URL"
+    )
+    
+    github_profile = models.URLField(
+        blank=True,
+        help_text="GitHub profile URL"
+    )
+    
+    def __str__(self):
+        return f"{self.user.username}'s profile"

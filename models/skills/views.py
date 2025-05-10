@@ -17,6 +17,10 @@ class ResumeParserView(View):
     
     def get(self, request):
         """Display the resume upload form."""
+        # Clear any existing messages
+        storage = messages.get_messages(request)
+        storage.used = True
+        
         context = {
             'resume_form': ResumeUploadForm(),
         }

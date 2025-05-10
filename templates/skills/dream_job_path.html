@@ -28,22 +28,34 @@
                     <h2 class="h5 mb-0">Select Your Dream Job</h2>
                 </div>
                 <div class="card-body">
-                    <form method="post" action="{% url 'skills:dream_job_path' %}">
-                        {% csrf_token %}
-                        <div class="mb-3">
-                            {{ form.role.label_tag }}
-                            {{ form.role }}
-                            {% if form.role.errors %}
-                            <div class="invalid-feedback d-block">
-                                {{ form.role.errors }}
+                    {% if user.dream_job %}
+                        <div class="alert alert-info mb-3">
+                            <h3 class="h6 mb-2">Current Dream Job:</h3>
+                            <p class="mb-2">{{ user.dream_job.name }}</p>
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#changeDreamJob">
+                                <i class="fas fa-edit"></i> Change Dream Job
+                            </button>
+                        </div>
+                    {% endif %}
+                    
+                    <div id="changeDreamJob" class="collapse {% if not user.dream_job %}show{% endif %}">
+                        <form method="post" action="{% url 'skills:dream_job_path' %}">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                {{ form.role.label_tag }}
+                                {{ form.role }}
+                                {% if form.role.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.role.errors }}
+                                </div>
+                                {% endif %}
+                                <div class="form-text">Choose the role you aspire to have</div>
                             </div>
-                            {% endif %}
-                            <div class="form-text">Choose the role you aspire to have</div>
-                        </div>
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary">Create My Learning Path</button>
-                        </div>
-                    </form>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">Create My Learning Path</button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
             
@@ -197,7 +209,7 @@
                                             {% if courses %}
                                             <div class="list-group">
                                                 {% for course in courses %}
-                                                <a href="{{ course.url }}" target="_blank" class="list-group-item list-group-item-action">
+                                                <a href="{% url 'learning:confirm_course' course.id %}" class="list-group-item list-group-item-action">
                                                     <div class="d-flex w-100 justify-content-between">
                                                         <h6 class="mb-1">{{ course.title }}</h6>
                                                         <small>{{ course.provider }}</small>
@@ -232,6 +244,33 @@
         {% endif %}
     </div>
 </div>
+
+{% if level_up_courses %}
+<div class="card mt-5">
+    <div class="card-header bg-warning text-dark">
+        <h2 class="h5 mb-0">Level Up Skills You Have</h2>
+    </div>
+    <div class="card-body">
+        <p class="mb-3">Already have some skills? Here are more courses to help you deepen your expertise and stay sharp.</p>
+        {% for item in level_up_courses %}
+            <div class="mb-3">
+                <h6>{{ item.skill_name|title }}</h6>
+                <ul class="list-group">
+                    {% for course in item.courses %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>{{ course.title }}</strong> <span class="badge bg-secondary ms-2">{{ course.provider }}</span>
+                            <div class="small text-muted">{{ course.description|truncatewords:20 }}</div>
+                        </div>
+                        <a href="{{ course.url }}" class="btn btn-sm btn-outline-primary" target="_blank">View Course</a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
 
 <style>
 .phase-number {

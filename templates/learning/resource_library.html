@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block title %}My Learning Library{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">My Learning Library</h1>
+        <a href="{% url 'learning:add_resource' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Add Resource
+        </a>
+    </div>
+
+    {% if resources %}
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            {% for resource in resources %}
+                <div class="col">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ resource.title }}</h5>
+                            <p class="card-text text-muted">
+                                <small>
+                                    <i class="fas fa-{{ resource.resource_type|lower }}"></i>
+                                    {{ resource.get_resource_type_display }}
+                                </small>
+                            </p>
+                            <p class="card-text">{{ resource.description|truncatewords:30 }}</p>
+                            {% if resource.tags %}
+                                <div class="mb-2">
+                                    {% for tag in resource.tags.split %}
+                                        <span class="badge bg-light text-dark">{{ tag }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <a href="{{ resource.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-external-link-alt"></i> Visit
+                                </a>
+                                <div class="btn-group">
+                                    <a href="{% url 'learning:edit_resource' resource.id %}" class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'learning:delete_resource' resource.id %}" class="btn btn-sm btn-outline-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-book fa-3x text-muted mb-3"></i>
+            <h3>Your library is empty</h3>
+            <p class="text-muted">Start adding resources to build your personal learning library.</p>
+            <a href="{% url 'learning:add_resource' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add Your First Resource
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %} 

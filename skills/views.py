@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.views import View
 from django.http import JsonResponse
 
-from .models import Skill, CareerRole, RoleSkill, Course
+from .models import Skill, CareerRole, RoleSkill, Course, UserSkill
 from .forms import RoleSelectionForm
 from .services import SkillGapAnalyzer
 
@@ -91,6 +91,10 @@ def dream_job_path(request):
     
     def process_role(role, form):
         """Helper function to process a role selection and create a learning path."""
+        # Save the selected role as the user's dream job
+        request.user.dream_job = role
+        request.user.save()
+        
         # Analyze skill gap
         analysis_result = analyzer.analyze_skill_gap(request.user, role.id)
         
@@ -146,8 +150,19 @@ def dream_job_path(request):
             'analysis_result': analysis_result,
             'learning_path': learning_path,
             'selected_role': role,
-            'match_percentage': analysis_result['match_percentage']
+            'match_percentage': analysis_result['match_percentage'],
         }
+        # Add level up section: all courses for user's existing skills
+        user_skills = UserSkill.objects.filter(user=request.user)
+        level_up_courses = []
+        for user_skill in user_skills:
+            courses = Course.objects.filter(courseskill__skill_name=user_skill.skill_name).distinct()
+            if courses.exists():
+                level_up_courses.append({
+                    'skill_name': user_skill.skill_name,
+                    'courses': courses
+                })
+        context['level_up_courses'] = level_up_courses
         return context
     
     # Check if a role is specified via URL parameter
@@ -173,7 +188,14 @@ def dream_job_path(request):
                 messages.error(request, f"Career role with ID {role_id} not found")
                 form = RoleSelectionForm()
         else:
-            form = RoleSelectionForm()
+            # If user has a saved dream job, use it as the default
+            if request.user.dream_job:
+                form = RoleSelectionForm(initial={'role': request.user.dream_job})
+                context = process_role(request.user.dream_job, form)
+                if context:
+                    return render(request, 'skills/dream_job_path.html', context)
+            else:
+                form = RoleSelectionForm()
     
     # Get recommended roles based on current skills
     recommended_roles = analyzer.get_top_recommended_roles(request.user)

@@ -6,6 +6,18 @@ from skills.models import Course, Skill
 
 User = get_user_model()
 
+class CourseProgressNote(models.Model):
+    """Model to store the history of notes and updates for course progress"""
+    progress = models.ForeignKey('CourseProgress', on_delete=models.CASCADE, related_name='notes_history')
+    note = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"Note for {self.progress.course.title} - {self.created_at.strftime('%Y-%m-%d')}"
+
 class CourseProgress(models.Model):
     STATUS_CHOICES = (
         ('not_started', 'Not Started'),
@@ -17,12 +29,11 @@ class CourseProgress(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='course_progress')
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='user_progress')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='not_started')
-    progress_percent = models.IntegerField(default=0, help_text="Percentage complete (0-100)")
     date_started = models.DateTimeField(null=True, blank=True)
     date_completed = models.DateTimeField(null=True, blank=True)
     last_activity_date = models.DateTimeField(auto_now=True)
     estimated_hours_spent = models.DecimalField(max_digits=5, decimal_places=1, default=0)
-    notes = models.TextField(blank=True, help_text="User notes about this course")
+    notes = models.TextField(blank=True, help_text="Current notes about this course")
     
     class Meta:
         unique_together = ('user', 'course')
@@ -36,7 +47,15 @@ class CourseProgress(models.Model):
         # Set date_completed when status changes to completed
         if self.status == 'completed' and not self.date_completed:
             self.date_completed = timezone.now()
-            self.progress_percent = 100
+        
+        # If notes have changed, create a new note in history
+        if self.pk:  # Only for existing instances
+            old_instance = CourseProgress.objects.get(pk=self.pk)
+            if old_instance.notes != self.notes and self.notes:
+                CourseProgressNote.objects.create(
+                    progress=self,
+                    note=self.notes
+                )
         
         super().save(*args, **kwargs)
         
@@ -57,21 +76,14 @@ class CourseProgress(models.Model):
                 user=self.user,
                 skill_name=course_skill.skill_name,
                 defaults={
-                    'proficiency_level': course_skill.proficiency_level,
                     'is_verified': False
                 }
             )
             
-            # If not created, update the proficiency level if course offers higher level
-            if not created:
-                proficiency_map = {'beginner': 1, 'intermediate': 2, 'advanced': 3}
-                
-                current_level = proficiency_map.get(user_skill.proficiency_level, 1)
-                course_level = proficiency_map.get(course_skill.proficiency_level, 1)
-                
-                if course_level > current_level:
-                    user_skill.proficiency_level = course_skill.proficiency_level
-                    user_skill.save()
+            # If not created, just ensure it's marked as verified
+            if not created and not user_skill.is_verified:
+                user_skill.is_verified = True
+                user_skill.save()
 
 class LearningStreak(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='learning_streak')
@@ -99,24 +111,6 @@ class LearningStreak(models.Model):
         
         self.last_activity_date = today
         self.save()
-
-class Achievement(models.Model):
-    name = models.CharField(max_length=100)
-    description = models.TextField()
-    icon = models.CharField(max_length=50, help_text="Font Awesome icon class")
-    requirement_type = models.CharField(max_length=50, help_text="Type of achievement (courses_completed, streak, etc.)")
-    requirement_value = models.IntegerField(help_text="Value required to earn this achievement")
-    
-    def __str__(self):
-        return self.name
-
-class UserAchievement(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='achievements')
-    achievement = models.ForeignKey(Achievement, on_delete=models.CASCADE)
-    date_earned = models.DateTimeField(auto_now_add=True)
-    
-    class Meta:
-        unique_together = ('user', 'achievement')
 
 class LearningResource(models.Model):
     """
@@ -188,3 +182,65 @@ class LearningResource(models.Model):
         """Increment click counter when resource is accessed"""
         self.clicks += 1
         self.save()
+
+class SavedResource(models.Model):
+    """
+    Model for storing user's saved learning resources.
+    """
+    RESOURCE_TYPE_CHOICES = [
+        ('article', 'Article'),
+        ('video', 'Video'),
+        ('book', 'Book'),
+        ('podcast', 'Podcast'),
+        ('documentation', 'Documentation'),
+        ('other', 'Other')
+    ]
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='saved_resources')
+    title = models.CharField(max_length=200)
+    url = models.URLField()
+    description = models.TextField(blank=True)
+    resource_type = models.CharField(max_length=20, choices=RESOURCE_TYPE_CHOICES)
+    date_saved = models.DateTimeField(auto_now_add=True)
+    tags = models.CharField(max_length=200, blank=True, help_text="Comma-separated tags")
+    notes = models.TextField(blank=True, help_text="Personal notes about this resource")
+    
+    class Meta:
+        ordering = ['-date_saved']
+        indexes = [
+            models.Index(fields=['user', 'resource_type']),
+            models.Index(fields=['date_saved'])
+        ]
+    
+    def __str__(self):
+        return f"{self.title} ({self.get_resource_type_display()})"
+    
+    def get_tags_list(self):
+        """Return list of tags"""
+        return [tag.strip() for tag in self.tags.split(',') if tag.strip()]
+
+class Achievement(models.Model):
+    name = models.CharField(max_length=100)
+    description = models.TextField()
+    icon = models.CharField(max_length=50, help_text='Emoji or icon class')
+    requirement_type = models.CharField(
+        max_length=50,
+        help_text='Type of achievement (courses_completed, streak, skill_level, total_hours)'
+    )
+    requirement_value = models.IntegerField(
+        help_text='Value required to earn this achievement'
+    )
+    
+    def __str__(self):
+        return self.name
+
+class UserAchievement(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='achievements')
+    achievement = models.ForeignKey(Achievement, on_delete=models.CASCADE)
+    date_earned = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ('user', 'achievement')
+    
+    def __str__(self):
+        return f"{self.user.username} earned {self.achievement.name}"

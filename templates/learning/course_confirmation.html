@@ -1,0 +1,56 @@
+<!-- templates/learning/course_confirmation.html -->
+{% extends "base.html" %}
+
+{% block title %}Start Course - {{ course.title }}{% endblock %}
+
+{% block content %}
+{% if show_redirect %}
+<script>
+    window.open("{{ course.url }}", "_blank");
+</script>
+{% endif %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            {% if already_tracking %}
+            <div class="alert alert-warning mb-3">
+                You are already tracking this course (status: {{ progress_status|capfirst }}).
+            </div>
+            {% endif %}
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="h5 mb-0">Course Confirmation</h2>
+                </div>
+                <div class="card-body">
+                    <div class="course-info mb-4">
+                        <h3>{{ course.title }}</h3>
+                        <div class="d-flex mb-2">
+                            <span class="badge bg-secondary me-2">{{ course.provider }}</span>
+                            <span class="badge bg-info me-2">{{ course.difficulty }}</span>
+                            {% if course.is_free %}
+                            <span class="badge bg-success">Free</span>
+                            {% else %}
+                            <span class="badge bg-warning text-dark">Paid</span>
+                            {% endif %}
+                        </div>
+                        <p>{{ course.description }}</p>
+                    </div>
+                    <div class="alert alert-info">
+                        <h5 class="alert-heading">Did you start the course?</h5>
+                        <p class="mb-0">Let us know if you decided to take this course so we can track your progress and let you update it.</p>
+                    </div>
+                    <form method="post" class="d-flex justify-content-between">
+                        {% csrf_token %}
+                        <button type="submit" name="confirm" value="yes" class="btn btn-primary">
+                            <i class="fas fa-check me-2"></i>Yes, I started
+                        </button>
+                        <button type="submit" name="confirm" value="no" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-2"></i>No, I didn't start
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -24,7 +24,7 @@
                             {% endif %}
                         </div>
                         <p>{{ course.description }}</p>
-                        <a href="{{ course.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                        <a href="{% url 'learning:confirm_course' course.id %}" class="btn btn-sm btn-outline-primary">
                             <i class="fas fa-external-link-alt me-1"></i> View Course
                         </a>
                     </div>
@@ -40,19 +40,6 @@
                                 <option value="completed" {% if progress.status == 'completed' %}selected{% endif %}>Completed</option>
                                 <option value="paused" {% if progress.status == 'paused' %}selected{% endif %}>Paused</option>
                             </select>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="progress_percent" class="form-label">Progress (0-100%)</label>
-                            <input type="range" class="form-range" id="progress_range" min="0" max="100" 
-                                  value="{{ progress.progress_percent|default:0 }}" oninput="updateProgressValue(this.value)">
-                            <div class="d-flex justify-content-between">
-                                <span>0%</span>
-                                <span id="progress_value">{{ progress.progress_percent|default:0 }}%</span>
-                                <span>100%</span>
-                            </div>
-                            <input type="hidden" id="progress_percent" name="progress_percent" 
-                                   value="{{ progress.progress_percent|default:0 }}">
                         </div>
                         
                         <div class="mb-3">
@@ -84,19 +71,4 @@
         </div>
     </div>
 </div>
-
-<script>
-    function updateProgressValue(value) {
-        document.getElementById('progress_value').textContent = value + '%';
-        document.getElementById('progress_percent').value = value;
-    }
-    
-    // Auto-update progress percent when status changes to completed
-    document.getElementById('status').addEventListener('change', function() {
-        if (this.value === 'completed') {
-            document.getElementById('progress_range').value = 100;
-            updateProgressValue(100);
-        }
-    });
-</script>
 {% endblock %}

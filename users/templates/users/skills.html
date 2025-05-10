@@ -50,9 +50,10 @@
                             You haven't added any skills yet. You can add skills manually or by uploading your resume.
                         </p>
                         <div class="text-center">
-                            <a href="{% url 'resume_parser' %}" class="btn btn-outline-primary me-2">
-                                <i class="bi bi-file-earmark-text"></i> Upload Resume
+                            <a href="{% url 'resume_parser' %}" class="btn btn-outline-primary">
+                                <i class="bi bi-file-earmark-text"></i> File Parser
                             </a>
+                            <span class="text-muted small d-block mb-2">Upload your CV, cover letter, or other career documents to extract and analyze key information.</span>
                             <a href="{% url 'users:add_custom_skill' %}" class="btn btn-primary">
                                 <i class="bi bi-plus-circle"></i> Add Skills Manually
                             </a>
@@ -109,12 +110,9 @@
             
             <div class="mt-3">
                 <a href="{% url 'resume_parser' %}" class="btn btn-outline-primary">
-                    <i class="bi bi-file-earmark-text"></i> Extract Skills from Resume
+                    <i class="bi bi-file-earmark-text"></i> File Parser
                 </a>
-                <a href="{% url 'skills:skill_gap_analysis' %}" class="btn btn-primary ms-2">
-                    <i class="bi bi-bar-chart"></i> Analyze Skill Gap
-                </a>
-                <a href="{% url 'user_profile' %}" class="btn btn-secondary ms-2">
+                <a href="{% url 'users:profile' %}" class="btn btn-secondary ms-2">
                     <i class="bi bi-person"></i> Back to Profile
                 </a>
             </div>

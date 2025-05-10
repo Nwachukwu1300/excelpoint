@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from .models import User
+from .models import User, UserProfile
 from skills.models import Skill
 
 class RegistrationForm(UserCreationForm):
@@ -25,20 +25,32 @@ class RegistrationForm(UserCreationForm):
 class UserProfileForm(forms.ModelForm):
     """Form for updating user profile details."""
     
+    first_name = forms.CharField(max_length=30, required=False)
+    last_name = forms.CharField(max_length=30, required=False)
+    email = forms.EmailField(max_length=254, required=False)
+    current_role = forms.CharField(max_length=100, required=False)
+    
     class Meta:
-        model = User
-        fields = ('first_name', 'last_name', 'email', 'current_role', 
-                 'experience_level', 'bio', 'linkedin_profile', 'github_profile')
+        model = UserProfile
+        fields = ['avatar', 'bio', 'linkedin_profile', 'github_profile']
         widgets = {
-            'first_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'last_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'email': forms.EmailInput(attrs={'class': 'form-control'}),
-            'current_role': forms.TextInput(attrs={'class': 'form-control'}),
-            'experience_level': forms.Select(attrs={'class': 'form-control'}),
-            'bio': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
-            'linkedin_profile': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://linkedin.com/in/username'}),
-            'github_profile': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://github.com/username'}),
+            'bio': forms.Textarea(attrs={'rows': 4}),
+            'linkedin_profile': forms.URLInput(attrs={'placeholder': 'https://linkedin.com/in/your-profile'}),
+            'github_profile': forms.URLInput(attrs={'placeholder': 'https://github.com/your-username'}),
         }
+    
+    def save(self, commit=True):
+        profile = super().save(commit=False)
+        if commit:
+            profile.save()
+            # Update User model fields
+            user = profile.user
+            user.first_name = self.cleaned_data.get('first_name', user.first_name)
+            user.last_name = self.cleaned_data.get('last_name', user.last_name)
+            user.email = self.cleaned_data.get('email', user.email)
+            user.current_role = self.cleaned_data.get('current_role', user.current_role)
+            user.save()
+        return profile
 
 class CustomSkillForm(forms.Form):
     """Form for adding custom skills."""

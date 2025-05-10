@@ -187,7 +187,7 @@ class CourseSkill(models.Model):
     )
     
     class Meta:
-        unique_together = ('course', 'skill_name')
+        unique_together = ('course', 'skill')
         
     def __str__(self):
         return f"{self.skill_name} in {self.course.title}"
@@ -196,17 +196,12 @@ class CourseSkill(models.Model):
 class UserSkill(models.Model):
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, related_name='user_skills')
     skill_name = models.CharField(max_length=100)
-    proficiency_level = models.CharField(
-        max_length=20, 
-        choices=[('beginner', 'Beginner'), ('intermediate', 'Intermediate'), ('advanced', 'Advanced')],
-        default='beginner'
-    )
     is_verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
         unique_together = ('user', 'skill_name')
-        
+    
     def __str__(self):
-        return f"{self.user.username} - {self.skill_name} ({self.proficiency_level})"
+        return f"{self.user.username} - {self.skill_name}"

@@ -4,6 +4,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.validators import EmailValidator 
 import re
 from skills.models import Skill
+from .models import UserProfile
 
 class SkillSerializer(serializers.ModelSerializer):
     """
@@ -89,6 +90,10 @@ class UserSerializer(serializers.ModelSerializer):
             user.github_profile = validated_data['github_profile']
         
         user.save()
+        
+        # Create user profile
+        UserProfile.objects.create(user=user)
+        
         return user
     
 

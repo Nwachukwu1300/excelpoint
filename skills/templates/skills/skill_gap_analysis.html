@@ -132,7 +132,7 @@
                                                 </ul>
                                             </td>
                                             <td>
-                                                <a href="{{ course.url }}" target="_blank" class="btn btn-sm btn-primary">
+                                                <a href="{% url 'learning:confirm_course' course.id %}" class="btn btn-sm btn-primary">
                                                     <i class="bi bi-box-arrow-up-right"></i> View Course
                                                 </a>
                                             </td>

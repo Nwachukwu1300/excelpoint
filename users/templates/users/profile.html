@@ -21,16 +21,14 @@
                                 <a href="{% url 'users:add_custom_skill' %}" class="btn btn-sm btn-outline-primary ms-2">
                                     <i class="bi bi-plus-circle"></i> Add Skill
                                 </a>
-                                <a href="{% url 'skills:skill_gap_analysis' %}" class="btn btn-sm btn-outline-success ms-2">
-                                    <i class="bi bi-bar-chart"></i> Analyze Gap
-                                </a>
                             </div>
                             {% else %}
                             <p class="text-muted mb-3">No skills added yet.</p>
                             <div class="d-flex">
                                 <a href="{% url 'resume_parser' %}" class="btn btn-sm btn-primary me-2">
-                                    <i class="bi bi-file-earmark-text"></i> Extract from Resume
+                                    <i class="bi bi-file-earmark-text"></i> File Parser
                                 </a>
+                                <span class="text-muted small d-block mb-2">Upload your CV, cover letter, or other career documents to extract and analyze key information.</span>
                                 <a href="{% url 'users:add_custom_skill' %}" class="btn btn-sm btn-outline-primary">
                                     <i class="bi bi-plus-circle"></i> Add Manually
                                 </a>

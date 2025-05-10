@@ -11,6 +11,11 @@ from django.contrib.auth.forms import PasswordChangeForm
 from .forms import RegistrationForm, UserProfileForm, CustomSkillForm
 from skills.models import Skill
 from .models import User
+from django.db.models import Count, Sum
+from django.utils import timezone
+from datetime import timedelta
+from learning.models import CourseProgress, LearningStreak, UserAchievement
+from skills.models import UserSkill
 
 
 @api_view(['GET', 'POST'])
@@ -484,3 +489,115 @@ def user_skills_api(request):
             'error': 'Failed to fetch skills',
             'details': str(e)
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@login_required
+def profile(request):
+    """Display user profile with learning stats and achievements"""
+    # Get user's learning stats
+    completed_courses = CourseProgress.objects.filter(
+        user=request.user,
+        status='completed'
+    ).count()
+    
+    total_hours = CourseProgress.objects.filter(
+        user=request.user
+    ).aggregate(Sum('estimated_hours_spent'))['estimated_hours_spent__sum'] or 0
+    
+    streak = LearningStreak.objects.get_or_create(user=request.user)[0]
+    
+    skills_count = UserSkill.objects.filter(user=request.user).count()
+    
+    # Get user's skills
+    user_skills = UserSkill.objects.filter(user=request.user)
+    
+    # Get recent activity
+    recent_activity = []
+    
+    # Add course progress updates
+    recent_progress = CourseProgress.objects.filter(
+        user=request.user,
+        last_activity_date__gte=timezone.now() - timedelta(days=30)
+    ).select_related('course')
+    
+    for progress in recent_progress:
+        icon = '📚'
+        if progress.status == 'completed':
+            title = f"Completed {progress.course.title}"
+            icon = '🎉'
+        else:
+            title = f"Updated progress on {progress.course.title}"
+        
+        recent_activity.append({
+            'icon': icon,
+            'title': title,
+            'description': f"Status: {progress.get_status_display()}",
+            'timestamp': progress.last_activity_date
+        })
+    
+    # Add earned achievements
+    earned_achievements = UserAchievement.objects.filter(
+        user=request.user
+    ).select_related('achievement')
+    
+    for user_achievement in earned_achievements:
+        if user_achievement.date_earned >= timezone.now() - timedelta(days=30):
+            recent_activity.append({
+                'icon': user_achievement.achievement.icon,
+                'title': f"Earned {user_achievement.achievement.name}",
+                'description': user_achievement.achievement.description,
+                'timestamp': user_achievement.date_earned
+            })
+    
+    # Sort recent activity by timestamp
+    recent_activity.sort(key=lambda x: x['timestamp'], reverse=True)
+    
+    # Get recent achievements
+    recent_achievements = earned_achievements.order_by('-date_earned')[:3]
+    achievements_count = earned_achievements.count()
+    
+    return render(request, 'users/profile.html', {
+        'completed_courses': completed_courses,
+        'total_hours': total_hours,
+        'current_streak': streak.current_streak,
+        'skills_count': skills_count,
+        'user_skills': user_skills,
+        'recent_activity': recent_activity,
+        'recent_achievements': recent_achievements,
+        'achievements_count': achievements_count
+    })
+
+@login_required
+def edit_profile(request):
+    """Edit user profile information"""
+    if request.method == 'POST':
+        form = UserProfileForm(request.POST, request.FILES, instance=request.user.profile)
+        if form.is_valid():
+            # Update user model fields
+            user = request.user
+            user.first_name = form.cleaned_data.get('first_name', user.first_name)
+            user.last_name = form.cleaned_data.get('last_name', user.last_name)
+            user.email = form.cleaned_data.get('email', user.email)
+            user.current_role = form.cleaned_data.get('current_role', user.current_role)
+            user.experience_level = form.cleaned_data.get('experience_level', user.experience_level)
+            user.save()
+            
+            # Update profile model
+            form.save()
+            
+            messages.success(request, 'Profile updated successfully!')
+            return redirect('users:profile')
+    else:
+        # Initialize form with current user data
+        initial_data = {
+            'first_name': request.user.first_name,
+            'last_name': request.user.last_name,
+            'email': request.user.email,
+            'current_role': request.user.current_role,
+            'experience_level': request.user.experience_level,
+        }
+        form = UserProfileForm(instance=request.user.profile, initial=initial_data)
+    
+    return render(request, 'users/edit_profile.html', {
+        'form': form,
+        'user': request.user
+    })
