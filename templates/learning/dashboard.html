@@ -363,7 +363,7 @@
                 </div>
                 <div class="card-body">
                     <canvas id="weeklyHoursChart" height="250"></canvas>
-                    <script id="weekly-hours-data" type="application/json">{{ analytics_data.weekly_hours_json|safe }}</script>
+                    <div id="weekly-hours-data" data-json="{{ analytics_data.weekly_hours_json|escapejs }}"></div>
                 </div>
             </div>
         </div>
@@ -375,7 +375,7 @@
                 </div>
                 <div class="card-body">
                     <canvas id="platformChart" height="250"></canvas>
-                    <script id="platform-data" type="application/json">{{ analytics_data.platform_json|safe }}</script>
+                    <div id="platform-data" data-json="{{ analytics_data.platform_json|escapejs }}"></div>
                 </div>
             </div>
         </div>
@@ -419,7 +419,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Completion Rate Chart (Doughnut Chart)
     const completionRateEl = document.getElementById('completionRateChart');
     if (completionRateEl) {
-        const completionRate = {{ analytics_data.completion_rate }};
+        const completionRate = parseInt('{{ analytics_data.completion_rate }}');
         const ctx = completionRateEl.getContext('2d');
         new Chart(ctx, {
             type: 'doughnut',
@@ -451,7 +451,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const weeklyHoursEl = document.getElementById('weeklyHoursChart');
     if (weeklyHoursEl) {
         const ctx = weeklyHoursEl.getContext('2d');
-        const weeklyHoursData = JSON.parse(document.getElementById('weekly-hours-data').textContent);
+        const weeklyHoursData = JSON.parse(
+            document.getElementById('weekly-hours-data').getAttribute('data-json')
+        );
         new Chart(ctx, {
             type: 'bar',
             data: {
@@ -482,7 +484,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const platformEl = document.getElementById('platformChart');
     if (platformEl) {
         const ctx = platformEl.getContext('2d');
-        const platformData = JSON.parse(document.getElementById('platform-data').textContent);
+        const platformData = JSON.parse(
+            document.getElementById('platform-data').getAttribute('data-json')
+        );
         new Chart(ctx, {
             type: 'pie',
             data: {

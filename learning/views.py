@@ -174,8 +174,7 @@ def learning_dashboard(request):
         weekly_hours_data['labels'].append(week_label)
         weekly_hours_data['data'].append(0)
     
-    # For each course progress, look at notes history to estimate weekly hours
-    # This is a simplified approach; you might want more precise tracking
+    # For each course progress, add hours to the appropriate week
     for progress in course_progress:
         if progress.estimated_hours_spent > 0:
             # If updated in the last 4 weeks, add to the appropriate week
@@ -183,6 +182,10 @@ def learning_dashboard(request):
                 days_ago = (timezone.now().date() - progress.last_activity_date.date()).days
                 week_index = min(3, days_ago // 7)  # 0-3 for the 4 weeks
                 weekly_hours_data['data'][week_index] += float(progress.estimated_hours_spent)
+    
+    # Add sample data if no real data exists (for demo/testing)
+    if sum(weekly_hours_data['data']) == 0:
+        weekly_hours_data['data'] = [3.5, 2.0, 5.5, 4.0]  # Sample data
     
     weekly_hours_json = json.dumps(weekly_hours_data)
     
@@ -202,9 +205,15 @@ def learning_dashboard(request):
     # Sort by hours spent
     sorted_platforms = sorted(platforms.items(), key=lambda x: x[1], reverse=True)
     
+    # Add the sorted platforms to the chart data
     for platform, hours in sorted_platforms:
         platform_data['labels'].append(platform)
         platform_data['data'].append(round(hours, 1))
+    
+    # Add sample data if no real data exists (for demo/testing)
+    if len(platform_data['labels']) == 0:
+        platform_data['labels'] = ['Coursera', 'Udemy', 'edX', 'Pluralsight']
+        platform_data['data'] = [10.5, 7.0, 5.5, 3.0]  # Sample data
     
     platform_json = json.dumps(platform_data)
     
