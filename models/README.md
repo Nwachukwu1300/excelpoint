@@ -1,6 +1,6 @@
-# CareerNexus ML Models
+# Excel Point ML Models
 
-This directory contains machine learning models used in CareerNexus for various purposes like skill extraction, job matching, and recommendations.
+This directory contains machine learning models used in Excel Point for various purposes like skill extraction, job matching, and recommendations.
 
 ## Skills Module
 

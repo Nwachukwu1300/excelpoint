@@ -8,13 +8,13 @@ from django.contrib.auth import login, logout, authenticate, update_session_auth
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
-from .forms import RegistrationForm, UserProfileForm, CustomSkillForm
+from .forms import RegistrationForm, UserProfileForm, CustomSkillForm, UserAchievementForm, UserCertificationForm
 from skills.models import Skill
-from .models import User
+from .models import User, UserAchievement, UserCertification
 from django.db.models import Count, Sum
 from django.utils import timezone
 from datetime import timedelta
-from learning.models import CourseProgress, LearningStreak, UserAchievement
+from learning.models import CourseProgress, LearningStreak, UserAchievement as LearningUserAchievement
 from skills.models import UserSkill
 
 
@@ -535,7 +535,7 @@ def profile(request):
         })
     
     # Add earned achievements
-    earned_achievements = UserAchievement.objects.filter(
+    earned_achievements = LearningUserAchievement.objects.filter(
         user=request.user
     ).select_related('achievement')
     
@@ -568,36 +568,158 @@ def profile(request):
 
 @login_required
 def edit_profile(request):
-    """Edit user profile information"""
+    """
+    View for editing user profile information.
+    """
+    user = request.user
+    
+    # Initialize both forms
     if request.method == 'POST':
-        form = UserProfileForm(request.POST, request.FILES, instance=request.user.profile)
-        if form.is_valid():
-            # Update user model fields
-            user = request.user
-            user.first_name = form.cleaned_data.get('first_name', user.first_name)
-            user.last_name = form.cleaned_data.get('last_name', user.last_name)
-            user.email = form.cleaned_data.get('email', user.email)
-            user.current_role = form.cleaned_data.get('current_role', user.current_role)
-            user.experience_level = form.cleaned_data.get('experience_level', user.experience_level)
-            user.save()
-            
-            # Update profile model
-            form.save()
-            
-            messages.success(request, 'Profile updated successfully!')
-            return redirect('users:profile')
+        profile_form = UserProfileForm(request.POST, request.FILES, instance=request.user.profile)
+        
+        # Populate User model fields
+        profile_form.fields['first_name'].initial = user.first_name
+        profile_form.fields['last_name'].initial = user.last_name
+        profile_form.fields['email'].initial = user.email
+        profile_form.fields['current_role'].initial = user.current_role
+        
+        if profile_form.is_valid():
+            profile_form.save()
+            messages.success(request, 'Your profile has been updated successfully!')
+            return redirect('profile')
     else:
-        # Initialize form with current user data
-        initial_data = {
-            'first_name': request.user.first_name,
-            'last_name': request.user.last_name,
-            'email': request.user.email,
-            'current_role': request.user.current_role,
-            'experience_level': request.user.experience_level,
-        }
-        form = UserProfileForm(instance=request.user.profile, initial=initial_data)
+        profile_form = UserProfileForm(instance=request.user.profile)
+        
+        # Populate User model fields
+        profile_form.fields['first_name'].initial = user.first_name
+        profile_form.fields['last_name'].initial = user.last_name
+        profile_form.fields['email'].initial = user.email
+        profile_form.fields['current_role'].initial = user.current_role
     
     return render(request, 'users/edit_profile.html', {
+        'profile_form': profile_form
+    })
+
+@login_required
+def manage_achievements(request):
+    """
+    View for managing user achievements and awards.
+    Displays a list of existing achievements and a form to add new ones.
+    """
+    user = request.user
+    achievements = user.user_achievements.all().order_by('-date_added')
+    
+    if request.method == 'POST':
+        form = UserAchievementForm(request.POST)
+        if form.is_valid():
+            achievement = form.save(commit=False)
+            achievement.user = user
+            achievement.save()
+            messages.success(request, 'Achievement added successfully!')
+            return redirect('users:manage_achievements')
+    else:
+        form = UserAchievementForm()
+    
+    return render(request, 'users/manage_achievements.html', {
+        'achievements': achievements,
+        'form': form
+    })
+
+@login_required
+def edit_achievement(request, achievement_id):
+    """
+    View for editing an existing achievement.
+    """
+    achievement = get_object_or_404(UserAchievement, id=achievement_id, user=request.user)
+    
+    if request.method == 'POST':
+        form = UserAchievementForm(request.POST, instance=achievement)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Achievement updated successfully!')
+            return redirect('users:manage_achievements')
+    else:
+        form = UserAchievementForm(instance=achievement)
+    
+    return render(request, 'users/edit_achievement.html', {
         'form': form,
-        'user': request.user
+        'achievement': achievement
+    })
+
+@login_required
+def delete_achievement(request, achievement_id):
+    """
+    View for deleting an achievement.
+    """
+    achievement = get_object_or_404(UserAchievement, id=achievement_id, user=request.user)
+    
+    if request.method == 'POST':
+        achievement.delete()
+        messages.success(request, 'Achievement deleted successfully!')
+        return redirect('users:manage_achievements')
+    
+    return render(request, 'users/delete_achievement.html', {
+        'achievement': achievement
+    })
+
+@login_required
+def manage_certifications(request):
+    """
+    View for managing user certifications.
+    Displays a list of existing certifications and a form to add new ones.
+    """
+    user = request.user
+    certifications = user.certifications.all().order_by('-date_added')
+    
+    if request.method == 'POST':
+        form = UserCertificationForm(request.POST)
+        if form.is_valid():
+            certification = form.save(commit=False)
+            certification.user = user
+            certification.save()
+            messages.success(request, 'Certification added successfully!')
+            return redirect('users:manage_certifications')
+    else:
+        form = UserCertificationForm()
+    
+    return render(request, 'users/manage_certifications.html', {
+        'certifications': certifications,
+        'form': form
+    })
+
+@login_required
+def edit_certification(request, certification_id):
+    """
+    View for editing an existing certification.
+    """
+    certification = get_object_or_404(UserCertification, id=certification_id, user=request.user)
+    
+    if request.method == 'POST':
+        form = UserCertificationForm(request.POST, instance=certification)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Certification updated successfully!')
+            return redirect('users:manage_certifications')
+    else:
+        form = UserCertificationForm(instance=certification)
+    
+    return render(request, 'users/edit_certification.html', {
+        'form': form,
+        'certification': certification
+    })
+
+@login_required
+def delete_certification(request, certification_id):
+    """
+    View for deleting a certification.
+    """
+    certification = get_object_or_404(UserCertification, id=certification_id, user=request.user)
+    
+    if request.method == 'POST':
+        certification.delete()
+        messages.success(request, 'Certification deleted successfully!')
+        return redirect('users:manage_certifications')
+    
+    return render(request, 'users/delete_certification.html', {
+        'certification': certification
     })

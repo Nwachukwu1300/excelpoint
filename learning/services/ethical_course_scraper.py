@@ -19,7 +19,7 @@ class EthicalCourseScraper:
     """
     
     def __init__(self):
-        self.user_agent = "CareerNexusCourseBot/1.0 (+https://your-domain.com/bot-info) Educational Project"
+        self.user_agent = "ExcelPointCourseBot/1.0 (+https://your-domain.com/bot-info) Educational Project"
         self.headers = {
             'User-Agent': self.user_agent,
             'Accept': 'text/html,application/xhtml+xml,application/xml',

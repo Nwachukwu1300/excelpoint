@@ -2,8 +2,87 @@
 
 {% block title %}Resume Parsing Results{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .badge-success-subtle {
+        background-color: rgba(25, 135, 84, 0.1);
+        color: #198754;
+    }
+    .badge-primary-subtle {
+        background-color: rgba(13, 110, 253, 0.1);
+        color: #0d6efd;
+    }
+    .badge-info-subtle {
+        background-color: rgba(13, 202, 240, 0.1);
+        color: #0dcaf0;
+    }
+    .badge-warning-subtle {
+        background-color: rgba(255, 193, 7, 0.1);
+        color: #ffc107;
+    }
+    .parsed-section {
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+    }
+    .parsed-section .card-header {
+        border-bottom: none;
+        padding: 1rem 1.25rem;
+    }
+    .parsed-section .card-body {
+        padding: 0.5rem 1.25rem 1.25rem;
+    }
+    .result-badge {
+        border-radius: 20px;
+        padding: 0.35rem 0.75rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+    .achievement-item {
+        border-left: 3px solid #6c63ff;
+        padding-left: 1rem;
+        margin-bottom: 1rem;
+    }
+    .achievement-title {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+    .achievement-detail {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+    .summary-box {
+        background-color: #f8f9fe;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    .summary-title {
+        margin-bottom: 1rem;
+        font-weight: 600;
+    }
+    .summary-stat {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #6c63ff;
+        margin-bottom: 0.25rem;
+    }
+    .summary-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container mt-5">
+<div class="container py-4">
     <div class="row">
         <div class="col-md-12">
             <h1 class="mb-4">Resume Parsing Results</h1>
@@ -11,30 +90,54 @@
             {% if messages %}
             <div class="messages mb-4">
                 {% for message in messages %}
-                <div class="alert alert-{{ message.tags }}">
+                <div class="alert alert-{{ message.tags }} border-0 shadow-sm">
+                    <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'warning' %}fa-exclamation-triangle{% elif message.tags == 'error' %}fa-times-circle{% else %}fa-info-circle{% endif %} me-2"></i>
                     {{ message }}
                 </div>
                 {% endfor %}
             </div>
             {% endif %}
             
-            {% if skills_added %}
-            <div class="alert alert-success">
-                <h4 class="alert-heading">Skills Added to Your Profile!</h4>
-                <p>These skills have been added to your user profile:</p>
-                <div class="d-flex flex-wrap mb-2">
-                    {% for skill in skills_added.added_skills %}
-                    <span class="badge bg-success me-2 mb-1">{{ skill }}</span>
-                    {% endfor %}
+            {% if parse_data_saved %}
+            <div class="summary-box">
+                <h2 class="summary-title">Information Added to Your Profile</h2>
+                <div class="row text-center">
+                    {% if parse_data_saved.skills_added > 0 %}
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <div class="summary-stat">{{ parse_data_saved.skills_added }}</div>
+                        <div class="summary-label">Skills</div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if parse_data_saved.education_added > 0 %}
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <div class="summary-stat">{{ parse_data_saved.education_added }}</div>
+                        <div class="summary-label">Education</div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if parse_data_saved.certifications_added > 0 %}
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <div class="summary-stat">{{ parse_data_saved.certifications_added }}</div>
+                        <div class="summary-label">Certifications</div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if parse_data_saved.achievements_added > 0 %}
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <div class="summary-stat">{{ parse_data_saved.achievements_added }}</div>
+                        <div class="summary-label">Achievements</div>
+                    </div>
+                    {% endif %}
                 </div>
-                <hr>
-                <p class="mb-0">You can now use these skills when searching for jobs or in your job applications.</p>
             </div>
             {% endif %}
             
             {% if result.success %}
-            <div class="card mb-4">
-                <div class="card-header">
+            
+            <!-- Contact Information Section -->
+            <div class="card parsed-section mb-4">
+                <div class="card-header bg-white">
                     <h2 class="h5 mb-0">Contact Information</h2>
                 </div>
                 <div class="card-body">
@@ -79,18 +182,12 @@
             </div>
             
             <div class="row">
+                <!-- Left Column -->
                 <div class="col-md-6">
-                    <div class="card mb-4">
-                        <div class="card-header d-flex justify-content-between align-items-center">
+                    <!-- Skills Section -->
+                    <div class="card parsed-section mb-4">
+                        <div class="card-header bg-white section-header">
                             <h2 class="h5 mb-0">Skills</h2>
-                            {% if result.data.skills %}
-                            <form method="post" action="{% url 'resume_results' %}">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-sm btn-primary">
-                                    <i class="bi bi-plus-circle"></i> Add to My Profile
-                                </button>
-                            </form>
-                            {% endif %}
                         </div>
                         <div class="card-body">
                             {% if result.data.skills %}
@@ -99,7 +196,7 @@
                                     <h3 class="h6">{{ skill_category.category|title }}</h3>
                                     <div class="d-flex flex-wrap">
                                         {% for skill in skill_category.skills %}
-                                        <span class="badge bg-primary me-2 mb-2">{{ skill }}</span>
+                                        <span class="badge bg-primary-subtle text-primary py-2 px-3 rounded-pill me-2 mb-2">{{ skill }}</span>
                                         {% endfor %}
                                     </div>
                                 </div>
@@ -110,8 +207,9 @@
                         </div>
                     </div>
                     
-                    <div class="card mb-4">
-                        <div class="card-header">
+                    <!-- Education Section -->
+                    <div class="card parsed-section mb-4">
+                        <div class="card-header bg-white section-header">
                             <h2 class="h5 mb-0">Education</h2>
                         </div>
                         <div class="card-body">
@@ -120,6 +218,9 @@
                                 <div class="mb-3">
                                     <h3 class="h6">{{ edu.degree }}</h3>
                                     <p class="mb-1">{{ edu.institution }}{% if edu.date %} ({{ edu.date }}){% endif %}</p>
+                                    {% if edu.gpa %}
+                                    <p class="mb-1 small"><strong>GPA:</strong> {{ edu.gpa }}</p>
+                                    {% endif %}
                                     {% if edu.additional_info %}
                                     <p class="text-muted small">{{ edu.additional_info }}</p>
                                     {% endif %}
@@ -132,9 +233,11 @@
                     </div>
                 </div>
                 
+                <!-- Right Column -->
                 <div class="col-md-6">
-                    <div class="card mb-4">
-                        <div class="card-header">
+                    <!-- Work Experience Section -->
+                    <div class="card parsed-section mb-4">
+                        <div class="card-header bg-white section-header">
                             <h2 class="h5 mb-0">Work Experience</h2>
                         </div>
                         <div class="card-body">
@@ -166,37 +269,79 @@
                         </div>
                     </div>
                     
-                    {% if result.data.certifications %}
-                    <div class="card mb-4">
-                        <div class="card-header">
+                    <!-- Certifications Section -->
+                    <div class="card parsed-section mb-4">
+                        <div class="card-header bg-white section-header">
                             <h2 class="h5 mb-0">Certifications</h2>
                         </div>
                         <div class="card-body">
-                            <ul class="list-unstyled mb-0">
+                            {% if result.data.certifications %}
+                            <div class="d-flex flex-wrap">
                                 {% for cert in result.data.certifications %}
-                                <li class="mb-2">
-                                    <span class="badge bg-secondary me-2">{{ cert.name }}</span>
-                                    {% if cert.date %}({{ cert.date }}){% endif %}
-                                    {% if cert.issuer %}<small class="text-muted">{{ cert.issuer }}</small>{% endif %}
-                                </li>
+                                <div class="mb-3 w-100">
+                                    <span class="badge result-badge badge-info-subtle mb-1">{{ cert.name }}</span>
+                                    <div class="ps-2 mt-1 small">
+                                        {% if cert.issuer %}<div><strong>Issuer:</strong> {{ cert.issuer }}</div>{% endif %}
+                                        {% if cert.date %}<div><strong>Date:</strong> {{ cert.date }}</div>{% endif %}
+                                        {% if cert.expiration %}<div><strong>Expires:</strong> {{ cert.expiration }}</div>{% endif %}
+                                        {% if cert.credential_id %}<div><strong>ID:</strong> {{ cert.credential_id }}</div>{% endif %}
+                                    </div>
+                                </div>
                                 {% endfor %}
-                            </ul>
+                            </div>
+                            {% else %}
+                            <p class="text-muted">No certifications extracted</p>
+                            {% endif %}
                         </div>
                     </div>
+                </div>
+            </div>
+            
+            <!-- Achievements Section -->
+            <div class="card parsed-section mb-4">
+                <div class="card-header bg-white section-header">
+                    <h2 class="h5 mb-0">Achievements, Awards & Honors</h2>
+                </div>
+                <div class="card-body">
+                    {% if result.data.achievements %}
+                    <div class="row">
+                        {% for achievement in result.data.achievements %}
+                        <div class="col-md-6 mb-3">
+                            <div class="achievement-item">
+                                <div class="achievement-title">{{ achievement.title }}</div>
+                                <div class="achievement-detail">
+                                    <span class="badge {% if achievement.type == 'scholarship' %}badge-success-subtle{% elif achievement.type == 'award' %}badge-warning-subtle{% else %}badge-primary-subtle{% endif %} me-2">
+                                        {{ achievement.type|title }}
+                                    </span>
+                                    {% if achievement.organization %}from {{ achievement.organization }}{% endif %}
+                                    {% if achievement.date %}({{ achievement.date }}){% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No achievements extracted</p>
                     {% endif %}
                 </div>
             </div>
             
             <div class="d-flex justify-content-between">
-                <a href="{% url 'resume_parser' %}" class="btn btn-secondary">Back to Parser</a>
+                <a href="{% url 'resume_parser' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Parser
+                </a>
                 
-                {% if result.data.skills %}
+                {% if not parse_data_saved %}
                 <form method="post" action="{% url 'resume_results' %}">
                     {% csrf_token %}
-                    <button type="submit" class="btn btn-success">
-                        Save Skills to Profile
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Save All to Profile
                     </button>
                 </form>
+                {% else %}
+                <a href="{% url 'users:profile' %}" class="btn btn-success">
+                    <i class="fas fa-user me-2"></i>View Your Profile
+                </a>
                 {% endif %}
             </div>
             

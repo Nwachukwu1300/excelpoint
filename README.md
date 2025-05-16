@@ -1,7 +1,7 @@
-# CareerNexus - Career Development Platform
+# Excel Point - Career Development Platform
 
 ## Project Overview
-CareerNexus is a comprehensive career development platform that helps users manage their professional growth through skill assessment, job matching, and personalized learning recommendations.
+Excel Point is a comprehensive career development platform that helps users manage their professional growth through skill assessment, job matching, and personalized learning recommendations.
 
 ## Current Implementation Status
 
@@ -39,7 +39,7 @@ CareerNexus is a comprehensive career development platform that helps users mana
 
 ## Skill Extraction API
 
-CareerNexus provides a flexible skill extraction system with two operational modes:
+Excel Point provides a flexible skill extraction system with two operational modes:
 
 1. **Basic Mode**: Pattern-based extraction that works without additional dependencies
 2. **Advanced Mode**: NLP-powered extraction that requires spaCy

@@ -3,7 +3,7 @@ import json
 
 def extract_skills_api(text, min_confidence=0.7, api_url=None):
     """
-    Extract skills from text using the Career Nexus API.
+    Extract skills from text using the Excel Point API.
     
     Args:
         text: The text to analyze
@@ -98,6 +98,6 @@ if __name__ == "__main__":
         print(f"\nResults saved to {output_file}")
     
     print("\nTo use this script with your own text:")
-    print("1. Make sure the Career Nexus server is running")
+    print("1. Make sure the Excel Point server is running")
     print("2. Modify the sample_text variable or create a new function to read from a file")
     print("3. Run the script with: python sample_skill_extractor_usage.py") 

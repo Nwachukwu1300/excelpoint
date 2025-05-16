@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from .models import User, UserProfile
+from .models import User, UserProfile, UserAchievement, UserCertification
 from skills.models import Skill
 
 class RegistrationForm(UserCreationForm):
@@ -87,3 +87,65 @@ class CustomSkillForm(forms.Form):
         # Check for existing skill with same name owned by this user
         # This validation will be done in the view with access to request.user
         return name
+
+class UserAchievementForm(forms.ModelForm):
+    """Form for adding user achievements and awards."""
+    
+    class Meta:
+        model = UserAchievement
+        fields = ['title', 'type', 'organization', 'date_received', 'description']
+        widgets = {
+            'title': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Achievement or award title'
+            }),
+            'organization': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Organization that granted the achievement'
+            }),
+            'date_received': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Month/Year or date received'
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'form-control',
+                'placeholder': 'Description of the achievement and its significance',
+                'rows': 3
+            }),
+            'type': forms.Select(attrs={
+                'class': 'form-control'
+            })
+        }
+
+class UserCertificationForm(forms.ModelForm):
+    """Form for adding user certifications."""
+    
+    class Meta:
+        model = UserCertification
+        fields = ['name', 'issuer', 'date_earned', 'expiration_date', 'credential_id', 'credential_url']
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Certification name'
+            }),
+            'issuer': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Organization that issued the certification'
+            }),
+            'date_earned': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Month/Year or date earned'
+            }),
+            'expiration_date': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Expiration date (if applicable)'
+            }),
+            'credential_id': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Certification number or ID (optional)'
+            }),
+            'credential_url': forms.URLInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'URL to verify the certification (optional)'
+            })
+        }

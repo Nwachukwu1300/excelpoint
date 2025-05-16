@@ -19,4 +19,14 @@ urlpatterns = [
     path('skills/add/', views.add_skill, name='add_skill'),
     path('skills/remove/<int:skill_id>/', views.remove_skill, name='remove_skill'),
     path('skills/add-custom/', views.add_custom_skill, name='add_custom_skill'),
+    
+    # Achievement management endpoints
+    path('achievements/', views.manage_achievements, name='manage_achievements'),
+    path('achievements/edit/<int:achievement_id>/', views.edit_achievement, name='edit_achievement'),
+    path('achievements/delete/<int:achievement_id>/', views.delete_achievement, name='delete_achievement'),
+    
+    # Certification management endpoints
+    path('certifications/', views.manage_certifications, name='manage_certifications'),
+    path('certifications/edit/<int:certification_id>/', views.edit_certification, name='edit_certification'),
+    path('certifications/delete/<int:certification_id>/', views.delete_certification, name='delete_certification'),
 ]

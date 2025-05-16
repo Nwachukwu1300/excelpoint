@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Manage Certifications{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="row">
+        <div class="col-lg-9 mx-auto">
+            <div class="card shadow">
+                <div class="card-header bg-gradient-primary text-white">
+                    <h4 class="card-title mb-0">Manage Your Certifications</h4>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <div class="mb-4">
+                        <h5 class="mb-3">Add New Certification</h5>
+                        <form method="post">
+                            {% csrf_token %}
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.name.id_for_label }}" class="form-label">Certification Name</label>
+                                    {{ form.name }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.issuer.id_for_label }}" class="form-label">Issuing Organization</label>
+                                    {{ form.issuer }}
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.date_earned.id_for_label }}" class="form-label">Date Earned</label>
+                                    {{ form.date_earned }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.expiration_date.id_for_label }}" class="form-label">Expiration Date (optional)</label>
+                                    {{ form.expiration_date }}
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.credential_id.id_for_label }}" class="form-label">Credential ID (optional)</label>
+                                    {{ form.credential_id }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.credential_url.id_for_label }}" class="form-label">Verification URL (optional)</label>
+                                    {{ form.credential_url }}
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Add Certification</button>
+                        </form>
+                    </div>
+                    
+                    <hr>
+                    
+                    <h5 class="mt-4 mb-3">Your Certifications</h5>
+                    {% if certifications %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Certification</th>
+                                        <th>Issuer</th>
+                                        <th>Date Earned</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for cert in certifications %}
+                                        <tr>
+                                            <td>
+                                                <strong>{{ cert.name }}</strong>
+                                                {% if cert.credential_id %}
+                                                    <br><small class="text-muted">ID: {{ cert.credential_id }}</small>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ cert.issuer|default:"-" }}</td>
+                                            <td>{{ cert.date_earned|default:"-" }}</td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <a href="{% url 'users:edit_certification' cert.id %}" class="btn btn-outline-primary">Edit</a>
+                                                    <a href="{% url 'users:delete_certification' cert.id %}" class="btn btn-outline-danger">Delete</a>
+                                                    {% if cert.credential_url %}
+                                                        <a href="{{ cert.credential_url }}" target="_blank" class="btn btn-outline-info">Verify</a>
+                                                    {% endif %}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            You haven't added any certifications yet. Add your first certification using the form above!
+                        </div>
+                    {% endif %}
+                    
+                    <div class="mt-4">
+                        <a href="{% url 'users:profile' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i> Back to Profile
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

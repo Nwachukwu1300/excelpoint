@@ -10,6 +10,7 @@ from .skill_extractor import SkillExtractor
 
 # Import the Skill model
 from skills.models import Skill
+from users.models import UserEducation, UserCertification, UserAchievement
 
 class ResumeProcessingService:
     """Service for processing resume files within Django."""
@@ -289,4 +290,209 @@ class ResumeProcessingService:
             'success': True,
             'added_skills': added_skills,
             'total_skills': len(added_skills)
+        }
+    
+    def save_resume_data_to_user(self, user, parsed_data):
+        """
+        Save all parsed resume data to the user's profile.
+        
+        Args:
+            user: Django User object
+            parsed_data: Dictionary containing parsed resume information
+            
+        Returns:
+            Dictionary with results of the operation
+        """
+        results = {
+            'success': True,
+            'skills_added': 0,
+            'education_added': 0,
+            'certifications_added': 0,
+            'achievements_added': 0,
+            'errors': []
+        }
+        
+        # Save skills if available
+        if 'skills' in parsed_data:
+            try:
+                skills_result = self.save_skills_to_user(user, parsed_data['skills'])
+                results['skills_added'] = skills_result.get('total_skills', 0)
+                results['added_skills'] = skills_result.get('added_skills', [])
+            except Exception as e:
+                results['success'] = False
+                results['errors'].append(f"Error saving skills: {str(e)}")
+        
+        # Save education if available
+        if 'education' in parsed_data:
+            try:
+                education_result = self.save_education_to_user(user, parsed_data['education'])
+                results['education_added'] = education_result.get('total_added', 0)
+            except Exception as e:
+                results['success'] = False
+                results['errors'].append(f"Error saving education: {str(e)}")
+        
+        # Save certifications if available
+        if 'certifications' in parsed_data:
+            try:
+                cert_result = self.save_certifications_to_user(user, parsed_data['certifications'])
+                results['certifications_added'] = cert_result.get('total_added', 0)
+            except Exception as e:
+                results['success'] = False
+                results['errors'].append(f"Error saving certifications: {str(e)}")
+        
+        # Save achievements if available
+        if 'achievements' in parsed_data:
+            try:
+                achieve_result = self.save_achievements_to_user(user, parsed_data['achievements'])
+                results['achievements_added'] = achieve_result.get('total_added', 0)
+            except Exception as e:
+                results['success'] = False
+                results['errors'].append(f"Error saving achievements: {str(e)}")
+        
+        return results
+    
+    def save_education_to_user(self, user, education_data):
+        """
+        Save education data to the user's profile.
+        
+        Args:
+            user: Django User object
+            education_data: List of dictionaries containing education information
+            
+        Returns:
+            Dictionary with results of the operation
+        """
+        if not education_data or not isinstance(education_data, list):
+            return {'success': False, 'error': 'No valid education data provided', 'total_added': 0}
+        
+        added_education = []
+        
+        for edu in education_data:
+            # Skip if missing required fields
+            if 'degree' not in edu:
+                continue
+            
+            # Create education entry in user profile
+            institution = edu.get('institution', '')
+            degree = edu.get('degree', '')
+            
+            # Check if this education entry already exists
+            existing_education = UserEducation.objects.filter(
+                user=user,
+                institution__iexact=institution,
+                degree__iexact=degree
+            ).exists()
+            
+            if not existing_education:
+                # Create new education entry
+                education = UserEducation.objects.create(
+                    user=user,
+                    institution=institution,
+                    degree=degree,
+                    graduation_date=edu.get('date', ''),
+                    gpa=edu.get('gpa', ''),
+                    additional_info=edu.get('additional_info', '')
+                )
+                added_education.append(education)
+        
+        return {
+            'success': True,
+            'total_added': len(added_education)
+        }
+    
+    def save_certifications_to_user(self, user, certifications_data):
+        """
+        Save certification data to the user's profile.
+        
+        Args:
+            user: Django User object
+            certifications_data: List of dictionaries containing certification information
+            
+        Returns:
+            Dictionary with results of the operation
+        """
+        if not certifications_data or not isinstance(certifications_data, list):
+            return {'success': False, 'error': 'No valid certification data provided', 'total_added': 0}
+        
+        added_certifications = []
+        
+        for cert in certifications_data:
+            # Skip if missing required fields
+            if 'name' not in cert:
+                continue
+            
+            # Create certification entry in user profile
+            cert_name = cert.get('name', '')
+            issuer = cert.get('issuer', '')
+            
+            # Check if this certification already exists
+            existing_cert = UserCertification.objects.filter(
+                user=user,
+                name__iexact=cert_name,
+                issuer__iexact=issuer
+            ).exists()
+            
+            if not existing_cert:
+                # Create new certification entry
+                certification = UserCertification.objects.create(
+                    user=user,
+                    name=cert_name,
+                    issuer=issuer,
+                    date_earned=cert.get('date', ''),
+                    expiration_date=cert.get('expiration', ''),
+                    credential_id=cert.get('credential_id', '')
+                )
+                added_certifications.append(certification)
+        
+        return {
+            'success': True,
+            'total_added': len(added_certifications)
+        }
+    
+    def save_achievements_to_user(self, user, achievements_data):
+        """
+        Save achievement data to the user's profile.
+        
+        Args:
+            user: Django User object
+            achievements_data: List of dictionaries containing achievement information
+            
+        Returns:
+            Dictionary with results of the operation
+        """
+        if not achievements_data or not isinstance(achievements_data, list):
+            return {'success': False, 'error': 'No valid achievement data provided', 'total_added': 0}
+        
+        added_achievements = []
+        
+        for achieve in achievements_data:
+            # Skip if missing required fields
+            if 'title' not in achieve:
+                continue
+            
+            # Create achievement entry in user profile
+            achievement_title = achieve.get('title', '')
+            achievement_type = achieve.get('type', 'general')
+            
+            # Check if this achievement already exists
+            existing_achievement = UserAchievement.objects.filter(
+                user=user,
+                title__iexact=achievement_title
+            ).exists()
+            
+            if not existing_achievement:
+                # Create new achievement entry
+                achievement = UserAchievement.objects.create(
+                    user=user,
+                    title=achievement_title,
+                    type=achievement_type,
+                    organization=achieve.get('organization', ''),
+                    date_received=achieve.get('date', ''),
+                    description=achieve.get('description', '')
+                )
+                added_achievements.append(achievement)
+        
+        return {
+            'success': True,
+            'total_added': len(added_achievements)
         } 

@@ -60,6 +60,9 @@ class ResumeParser:
             'certifications': [
                 r'(?i)(?:^|\n)\s*(CERTIFICATIONS|CERTIFICATES|PROFESSIONAL CERTIFICATIONS|LICENSES)'
             ],
+            'achievements': [
+                r'(?i)(?:^|\n)\s*(ACHIEVEMENTS|AWARDS|HONORS|SCHOLARSHIPS|RECOGNITION|ACCOMPLISHMENTS)'
+            ],
             'projects': [
                 r'(?i)(?:^|\n)\s*(PROJECTS|PROJECT EXPERIENCE|KEY PROJECTS)'
             ],
@@ -76,6 +79,36 @@ class ResumeParser:
             'linkedin': r'(?:http[s]?://)?(?:www\.)?linkedin\.com/in/[\w\-_]+/?',
             'github': r'(?:http[s]?://)?(?:www\.)?github\.com/[\w\-_]+/?',
             'date': r'(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]* \d{4}|(?:january|february|march|april|may|june|july|august|september|october|november|december) \d{4}|\d{1,2}/\d{4}|\d{4}'
+        }
+        
+        # Education-related patterns
+        self.education_patterns = {
+            'degree': [
+                r'(?i)(?:Bachelor|B\.?A\.?|B\.?S\.?|B\.?E\.?|Master|M\.?A\.?|M\.?S\.?|M\.?B\.?A\.?|Ph\.?D\.?|Doctorate|Associate|A\.?A\.?|A\.?S\.?|Diploma)',
+                r"(?i)(?:Bachelor's|Master's|Doctoral) (?:Degree|degree)?",
+                r'(?i)(?:High School|Secondary School|College|University)'
+            ],
+            'graduation_date': [
+                r'(?i)(?:Graduated|Graduation|Completed|Earned|Received) (?:in|on)? (\w+ \d{4}|\d{4})',
+                r'(?i)(\d{4})(?: ?- ?(?:\d{4}|Present|Ongoing|Current))?'
+            ],
+            'gpa': r'(?i)(?:GPA|Grade Point Average)[: ]? ?(\d+\.\d+)'
+        }
+        
+        # Achievement-related patterns
+        self.achievement_patterns = {
+            'scholarship': [
+                r'(?i)(?:Scholarship|Fellowship|Grant) (?:recipient|awarded|received)?(?: for| from| in)? (.*?)(?:\n|$)',
+                r'(?i)(?:Awarded|Received|Earned|Won) (?:the |a )?(.*?)(:(?:scholarship|fellowship|grant))(.*?)(?:\n|$)'
+            ],
+            'award': [
+                r'(?i)(?:Award|Honor|Prize|Medal|Trophy|Recognition) (?:recipient|winner|for|received)?(?: for| from| in)? (.*?)(?:\n|$)',
+                r'(?i)(?:Awarded|Received|Earned|Won|Honored with) (?:the |a |an )?(.*?)(?:award|honor|prize|medal|trophy|recognition)(.*?)(?:\n|$)'
+            ],
+            'honor': [
+                r'(?i)(?:Dean\'?s List|Honor Roll|Magna Cum Laude|Summa Cum Laude|Cum Laude)',
+                r'(?i)(?:Graduated|Completed) (?:with|in) (?:honors|distinction|high distinction)'
+            ]
         }
         
         # Register additional mime types
@@ -100,6 +133,9 @@ class ResumeParser:
                 'data': {}
             }
         
+        # Store the full text for reference by other methods
+        self.full_text = text
+        
         # Clean text
         cleaned_text = self._clean_text(text)
         
@@ -123,6 +159,7 @@ class ResumeParser:
         
         # Extract other sections
         certifications = self._extract_certifications(sections.get('certifications', ''))
+        achievements = self._extract_achievements(sections.get('achievements', ''))
         projects = self._extract_projects(sections.get('projects', ''))
         languages = self._extract_languages(sections.get('languages', ''))
         
@@ -136,8 +173,10 @@ class ResumeParser:
                 'experience': experience,
                 'skills': skills_data,
                 'certifications': certifications,
+                'achievements': achievements,
                 'projects': projects,
-                'languages': languages
+                'languages': languages,
+                'full_text': cleaned_text  # Include full text for reference
             }
         }
         
@@ -285,58 +324,178 @@ class ResumeParser:
         return ""
     
     def _extract_education(self, education_section: str) -> List[Dict[str, str]]:
-        """Extract education history."""
+        """
+        Extract education information from the education section.
+        
+        Enhanced with contextual window approach for better recognition.
+        
+        Args:
+            education_section: Text containing education information
+            
+        Returns:
+            List of dictionaries containing education details
+        """
+        self.full_text = self.full_text if hasattr(self, 'full_text') else ""
+        
+        if not education_section:
+            # Fall back to searching the entire resume for education
+            paragraphs = re.split(r'\n\s*\n', self._clean_text(self.full_text))
+            education_paragraphs = []
+            
+            # Education keywords to look for in the entire text
+            education_indicators = [
+                r'(?:bachelor|b\.?a\.?|b\.?s\.?|b\.?e\.?|master|m\.?a\.?|m\.?s\.?|m\.?b\.?a\.?|ph\.?d\.?|doctorate|associate|a\.?a\.?|a\.?s\.?|diploma)',
+                r'(?:degree|university|college|school|institute|academy)',
+                r'(?:graduated|graduation|completed|earned|received)\s+(?:from|in|with)',
+                r'(?:major|minor|concentration|gpa)',
+                r'(?:high school|secondary school)'
+            ]
+            
+            # Search for paragraphs that might contain education
+            for paragraph in paragraphs:
+                for indicator in education_indicators:
+                    if re.search(rf'(?i){indicator}', paragraph):
+                        education_paragraphs.append(paragraph)
+                        break
+            
+            # Use these paragraphs as our education section
+            if education_paragraphs:
+                education_section = "\n\n".join(education_paragraphs)
+        
+        # If we still don't have an education section, return empty list
         if not education_section:
             return []
         
+        # Split the education section into potential entries
+        paragraphs = re.split(r'\n\s*\n|(?:\r\n){2,}', education_section)
         education_entries = []
         
-        # Split by line breaks and bullet points
-        lines = re.split(r'\n+|•', education_section)
-        
-        # Process lines
-        current_entry = {}
-        for line in lines:
-            line = line.strip()
-            if not line:
+        for paragraph in paragraphs:
+            if not paragraph.strip():
                 continue
             
-            # Skip the section heading
-            if re.match(r'(?i)(EDUCATION|EDUCATIONAL BACKGROUND)', line):
-                continue
+            # Use the entire paragraph as context
+            entry_text = paragraph.strip()
+            lines = entry_text.split('\n')
             
-            # Look for degree patterns
-            degree_match = re.search(r'(?i)(Bachelor|Master|PhD|Doctor|Associate|Diploma|Certificate) (?:of|in) ([^\n,]+)', line)
-            if degree_match:
-                # If we already have a partial entry, save it
-                if current_entry:
-                    education_entries.append(current_entry)
-                    current_entry = {}
-                
-                current_entry['degree'] = degree_match.group(0)
-                
-                # Try to extract field of study
-                field_match = re.search(r'(?i)in ([^,\n]+)', line)
-                if field_match:
-                    current_entry['field'] = field_match.group(1).strip()
+            # Initialize with the full raw text for reference
+            entry = {'raw_text': entry_text}
             
-            # Look for institution
-            elif not current_entry.get('institution') and re.search(r'(?i)(University|College|School|Institute)', line):
-                current_entry['institution'] = line
+            # Extract degree information - try multiple approaches
+            degree_found = False
             
-            # Look for dates
-            date_match = re.search(self.data_patterns['date'], line)
-            if date_match and not current_entry.get('date'):
-                current_entry['date'] = date_match.group(0)
+            # First approach: Look for specific degree keywords
+            for degree_pattern in self.education_patterns['degree']:
+                degree_match = re.search(degree_pattern, entry_text)
+                if degree_match:
+                    # Window approach: Get context around the degree
+                    # Look for the entire phrase containing the degree (up to period or comma)
+                    degree_context = re.search(rf'(?i)([^.,\n]*{re.escape(degree_match.group(0))}[^.,\n]*)', entry_text)
+                    if degree_context:
+                        entry['degree'] = degree_context.group(1).strip()
+                    else:
+                        entry['degree'] = degree_match.group(0).strip()
+                    degree_found = True
+                    break
             
-            # If we have a substantial entry with no place to put the current line
-            # assume it's additional information
-            elif current_entry and 'degree' in current_entry:
-                current_entry['additional_info'] = line
-        
-        # Add the last entry if not empty
-        if current_entry:
-            education_entries.append(current_entry)
+            # Second approach: Use the first line if it likely contains the degree
+            if not degree_found and lines:
+                first_line = lines[0].strip()
+                # Often the first line contains the degree
+                if any(keyword.lower() in first_line.lower() for keyword in ['degree', 'bachelor', 'master', 'phd', 'diploma', 'certificate']):
+                    entry['degree'] = first_line
+                    degree_found = True
+            
+            # Third approach: If still no degree, but we have a University/College, infer a degree
+            if not degree_found:
+                institution_match = re.search(r'(?i)(.*?(?:university|college|institute|school))', entry_text)
+                if institution_match:
+                    # Look for an education level/major before the institution
+                    major_match = re.search(r'(?i)((?:computer science|engineering|business|arts|science|economics|psychology|education|nursing|mathematics|history|physics|chemistry|biology|marketing|finance).*?)(?:at|from|,|\n)', entry_text)
+                    if major_match:
+                        entry['degree'] = f"Degree in {major_match.group(1).strip()}"
+                    else:
+                        entry['degree'] = "Degree"
+                    degree_found = True
+            
+            # If we still don't have a degree, use the first line as default
+            if not degree_found and lines:
+                entry['degree'] = lines[0].strip()
+            
+            # Extract institution name using multiple patterns
+            institution_patterns = [
+                r'(?i)(?:at|from)\s+(.*?(?:university|college|institute|school)(?:(?:\s+of\s+|\s+)[\w\s&]+)?)',
+                r'(?i)((?:[A-Z][A-Za-z\']*\s+){1,4}(?:University|College|Institute|School)(?:(?:\s+of\s+|\s+)[\w\s&]+)?)',
+                r'(?i)([\w\s&]+(?:University|College|Institute|School))'
+            ]
+            
+            for pattern in institution_patterns:
+                institution_match = re.search(pattern, entry_text)
+                if institution_match:
+                    entry['institution'] = institution_match.group(1).strip()
+                    break
+            
+            # If we didn't find an institution but have multiple lines,
+            # the second line often contains the institution
+            if 'institution' not in entry and len(lines) > 1:
+                second_line = lines[1].strip()
+                if any(keyword.lower() in second_line.lower() for keyword in ['university', 'college', 'institute', 'school']):
+                    entry['institution'] = second_line
+            
+            # Extract graduation date
+            date_patterns = [
+                r'(?i)(?:graduated|graduation|completed|earned|received)\s+(?:in|on)?\s*(\w+\s+\d{4}|\d{4})',
+                r'(?i)(?:may|june|july|august|september|october|november|december|january|february|march|april)\s+\d{4}',
+                r'(?i)(?:19|20)\d{2}(?:\s*-\s*(?:present|current|ongoing|now|\d{4}))?'
+            ]
+            
+            for pattern in date_patterns:
+                date_match = re.search(pattern, entry_text)
+                if date_match:
+                    entry['date'] = date_match.group(0).strip()
+                    break
+            
+            # Extract GPA if available (expanded pattern)
+            gpa_patterns = [
+                r'(?i)(?:gpa|grade point average|g\.p\.a\.)(?:[:\s]+)?([0-4]\.\d{1,2})',
+                r'(?i)(?:gpa|grade point average|g\.p\.a\.)[:\s]+(?:of\s+)?(\d\.\d{1,2})',
+                r'(?i)(?:with|earned|achieved).*?gpa\s+(?:of\s+)?([0-4]\.\d{1,2})'
+            ]
+            
+            for pattern in gpa_patterns:
+                gpa_match = re.search(pattern, entry_text)
+                if gpa_match:
+                    entry['gpa'] = gpa_match.group(1).strip()
+                    break
+            
+            # Extract additional information using keywords
+            additional_info = []
+            
+            # Extract major/minor/concentration/focus
+            for keyword in ['major', 'minor', 'concentration', 'focus', 'specialization', 'program']:
+                keyword_match = re.search(f'(?i){keyword}[: ]+(.*?)(?:[.;,]|\n|$)', entry_text)
+                if keyword_match:
+                    additional_info.append(f"{keyword.title()}: {keyword_match.group(1).strip()}")
+            
+            # Extract honors, awards, achievements in education
+            honor_keywords = ['honors', 'distinction', 'dean\'s list', 'cum laude', 'gpa', 'graduate', 'thesis']
+            for keyword in honor_keywords:
+                keyword_match = re.search(f'(?i)(?:with|received|earned).*?{keyword}.*?(?:[.;,]|\n|$)', entry_text)
+                if keyword_match:
+                    context = re.search(f'(?i)((?:with|received|earned)[^.;,\n]*?{keyword}[^.;,\n]*)', entry_text)
+                    if context:
+                        additional_info.append(context.group(1).strip())
+            
+            # Extract extracurricular activities
+            activities_match = re.search(r'(?i)(?:activities|clubs|organizations|involved in|participated in)[: ]+(.*?)(?:[.;]|\n|$)', entry_text)
+            if activities_match:
+                additional_info.append(f"Activities: {activities_match.group(1).strip()}")
+            
+            # Join additional info if any was found
+            if additional_info:
+                entry['additional_info'] = '; '.join(additional_info)
+            
+            education_entries.append(entry)
         
         return education_entries
     
@@ -439,45 +598,281 @@ class ResumeParser:
         return result
     
     def _extract_certifications(self, certifications_section: str) -> List[Dict[str, str]]:
-        """Extract certifications."""
+        """
+        Extract certification information from the certifications section.
+        
+        Enhanced to use a contextual window approach to better identify certifications.
+        
+        Args:
+            certifications_section: Text containing certification information
+            
+        Returns:
+            List of dictionaries containing certification details
+        """
+        if not certifications_section:
+            # Fall back to searching the entire resume for certifications
+            paragraphs = re.split(r'\n\s*\n', self._clean_text(self.full_text))
+            certifications_paragraphs = []
+            
+            # Common certification keywords to look for in the entire text
+            cert_indicators = [
+                r'certif', r'licens', r'accredit', r'credential', 
+                r'qualified', r'awarded', r'complete'
+            ]
+            
+            # Search for paragraphs that might contain certifications
+            for paragraph in paragraphs:
+                for indicator in cert_indicators:
+                    if re.search(rf'(?i){indicator}', paragraph):
+                        certifications_paragraphs.append(paragraph)
+                        break
+            
+            # Use these paragraphs as our certifications section
+            if certifications_paragraphs:
+                certifications_section = "\n\n".join(certifications_paragraphs)
+        
+        # If we still don't have a certifications section, return empty list
         if not certifications_section:
             return []
         
+        # Split the certifications section into potential entries
+        entries = re.split(r'\n\s*\n|•|\*|\-|\d+\.', certifications_section)
         certifications = []
         
-        # Split by potential certification delimiters
-        entries = re.split(r'\n|•', certifications_section)
+        # Common certification keywords (expanded for better matching)
+        cert_keywords = [
+            'certified', 'certificate', 'certification', 'certified in', 'credential',
+            'license', 'licensed', 'accredited', 'qualified', 'authorized',
+            'diploma', 'completion of', 'completed'
+        ]
+        
+        # Common certification issuers (expanded)
+        common_issuers = [
+            'AWS', 'Amazon Web Services', 'Microsoft', 'Google', 'Cisco', 'CompTIA', 
+            'Oracle', 'PMI', 'IBM', 'Adobe', 'Salesforce', 'Red Hat', 'ISACA', 
+            '(ISC)²', 'Scrum Alliance', 'Agile', 'PMP', 'ITIL', 'Coursera', 'Udemy',
+            'edX', 'Pluralsight', 'LinkedIn Learning', 'Tableau', 'SAP'
+        ]
         
         for entry in entries:
-            entry = entry.strip()
-            if not entry or re.match(r'(?i)(CERTIFICATIONS|CERTIFICATES)', entry):
+            # Skip empty entries
+            if not entry.strip():
                 continue
             
-            cert = {}
+            # Window approach: Use the entire entry as context
+            entry_text = entry.strip()
             
-            # Extract certification name
-            cert['name'] = entry
+            # Initialize with default values
+            cert = {'name': entry_text}
+            matched = False
             
-            # Extract issuer if present
-            issuer_match = re.search(r'(?i)(?:from|by|issued by) ([^\n,]+)', entry)
-            if issuer_match:
-                cert['issuer'] = issuer_match.group(1).strip()
-                # Remove the issuer part from the name
-                cert['name'] = entry.replace(issuer_match.group(0), '').strip()
+            # First pass: Look for certification keywords
+            for keyword in cert_keywords:
+                # Look for certification keyword with surrounding context
+                pattern = rf'(?i)(?:.*?)(\b{keyword}.*?)(?:(?:from|by|issued|awarded|through|,|;)|$)'
+                cert_match = re.search(pattern, entry_text)
+                
+                if cert_match:
+                    matched = True
+                    cert_name = cert_match.group(1).strip()
+                    # Clean up punctuation at the end
+                    cert_name = re.sub(r'[,;.]+$', '', cert_name)
+                    cert['name'] = cert_name
+                    
+                    # Look for the issuer in the remaining text
+                    remaining_text = entry_text[cert_match.end(1):]
+                    issuer_match = re.search(r'(?i)(?:from|by|issued|awarded|through)\s+(.*?)(?:\s+in\s+|\s+on\s+|\d{2}/\d{2}/\d{4}|$)', remaining_text)
+                    
+                    if issuer_match:
+                        cert['issuer'] = issuer_match.group(1).strip()
+                    break
             
-            # Extract date if present
-            date_match = re.search(self.data_patterns['date'], entry)
-            if date_match:
-                cert['date'] = date_match.group(0)
-                # Remove the date part from the name
-                cert['name'] = cert['name'].replace(date_match.group(0), '').strip()
+            # Second pass: If no match yet, check for known issuers directly
+            if not matched:
+                for issuer in common_issuers:
+                    # Check if entry contains a known issuer
+                    if re.search(rf'(?i)\b{re.escape(issuer)}\b', entry_text):
+                        matched = True
+                        
+                        # Try to extract the full certification name with issuer
+                        cert_match = re.search(rf'(?i)(.*?(?:certification|certificate|credential|qualification).*?)(?:(?:from|by|issued|awarded|through)\s+{re.escape(issuer)}|$)', entry_text)
+                        
+                        if cert_match:
+                            cert['name'] = cert_match.group(1).strip()
+                            cert['issuer'] = issuer
+                        else:
+                            # If no explicit certification name found, use a window around the issuer
+                            window_match = re.search(rf'(?i)((?:[^.;,\n]{{1,50}}\s+)?{re.escape(issuer)}(?:\s+[^.;,\n]{{1,50}})?)', entry_text)
+                            if window_match:
+                                cert['name'] = window_match.group(1).strip()
+                                cert['issuer'] = issuer
+                        break
             
-            # Clean up the name
-            cert['name'] = re.sub(r'[,\-–—] *$', '', cert['name']).strip()
-            
-            certifications.append(cert)
+            # For certifications we found, extract additional details
+            if matched:
+                # Extract date
+                date_match = re.search(r'(?i)(?:in|on|dated?|issued|awarded|earned|received|completed)\s+(\w+\s+\d{4}|\d{4}|\d{1,2}/\d{1,2}/\d{4}|\d{2}-\d{2}-\d{4})', entry_text)
+                if date_match:
+                    cert['date'] = date_match.group(1).strip()
+                
+                # Extract expiration if mentioned
+                expiry_match = re.search(r'(?i)(?:valid until|expires|expiration|exp\.?|exp date|valid through)\s+(\w+\s+\d{4}|\d{4}|\d{1,2}/\d{1,2}/\d{4}|\d{2}-\d{2}-\d{4})', entry_text)
+                if expiry_match:
+                    cert['expiration'] = expiry_match.group(1).strip()
+                
+                # Extract credential ID if mentioned
+                id_match = re.search(r'(?i)(?:credential|cert|certificate|license|id|number|#)[\s:#-]+([A-Z0-9\-]+)', entry_text)
+                if id_match:
+                    cert['credential_id'] = id_match.group(1).strip()
+                
+                certifications.append(cert)
+            # If we didn't match anything but the entry contains words like "certified" or "license"
+            elif any(keyword in entry_text.lower() for keyword in ['certified', 'license', 'certificate', 'credential']):
+                # Get the first sentence or up to 100 characters as the name
+                name_match = re.search(r'(?i)^([^.;,\n]{1,100})', entry_text)
+                if name_match:
+                    cert['name'] = name_match.group(1).strip()
+                    certifications.append(cert)
         
         return certifications
+    
+    def _extract_achievements(self, achievements_section: str) -> List[Dict[str, str]]:
+        """
+        Extract achievements such as scholarships, awards, and honors.
+        
+        Enhanced with contextual window approach for better recognition.
+        
+        Args:
+            achievements_section: Text containing achievement information
+            
+        Returns:
+            List of dictionaries containing achievement details
+        """
+        self.full_text = self.full_text if hasattr(self, 'full_text') else ""
+        
+        if not achievements_section:
+            # Fall back to searching the entire resume for achievements
+            paragraphs = re.split(r'\n\s*\n', self._clean_text(self.full_text))
+            achievement_paragraphs = []
+            
+            # Achievement keywords to look for in the entire text
+            achievement_indicators = [
+                r'award', r'honor', r'scholarship', r'fellowship', r'grant', 
+                r'recognition', r'prize', r'medal', r'achievement', r'accomplishment', 
+                r'dean\'?s list', r'honor roll', r'cum laude', r'distinction'
+            ]
+            
+            # Search for paragraphs that might contain achievements
+            for paragraph in paragraphs:
+                for indicator in achievement_indicators:
+                    if re.search(rf'(?i){indicator}', paragraph):
+                        achievement_paragraphs.append(paragraph)
+                        break
+            
+            # Use these paragraphs as our achievements section
+            if achievement_paragraphs:
+                achievements_section = "\n\n".join(achievement_paragraphs)
+        
+        # If we still don't have an achievements section, return empty list
+        if not achievements_section:
+            return []
+        
+        # Split the achievements section into potential entries
+        entries = re.split(r'\n\s*\n|•|\*|\-|\d+\.', achievements_section)
+        achievements = []
+        
+        for entry in entries:
+            # Skip empty entries
+            if not entry.strip():
+                continue
+            
+            # Window approach: Use the entire entry as context
+            entry_text = entry.strip()
+            
+            # Default achievement with the entire entry text
+            achievement = {'title': entry_text, 'type': 'general'}
+            
+            # Check for scholarship patterns
+            scholarship_patterns = [
+                r'(?i)(?:received|awarded|earned|won)(?:[^.;,\n]*?)(?:scholarship|fellowship|grant)',
+                r'(?i)(?:scholarship|fellowship|grant)(?:[^.;,\n]*?)(?:recipient|awardee)',
+                r'(?i)(?:full|partial|merit|academic|research)(?:[^.;,\n]*?)(?:scholarship|fellowship|grant)'
+            ]
+            
+            for pattern in scholarship_patterns:
+                if re.search(pattern, entry_text):
+                    # Try to extract the full scholarship name
+                    name_match = re.search(r'(?i)((?:(?:the|a|an)\s+)?[^.;,\n]{1,100}(?:scholarship|fellowship|grant))', entry_text)
+                    if name_match:
+                        achievement['title'] = name_match.group(1).strip()
+                    achievement['type'] = 'scholarship'
+                    break
+            
+            # Check for award patterns if not already identified as scholarship
+            if achievement['type'] == 'general':
+                award_patterns = [
+                    r'(?i)(?:received|awarded|earned|won)(?:[^.;,\n]*?)(?:award|prize|medal|honor|recognition)',
+                    r'(?i)(?:award|prize|medal|honor)(?:[^.;,\n]*?)(?:recipient|winner)',
+                    r'(?i)(?:1st|2nd|3rd|first|second|third)(?:[^.;,\n]*?)(?:place|prize|position)'
+                ]
+                
+                for pattern in award_patterns:
+                    if re.search(pattern, entry_text):
+                        # Try to extract the full award name
+                        name_match = re.search(r'(?i)((?:(?:the|a|an)\s+)?[^.;,\n]{1,100}(?:award|prize|medal|honor|recognition))', entry_text)
+                        if name_match:
+                            achievement['title'] = name_match.group(1).strip()
+                        achievement['type'] = 'award'
+                        break
+            
+            # Check for honor patterns if not already identified
+            if achievement['type'] == 'general':
+                honor_patterns = [
+                    r'(?i)dean\'?s list',
+                    r'(?i)honor roll',
+                    r'(?i)(?:magna|summa|)?\s*cum laude',
+                    r'(?i)with (?:high |highest )?(?:honors|distinction)',
+                    r'(?i)valedictorian',
+                    r'(?i)salutatorian'
+                ]
+                
+                for pattern in honor_patterns:
+                    honor_match = re.search(pattern, entry_text)
+                    if honor_match:
+                        # Use the honor term and its immediate context
+                        context_match = re.search(r'(?i)((?:[^.;,\n]{0,30}\s+)?(?:' + pattern.replace('(?i)', '') + r')(?:\s+[^.;,\n]{0,30})?)', entry_text)
+                        if context_match:
+                            achievement['title'] = context_match.group(1).strip()
+                        else:
+                            achievement['title'] = honor_match.group(0).strip()
+                        achievement['type'] = 'honor'
+                        break
+            
+            # For achievements we've identified, extract additional details
+            if achievement['type'] != 'general' or any(keyword in entry_text.lower() for keyword in ['award', 'honor', 'scholarship', 'recognition', 'achievement']):
+                # If we still have a long title, try to shorten it to just the first sentence or clause
+                if len(achievement['title']) > 100:
+                    first_part = re.search(r'^([^.;,\n]{1,100})', achievement['title'])
+                    if first_part:
+                        achievement['title'] = first_part.group(1).strip()
+                
+                # Extract date if available
+                date_match = re.search(r'(?i)(?:in|on|dated?|received|awarded|earned|won)\s+(\w+\s+\d{4}|\d{4}|\d{1,2}/\d{1,2}/\d{4}|\d{2}-\d{2}-\d{4})', entry_text)
+                if date_match:
+                    achievement['date'] = date_match.group(1).strip()
+                
+                # Extract organization if mentioned
+                org_match = re.search(r'(?i)(?:from|by|at|through)\s+((?:[A-Z][A-Za-z\']*(?:\s+|,\s*)){1,5})', entry_text)
+                if org_match:
+                    achievement['organization'] = org_match.group(1).strip()
+                
+                # Add a description if there's significant remaining text
+                if len(entry_text) > len(achievement['title']) + 30:
+                    achievement['description'] = entry_text.strip()
+                
+                achievements.append(achievement)
+        
+        return achievements
     
     def _extract_projects(self, projects_section: str) -> List[Dict[str, str]]:
         """Extract projects."""

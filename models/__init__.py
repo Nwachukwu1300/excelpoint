@@ -1,5 +1,5 @@
 """
-Machine learning models for CareerNexus.
+Machine learning models for Excel Point.
 This package contains various models for data analysis and prediction.
 """
 

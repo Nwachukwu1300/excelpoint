@@ -5,6 +5,8 @@ urlpatterns = [
     # Resume parser views
     path('parser/', views.ResumeParserView.as_view(), name='resume_parser'),
     path('results/', views.ResumeResultsView.as_view(), name='resume_results'),
+    path('confirm/', views.ResumeConfirmView.as_view(), name='resume_confirm'),
+    path('confirm/save/', views.ResumeConfirmSaveView.as_view(), name='resume_confirm_save'),
     
     # API views for skill extraction
     path('api/extract-skills/', views.SkillExtractAPIView.as_view(), name='api_extract_skills'),

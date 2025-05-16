@@ -83,91 +83,99 @@
         <div class="col-md-8">
             <div class="card mb-4">
                 <div class="card-header bg-success text-white">
-                    <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex justify-content-between align-items-center" 
+                         data-bs-toggle="collapse" 
+                         data-bs-target="#roleAnalysisContent" 
+                         style="cursor: pointer;">
                         <h2 class="h5 mb-0">{{ selected_role.name }} - Role Analysis</h2>
-                        <span class="badge bg-light text-dark">{{ match_percentage }}% Match</span>
+                        <div>
+                            <span class="badge bg-light text-dark me-2">{{ match_percentage }}% Match</span>
+                            <i class="fas fa-chevron-down fa-lg"></i>
+                        </div>
                     </div>
                 </div>
-                <div class="card-body">
-                    <p>{{ selected_role.description }}</p>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h3 class="h6">Your Current Skills</h3>
-                            {% if analysis_result.user_skills %}
-                            <ul class="list-group">
-                                {% for skill in analysis_result.user_skills %}
-                                <li class="list-group-item">{{ skill }}</li>
-                                {% endfor %}
-                            </ul>
-                            {% else %}
-                            <p class="text-muted">No skills found in your profile. <a href="{% url 'users:user_skills' %}">Add some skills</a> to your profile!</p>
-                            {% endif %}
-                        </div>
-                        <div class="col-md-6">
-                            <h3 class="h6">Missing Skills</h3>
-                            {% if analysis_result.total_missing > 0 %}
-                            <div class="accordion" id="missingSkillsAccordion">
-                                {% if analysis_result.missing_skills.essential %}
-                                <div class="accordion-item">
-                                    <h2 class="accordion-header" id="essentialHeading">
-                                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#essentialCollapse" aria-expanded="true" aria-controls="essentialCollapse">
-                                            Essential Skills ({{ analysis_result.missing_skills.essential|length }})
-                                        </button>
-                                    </h2>
-                                    <div id="essentialCollapse" class="accordion-collapse collapse show" aria-labelledby="essentialHeading" data-bs-parent="#missingSkillsAccordion">
-                                        <div class="accordion-body">
-                                            <ul class="list-group">
-                                                {% for skill in analysis_result.missing_skills.essential %}
-                                                <li class="list-group-item">{{ skill }}</li>
-                                                {% endfor %}
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-                                {% endif %}
-                                
-                                {% if analysis_result.missing_skills.important %}
-                                <div class="accordion-item">
-                                    <h2 class="accordion-header" id="importantHeading">
-                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#importantCollapse" aria-expanded="false" aria-controls="importantCollapse">
-                                            Important Skills ({{ analysis_result.missing_skills.important|length }})
-                                        </button>
-                                    </h2>
-                                    <div id="importantCollapse" class="accordion-collapse collapse" aria-labelledby="importantHeading" data-bs-parent="#missingSkillsAccordion">
-                                        <div class="accordion-body">
-                                            <ul class="list-group">
-                                                {% for skill in analysis_result.missing_skills.important %}
-                                                <li class="list-group-item">{{ skill }}</li>
-                                                {% endfor %}
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-                                {% endif %}
-                                
-                                {% if analysis_result.missing_skills.nice_to_have %}
-                                <div class="accordion-item">
-                                    <h2 class="accordion-header" id="niceToHaveHeading">
-                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#niceToHaveCollapse" aria-expanded="false" aria-controls="niceToHaveCollapse">
-                                            Nice-to-Have Skills ({{ analysis_result.missing_skills.nice_to_have|length }})
-                                        </button>
-                                    </h2>
-                                    <div id="niceToHaveCollapse" class="accordion-collapse collapse" aria-labelledby="niceToHaveHeading" data-bs-parent="#missingSkillsAccordion">
-                                        <div class="accordion-body">
-                                            <ul class="list-group">
-                                                {% for skill in analysis_result.missing_skills.nice_to_have %}
-                                                <li class="list-group-item">{{ skill }}</li>
-                                                {% endfor %}
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
+                <div id="roleAnalysisContent" class="collapse">
+                    <div class="card-body">
+                        <p>{{ selected_role.description }}</p>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h3 class="h6">Your Current Skills</h3>
+                                {% if analysis_result.user_skills %}
+                                <ul class="list-group">
+                                    {% for skill in analysis_result.user_skills %}
+                                    <li class="list-group-item">{{ skill }}</li>
+                                    {% endfor %}
+                                </ul>
+                                {% else %}
+                                <p class="text-muted">No skills found in your profile. <a href="{% url 'users:user_skills' %}">Add some skills</a> to your profile!</p>
                                 {% endif %}
                             </div>
-                            {% else %}
-                            <p class="text-success">Great! You already have all the skills needed for this role.</p>
-                            {% endif %}
+                            <div class="col-md-6">
+                                <h3 class="h6">Missing Skills</h3>
+                                {% if analysis_result.total_missing > 0 %}
+                                <div class="accordion" id="missingSkillsAccordion">
+                                    {% if analysis_result.missing_skills.essential %}
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="essentialHeading">
+                                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#essentialCollapse" aria-expanded="false" aria-controls="essentialCollapse">
+                                                Essential Skills ({{ analysis_result.missing_skills.essential|length }})
+                                            </button>
+                                        </h2>
+                                        <div id="essentialCollapse" class="accordion-collapse collapse" aria-labelledby="essentialHeading" data-bs-parent="#missingSkillsAccordion">
+                                            <div class="accordion-body">
+                                                <ul class="list-group">
+                                                    {% for skill in analysis_result.missing_skills.essential %}
+                                                    <li class="list-group-item">{{ skill }}</li>
+                                                    {% endfor %}
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% if analysis_result.missing_skills.important %}
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="importantHeading">
+                                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#importantCollapse" aria-expanded="false" aria-controls="importantCollapse">
+                                                Important Skills ({{ analysis_result.missing_skills.important|length }})
+                                            </button>
+                                        </h2>
+                                        <div id="importantCollapse" class="accordion-collapse collapse" aria-labelledby="importantHeading" data-bs-parent="#missingSkillsAccordion">
+                                            <div class="accordion-body">
+                                                <ul class="list-group">
+                                                    {% for skill in analysis_result.missing_skills.important %}
+                                                    <li class="list-group-item">{{ skill }}</li>
+                                                    {% endfor %}
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% if analysis_result.missing_skills.nice_to_have %}
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="niceToHaveHeading">
+                                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#niceToHaveCollapse" aria-expanded="false" aria-controls="niceToHaveCollapse">
+                                                Nice-to-Have Skills ({{ analysis_result.missing_skills.nice_to_have|length }})
+                                            </button>
+                                        </h2>
+                                        <div id="niceToHaveCollapse" class="accordion-collapse collapse" aria-labelledby="niceToHaveHeading" data-bs-parent="#missingSkillsAccordion">
+                                            <div class="accordion-body">
+                                                <ul class="list-group">
+                                                    {% for skill in analysis_result.missing_skills.nice_to_have %}
+                                                    <li class="list-group-item">{{ skill }}</li>
+                                                    {% endfor %}
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                {% else %}
+                                <p class="text-success">Great! You already have all the skills needed for this role.</p>
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -182,54 +190,58 @@
                     <div class="learning-path">
                         {% for phase in learning_path %}
                         <div class="learning-phase mb-4">
-                            <div class="d-flex align-items-center mb-3">
+                            <div class="d-flex align-items-center mb-3" data-bs-toggle="collapse" data-bs-target="#phase{{ phase.phase }}Content" style="cursor: pointer;">
                                 <div class="phase-number rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">{{ phase.phase }}</div>
                                 <h3 class="h5 mb-0 ms-3">{{ phase.title }}</h3>
-                            </div>
-                            <p class="text-muted">{{ phase.description }}</p>
-                            
-                            <div class="skills-to-learn mb-3">
-                                <h4 class="h6">Skills to learn:</h4>
-                                <div class="d-flex flex-wrap gap-2">
-                                    {% for skill in phase.skills %}
-                                    <span class="badge bg-light text-dark">{{ skill }}</span>
-                                    {% endfor %}
-                                </div>
+                                <i class="fas fa-chevron-down fa-lg ms-auto"></i>
                             </div>
                             
-                            <h4 class="h6">Recommended Courses:</h4>
-                            <div class="row">
-                                {% for skill_name, courses in phase.courses.items %}
-                                <div class="col-12 mb-3">
-                                    <div class="card border-0 bg-light">
-                                        <div class="card-header bg-secondary text-white">
-                                            <h5 class="h6 mb-0">{{ skill_name }}</h5>
-                                        </div>
-                                        <div class="card-body">
-                                            {% if courses %}
-                                            <div class="list-group">
-                                                {% for course in courses %}
-                                                <a href="{% url 'learning:confirm_course' course.id %}" class="list-group-item list-group-item-action">
-                                                    <div class="d-flex w-100 justify-content-between">
-                                                        <h6 class="mb-1">{{ course.title }}</h6>
-                                                        <small>{{ course.provider }}</small>
-                                                    </div>
-                                                    <p class="mb-1 small">{{ course.description|truncatechars:100 }}</p>
-                                                    <small class="d-flex justify-content-between">
-                                                        <span>Difficulty: {{ course.difficulty }}</span>
-                                                        <span>Duration: {{ course.duration }}</span>
-                                                        <span>{% if course.is_free %}Free{% else %}Paid{% endif %}</span>
-                                                    </small>
-                                                </a>
-                                                {% endfor %}
-                                            </div>
-                                            {% else %}
-                                            <p class="text-muted">No courses found for {{ skill_name }}. Try searching on learning platforms directly.</p>
-                                            {% endif %}
-                                        </div>
+                            <div id="phase{{ phase.phase }}Content" class="collapse">
+                                <p class="text-muted">{{ phase.description }}</p>
+                                
+                                <div class="skills-to-learn mb-3">
+                                    <h4 class="h6">Skills to learn:</h4>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        {% for skill in phase.skills %}
+                                        <span class="badge bg-light text-dark">{{ skill }}</span>
+                                        {% endfor %}
                                     </div>
                                 </div>
-                                {% endfor %}
+                                
+                                <h4 class="h6">Recommended Courses:</h4>
+                                <div class="row">
+                                    {% for skill_name, courses in phase.courses.items %}
+                                    <div class="col-12 mb-3">
+                                        <div class="card border-0 bg-light">
+                                            <div class="card-header bg-secondary text-white">
+                                                <h5 class="h6 mb-0">{{ skill_name }}</h5>
+                                            </div>
+                                            <div class="card-body">
+                                                {% if courses %}
+                                                <div class="list-group">
+                                                    {% for course in courses %}
+                                                    <a href="{% url 'learning:confirm_course' course.id %}" class="list-group-item list-group-item-action">
+                                                        <div class="d-flex w-100 justify-content-between">
+                                                            <h6 class="mb-1">{{ course.title }}</h6>
+                                                            <small>{{ course.provider }}</small>
+                                                        </div>
+                                                        <p class="mb-1 small">{{ course.description|truncatechars:100 }}</p>
+                                                        <small class="d-flex justify-content-between">
+                                                            <span>Difficulty: {{ course.difficulty }}</span>
+                                                            <span>Duration: {{ course.duration }}</span>
+                                                            <span>{% if course.is_free %}Free{% else %}Paid{% endif %}</span>
+                                                        </small>
+                                                    </a>
+                                                    {% endfor %}
+                                                </div>
+                                                {% else %}
+                                                <p class="text-muted">No courses found for {{ skill_name }}. Try searching on learning platforms directly.</p>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
                             </div>
                         </div>
                         {% if not forloop.last %}
@@ -247,27 +259,36 @@
 
 {% if level_up_courses %}
 <div class="card mt-5">
-    <div class="card-header bg-warning text-dark">
-        <h2 class="h5 mb-0">Level Up Skills You Have</h2>
+    <div class="card-header bg-warning text-dark" data-bs-toggle="collapse" data-bs-target="#levelUpContent" style="cursor: pointer;">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2 class="h5 mb-0">Level Up Skills You Have</h2>
+            <i class="fas fa-chevron-down fa-lg"></i>
+        </div>
     </div>
-    <div class="card-body">
-        <p class="mb-3">Already have some skills? Here are more courses to help you deepen your expertise and stay sharp.</p>
-        {% for item in level_up_courses %}
-            <div class="mb-3">
-                <h6>{{ item.skill_name|title }}</h6>
-                <ul class="list-group">
-                    {% for course in item.courses %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <div>
-                            <strong>{{ course.title }}</strong> <span class="badge bg-secondary ms-2">{{ course.provider }}</span>
-                            <div class="small text-muted">{{ course.description|truncatewords:20 }}</div>
-                        </div>
-                        <a href="{{ course.url }}" class="btn btn-sm btn-outline-primary" target="_blank">View Course</a>
-                    </li>
-                    {% endfor %}
-                </ul>
-            </div>
-        {% endfor %}
+    <div id="levelUpContent" class="collapse">
+        <div class="card-body">
+            <p class="mb-3">Already have some skills? Here are more courses to help you deepen your expertise and stay sharp.</p>
+            {% for item in level_up_courses %}
+                <div class="mb-3">
+                    <h6 data-bs-toggle="collapse" data-bs-target="#levelUp{{ forloop.counter }}" style="cursor: pointer;">
+                        {{ item.skill_name|title }} <i class="fas fa-chevron-down ms-2"></i>
+                    </h6>
+                    <div id="levelUp{{ forloop.counter }}" class="collapse">
+                        <ul class="list-group">
+                            {% for course in item.courses %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>{{ course.title }}</strong> <span class="badge bg-secondary ms-2">{{ course.provider }}</span>
+                                    <div class="small text-muted">{{ course.description|truncatewords:20 }}</div>
+                                </div>
+                                <a href="{{ course.url }}" class="btn btn-sm btn-outline-primary" target="_blank">View Course</a>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
     </div>
 </div>
 {% endif %}
@@ -275,6 +296,26 @@
 <style>
 .phase-number {
     flex-shrink: 0;
+}
+.card-header[data-bs-toggle="collapse"]:hover,
+.d-flex[data-bs-toggle="collapse"]:hover {
+    background-color: rgba(0,0,0,0.05);
+}
+h6[data-bs-toggle="collapse"]:hover {
+    color: #0d6efd;
+}
+/* Add a pulsing animation to draw attention to collapse toggles */
+.fa-chevron-down {
+    transition: transform 0.3s ease;
+}
+[data-bs-toggle="collapse"]:hover .fa-chevron-down,
+h6[data-bs-toggle="collapse"]:hover .fa-chevron-down {
+    transform: translateY(3px);
+}
+/* Expanded state rotation */
+.collapse.show + [data-bs-toggle="collapse"] .fa-chevron-down,
+[aria-expanded="true"] .fa-chevron-down {
+    transform: rotate(180deg);
 }
 </style>
 {% endblock %} 
