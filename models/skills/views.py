@@ -11,8 +11,10 @@ from .skill_extractor import SkillExtractor
 # Import necessary user models
 from users.models import UserEducation, UserCertification, UserAchievement
 
-class ResumeParserView(View):
+class ResumeParserView(LoginRequiredMixin, View):
     """View for parsing resumes and extracting skills."""
+    
+    login_url = '/users/login/'  # Redirect to login if user is not authenticated
     
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -339,53 +341,54 @@ class ResumeConfirmSaveView(LoginRequiredMixin, View):
         
         return data
 
-class SkillExtractAPIView(View):
-    """API view for extracting skills from text."""
+class SkillExtractAPIView(LoginRequiredMixin, View):
+    """View for extracting skills from text."""
+    
+    login_url = '/users/login/'  # Redirect to login if user is not authenticated
     
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.service = ResumeProcessingService()
+        self.extractor = SkillExtractor()
     
     def get(self, request):
         """Display the skill extraction form."""
-        context = {'form': SkillExtractionForm()}
+        context = {
+            'form': SkillExtractionForm()
+        }
         return render(request, 'skill_extract.html', context)
     
     def post(self, request):
-        """Extract skills from posted text."""
+        """Extract skills from the provided text."""
         # Check if this is an AJAX request
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             text = request.POST.get('text', '')
             min_confidence = float(request.POST.get('min_confidence', 0.7))
             
             if not text:
-                return JsonResponse({
-                    'success': False,
-                    'error': 'No text provided'
-                })
+                return JsonResponse({'error': 'No text provided'}, status=400)
             
             # Extract skills
-            skills = self.service.extract_skills_from_text(text, min_confidence)
+            skills = self.extractor.extract_skills(text)
             
             return JsonResponse({
                 'success': True,
-                'skills_count': len(skills),
                 'skills': skills
             })
         
-        # Handle form submission for non-AJAX requests
+        # If not AJAX, handle form submission
         form = SkillExtractionForm(request.POST)
         
         if form.is_valid():
             text = form.cleaned_data['text']
-            min_confidence = form.cleaned_data['min_confidence']
+            min_confidence = form.cleaned_data.get('min_confidence', 0.7)
             
             # Extract skills
-            skills = self.service.extract_skills_from_text(text, min_confidence)
+            skills = self.extractor.extract_skills(text)
             
             context = {
                 'form': form,
                 'skills': skills,
+                'text': text,
                 'skills_count': len(skills)
             }
             return render(request, 'skill_extract.html', context)
@@ -393,12 +396,13 @@ class SkillExtractAPIView(View):
         context = {'form': form}
         return render(request, 'skill_extract.html', context)
 
-class BasicSkillExtractAPIView(View):
-    """API view for extracting skills from text without requiring spaCy."""
+class BasicSkillExtractAPIView(LoginRequiredMixin, View):
+    """Simple view for extracting skills from text."""
+    
+    login_url = '/users/login/'  # Redirect to login if user is not authenticated
     
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # Initialize with just the skill extractor, not the full resume service
         self.extractor = SkillExtractor()
     
     def get(self, request):
@@ -411,63 +415,28 @@ class BasicSkillExtractAPIView(View):
         return render(request, 'basic_skill_extract.html', context)
     
     def post(self, request):
-        """Extract skills from posted text using pattern-based methods."""
-        # Check if this is an AJAX request or a direct API call
-        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        """Extract skills using basic pattern matching."""
+        form = BasicSkillExtractionForm(request.POST)
         
-        # Get parameters from request
-        if request.content_type == 'application/json':
-            import json
-            data = json.loads(request.body)
-            text = data.get('text', '')
-            min_confidence = float(data.get('min_confidence', 0.7))
-        else:
-            text = request.POST.get('text', '')
-            min_confidence = float(request.POST.get('min_confidence', 0.7))
-        
-        if not text:
-            return JsonResponse({
-                'success': False,
-                'error': 'No text provided'
-            }, status=400)
-        
-        # Extract skills using the non-spaCy methods
-        all_skills = self.extractor.extract_skills(text)
-        
-        # Filter by confidence
-        filtered_skills = [skill for skill in all_skills if skill['confidence'] >= min_confidence]
-        
-        # Group skills by category
-        skills_by_category = {}
-        for skill in filtered_skills:
-            category = skill.get('category', 'unknown')
-            if category not in skills_by_category:
-                skills_by_category[category] = []
-            skills_by_category[category].append(skill)
-        
-        # Prepare response data
-        response_data = {
-            'success': True,
-            'skills_count': len(filtered_skills),
-            'skills': filtered_skills,
-            'skills_by_category': {
-                category: [s.get('skill') for s in skills] 
-                for category, skills in skills_by_category.items()
-            },
-            'spacy_available': self.extractor.nlp_available
-        }
-        
-        # Return JSON for AJAX/API requests or render form with results
-        if is_ajax or request.content_type == 'application/json':
-            return JsonResponse(response_data)
-        else:
-            # For normal form submissions, render the form with results
+        if form.is_valid():
+            text = form.cleaned_data['text']
+            
+            # Extract skills using basic pattern matching
+            skills = self.extractor.extract_skills_basic(text)
+            
+            # Group skills by category
+            skills_by_category = {}
+            for skill in skills:
+                category = skill.get('category', 'Uncategorized')
+                if category not in skills_by_category:
+                    skills_by_category[category] = []
+                skills_by_category[category].append(skill)
+            
             context = {
-                'form': BasicSkillExtractionForm(request.POST),
-                'title': 'Basic Skill Extraction',
-                'description': 'Extract skills using pattern-based methods (no spaCy required)',
-                'results': response_data,
-                'skills_found': filtered_skills,
+                'form': form,
+                'text': text,
+                'skills': skills,
+                'skills_count': len(skills),
                 'skills_by_category': skills_by_category
             }
             return render(request, 'basic_skill_extract.html', context) 

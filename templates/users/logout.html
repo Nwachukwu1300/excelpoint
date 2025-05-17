@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Log Out - Career Nexus{% endblock %}
+
+{% block extra_head %}
+<style>
+    .logout-container {
+        max-width: 500px;
+        margin: 3rem auto;
+    }
+    
+    .card {
+        border: none;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        border-radius: 0.75rem;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+    
+    .card-header {
+        background: linear-gradient(45deg, #4e73df, #36b9cc);
+        color: white;
+        padding: 1.5rem;
+        border-bottom: none;
+        text-align: center;
+    }
+    
+    .logout-icon {
+        font-size: 3.5rem;
+        margin-bottom: 1rem;
+        color: rgba(255, 255, 255, 0.8);
+    }
+    
+    .btn-danger {
+        background-color: #e74a3b;
+        border-color: #e74a3b;
+        transition: all 0.3s ease;
+        border-radius: 50px;
+        padding: 0.6rem 2rem;
+        font-weight: 500;
+    }
+    
+    .btn-secondary {
+        background-color: #858796;
+        border-color: #858796;
+        transition: all 0.3s ease;
+        border-radius: 50px;
+        padding: 0.6rem 2rem;
+        font-weight: 500;
+    }
+    
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .animation-float {
+        animation: float 6s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+        0% {
+            transform: translateY(0px);
+        }
+        50% {
+            transform: translateY(-10px);
+        }
+        100% {
+            transform: translateY(0px);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="logout-container">
+    <div class="card">
+        <div class="card-header">
+            <div class="animation-float">
+                <i class="fas fa-sign-out-alt logout-icon"></i>
+            </div>
+            <h2 class="h4 mb-0">Log Out Confirmation</h2>
+            <p class="text-light mb-0 mt-2">Are you sure you want to leave?</p>
+        </div>
+        <div class="card-body p-4 text-center">
+            <p class="mb-4">You're about to log out from your Career Nexus account. Your progress and data will be saved for when you return.</p>
+            
+            <form method="post" action="{% url 'users:logout' %}">
+                {% csrf_token %}
+                <div class="d-flex justify-content-center gap-3">
+                    <a href="{% url 'home' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-2"></i> Stay Logged In
+                    </a>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-sign-out-alt me-2"></i> Log Out
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

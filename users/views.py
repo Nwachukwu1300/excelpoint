@@ -18,40 +18,30 @@ from learning.models import CourseProgress, LearningStreak, UserAchievement as L
 from skills.models import UserSkill
 
 
-@api_view(['GET', 'POST'])
-@permission_classes([AllowAny])
 def register_user(request):
    """
    Registration endpoint.
-   GET: Shows template
+   GET: Shows registration form
    POST: Creates new user
    """
-   if request.method == 'GET':
-       default_content = {
-           "username": "gbemi",
-           "email": "gbemi@example.com", 
-           "password": "test123.",
-           "password2": "test123.",
-           
-           "current_role": "Software Developer",
-           "experience_level": "senior" 
-       }
-       return Response(default_content)
-
-   if request.method == 'POST':
-       serializer = UserSerializer(data=request.data)
-       if serializer.is_valid():
-           user = serializer.save()
-           return Response({
-               'message': 'User registered successfully',
-               'user_id': user.id,
-               'username': user.username
-           }, status=status.HTTP_201_CREATED)
+   if request.user.is_authenticated:
+       # If already logged in, redirect to profile page
+       return redirect('users:profile')
        
-       return Response({
-           'status': 'error', 
-           'errors': serializer.errors
-       }, status=status.HTTP_400_BAD_REQUEST)
+   if request.method == 'POST':
+       form = RegistrationForm(request.POST)
+       if form.is_valid():
+           # Create the user account
+           user = form.save()
+           # Log the user in
+           login(request, user)
+           messages.success(request, 'Your account has been created successfully! Welcome to Career Nexus.')
+           return redirect('home')
+   else:
+       # GET request: show registration form
+       form = RegistrationForm()
+   
+   return render(request, 'users/register.html', {'form': form})
 
 
 
@@ -59,72 +49,34 @@ def register_user(request):
 @permission_classes([AllowAny])
 def login_user(request):
     """
-    Handles login and logout functionality.
+    Handles user login.
+    - GET: Show login form
+    - POST: Process login request
     """
-    if request.method == 'GET':
-        # Show different templates based on authentication status
-        if request.user.is_authenticated:
-            default_content = {
-                "action": "logout"
-            }
-        else:
-            default_content = {
-                "username": "enter_username",
-                "password": "enter_password"
-            }
-        return Response(default_content)
-
-    if request.method == 'POST':
-        try:
-            # Check if this is a logout request
-            action = request.data.get('action')
-            
-            if action == 'logout':
-                if request.user.is_authenticated:
-                    logout(request)
-                    return Response({
-                        'status': 'success',
-                        'message': 'Successfully logged out'
-                    })
-                else:
-                    return Response({
-                        'error': 'Not logged in'
-                    }, status=status.HTTP_401_UNAUTHORIZED)
-
-            # Handle login
-            username = request.data.get('username')
-            password = request.data.get('password')
-            
-            if not username or not password:
-                return Response({
-                    'error': 'Both username and password are required'
-                }, status=status.HTTP_400_BAD_REQUEST)
-            
-            user = authenticate(request, username=username, password=password)
-            
-            if user is not None:
-                login(request, user)
-                return Response({
-                    'status': 'success',
-                    'message': 'Login successful',
-                    'user_info': {
-                        'id': user.id,
-                        'username': user.username,
-                        'current_role': user.current_role,
-                        'experience_level': user.experience_level,
-                    }
-                })
-            
-            return Response({
-                'error': 'Invalid credentials you many not have an account yet'
-            }, status=status.HTTP_401_UNAUTHORIZED)
-            
-        except Exception as e:
-            return Response({
-                'error': 'Operation failed',
-                'details': str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    if request.user.is_authenticated:
+        # If already logged in, redirect to profile page
+        return redirect('users:profile')
         
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        
+        if not username or not password:
+            messages.error(request, 'Both username and password are required')
+            return render(request, 'users/login.html')
+        
+        user = authenticate(request, username=username, password=password)
+        
+        if user is not None:
+            login(request, user)
+            messages.success(request, 'Login successful!')
+            return redirect('home')
+        else:
+            messages.error(request, 'Invalid username or password')
+    
+    # If GET request or login failed
+    return render(request, 'users/login.html')
+
 def calculate_profile_completion(user):
     """
     Calculates the percentage of profile completion.
@@ -145,23 +97,24 @@ def calculate_profile_completion(user):
     return round((filled_fields / len(fields)) * 100, 2)
 
 
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@login_required
 def logout_user(request):
     """
-    Handles logout - requires active session
+    Handles the logout process:
+    - GET: Show logout confirmation page
+    - POST: Process logout and redirect to home
     """
-    try:
-        logout(request)
-        return Response({
-            'status': 'success',
-            'message': 'Successfully logged out'
-        })
-    except Exception as e:
-        return Response({
-            'error': 'Logout failed',
-            'details': str(e)
-        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    if request.method == 'POST':
+        try:
+            logout(request)
+            messages.success(request, 'You have been successfully logged out.')
+            return redirect('home')
+        except Exception as e:
+            messages.error(request, f'Logout failed: {str(e)}')
+            return redirect('users:profile')
+    else:
+        # GET request: show the logout confirmation page
+        return render(request, 'users/logout.html')
 
 
 
