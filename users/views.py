@@ -463,13 +463,17 @@ def profile(request):
     # Get user's skills
     user_skills = UserSkill.objects.filter(user=request.user)
     
-    # Get recent activity
+    # Get recent activity - ensure we're only getting current user's data
     recent_activity = []
     
-    # Add course progress updates
+    # Make sure we have fresh data for this user
+    current_time = timezone.now()
+    thirty_days_ago = current_time - timedelta(days=30)
+    
+    # Add course progress updates - strictly filter by current user
     recent_progress = CourseProgress.objects.filter(
         user=request.user,
-        last_activity_date__gte=timezone.now() - timedelta(days=30)
+        last_activity_date__gte=thirty_days_ago
     ).select_related('course')
     
     for progress in recent_progress:
@@ -487,13 +491,13 @@ def profile(request):
             'timestamp': progress.last_activity_date
         })
     
-    # Add earned achievements
+    # Add earned achievements - strictly filter by current user
     earned_achievements = LearningUserAchievement.objects.filter(
         user=request.user
     ).select_related('achievement')
     
     for user_achievement in earned_achievements:
-        if user_achievement.date_earned >= timezone.now() - timedelta(days=30):
+        if user_achievement.date_earned >= thirty_days_ago:
             recent_activity.append({
                 'icon': user_achievement.achievement.icon,
                 'title': f"Earned {user_achievement.achievement.name}",
