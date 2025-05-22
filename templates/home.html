@@ -8,7 +8,7 @@
         <div class="row align-items-center">
             <div class="col-lg-7">
                 <h1 class="display-4 fw-bold mb-3">Welcome to Excel Point</h1>
-                <p class="lead mb-4">Your all-in-one platform for career development, skill enhancement, and job matching. Discover opportunities, build your skills, and chart your path to success.</p>
+                <p class="lead mb-4">Your all-in-one platform for career development and skill enhancement. Discover opportunities, build your skills, and chart your path to success.</p>
                 <div class="d-flex gap-3">
                     {% if user.is_authenticated %}
                     <a href="{% url 'learning:dashboard' %}" class="btn btn-primary btn-lg">My Dashboard</a>
@@ -75,22 +75,6 @@
                     <h3 class="h4 mb-3">Resume Parser</h3>
                     <p class="text-muted mb-4">Upload your CV or cover letter to extract key skills and get personalized recommendations.</p>
                     <a href="/skills/models/parser/" class="btn btn-outline-primary">Analyze Documents</a>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Feature 4: Job Matching -->
-        <div class="col-md-6 col-lg-4">
-            <div class="card h-100 shadow-sm border-0 hover-shadow">
-                <div class="card-body text-center p-4">
-                    <div class="rounded-circle bg-primary bg-opacity-10 p-3 d-inline-block mb-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-briefcase text-primary" viewBox="0 0 16 16">
-                            <path d="M6.5 1A1.5 1.5 0 0 0 5 2.5V3H1.5A1.5 1.5 0 0 0 0 4.5v8A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-8A1.5 1.5 0 0 0 14.5 3H11v-.5A1.5 1.5 0 0 0 9.5 1h-3zm0 1h3a.5.5 0 0 1 .5.5V3H6v-.5a.5.5 0 0 1 .5-.5zm1.886 6.914L15 7.151V12.5a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5V7.15l6.614 1.764a1.5 1.5 0 0 0 .772 0zM1.5 4h13a.5.5 0 0 1 .5.5v1.616L8.129 7.948a.5.5 0 0 1-.258 0L1 6.116V4.5a.5.5 0 0 1 .5-.5z"/>
-                        </svg>
-                    </div>
-                    <h3 class="h4 mb-3">Job Matching</h3>
-                    <p class="text-muted mb-4">Find job opportunities that match your skills and experience with intelligent matching algorithms.</p>
-                    <a href="/jobs/" class="btn btn-outline-primary">Find Opportunities</a>
                 </div>
             </div>
         </div>
