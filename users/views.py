@@ -463,6 +463,9 @@ def profile(request):
     # Get user's skills
     user_skills = UserSkill.objects.filter(user=request.user)
     
+    # Calculate profile completion percentage
+    profile_completion = calculate_profile_completion(request.user)
+    
     # Get recent activity - ensure we're only getting current user's data
     recent_activity = []
     
@@ -512,6 +515,9 @@ def profile(request):
     recent_achievements = earned_achievements.order_by('-date_earned')[:3]
     achievements_count = earned_achievements.count()
     
+    # Count enrolled courses
+    enrolled_courses = CourseProgress.objects.filter(user=request.user).count()
+    
     return render(request, 'users/profile.html', {
         'completed_courses': completed_courses,
         'total_hours': total_hours,
@@ -520,7 +526,9 @@ def profile(request):
         'user_skills': user_skills,
         'recent_activity': recent_activity,
         'recent_achievements': recent_achievements,
-        'achievements_count': achievements_count
+        'achievements_count': achievements_count,
+        'profile_completion': profile_completion,
+        'enrolled_courses': enrolled_courses
     })
 
 @login_required
