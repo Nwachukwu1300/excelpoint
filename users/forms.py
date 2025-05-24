@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from .models import User, UserProfile, UserAchievement, UserCertification
+from .models import User, UserProfile, UserAchievement, UserCertification, UserEducation
 from skills.models import Skill
 
 class RegistrationForm(UserCreationForm):
@@ -147,5 +147,39 @@ class UserCertificationForm(forms.ModelForm):
             'credential_url': forms.URLInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'URL to verify the certification (optional)'
+            })
+        }
+
+class UserEducationForm(forms.ModelForm):
+    """Form for adding and editing user education."""
+    
+    class Meta:
+        model = UserEducation
+        fields = ['institution', 'degree', 'field_of_study', 'graduation_date', 'gpa', 'additional_info']
+        widgets = {
+            'institution': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'School, college, or university name'
+            }),
+            'degree': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Degree or certificate earned'
+            }),
+            'field_of_study': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Major or field of study'
+            }),
+            'graduation_date': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Year or date of graduation'
+            }),
+            'gpa': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'GPA or academic performance metric'
+            }),
+            'additional_info': forms.Textarea(attrs={
+                'class': 'form-control',
+                'placeholder': 'Additional information, honors, activities, etc.',
+                'rows': 3
             })
         }

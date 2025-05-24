@@ -29,4 +29,9 @@ urlpatterns = [
     path('certifications/', views.manage_certifications, name='manage_certifications'),
     path('certifications/edit/<int:certification_id>/', views.edit_certification, name='edit_certification'),
     path('certifications/delete/<int:certification_id>/', views.delete_certification, name='delete_certification'),
+    
+    # Education management endpoints
+    path('education/', views.manage_education, name='manage_education'),
+    path('education/edit/<int:education_id>/', views.edit_education, name='edit_education'),
+    path('education/delete/<int:education_id>/', views.delete_education, name='delete_education'),
 ]

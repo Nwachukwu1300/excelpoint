@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit Education{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow">
+                <div class="card-header bg-gradient-primary text-white">
+                    <h4 class="card-title mb-0">Edit Education Entry</h4>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.institution.id_for_label }}" class="form-label">Institution</label>
+                                {{ form.institution }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.degree.id_for_label }}" class="form-label">Degree</label>
+                                {{ form.degree }}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.field_of_study.id_for_label }}" class="form-label">Field of Study</label>
+                                {{ form.field_of_study }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.graduation_date.id_for_label }}" class="form-label">Graduation Date</label>
+                                {{ form.graduation_date }}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.gpa.id_for_label }}" class="form-label">GPA (optional)</label>
+                                {{ form.gpa }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.additional_info.id_for_label }}" class="form-label">Additional Information</label>
+                                {{ form.additional_info }}
+                            </div>
+                        </div>
+                        <div class="d-flex">
+                            <button type="submit" class="btn btn-primary me-2">Save Changes</button>
+                            <a href="{% url 'users:manage_education' %}" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -8,9 +8,9 @@ from django.contrib.auth import login, logout, authenticate, update_session_auth
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
-from .forms import RegistrationForm, UserProfileForm, CustomSkillForm, UserAchievementForm, UserCertificationForm
+from .forms import RegistrationForm, UserProfileForm, CustomSkillForm, UserAchievementForm, UserCertificationForm, UserEducationForm
 from skills.models import Skill
-from .models import User, UserAchievement, UserCertification
+from .models import User, UserAchievement, UserCertification, UserEducation
 from django.db.models import Count, Sum
 from django.utils import timezone
 from datetime import timedelta
@@ -631,25 +631,24 @@ def delete_achievement(request, achievement_id):
 def manage_certifications(request):
     """
     View for managing user certifications.
-    Displays a list of existing certifications and a form to add new ones.
     """
-    user = request.user
-    certifications = user.certifications.all().order_by('-date_added')
-    
     if request.method == 'POST':
         form = UserCertificationForm(request.POST)
         if form.is_valid():
             certification = form.save(commit=False)
-            certification.user = user
+            certification.user = request.user
             certification.save()
             messages.success(request, 'Certification added successfully!')
             return redirect('users:manage_certifications')
     else:
         form = UserCertificationForm()
     
+    # Get user's certifications
+    certifications = UserCertification.objects.filter(user=request.user)
+    
     return render(request, 'users/manage_certifications.html', {
-        'certifications': certifications,
-        'form': form
+        'form': form,
+        'certifications': certifications
     })
 
 @login_required
@@ -687,4 +686,65 @@ def delete_certification(request, certification_id):
     
     return render(request, 'users/delete_certification.html', {
         'certification': certification
+    })
+
+@login_required
+def manage_education(request):
+    """
+    View for managing user education.
+    """
+    if request.method == 'POST':
+        form = UserEducationForm(request.POST)
+        if form.is_valid():
+            education = form.save(commit=False)
+            education.user = request.user
+            education.save()
+            messages.success(request, 'Education entry added successfully!')
+            return redirect('users:manage_education')
+    else:
+        form = UserEducationForm()
+    
+    # Get user's education entries
+    education_entries = UserEducation.objects.filter(user=request.user)
+    
+    return render(request, 'users/manage_education.html', {
+        'form': form,
+        'education_entries': education_entries
+    })
+
+@login_required
+def edit_education(request, education_id):
+    """
+    View for editing an existing education entry.
+    """
+    education = get_object_or_404(UserEducation, id=education_id, user=request.user)
+    
+    if request.method == 'POST':
+        form = UserEducationForm(request.POST, instance=education)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Education entry updated successfully!')
+            return redirect('users:manage_education')
+    else:
+        form = UserEducationForm(instance=education)
+    
+    return render(request, 'users/edit_education.html', {
+        'form': form,
+        'education': education
+    })
+
+@login_required
+def delete_education(request, education_id):
+    """
+    View for deleting an education entry.
+    """
+    education = get_object_or_404(UserEducation, id=education_id, user=request.user)
+    
+    if request.method == 'POST':
+        education.delete()
+        messages.success(request, 'Education entry deleted successfully!')
+        return redirect('users:manage_education')
+    
+    return render(request, 'users/delete_education.html', {
+        'education': education
     })
