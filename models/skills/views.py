@@ -292,7 +292,8 @@ class ResumeConfirmSaveView(LoginRequiredMixin, View):
         else:
             messages.info(request, "No new information was added to your profile.")
         
-        return redirect('resume_results')
+        # Redirect to profile page instead of resume results
+        return redirect('users:profile')
     
     def _extract_form_data(self, post_data, prefix):
         """
