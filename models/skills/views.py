@@ -147,12 +147,20 @@ class ResumeConfirmSaveView(LoginRequiredMixin, View):
         result = request.session.get('resume_parsing_result')
         if result and 'data' in result and 'skills' in result['data']:
             try:
-                skills_result = self.service.save_skills_to_user(user, result['data']['skills'])
+                # Pass the skills list directly from the parsed result
+                skills_data = result['data']['skills']
+                
+                # Log the skills data structure for debugging
+                print(f"Skills data structure: {type(skills_data)}")
+                print(f"Skills data content: {skills_data}")
+                
+                skills_result = self.service.save_skills_to_user(user, skills_data)
                 results['skills_added'] = skills_result.get('total_skills', 0)
                 results['added_skills'] = skills_result.get('added_skills', [])
             except Exception as e:
                 results['success'] = False
                 results['errors'].append(f"Error saving skills: {str(e)}")
+                print(f"Error saving skills: {str(e)}")  # Log the error
         
         # Save education data
         if education_data:

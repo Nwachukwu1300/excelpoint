@@ -206,31 +206,94 @@ class ResumeProcessingService:
         Args:
             user: Django User object
             text_or_skills: Either text to extract skills from or a list of already extracted skills
+                            or a list of categorized skills from resume parser
             min_confidence: Minimum confidence threshold (0.0-1.0)
             
         Returns:
             Dictionary with results of the operation
         """
+        # Safety check for user
+        if not user:
+            return {
+                'success': False,
+                'error': 'No user provided',
+                'added_skills': [],
+                'total_skills': 0
+            }
+        
+        # Safety check for empty input
+        if not text_or_skills:
+            return {
+                'success': True,
+                'added_skills': [],
+                'total_skills': 0
+            }
+        
         # Determine if input is text or already extracted skills
         if isinstance(text_or_skills, str):
             # Extract skills from text
             extracted_skills = self.extract_skills_from_text(text_or_skills, min_confidence)
         else:
             # Input is already extracted skills
-            # Add safety check for confidence key
             extracted_skills = []
-            for s in text_or_skills:
-                # Skip items without 'skill' key
-                if 'skill' not in s:
-                    continue
+            
+            # Safety check to ensure text_or_skills is a list
+            if not isinstance(text_or_skills, list):
+                print(f"Expected list but got {type(text_or_skills)}: {text_or_skills}")
+                return {
+                    'success': False,
+                    'error': f'Expected list but got {type(text_or_skills)}',
+                    'added_skills': [],
+                    'total_skills': 0
+                }
+            
+            # Handle empty list
+            if not text_or_skills:
+                return {
+                    'success': True,
+                    'added_skills': [],
+                    'total_skills': 0
+                }
+            
+            # Check if we're dealing with categorized skills from resume parser
+            # which has format: [{'category': 'category_name', 'skills': ['skill1', 'skill2']}]
+            if isinstance(text_or_skills, list) and text_or_skills and isinstance(text_or_skills[0], dict) and 'category' in text_or_skills[0]:
+                for category_data in text_or_skills:
+                    if not isinstance(category_data, dict):
+                        continue
+                        
+                    category = category_data.get('category', 'general')
+                    skills_list = category_data.get('skills', [])
                     
-                if 'confidence' in s and s['confidence'] >= min_confidence:
-                    extracted_skills.append(s)
-                elif 'confidence' not in s:
-                    # If confidence is missing, add with default confidence
-                    s_copy = s.copy()
-                    s_copy['confidence'] = min_confidence
-                    extracted_skills.append(s_copy)
+                    if not isinstance(skills_list, list):
+                        continue
+                        
+                    for skill_name in skills_list:
+                        if not skill_name:
+                            continue
+                            
+                        extracted_skills.append({
+                            'skill': skill_name,
+                            'confidence': min_confidence,
+                            'category': category
+                        })
+            else:
+                # Standard skill list format with confidence values
+                for s in text_or_skills:
+                    if not isinstance(s, dict):
+                        continue
+                        
+                    # Skip items without 'skill' key
+                    if 'skill' not in s:
+                        continue
+                        
+                    if 'confidence' in s and s['confidence'] >= min_confidence:
+                        extracted_skills.append(s)
+                    elif 'confidence' not in s:
+                        # If confidence is missing, add with default confidence
+                        s_copy = s.copy()
+                        s_copy['confidence'] = min_confidence
+                        extracted_skills.append(s_copy)
         
         # Keep track of added skills
         added_skills = []

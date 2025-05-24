@@ -3,14 +3,17 @@
                             <h2 class="h5 mb-0">Skills</h2>
                         </div>
                         <div class="card-body">
-                            {% if user.skills.all %}
+                            {% if user.skills.all or user.user_skills_direct.all %}
                             <div class="d-flex flex-wrap mb-3">
                                 {% for skill in user.skills.all|slice:":10" %}
                                 <span class="badge bg-primary me-2 mb-2">{{ skill.name }}</span>
                                 {% endfor %}
-                                {% if user.skills.all.count > 10 %}
+                                {% for skill in user.user_skills_direct.all|slice:":10" %}
+                                <span class="badge bg-primary me-2 mb-2">{{ skill.name }}</span>
+                                {% endfor %}
+                                {% if user.skills.all.count > 10 or user.user_skills_direct.all.count > 10 %}
                                 <a href="{% url 'users:user_skills' %}" class="badge bg-secondary text-decoration-none">
-                                    + {{ user.skills.all.count|add:"-10" }} more
+                                    + more skills
                                 </a>
                                 {% endif %}
                             </div>
