@@ -350,18 +350,6 @@
                         <a href="{% url 'users:edit_profile' %}" class="btn btn-sm btn-primary">
                             <i class="fas fa-edit me-1"></i> Edit Profile
                         </a>
-                        <a href="{% url 'users:user_skills' %}" class="btn btn-sm btn-outline-primary">
-                            <i class="fas fa-code me-1"></i> Manage Skills
-                        </a>
-                        <a href="{% url 'users:manage_achievements' %}" class="btn btn-sm btn-outline-primary">
-                            <i class="fas fa-trophy me-1"></i> Manage Achievements
-                        </a>
-                        <a href="{% url 'users:manage_certifications' %}" class="btn btn-sm btn-outline-primary">
-                            <i class="fas fa-certificate me-1"></i> Manage Certifications
-                        </a>
-                        <a href="{% url 'users:manage_education' %}" class="btn btn-sm btn-outline-primary">
-                            <i class="fas fa-graduation-cap me-1"></i> Manage Education
-                        </a>
                     </div>
                 </div>
                 <div class="col-md-4">
@@ -374,20 +362,8 @@
                         </div>
                         <div class="col">
                             <div class="bg-light rounded-3 p-3">
-                                <h2 class="h1 fw-bold text-primary mb-0">{{ profile_completion|default:"0" }}%</h2>
-                                <small class="text-muted">Profile</small>
-                            </div>
-                        </div>
-                        <div class="col">
-                            <div class="bg-light rounded-3 p-3">
-                                <h2 class="h1 fw-bold text-primary mb-0">{{ total_hours|default:"0" }}</h2>
-                                <small class="text-muted">Hours</small>
-                            </div>
-                        </div>
-                        <div class="col">
-                            <div class="bg-light rounded-3 p-3">
-                                <h2 class="h1 fw-bold text-primary mb-0">{{ current_streak|default:"0" }}</h2>
-                                <small class="text-muted">Streak</small>
+                                <h2 class="h1 fw-bold text-primary mb-0">{{ completed_courses|default:"0" }}</h2>
+                                <small class="text-muted">Completed</small>
                             </div>
                         </div>
                     </div>
@@ -398,165 +374,8 @@
     
     <!-- Main Content -->
     <div class="row g-4">
-        <!-- Left Column -->
-        <div class="col-lg-6">
-            <!-- Skills Section -->
-            <div class="card shadow-sm border-0 mb-4">
-                <div class="card-header bg-white p-3 border-0">
-                    <div class="d-flex align-items-center">
-                        <i class="fas fa-code text-primary me-2 fs-4"></i>
-                        <h2 class="h5 mb-0 fw-bold">Skills</h2>
-                    </div>
-                </div>
-                <div class="card-body p-3">
-                    <div class="d-flex flex-wrap gap-2 mb-3">
-                        {% if user_skills or user.skills.all or user.user_skills_direct.all %}
-                            {% for skill in user_skills %}
-                                <span class="badge rounded-pill bg-light text-dark border px-3 py-2">
-                                    {% if 'tensorflow' in skill.skill_name|lower %}
-                                        <i class="fab fa-tensorflow text-warning me-1"></i>
-                                    {% elif 'deep learning' in skill.skill_name|lower %}
-                                        <i class="fas fa-brain text-primary me-1"></i>
-                                    {% elif 'pytorch' in skill.skill_name|lower %}
-                                        <i class="fas fa-fire text-danger me-1"></i>
-                                    {% elif 'neural' in skill.skill_name|lower %}
-                                        <i class="fas fa-project-diagram text-purple me-1"></i>
-                                    {% elif 'vision' in skill.skill_name|lower %}
-                                        <i class="fas fa-eye text-success me-1"></i>
-                                    {% elif 'python' in skill.skill_name|lower %}
-                                        <i class="fab fa-python text-primary me-1"></i>
-                                    {% elif 'data' in skill.skill_name|lower %}
-                                        <i class="fas fa-database text-warning me-1"></i>
-                                    {% else %}
-                                        <i class="fas fa-code text-info me-1"></i>
-                                    {% endif %}
-                                    {{ skill.skill_name }}
-                                </span>
-                            {% endfor %}
-                            
-                            {% for skill in user.skills.all %}
-                                <span class="badge rounded-pill bg-light text-dark border px-3 py-2">
-                                    <i class="fas fa-code text-info me-1"></i>
-                                    {{ skill.name }}
-                                </span>
-                            {% endfor %}
-                            
-                            {% for skill in user.user_skills_direct.all %}
-                                <span class="badge rounded-pill bg-light text-dark border px-3 py-2">
-                                    <i class="fas fa-code text-info me-1"></i>
-                                    {{ skill.name }}
-                                </span>
-                            {% endfor %}
-                        {% else %}
-                            <p class="text-muted">No skills added yet. Add skills to track your progress.</p>
-                            <div class="mt-2">
-                                <a href="{% url 'users:add_custom_skill' %}" class="btn btn-sm btn-primary">
-                                    <i class="fas fa-plus me-1"></i> Add Skills
-                                </a>
-                            </div>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Achievements Section -->
-            <div class="card shadow-sm border-0 mb-4">
-                <div class="card-header bg-white p-3 border-0">
-                    <div class="d-flex align-items-center">
-                        <i class="fas fa-trophy text-warning me-2 fs-4"></i>
-                        <h2 class="h5 mb-0 fw-bold">Achievements & Awards</h2>
-                    </div>
-                </div>
-                <div class="card-body p-3">
-                    {% if user.user_achievements.all %}
-                        {% for achievement in user.user_achievements.all|slice:":3" %}
-                            <div class="d-flex align-items-start mb-3 pb-3 {% if not forloop.last %}border-bottom{% endif %}">
-                                <div class="me-3">
-                                    <div class="rounded-circle bg-light p-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
-                                        <i class="fas {% if achievement.type == 'award' %}fa-award text-warning{% elif achievement.type == 'scholarship' %}fa-graduation-cap text-primary{% else %}fa-medal text-danger{% endif %} fs-5"></i>
-                                    </div>
-                                </div>
-                                <div>
-                                    <div class="text-muted small">{{ achievement.date_received|date:"F Y"|default:"Fall 2023" }}</div>
-                                    <div class="fw-semibold">{{ achievement.title }}</div>
-                                </div>
-                            </div>
-                        {% endfor %}
-                    {% else %}
-                        <div class="text-center py-3">
-                            <p class="text-muted">No achievements added yet.</p>
-                            <a href="{% url 'users:manage_achievements' %}" class="btn btn-sm btn-primary mt-2">
-                                <i class="fas fa-plus me-1"></i> Add Achievements
-                            </a>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-        
-        <!-- Right Column -->
-        <div class="col-lg-6">
-            <!-- Certifications Section -->
-            <div class="card shadow-sm border-0 mb-4">
-                <div class="card-header bg-white p-3 border-0">
-                    <div class="d-flex align-items-center">
-                        <i class="fas fa-certificate text-info me-2 fs-4"></i>
-                        <h2 class="h5 mb-0 fw-bold">Certifications</h2>
-                    </div>
-                </div>
-                <div class="card-body p-3">
-                    {% if user.certifications.all %}
-                        {% for cert in user.certifications.all %}
-                            <div class="mb-3 {% if not forloop.last %}pb-3 border-bottom{% endif %}">
-                                <div class="fw-semibold">{{ cert.name }}</div>
-                                <div class="text-muted small">{{ cert.issuer }}</div>
-                            </div>
-                        {% endfor %}
-                    {% else %}
-                        <div class="text-center py-3">
-                            <p class="text-muted">No certifications added yet.</p>
-                            <a href="{% url 'users:manage_certifications' %}" class="btn btn-sm btn-primary mt-2">
-                                <i class="fas fa-plus me-1"></i> Add Certifications
-                            </a>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-            
-            <!-- Education Section -->
-            <div class="card shadow-sm border-0 mb-4">
-                <div class="card-header bg-white p-3 border-0">
-                    <div class="d-flex align-items-center">
-                        <i class="fas fa-graduation-cap text-success me-2 fs-4"></i>
-                        <h2 class="h5 mb-0 fw-bold">Education</h2>
-                    </div>
-                </div>
-                <div class="card-body p-3">
-                    {% if user.education.all %}
-                        {% for edu in user.education.all %}
-                            <div class="mb-3 {% if not forloop.last %}pb-3 border-bottom{% endif %}">
-                                <div class="fw-semibold">{{ edu.degree }}{% if edu.field_of_study %} in {{ edu.field_of_study }}{% endif %}</div>
-                                <div>{{ edu.institution }}</div>
-                                {% if edu.graduation_date %}
-                                    <div class="text-muted small">Graduated: {{ edu.graduation_date }}</div>
-                                {% endif %}
-                                {% if edu.gpa %}
-                                    <div class="text-muted small">GPA: {{ edu.gpa }}</div>
-                                {% endif %}
-                            </div>
-                        {% endfor %}
-                    {% else %}
-                        <div class="text-center py-3">
-                            <p class="text-muted">No education information added yet.</p>
-                            <a href="{% url 'users:manage_education' %}" class="btn btn-sm btn-primary mt-2">
-                                <i class="fas fa-plus me-1"></i> Add Education
-                            </a>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-            
-            <!-- Recent Activity -->
+        <!-- Recent Activity - Full Width -->
+        <div class="col-12">
             <div class="card shadow-sm border-0 mb-4">
                 <div class="card-header bg-white p-3 border-0">
                     <div class="d-flex align-items-center">
@@ -566,7 +385,7 @@
                 </div>
                 <div class="card-body p-3">
                     {% if recent_activity %}
-                        {% for activity in recent_activity|slice:":3" %}
+                        {% for activity in recent_activity|slice:":5" %}
                             <div class="d-flex align-items-center mb-3 {% if not forloop.last %}pb-3 border-bottom{% endif %}">
                                 <div class="me-3">
                                     <div class="rounded-circle bg-light p-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
@@ -590,42 +409,46 @@
                     {% endif %}
                 </div>
             </div>
-            
-            <!-- Learning Achievements -->
+        </div>
+    </div>
+    
+    <!-- Learning Statistics - Full Width -->
+    <div class="row">
+        <div class="col-12">
             <div class="card shadow-sm border-0 mb-4">
                 <div class="card-header bg-white p-3 border-0">
                     <div class="d-flex align-items-center">
-                        <i class="fas fa-star text-warning me-2 fs-4"></i>
-                        <h2 class="h5 mb-0 fw-bold">Learning Achievements</h2>
+                        <i class="fas fa-chart-line text-primary me-2 fs-4"></i>
+                        <h2 class="h5 mb-0 fw-bold">Learning Statistics</h2>
                     </div>
                 </div>
                 <div class="card-body p-3">
-                    <div class="row row-cols-2 g-3">
+                    <div class="row row-cols-2 row-cols-md-4 g-3">
                         <div class="col">
-                            <div class="p-3 bg-light rounded-3">
-                                <div class="fw-bold h4 mb-0 text-primary">{{ skills_count|default:"0" }}</div>
-                                <div class="small text-muted">Maps of Skills</div>
+                            <div class="p-3 bg-light rounded-3 text-center">
+                                <div class="fw-bold h3 mb-0 text-primary">{{ total_hours|default:"0" }}</div>
+                                <div class="small text-muted">Learning Hours</div>
                             </div>
                         </div>
                         <div class="col">
-                            <div class="p-3 bg-light rounded-3">
-                                <div class="fw-bold h4 mb-0 text-primary">{{ completed_courses|default:"0" }}</div>
+                            <div class="p-3 bg-light rounded-3 text-center">
+                                <div class="fw-bold h3 mb-0 text-success">{{ completed_courses|default:"0" }}</div>
                                 <div class="small text-muted">Courses Completed</div>
                             </div>
                         </div>
                         <div class="col">
-                            <div class="p-3 bg-light rounded-3">
-                                <div class="fw-bold h4 mb-0 text-primary">{{ previous_awards|default:"0" }}</div>
-                                <div class="small text-muted">Previous Awards</div>
+                            <div class="p-3 bg-light rounded-3 text-center">
+                                <div class="fw-bold h3 mb-0 text-warning">{{ current_streak|default:"0" }}</div>
+                                <div class="small text-muted">Current Streak</div>
                             </div>
                         </div>
                         <div class="col">
-                            <div class="p-3 bg-light rounded-3">
-                                <div class="fw-bold h4 mb-0 text-primary">{{ community_contributions|default:"0" }}</div>
-                                <div class="small text-muted">Community Contributions</div>
+                            <div class="p-3 bg-light rounded-3 text-center">
+                                <div class="fw-bold h3 mb-0 text-info">{{ enrolled_courses|default:"0" }}</div>
+                                <div class="small text-muted">Enrolled Courses</div>
                             </div>
                         </div>
-                    </div>
+                    </div> 
                 </div>
             </div>
         </div>

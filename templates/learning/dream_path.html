@@ -1,0 +1,473 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Dream Path - {{ selected_path.title }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+    body {
+        background: #f8f9fe;
+    }
+    
+    .hero-section {
+        background: linear-gradient(135deg, #6c63ff 0%, #5a52d5 100%);
+        color: white;
+        padding: 4rem 0;
+        border-radius: 0 0 40px 40px;
+        margin-bottom: 3rem;
+    }
+    
+    .path-card {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+    }
+    
+    .progress-ring {
+        width: 120px;
+        height: 120px;
+        margin: 0 auto 1rem;
+    }
+    
+    .progress-ring svg {
+        transform: rotate(-90deg);
+    }
+    
+    .progress-ring-circle {
+        fill: transparent;
+        stroke: #e9ecef;
+        stroke-width: 8;
+    }
+    
+    .progress-ring-circle.progress {
+        stroke: #6c63ff;
+        stroke-linecap: round;
+        transition: stroke-dashoffset 0.5s ease-in-out;
+    }
+    
+    .skill-tag {
+        display: inline-block;
+        background: #f8f9ff;
+        color: #6c63ff;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        margin: 0.25rem;
+        font-size: 0.9rem;
+        font-weight: 500;
+        border: 1px solid #e9ecff;
+    }
+    
+    .next-role-card {
+        background: linear-gradient(135deg, #f8f9ff 0%, #fff 100%);
+        border: 1px solid #e9ecff;
+        border-radius: 12px;
+        padding: 1rem;
+        margin: 0.5rem 0;
+        transition: all 0.3s ease;
+    }
+    
+    .next-role-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(108, 99, 255, 0.1);
+    }
+    
+    .course-card {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        border: 1px solid #e9ecef;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .course-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        border-color: #6c63ff;
+    }
+    
+    .course-card.completed {
+        background: linear-gradient(135deg, #d4edda 0%, #f8fff9 100%);
+        border-color: #28a745;
+    }
+    
+    .course-card.in-progress {
+        background: linear-gradient(135deg, #fff3cd 0%, #fffef7 100%);
+        border-color: #ffc107;
+    }
+    
+    .course-status {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+    }
+    
+    .course-status.completed {
+        background: #28a745;
+    }
+    
+    .course-status.in-progress {
+        background: #ffc107;
+    }
+    
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 2rem;
+        position: relative;
+        display: inline-block;
+    }
+    
+    .section-title:after {
+        content: '';
+        position: absolute;
+        left: 0;
+        bottom: -5px;
+        height: 3px;
+        width: 40px;
+        background: #6c63ff;
+        border-radius: 2px;
+    }
+    
+    .course-provider {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .course-title {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #333;
+    }
+    
+    .course-description {
+        color: #6c757d;
+        font-size: 0.9rem;
+        line-height: 1.4;
+    }
+    
+    .btn-course {
+        padding: 0.5rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary-custom {
+        background: #6c63ff;
+        color: white;
+        border: 1px solid #6c63ff;
+    }
+    
+    .btn-primary-custom:hover {
+        background: #5a52d5;
+        color: white;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+    
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #6c63ff;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+    
+    /* Dream Role Selector Styling */
+    .role-selector-card {
+        background: linear-gradient(135deg, #f8f9ff 0%, #fff 100%);
+        border: 1px solid #e9ecff !important;
+    }
+    
+    .role-selector-card:hover {
+        box-shadow: 0 4px 15px rgba(108, 99, 255, 0.1) !important;
+    }
+    
+    .form-select:focus {
+        border-color: #6c63ff;
+        box-shadow: 0 0 0 0.2rem rgba(108, 99, 255, 0.25);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Dream Role Selector -->
+<div class="container py-3">
+    <div class="card border-0 shadow-sm mb-4 role-selector-card">
+        <div class="card-body p-4">
+            <h2 class="h5 mb-3"><i class="fas fa-bullseye text-primary me-2"></i>Choose Your Dream Career Path</h2>
+            <form method="post" class="row g-3 align-items-end">
+                {% csrf_token %}
+                <div class="col-md-8">
+                    <label for="dream_role" class="form-label">What's your career goal?</label>
+                    <select name="dream_role" id="dream_role" class="form-select" required>
+                        <option value="">Select your dream role...</option>
+                        {% for role_key, path_data in available_paths.items %}
+                            <option value="{{ role_key }}" {% if role_key == selected_dream_role_key %}selected{% endif %}>
+                                {{ path_data.title }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-rocket me-1"></i>Update My Path
+                    </button>
+                </div>
+            </form>
+            {% if current_dream_role != 'Not set' %}
+                <div class="mt-3">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Current dream role: <strong>{{ current_dream_role }}</strong>
+                    </small>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Hero Section -->
+<div class="hero-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="display-5 fw-bold mb-3">{{ selected_path.title }}</h1>
+                <p class="lead mb-4">{{ selected_path.description }}</p>
+                <div class="d-flex align-items-center gap-3">
+                    <span class="badge bg-light text-dark px-3 py-2">Current Role: {{ current_role }}</span>
+                    <span class="badge bg-success px-3 py-2">{{ completed_recommended }}/{{ total_recommended }} Courses Completed</span>
+                </div>
+            </div>
+            <div class="col-lg-4 text-center">
+                <div class="progress-ring">
+                    <svg width="120" height="120">
+                        <circle class="progress-ring-circle" cx="60" cy="60" r="56"></circle>
+                        <circle class="progress-ring-circle progress" cx="60" cy="60" r="56" 
+                                stroke-dasharray="351.86" 
+                                stroke-dashoffset="{{ stroke_dashoffset }}"></circle>
+                    </svg>
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+                        <div style="font-size: 1.5rem; font-weight: 700;">{{ progress_percentage }}%</div>
+                        <div style="font-size: 0.8rem; opacity: 0.8;">Complete</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Path Overview -->
+    <div class="path-card">
+        <h2 class="h4 mb-4"><i class="fas fa-route text-primary me-2"></i>Your Learning Path</h2>
+        
+        <div class="row">
+            <div class="col-lg-6">
+                <h3 class="h5 mb-3">Key Skills to Master</h3>
+                <div class="mb-4">
+                    {% for skill in selected_path.skills %}
+                        <span class="skill-tag">{{ skill }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <h3 class="h5 mb-3">Next Career Steps</h3>
+                {% for role in selected_path.next_roles %}
+                    <div class="next-role-card">
+                        <i class="fas fa-arrow-right text-primary me-2"></i>{{ role }}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Freedom to Choose Message -->
+        <div class="alert alert-info border-0 mt-4" style="background: linear-gradient(135deg, #e3f2fd 0%, #f8f9ff 100%);">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-lightbulb text-primary me-3" style="font-size: 1.5rem;"></i>
+                <div>
+                    <h6 class="mb-1 text-primary">Learn at Your Own Pace</h6>
+                    <small class="text-muted">You have complete freedom to choose any course at any level. Start with beginner-friendly courses or jump straight into advanced topics - it's your journey!</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Stats -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value">{{ recommended_courses|length }}</div>
+            <div class="stat-label">Core Courses</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ beginner_courses|length }}</div>
+            <div class="stat-label">Beginner-Friendly</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ advanced_courses|length }}</div>
+            <div class="stat-label">Advanced Level</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ progress_percentage }}%</div>
+            <div class="stat-label">Overall Progress</div>
+        </div>
+    </div>
+
+    <!-- Recommended Courses -->
+    {% if recommended_courses %}
+    <div class="mb-5">
+        <h2 class="section-title">Core Courses</h2>
+        <p class="text-muted mb-4">Essential courses for your career path - start with any that interests you!</p>
+        <div class="row">
+            {% for course in recommended_courses %}
+            <div class="col-lg-6 mb-3">
+                <div class="course-card {% if course.id in completed_course_ids %}completed{% elif course.id in in_progress_course_ids %}in-progress{% endif %}">
+                    {% if course.id in completed_course_ids %}
+                        <div class="course-status completed" title="Completed"></div>
+                    {% elif course.id in in_progress_course_ids %}
+                        <div class="course-status in-progress" title="In Progress"></div>
+                    {% endif %}
+                    
+                    <div class="course-provider">{{ course.instructor }}</div>
+                    <h3 class="course-title">{{ course.title }}</h3>
+                    <p class="course-description">{{ course.description|truncatechars:120 }}</p>
+                    
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <div class="text-muted small">
+                            <i class="far fa-clock me-1"></i>{{ course.duration_hours }} hours
+                        </div>
+                        <a href="{% url 'learning:confirm_course' course.id %}" class="btn btn-course btn-primary-custom">
+                            {% if course.id in completed_course_ids %}
+                                <i class="fas fa-external-link-alt me-1"></i>Review Course
+                            {% elif course.id in in_progress_course_ids %}
+                                <i class="fas fa-external-link-alt me-1"></i>Continue
+                            {% else %}
+                                <i class="fas fa-external-link-alt me-1"></i>Start Course
+                            {% endif %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Beginner Courses -->
+    {% if beginner_courses %}
+    <div class="mb-5">
+        <h2 class="section-title">Beginner-Friendly Options</h2>
+        <p class="text-muted mb-4">Perfect if you're new to the field, but feel free to explore regardless of your experience level!</p>
+        <div class="row">
+            {% for course in beginner_courses %}
+            <div class="col-lg-6 mb-3">
+                <div class="course-card {% if course.id in completed_course_ids %}completed{% elif course.id in in_progress_course_ids %}in-progress{% endif %}">
+                    {% if course.id in completed_course_ids %}
+                        <div class="course-status completed" title="Completed"></div>
+                    {% elif course.id in in_progress_course_ids %}
+                        <div class="course-status in-progress" title="In Progress"></div>
+                    {% endif %}
+                    
+                    <div class="course-provider">{{ course.instructor }}</div>
+                    <h3 class="course-title">{{ course.title }}</h3>
+                    <p class="course-description">{{ course.description|truncatechars:120 }}</p>
+                    
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <div class="text-muted small">
+                            <i class="far fa-clock me-1"></i>{{ course.duration_hours }} hours
+                            <span class="badge bg-success ms-2">Beginner-Friendly</span>
+                        </div>
+                        <a href="{% url 'learning:confirm_course' course.id %}" class="btn btn-course btn-primary-custom">
+                            {% if course.id in completed_course_ids %}
+                                <i class="fas fa-external-link-alt me-1"></i>Review Course
+                            {% elif course.id in in_progress_course_ids %}
+                                <i class="fas fa-external-link-alt me-1"></i>Continue
+                            {% else %}
+                                <i class="fas fa-external-link-alt me-1"></i>Start Course
+                            {% endif %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Advanced Courses -->
+    {% if advanced_courses %}
+    <div class="mb-5">
+        <h2 class="section-title">Advanced Challenges</h2>
+        <p class="text-muted mb-4">Deep-dive into complex topics - accessible to everyone, regardless of where you're starting!</p>
+        <div class="row">
+            {% for course in advanced_courses %}
+            <div class="col-lg-6 mb-3">
+                <div class="course-card {% if course.id in completed_course_ids %}completed{% elif course.id in in_progress_course_ids %}in-progress{% endif %}">
+                    {% if course.id in completed_course_ids %}
+                        <div class="course-status completed" title="Completed"></div>
+                    {% elif course.id in in_progress_course_ids %}
+                        <div class="course-status in-progress" title="In Progress"></div>
+                    {% endif %}
+                    
+                    <div class="course-provider">{{ course.instructor }}</div>
+                    <h3 class="course-title">{{ course.title }}</h3>
+                    <p class="course-description">{{ course.description|truncatechars:120 }}</p>
+                    
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <div class="text-muted small">
+                            <i class="far fa-clock me-1"></i>{{ course.duration_hours }} hours
+                            <span class="badge bg-warning ms-2">Advanced</span>
+                        </div>
+                        <a href="{% url 'learning:confirm_course' course.id %}" class="btn btn-course btn-primary-custom">
+                            {% if course.id in completed_course_ids %}
+                                <i class="fas fa-external-link-alt me-1"></i>Review Course
+                            {% elif course.id in in_progress_course_ids %}
+                                <i class="fas fa-external-link-alt me-1"></i>Continue
+                            {% else %}
+                                <i class="fas fa-external-link-alt me-1"></i>Start Course
+                            {% endif %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Call to Action -->
+    <div class="text-center py-5">
+        <h3 class="mb-3">Ready to advance your career?</h3>
+        <p class="text-muted mb-4">Update your profile to get more personalized recommendations</p>
+        <a href="{% url 'users:edit_profile' %}" class="btn btn-primary btn-lg">Update My Profile</a>
+    </div>
+</div>
+{% endblock %} 

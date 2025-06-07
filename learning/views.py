@@ -8,8 +8,7 @@ from django.db.models.functions import TruncMonth
 from datetime import timedelta
 import json
 
-from skills.models import Course, UserSkill
-from .models import CourseProgress, LearningStreak, SavedResource, Achievement, UserAchievement
+from .models import Course, CourseProgress, SavedResource, Achievement, UserAchievement
 from .services.progress_service import ProgressService
 from .forms import SavedResourceForm
 
@@ -17,60 +16,6 @@ from .forms import SavedResourceForm
 def learning_dashboard(request):
     # Get user's course progress
     course_progress = CourseProgress.objects.filter(user=request.user).select_related('course')
-    
-    # Get learning streak
-    streak, _ = LearningStreak.objects.get_or_create(user=request.user)
-    
-    # Get skill growth data for the last 6 months
-    six_months_ago = timezone.now() - timedelta(days=180)
-    skill_growth = UserSkill.objects.filter(
-        user=request.user,
-        created_at__gte=six_months_ago
-    ).annotate(
-        month=TruncMonth('created_at')
-    ).values('month').annotate(
-        count=Count('id')
-    ).order_by('month')
-    
-    # Format skill growth data for the chart
-    skill_growth_data = {
-        'labels': [],
-        'data': []
-    }
-    
-    # Ensure we have data for all months
-    current_date = six_months_ago
-    while current_date <= timezone.now():
-        month_str = current_date.strftime('%Y-%m')
-        skill_growth_data['labels'].append(month_str)
-        skill_growth_data['data'].append(0)
-        current_date += timedelta(days=32)
-        current_date = current_date.replace(day=1)
-    
-    # Fill in actual data
-    for item in skill_growth:
-        month_str = item['month'].strftime('%Y-%m')
-        if month_str in skill_growth_data['labels']:
-            index = skill_growth_data['labels'].index(month_str)
-            skill_growth_data['data'][index] = item['count']
-    
-    # Serialize to JSON for template
-    skill_growth_data_json = json.dumps(skill_growth_data)
-    
-    # Get achievements data
-    earned_achievements = UserAchievement.objects.filter(
-        user=request.user
-    ).select_related('achievement')
-    
-    all_achievements = Achievement.objects.all()
-    achievements_data = []
-    
-    for achievement in all_achievements:
-        is_earned = earned_achievements.filter(achievement=achievement).exists()
-        achievements_data.append({
-            'achievement': achievement,
-            'is_earned': is_earned
-        })
     
     # Get recent activity
     recent_activity = []
@@ -96,7 +41,12 @@ def learning_dashboard(request):
             'timestamp': progress.last_activity_date
         })
     
-    # Add earned achievements
+    # Get achievements data
+    earned_achievements = UserAchievement.objects.filter(
+        user=request.user
+    ).select_related('achievement')
+    
+    # Add earned achievements to recent activity
     for user_achievement in earned_achievements:
         if user_achievement.date_earned >= timezone.now() - timedelta(days=30):
             recent_activity.append({
@@ -109,18 +59,15 @@ def learning_dashboard(request):
     # Sort recent activity by timestamp
     recent_activity.sort(key=lambda x: x['timestamp'], reverse=True)
     
-    # Get user's skills
-    user_skills = UserSkill.objects.filter(user=request.user)
-    skill_courses = []
-    for user_skill in user_skills:
-        courses = Course.objects.filter(
-            courseskill__skill_name=user_skill.skill_name
-        ).distinct()
-        if courses.exists():
-            skill_courses.append({
-                'skill_name': user_skill.skill_name,
-                'courses': courses
-            })
+    all_achievements = Achievement.objects.all()
+    achievements_data = []
+    
+    for achievement in all_achievements:
+        is_earned = earned_achievements.filter(achievement=achievement).exists()
+        achievements_data.append({
+            'achievement': achievement,
+            'is_earned': is_earned
+        })
     
     # ----------------- ANALYTICS DATA -----------------
     # Calculate key metrics for analytics
@@ -197,7 +144,7 @@ def learning_dashboard(request):
     
     platforms = {}
     for progress in course_progress:
-        platform = progress.course.provider
+        platform = progress.course.instructor
         if platform not in platforms:
             platforms[platform] = 0
         platforms[platform] += float(progress.estimated_hours_spent)
@@ -212,7 +159,7 @@ def learning_dashboard(request):
     
     # Add sample data if no real data exists (for demo/testing)
     if len(platform_data['labels']) == 0:
-        platform_data['labels'] = ['Coursera', 'Udemy', 'edX', 'Pluralsight']
+        platform_data['labels'] = ['Dr. Sarah Johnson', 'Mike Chen', 'Prof. Emily Davis', 'Jessica Park']
         platform_data['data'] = [10.5, 7.0, 5.5, 3.0]  # Sample data
     
     platform_json = json.dumps(platform_data)
@@ -235,11 +182,8 @@ def learning_dashboard(request):
     
     return render(request, 'learning/dashboard.html', {
         'course_progress': course_progress,
-        'streak': streak,
-        'skill_growth_data_json': skill_growth_data_json,
-        'achievements': achievements_data,
         'recent_activity': recent_activity,
-        'skill_courses': skill_courses,
+        'achievements': achievements_data,
         'analytics_data': analytics_data,
     })
 
@@ -250,8 +194,7 @@ def update_course_progress(request, course_id):
     
     if request.method == 'POST':
         status = request.POST.get('status')
-        hours_spent = request.POST.get('hours_spent')
-        notes = request.POST.get('notes')
+        hours_spent = request.POST.get('hours_spent') if status in ['in_progress', 'completed'] else None
         
         if hours_spent:
             try:
@@ -268,8 +211,7 @@ def update_course_progress(request, course_id):
             user=request.user,
             course=course,
             status=status,
-            hours_spent=hours_spent,
-            notes=notes
+            hours_spent=hours_spent
         )
         
         messages.success(request, f"Progress updated for {course.title}")
@@ -324,6 +266,20 @@ def confirm_course(request, course_id):
         progress_status = 'not_started'
         progress = CourseProgress.objects.get(user=request.user, course=course)
 
+    if already_tracking and progress_status == 'in_progress':
+        # If already in progress, show a status update form instead of redirecting or asking if started
+        if request.method == 'POST':
+            status = request.POST.get('status')
+            if status in ['in_progress', 'completed', 'quit']:
+                progress.status = status
+                progress.save()
+                messages.success(request, f"Course status updated to {status.replace('_', ' ').title()}.")
+                return redirect('learning:dashboard')
+        return render(request, 'learning/update_progress.html', {
+            'course': course,
+            'progress': progress
+        })
+
     if request.method == 'POST':
         confirm = request.POST.get('confirm')
         if confirm == 'yes':
@@ -346,6 +302,10 @@ def confirm_course(request, course_id):
     if not request.session.get(session_key, False):
         show_redirect = True
         request.session[session_key] = True
+
+    if request.method == 'GET' and show_redirect and course.course_url:
+        # Open the course in a new tab using JavaScript in the template
+        pass  # The template already handles this with window.open
 
     return render(request, 'learning/course_confirmation.html', {
         'course': course,
@@ -464,10 +424,8 @@ def achievements(request):
         user=request.user
     ).aggregate(Sum('estimated_hours_spent'))['estimated_hours_spent__sum'] or 0
     
-    streak = LearningStreak.objects.get(user=request.user)
-    
-    # Get total number of skills
-    total_skills = UserSkill.objects.filter(user=request.user).count()
+    # Get total number of courses enrolled
+    total_courses = CourseProgress.objects.filter(user=request.user).count()
     
     for achievement in all_achievements:
         if not earned_achievements.filter(achievement=achievement).exists():
@@ -475,11 +433,9 @@ def achievements(request):
             progress = 0
             if achievement.requirement_type == 'courses_completed':
                 progress = min(100, (completed_courses / achievement.requirement_value) * 100)
-            elif achievement.requirement_type == 'streak':
-                progress = min(100, (streak.current_streak / achievement.requirement_value) * 100)
             elif achievement.requirement_type == 'skill_level':
-                # Now using total skills instead of advanced skills
-                progress = min(100, (total_skills / achievement.requirement_value) * 100)
+                # Now using total courses instead of skills
+                progress = min(100, (total_courses / achievement.requirement_value) * 100)
             elif achievement.requirement_type == 'total_hours':
                 progress = min(100, (total_hours / achievement.requirement_value) * 100)
             
@@ -542,9 +498,52 @@ def recent_activity(request):
     })
 
 @login_required
+def course_redirect(request, course_id):
+    """
+    Redirect to external course URL and track course start
+    """
+    course = get_object_or_404(Course, id=course_id)
+    
+    # Create or update progress record to track that user started the course
+    progress, created = CourseProgress.objects.get_or_create(
+        user=request.user, 
+        course=course,
+        defaults={
+            'status': 'in_progress',
+            'estimated_hours_spent': 0,
+            'date_started': timezone.now(),
+            'date_completed': None
+        }
+    )
+    
+    # If it was already created but not started, mark as in_progress
+    if not created and progress.status == 'not_started':
+        progress.status = 'in_progress'
+        progress.date_started = timezone.now()
+        progress.save()
+    
+    # If course has an external URL, redirect there
+    if course.course_url:
+        return redirect(course.course_url)
+    else:
+        # Fallback to internal course detail if no external URL
+        messages.info(request, f"Added '{course.title}' to your learning dashboard")
+        return redirect('learning:course_detail', course_id=course.id)
+
+@login_required
 def course_detail(request, course_id):
     course = get_object_or_404(Course, id=course_id)
-    progress = get_object_or_404(CourseProgress, user=request.user, course=course)
+    # Get or create progress record - don't fail if it doesn't exist
+    progress, created = CourseProgress.objects.get_or_create(
+        user=request.user, 
+        course=course,
+        defaults={
+            'status': 'not_started',
+            'estimated_hours_spent': 0,
+            'date_started': None,
+            'date_completed': None
+        }
+    )
     # Get note history
     notes_history = progress.notes_history.all()
     return render(request, 'learning/course_detail.html', {
@@ -552,3 +551,181 @@ def course_detail(request, course_id):
         'progress': progress,
         'notes_history': notes_history
     })
+
+@login_required
+def dream_path(request):
+    """
+    Dream Path view - Shows personalized course recommendations based on user's dream role
+    and provides career path guidance.
+    """
+    user = request.user
+    
+    # Handle dream role selection
+    if request.method == 'POST':
+        selected_dream_role = request.POST.get('dream_role')
+        if selected_dream_role:
+            user.dream_role = selected_dream_role
+            user.save()
+            messages.success(request, f"Updated your dream role to: {selected_dream_role}")
+    
+    # Get user's dream role (fallback to current role if not set)
+    dream_role = user.dream_role.lower() if user.dream_role else (user.current_role.lower() if user.current_role else '')
+    
+    # Define available career paths
+    available_paths = {
+        'frontend_developer': {
+            'title': 'Frontend Developer Path',
+            'description': 'Master modern frontend technologies and build amazing user interfaces',
+            'skills': ['HTML/CSS', 'JavaScript', 'React', 'Vue.js', 'TypeScript', 'UI/UX Design'],
+            'next_roles': ['Senior Frontend Developer', 'Full Stack Developer', 'UI/UX Designer']
+        },
+        'backend_developer': {
+            'title': 'Backend Developer Path', 
+            'description': 'Build robust server-side applications and APIs',
+            'skills': ['Python', 'Node.js', 'Database Design', 'API Development', 'Cloud Services'],
+            'next_roles': ['Senior Backend Developer', 'DevOps Engineer', 'Solution Architect']
+        },
+        'fullstack_developer': {
+            'title': 'Full Stack Developer Path',
+            'description': 'Master both frontend and backend development',
+            'skills': ['JavaScript', 'Python', 'React', 'Node.js', 'Database Design', 'DevOps'],
+            'next_roles': ['Senior Full Stack Developer', 'Technical Lead', 'Solution Architect']
+        },
+        'data_scientist': {
+            'title': 'Data Scientist Path',
+            'description': 'Analyze data and build machine learning models',
+            'skills': ['Python', 'Machine Learning', 'Data Analysis', 'Statistics', 'SQL'],
+            'next_roles': ['Senior Data Scientist', 'ML Engineer', 'Data Engineering Lead']
+        },
+        'python_developer': {
+            'title': 'Python Developer Path',
+            'description': 'Master Python for web development, automation, and data science',
+            'skills': ['Python', 'Django/Flask', 'Data Analysis', 'Automation', 'API Development'],
+            'next_roles': ['Senior Python Developer', 'Data Scientist', 'Backend Lead']
+        },
+        'javascript_developer': {
+            'title': 'JavaScript Developer Path',
+            'description': 'Build modern web applications with JavaScript',
+            'skills': ['JavaScript', 'React', 'Node.js', 'TypeScript', 'Web APIs'],
+            'next_roles': ['Senior JavaScript Developer', 'Frontend Lead', 'Full Stack Developer']
+        },
+        'mobile_developer': {
+            'title': 'Mobile Developer Path',
+            'description': 'Create mobile applications for iOS and Android',
+            'skills': ['React Native', 'Flutter', 'Swift', 'Kotlin', 'Mobile UI/UX'],
+            'next_roles': ['Senior Mobile Developer', 'Mobile Architect', 'Product Manager']
+        },
+        'devops_engineer': {
+            'title': 'DevOps Engineer Path',
+            'description': 'Automate deployment, scaling, and management of applications',
+            'skills': ['Docker', 'Kubernetes', 'AWS/Azure', 'CI/CD', 'Infrastructure as Code'],
+            'next_roles': ['Senior DevOps Engineer', 'Cloud Architect', 'Platform Engineer']
+        },
+        'ui_ux_designer': {
+            'title': 'UI/UX Designer Path',
+            'description': 'Design beautiful and user-friendly interfaces',
+            'skills': ['Figma', 'User Research', 'Prototyping', 'Design Systems', 'Accessibility'],
+            'next_roles': ['Senior UX Designer', 'Design Lead', 'Product Designer']
+        }
+    }
+    
+    # Default path if role not found
+    default_path = {
+        'title': 'General Tech Career Path',
+        'description': 'Start your tech journey with foundational programming skills',
+        'skills': ['Programming Fundamentals', 'Web Development', 'Database Basics', 'Git/GitHub'],
+        'next_roles': ['Frontend Developer', 'Backend Developer', 'Data Analyst']
+    }
+    
+    # Find matching path based on dream role
+    selected_path = default_path
+    selected_dream_role_key = None
+    
+    # Try exact match first
+    if dream_role in available_paths:
+        selected_path = available_paths[dream_role]
+        selected_dream_role_key = dream_role
+    else:
+        # Try partial matches
+        for role_key, path_data in available_paths.items():
+            if any(keyword in dream_role for keyword in role_key.replace('_', ' ').split()) or \
+               any(keyword in role_key for keyword in dream_role.split()):
+                selected_path = path_data
+                selected_dream_role_key = role_key
+                break
+    
+    # Get all courses and filter relevant ones
+    all_courses = Course.objects.all()
+    
+    # Get recommended courses based on role
+    recommended_courses = []
+    beginner_courses = []
+    advanced_courses = []
+    
+    for course in all_courses:
+        course_title_lower = course.title.lower()
+        course_desc_lower = course.description.lower()
+        
+        # Check if course matches user's path
+        is_relevant = False
+        for skill in selected_path['skills']:
+            skill_lower = skill.lower()
+            # Split skill into individual words for better matching
+            skill_words = skill_lower.replace('/', ' ').split()
+            if (skill_lower in course_title_lower or 
+                skill_lower in course_desc_lower or
+                any(word in course_title_lower or word in course_desc_lower for word in skill_words if len(word) > 2)):
+                is_relevant = True
+                break
+        
+        # Also include generally relevant programming/tech courses
+        tech_keywords = ['programming', 'development', 'software', 'web', 'app', 'technology', 'computer']
+        if not is_relevant and any(keyword in course_title_lower or keyword in course_desc_lower for keyword in tech_keywords):
+            is_relevant = True
+        
+        if is_relevant:
+            # Categorize by difficulty level
+            if any(word in course_title_lower for word in ['beginner', 'intro', 'basic', 'fundamentals']):
+                beginner_courses.append(course)
+            elif any(word in course_title_lower for word in ['advanced', 'expert', 'master', 'deep']):
+                advanced_courses.append(course)
+            else:
+                recommended_courses.append(course)
+    
+    # Get user's current progress
+    user_progress = CourseProgress.objects.filter(user=user).select_related('course')
+    completed_course_ids = user_progress.filter(status='completed').values_list('course_id', flat=True)
+    in_progress_course_ids = user_progress.filter(status='in_progress').values_list('course_id', flat=True)
+    
+    # Calculate progress metrics
+    total_recommended = len(recommended_courses) + len(beginner_courses) + len(advanced_courses)
+    completed_recommended = len([c for c in recommended_courses + beginner_courses + advanced_courses 
+                                if c.id in completed_course_ids])
+    
+    progress_percentage = 0
+    if total_recommended > 0:
+        progress_percentage = int((completed_recommended / total_recommended) * 100)
+    
+    # Calculate stroke-dashoffset for progress ring (circumference = 2 * π * radius = 2 * π * 56 ≈ 351.86)
+    circumference = 351.86
+    stroke_dashoffset = circumference - (progress_percentage / 100 * circumference)
+    
+    context = {
+        'selected_path': selected_path,
+        'available_paths': available_paths,
+        'selected_dream_role_key': selected_dream_role_key,
+        'current_dream_role': user.dream_role or 'Not set',
+        'recommended_courses': recommended_courses[:6],  # Limit to 6 courses
+        'beginner_courses': beginner_courses[:4],        # Limit to 4 courses
+        'advanced_courses': advanced_courses[:4],        # Limit to 4 courses
+        'user_progress': user_progress,
+        'completed_course_ids': list(completed_course_ids),
+        'in_progress_course_ids': list(in_progress_course_ids),
+        'progress_percentage': progress_percentage,
+        'stroke_dashoffset': stroke_dashoffset,
+        'total_recommended': total_recommended,
+        'completed_recommended': completed_recommended,
+        'current_role': user.current_role or 'Getting Started',
+    }
+    
+    return render(request, 'learning/dream_path.html', context)

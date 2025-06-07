@@ -24,7 +24,7 @@
                             {% endif %}
                         </div>
                         <p>{{ course.description }}</p>
-                        <a href="{% url 'learning:confirm_course' course.id %}" class="btn btn-sm btn-outline-primary">
+                        <a href="{{ course.course_url }}" target="_blank" class="btn btn-sm btn-outline-primary">
                             <i class="fas fa-external-link-alt me-1"></i> View Course
                         </a>
                     </div>
@@ -35,27 +35,25 @@
                         <div class="mb-3">
                             <label for="status" class="form-label">Status</label>
                             <select class="form-select" id="status" name="status" required>
-                                <option value="not_started" {% if progress.status == 'not_started' %}selected{% endif %}>Not Started</option>
-                                <option value="in_progress" {% if progress.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                                <option value="in_progress" {% if progress.status == 'in_progress' or progress.status == 'completed' %}selected{% endif %}>In Progress</option>
                                 <option value="completed" {% if progress.status == 'completed' %}selected{% endif %}>Completed</option>
-                                <option value="paused" {% if progress.status == 'paused' %}selected{% endif %}>Paused</option>
+                                <option value="quit" {% if progress.status == 'quit' or progress.status == 'completed' %}selected{% endif %}>Quit</option>
                             </select>
                         </div>
-                        
-                        <div class="mb-3">
-                            <label for="hours_spent" class="form-label">Hours Spent</label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="hours_spent" name="hours_spent" 
-                                       min="0" step="0.5" value="{{ progress.estimated_hours_spent|default:0 }}">
-                                <span class="input-group-text">hours</span>
-                            </div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="notes" class="form-label">Notes</label>
-                            <textarea class="form-control" id="notes" name="notes" rows="3" 
-                                      placeholder="What have you learned so far? Any challenges?">{{ progress.notes|default:'' }}</textarea>
-                        </div>
+                        <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            const form = document.querySelector('form');
+                            const statusSelect = document.getElementById('status');
+                            form.addEventListener('submit', function(e) {
+                                if (statusSelect.value === 'quit') {
+                                    const confirmed = confirm('Are you sure you want to give up on this course?');
+                                    if (!confirmed) {
+                                        e.preventDefault();
+                                    }
+                                }
+                            });
+                        });
+                        </script>
                         
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                             <a href="{% url 'learning:dashboard' %}" class="btn btn-outline-secondary me-md-2">

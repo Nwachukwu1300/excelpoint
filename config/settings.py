@@ -40,8 +40,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     # our apps
     'users',
-    'skills',
-    'jobs',
     'learning',
     'rest_framework',
     'rest_framework_simplejwt',
@@ -65,7 +63,6 @@ TEMPLATES = [
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
             BASE_DIR / 'templates',
-            BASE_DIR / 'models' / 'skills' / 'templates',
         ],
         'APP_DIRS': True,
         'OPTIONS': {

@@ -8,14 +8,12 @@ from django.contrib.auth import login, logout, authenticate, update_session_auth
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
-from .forms import RegistrationForm, UserProfileForm, CustomSkillForm, UserAchievementForm, UserCertificationForm, UserEducationForm
-from skills.models import Skill
-from .models import User, UserAchievement, UserCertification, UserEducation
+from .forms import RegistrationForm, UserProfileForm, UserAchievementForm, UserCertificationForm, UserEducationForm
+from .models import User, UserProfile, UserAchievement, UserCertification, UserEducation
 from django.db.models import Count, Sum
 from django.utils import timezone
 from datetime import timedelta
-from learning.models import CourseProgress, LearningStreak, UserAchievement as LearningUserAchievement
-from skills.models import UserSkill
+from learning.models import CourseProgress, UserAchievement as LearningUserAchievement
 
 
 def register_user(request):
@@ -180,18 +178,11 @@ def user_profile(request):
             user = request.user
             serializer = UserSerializer(user)
             
-            # Get skill information
-            skills_from_resume = [skill for skill in user.skills.all() if skill.category == 'resume_extracted']
-            skills_manually_added = [skill for skill in user.skills.all() if skill.category != 'resume_extracted']
-            
             return Response({
                 'status': 'success',
                 'profile_info': {
                     'details': serializer.data,
                     'completion_percentage': calculate_profile_completion(user),
-                    'skills_count': user.skills.count(),
-                    'has_resume_extracted_skills': len(skills_from_resume) > 0,
-                    'has_manually_added_skills': len(skills_manually_added) > 0
                 },
                 'update_template': {
                     'current_role': 'enter_role',
@@ -272,177 +263,6 @@ def change_password(request):
             'details': str(e)
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-# Skill management views
-@login_required
-def manage_skills(request):
-    user_skills = request.user.skills.all()
-    # Get skills not associated with the user
-    available_skills = Skill.objects.exclude(id__in=user_skills.values_list('id', flat=True))
-    
-    return render(request, 'users/manage_skills.html', {
-        'user_skills': user_skills,
-        'available_skills': available_skills
-    })
-
-@login_required
-def add_skill(request):
-    if request.method == 'POST':
-        skill_id = request.POST.get('skill_id')
-        if skill_id:
-            skill = get_object_or_404(Skill, id=skill_id)
-            if skill not in request.user.skills.all():
-                request.user.skills.add(skill)
-                messages.success(request, f"Skill '{skill.name}' added to your profile.")
-            else:
-                messages.info(request, f"Skill '{skill.name}' is already in your profile.")
-        return redirect('users:manage_skills')
-    return redirect('users:manage_skills')
-
-@login_required
-def remove_skill(request, skill_id):
-    skill = get_object_or_404(Skill, id=skill_id)
-    if skill in request.user.skills.all():
-        request.user.skills.remove(skill)
-        messages.success(request, f"Skill '{skill.name}' removed from your profile.")
-    return redirect('users:manage_skills')
-
-@login_required
-def add_custom_skill(request):
-    """Add a custom skill manually."""
-    
-    if request.method == 'POST':
-        form = CustomSkillForm(request.POST)
-        if form.is_valid():
-            # Check if user already has this skill
-            skill_name = form.cleaned_data['name']
-            
-            # Check if skill exists in either direct skills or M2M skills
-            user_direct_skills = [s.name.lower() for s in request.user.user_skills_direct.all()]
-            user_m2m_skills = [s.name.lower() for s in request.user.skills.all()]
-            
-            if skill_name.lower() in user_direct_skills or skill_name.lower() in user_m2m_skills:
-                messages.warning(request, f"You already have the skill '{skill_name}'")
-                return redirect('users:user_skills')
-            
-            # Check for existing skill with same name but no user
-            try:
-                existing_skill = Skill.objects.get(name__iexact=skill_name, user__isnull=True)
-                # Assign it to this user
-                existing_skill.user = request.user
-                existing_skill.category = form.cleaned_data['category']
-                existing_skill.description = form.cleaned_data['description']
-                existing_skill.save()
-                
-                # Add to M2M if not already there
-                if existing_skill not in request.user.skills.all():
-                    request.user.skills.add(existing_skill)
-                
-                messages.success(request, f"Added skill: {skill_name}")
-                return redirect('users:user_skills')
-            except Skill.DoesNotExist:
-                # No existing skill, we'll create a new one
-                pass
-            except Skill.MultipleObjectsReturned:
-                # Multiple skills with the same name but no user
-                existing_skill = Skill.objects.filter(name__iexact=skill_name, user__isnull=True).first()
-                existing_skill.user = request.user
-                existing_skill.category = form.cleaned_data['category']
-                existing_skill.description = form.cleaned_data['description']
-                existing_skill.save()
-                
-                # Add to M2M if not already there
-                if existing_skill not in request.user.skills.all():
-                    request.user.skills.add(existing_skill)
-                
-                messages.success(request, f"Added skill: {skill_name}")
-                return redirect('users:user_skills')
-            
-            # Create new skill directly associated with the user
-            skill = Skill.objects.create(
-                name=skill_name,
-                category=form.cleaned_data['category'],
-                description=form.cleaned_data['description'],
-                user=request.user
-            )
-            
-            # Also add to M2M relationship for compatibility
-            request.user.skills.add(skill)
-            
-            messages.success(request, f"Added skill: {skill_name}")
-            return redirect('users:user_skills')
-    else:
-        form = CustomSkillForm()
-    
-    return render(request, 'users/add_skill.html', {'form': form})
-
-@login_required
-def user_skills_view(request):
-    """View the current user's skills."""
-    # Get direct skills (owned by the user)
-    direct_skills = request.user.user_skills_direct.all()
-    
-    # Get skills from the ManyToMany relationship
-    m2m_skills = request.user.skills.all()
-    
-    # Combine all skills (excluding duplicates)
-    all_skill_ids = set(direct_skills.values_list('id', flat=True)) | set(m2m_skills.values_list('id', flat=True))
-    all_skills = Skill.objects.filter(id__in=all_skill_ids)
-    
-    # Group skills by category
-    skills_by_category = {}
-    for skill in all_skills:
-        category = skill.category or "Uncategorized"
-        if category not in skills_by_category:
-            skills_by_category[category] = []
-        skills_by_category[category].append(skill)
-    
-    context = {
-        'direct_skills': direct_skills,
-        'm2m_skills': m2m_skills,
-        'skills_by_category': skills_by_category
-    }
-    
-    return render(request, 'users/skills.html', context)
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def user_skills_api(request):
-    """
-    Get all skills for the current user (API endpoint)
-    """
-    try:
-        user = request.user
-        # Get all user skills (both direct and M2M)
-        direct_skills = user.user_skills_direct.all()
-        m2m_skills = user.skills.all()
-        
-        # Combine all skills (excluding duplicates)
-        all_skill_ids = set(direct_skills.values_list('id', flat=True)) | set(m2m_skills.values_list('id', flat=True))
-        all_skills = Skill.objects.filter(id__in=all_skill_ids)
-        
-        # Format skill data for API response
-        skill_data = [
-            {
-                'id': skill.id,
-                'name': skill.name,
-                'category': skill.category,
-                'is_direct': skill in direct_skills,
-                'owner': skill.user.username if skill.user else None
-            } 
-            for skill in all_skills
-        ]
-        
-        return Response({
-            'status': 'success',
-            'count': len(skill_data),
-            'skills': skill_data
-        })
-    except Exception as e:
-        return Response({
-            'error': 'Failed to fetch skills',
-            'details': str(e)
-        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 @login_required
 def profile(request):
     """Display user profile with learning stats and achievements"""
@@ -451,17 +271,6 @@ def profile(request):
         user=request.user,
         status='completed'
     ).count()
-    
-    total_hours = CourseProgress.objects.filter(
-        user=request.user
-    ).aggregate(Sum('estimated_hours_spent'))['estimated_hours_spent__sum'] or 0
-    
-    streak = LearningStreak.objects.get_or_create(user=request.user)[0]
-    
-    skills_count = UserSkill.objects.filter(user=request.user).count()
-    
-    # Get user's skills
-    user_skills = UserSkill.objects.filter(user=request.user)
     
     # Calculate profile completion percentage
     profile_completion = calculate_profile_completion(request.user)
@@ -520,14 +329,10 @@ def profile(request):
     
     return render(request, 'users/profile.html', {
         'completed_courses': completed_courses,
-        'total_hours': total_hours,
-        'current_streak': streak.current_streak,
-        'skills_count': skills_count,
-        'user_skills': user_skills,
+        'profile_completion': profile_completion,
         'recent_activity': recent_activity,
         'recent_achievements': recent_achievements,
         'achievements_count': achievements_count,
-        'profile_completion': profile_completion,
         'enrolled_courses': enrolled_courses
     })
 

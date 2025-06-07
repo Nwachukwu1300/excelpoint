@@ -1,7 +1,7 @@
-# Excel Point - Career Development Platform
+# Career Nexus - Career Development Platform
 
 ## Project Overview
-Excel Point is a comprehensive career development platform that helps users manage their professional growth through skill assessment, job matching, and personalized learning recommendations.
+Career Nexus is a comprehensive career development platform that helps users manage their professional growth through learning management, progress tracking, and career development tools.
 
 ## Current Implementation Status
 
@@ -9,67 +9,88 @@ Excel Point is a comprehensive career development platform that helps users mana
 - **User Authentication System**
  - Registration with email validation
  - Login/Logout functionality
- - Profile management
+ - Profile management with achievements, certifications, and education
  - Password change capabilities
  - Session-based authentication
-- **Skill Extraction and Analysis**
- - Pattern-based skill extraction (no dependencies required)
- - Optional NLP-based skill extraction (requires spaCy)
- - Skill gap analysis against job roles
- - Course recommendations based on missing skills
- - API endpoints for skill extraction
+
+- **Learning Management System**
+ - Course catalog and progress tracking
+ - Learning dashboard with statistics
+ - Resource library with external learning materials
+ - Achievement system and learning streaks
+ - Saved resources functionality
+
+- **User Profile Management**
+ - Comprehensive user profiles
+ - Achievement tracking
+ - Certification management
+ - Education history
+ - Profile completion tracking
 
 ### Pending Features
 - **API Integrations**
- - Job search (LinkedIn, Glassdoor)
  - Learning platforms (Coursera, Udemy)
  - Portfolio integration
  - Trend analysis
 - **Core Functionality**
- - Skill assessment
- - Job matching
- - Course recommendations
  - Market trend analysis
+ - Advanced course recommendations
 
 ## Technical Stack
 - **Backend**: Django/Python
-- **Database**: PostgreSQL
+- **Database**: SQLite (development) / PostgreSQL (production)
 - **Authentication**: Session-based
 - **API Framework**: Django REST Framework
+- **Frontend**: Bootstrap 5, HTML/CSS/JavaScript
 
-## Skill Extraction API
+## Getting Started
 
-Excel Point provides a flexible skill extraction system with two operational modes:
+### Prerequisites
+- Python 3.8+
+- pip
+- Virtual environment (recommended)
 
-1. **Basic Mode**: Pattern-based extraction that works without additional dependencies
-2. **Advanced Mode**: NLP-powered extraction that requires spaCy
+### Installation
+1. Clone the repository
+2. Create and activate virtual environment:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
+3. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+4. Run migrations:
+   ```bash
+   python manage.py migrate
+   ```
+5. Create superuser:
+   ```bash
+   python manage.py createsuperuser
+   ```
+6. Run the development server:
+   ```bash
+   python manage.py runserver
+   ```
 
-### Using the Skill Extraction API
+## Features Overview
 
-#### Web Interface
-- Access the basic skill extraction form at: `/skills/models/api/basic-extract-skills/`
-- This interface allows you to extract skills from text without requiring spaCy
+### Learning Dashboard
+- Track course progress and completion
+- View learning statistics and achievements
+- Monitor learning streaks
+- Access personalized recommendations
 
-#### Programmatic API
-```python
-import requests
-import json
+### Resource Library
+- Browse external learning resources
+- Save resources for later
+- Filter by platform and difficulty level
+- Track resource usage
 
-# Example API call
-response = requests.post(
-    "http://localhost:8000/skills/models/api/basic-extract-skills/",
-    headers={"Content-Type": "application/json"},
-    data=json.dumps({
-        "text": "Your job description or resume text",
-        "min_confidence": 0.7
-    })
-)
-
-# Process results
-if response.status_code == 200:
-    skills_data = response.json()
-    print(f"Found {skills_data['skills_count']} skills")
-```
-
-See `skills/sample_skill_extractor_usage.py` for a complete example.
+### User Profiles
+- Manage personal information
+- Track achievements and certifications
+- View learning progress
+- Profile completion tracking
 

@@ -2,9 +2,36 @@ from django.db import models
 from django.conf import settings
 from django.utils import timezone
 from django.contrib.auth import get_user_model
-from skills.models import Course, Skill
 
 User = get_user_model()
+
+# Import Course model from learning app itself
+class Course(models.Model):
+    """
+    Model for courses in the learning platform.
+    """
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    instructor = models.CharField(max_length=100)
+    duration_hours = models.IntegerField(default=0)
+    difficulty_level = models.CharField(
+        max_length=20,
+        choices=[
+            ('beginner', 'Beginner'),
+            ('intermediate', 'Intermediate'),
+            ('advanced', 'Advanced')
+        ],
+        default='beginner'
+    )
+    course_url = models.URLField(
+        blank=True,
+        null=True,
+        help_text="External link to the course (e.g., Coursera, Udemy, etc.)"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return self.title
 
 class CourseProgressNote(models.Model):
     """Model to store the history of notes and updates for course progress"""
@@ -33,7 +60,6 @@ class CourseProgress(models.Model):
     date_completed = models.DateTimeField(null=True, blank=True)
     last_activity_date = models.DateTimeField(auto_now=True)
     estimated_hours_spent = models.DecimalField(max_digits=5, decimal_places=1, default=0)
-    notes = models.TextField(blank=True, help_text="Current notes about this course")
     
     class Meta:
         unique_together = ('user', 'course')
@@ -48,69 +74,7 @@ class CourseProgress(models.Model):
         if self.status == 'completed' and not self.date_completed:
             self.date_completed = timezone.now()
         
-        # If notes have changed, create a new note in history
-        if self.pk:  # Only for existing instances
-            old_instance = CourseProgress.objects.get(pk=self.pk)
-            if old_instance.notes != self.notes and self.notes:
-                CourseProgressNote.objects.create(
-                    progress=self,
-                    note=self.notes
-                )
-        
         super().save(*args, **kwargs)
-        
-        # Update user skills when a course is completed
-        if self.status == 'completed':
-            self.update_user_skills()
-    
-    def update_user_skills(self):
-        """Update user skills when a course is completed"""
-        from skills.models import UserSkill
-        
-        # Get all skills associated with this course
-        course_skills = self.course.courseskill_set.all()
-        
-        for course_skill in course_skills:
-            # Check if user already has this skill
-            user_skill, created = UserSkill.objects.get_or_create(
-                user=self.user,
-                skill_name=course_skill.skill_name,
-                defaults={
-                    'is_verified': False
-                }
-            )
-            
-            # If not created, just ensure it's marked as verified
-            if not created and not user_skill.is_verified:
-                user_skill.is_verified = True
-                user_skill.save()
-
-class LearningStreak(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='learning_streak')
-    current_streak = models.IntegerField(default=0)
-    longest_streak = models.IntegerField(default=0)
-    last_activity_date = models.DateField(null=True, blank=True)
-    
-    def update_streak(self):
-        today = timezone.now().date()
-        
-        if not self.last_activity_date:
-            # First activity
-            self.current_streak = 1
-            self.longest_streak = 1
-        elif self.last_activity_date == today:
-            # Already logged activity today
-            pass
-        elif self.last_activity_date == today - timezone.timedelta(days=1):
-            # Consecutive day
-            self.current_streak += 1
-            self.longest_streak = max(self.current_streak, self.longest_streak)
-        else:
-            # Streak broken
-            self.current_streak = 1
-        
-        self.last_activity_date = today
-        self.save()
 
 class LearningResource(models.Model):
     """
@@ -156,12 +120,6 @@ class LearningResource(models.Model):
         max_length=20,
         choices=LEVEL_CHOICES,
         help_text="Course difficulty level"
-    )
-
-    # Skill relationship
-    related_skills = models.ManyToManyField(
-        'skills.Skill',
-        help_text="Skills this course helps develop"
     )
 
     # Tracking information

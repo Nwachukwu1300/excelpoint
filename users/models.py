@@ -20,6 +20,12 @@ class User(AbstractUser):
         help_text="User's current job position"
     )
 
+    dream_role = models.CharField(
+        max_length=100, 
+        blank=True, 
+        help_text="User's desired career goal"
+    )
+
     experience_level = models.CharField(
         max_length=20, 
         choices=EXPERIENCE_LEVELS,
@@ -27,21 +33,6 @@ class User(AbstractUser):
         help_text="User's current experience level"
     )
 
-    dream_job = models.ForeignKey(
-        'skills.CareerRole',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='aspiring_users',
-        help_text="User's target career role"
-    )
-
-    skills = models.ManyToManyField(
-        'skills.Skill', 
-        blank=True,
-        related_name='user_skills',
-        help_text="Skills associated with the user")
-    
     bio = models.TextField(
         blank=True,
         help_text="Professional summary and background")

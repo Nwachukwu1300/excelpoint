@@ -12,20 +12,15 @@
                 </div>
                 <div class="card-body">
                     <div class="mb-3">
-                        <span class="badge bg-secondary me-2">{{ course.provider }}</span>
-                        <span class="badge bg-info me-2">{{ course.difficulty }}</span>
-                        {% if course.is_free %}
-                        <span class="badge bg-success">Free</span>
-                        {% else %}
-                        <span class="badge bg-warning text-dark">Paid</span>
-                        {% endif %}
+                        <span class="badge bg-secondary me-2">{{ course.instructor }}</span>
+                        <span class="badge bg-info me-2">{{ course.get_difficulty_level_display }}</span>
+                        <span class="badge bg-primary">{{ course.duration_hours }} hours</span>
                     </div>
                     <p>{{ course.description }}</p>
                     <hr>
                     <h5>Your Progress</h5>
                     <ul class="list-unstyled mb-3">
                         <li><strong>Status:</strong> {{ progress.get_status_display }}</li>
-                        <li><strong>Hours Spent:</strong> {{ progress.estimated_hours_spent }}</li>
                         <li><strong>Last Updated:</strong> {{ progress.last_activity_date|date:"M d, Y H:i" }}</li>
                     </ul>
                     <h5>Your Notes</h5>

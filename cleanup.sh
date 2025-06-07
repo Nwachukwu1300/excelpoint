@@ -14,10 +14,6 @@ rm -f db.sqlite3
 echo "Removing cache directory..."
 rm -rf cache/
 
-# Remove sample/test files
-echo "Removing sample files..."
-rm -f parsed_resume.json sample_resume.txt
-
 # Remove all __pycache__ directories
 echo "Removing Python cache files..."
 find . -name "__pycache__" -type d -exec rm -rf {} +
@@ -83,8 +79,6 @@ Thumbs.db
 
 # Custom
 cache/
-parsed_resume.json
-sample_resume.txt
 EOF
 fi
 

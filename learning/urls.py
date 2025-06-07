@@ -5,6 +5,8 @@ app_name = 'learning'
 
 urlpatterns = [
     path('dashboard/', views.learning_dashboard, name='dashboard'),
+    path('dream-path/', views.dream_path, name='dream_path'),
+    path('course/<int:course_id>/start/', views.course_redirect, name='course_start'),
     path('course/<int:course_id>/progress/', views.update_course_progress, name='update_progress'),
     path('course/<int:course_id>/track/', views.track_course, name='track_course'),
     path('course/<int:course_id>/confirm/', views.confirm_course, name='confirm_course'),

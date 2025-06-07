@@ -12,8 +12,7 @@ django.setup()
 # Import Django models
 from django.contrib.auth import get_user_model
 from users.models import UserProfile, UserEducation
-from skills.models import Course, Skill, UserSkill
-from learning.models import CourseProgress
+from learning.models import Course, CourseProgress
 
 User = get_user_model()
 
@@ -65,7 +64,6 @@ degrees = [
 def create_users(num_users=10):
     """Create sample users with real names and assign them courses"""
     courses = list(Course.objects.all())
-    skills = list(Skill.objects.all())
     
     if not courses:
         print("No courses found in the database!")
@@ -125,20 +123,6 @@ def create_users(num_users=10):
                 graduation_date=graduation_year,
                 gpa=f"{random.uniform(3.0, 4.0):.2f}"
             )
-        
-        # Assign random skills
-        num_skills = random.randint(5, 15)
-        user_skills = random.sample(skills, min(num_skills, len(skills)))
-        for skill in user_skills:
-            # Create UserSkill entry with just skill_name using get_or_create
-            UserSkill.objects.get_or_create(
-                user=user,
-                skill_name=skill.name,
-                defaults={'is_verified': random.choice([True, False])}
-            )
-            
-            # Also add to many-to-many relationship
-            user.skills.add(skill)
         
         # Enroll in random courses
         num_courses = random.randint(3, 8)

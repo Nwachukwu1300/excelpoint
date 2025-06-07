@@ -37,19 +37,12 @@
                     <li class="nav-item">
                         <a class="nav-link" href="/"><i class="fas fa-home"></i> Home</a>
                     </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-cogs"></i> Skills
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <li><a class="dropdown-item" href="{% url 'skills:dream_job_path' %}"><i class="fas fa-star"></i> Dream Job Path</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="/skills/models/parser/"><i class="fas fa-file-alt"></i> File Parser</a></li>
-                        </ul>
-                    </li>
                     <!-- In your navigation menu -->
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'learning:dashboard' %}"><i class="fas fa-tachometer-alt"></i> Learning Dashboard</a>
+                        <a class="nav-link" href="{% url 'learning:dashboard' %}"><i class="fas fa-tachometer-alt"></i> Courses Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'learning:dream_path' %}"><i class="fas fa-route"></i> Dream Path</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'learning:resource_library' %}"><i class="fas fa-book"></i> Learning Library</a>
@@ -64,7 +57,6 @@
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                             {% if user.is_authenticated %}
                                 <li><a class="dropdown-item" href="{% url 'users:profile' %}"><i class="fas fa-id-card"></i> My Profile</a></li>
-                                <li><a class="dropdown-item" href="{% url 'users:user_skills' %}"><i class="fas fa-tools"></i> Manage Skills</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="{% url 'users:logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
                             {% else %}

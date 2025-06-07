@@ -4,9 +4,9 @@
 {% block title %}Start Course - {{ course.title }}{% endblock %}
 
 {% block content %}
-{% if show_redirect %}
+{% if show_redirect and course.course_url %}
 <script>
-    window.open("{{ course.url }}", "_blank");
+    window.open("{{ course.course_url }}", "_blank");
 </script>
 {% endif %}
 <div class="container py-4">

@@ -82,20 +82,22 @@
     <h2 class="mb-3">Earned Achievements</h2>
     <div class="row mb-5">
         {% for user_achievement in earned_achievements %}
-        <div class="col-md-4 mb-4">
-            <div class="card achievement-card earned h-100 shadow-sm">
-                <div class="card-body text-center">
-                    <div class="achievement-icon">
-                        <i class="fas {{ user_achievement.achievement.icon }}"></i>
-                    </div>
-                    <h3 class="h5">{{ user_achievement.achievement.name }}</h3>
-                    <p>{{ user_achievement.achievement.description }}</p>
-                    <div class="mt-auto text-muted">
-                        Earned on {{ user_achievement.date_earned|date:"M d, Y" }}
+            {% if user_achievement.achievement.requirement_type != 'streak' and user_achievement.achievement.requirement_type != 'total_hours' %}
+            <div class="col-md-4 mb-4">
+                <div class="card achievement-card earned h-100 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="achievement-icon">
+                            <i class="fas {{ user_achievement.achievement.icon }}"></i>
+                        </div>
+                        <h3 class="h5">{{ user_achievement.achievement.name }}</h3>
+                        <p>{{ user_achievement.achievement.description }}</p>
+                        <div class="mt-auto text-muted">
+                            Earned on {{ user_achievement.date_earned|date:"M d, Y" }}
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+            {% endif %}
         {% endfor %}
     </div>
     {% endif %}
@@ -105,24 +107,26 @@
     <h2 class="mb-3">Achievements to Unlock</h2>
     <div class="row">
         {% for achievement_data in unearned_achievements %}
-        <div class="col-md-4 mb-4">
-            <div class="card achievement-card unearned h-100 shadow-sm">
-                <div class="card-body text-center">
-                    <div class="achievement-icon">
-                        <i class="fas {{ achievement_data.achievement.icon }}"></i>
-                    </div>
-                    <h3 class="h5">{{ achievement_data.achievement.name }}</h3>
-                    <p>{{ achievement_data.achievement.description }}</p>
-                    <div class="mt-auto">
-                        <div class="progress mb-2">
-                            <div class="progress-bar bg-info" role="progressbar" style='width:{{ achievement_data.progress }}%;'
-                                aria-valuenow="{{ achievement_data.progress }}" aria-valuemin="0" aria-valuemax="100"></div>
+            {% if achievement_data.achievement.requirement_type != 'streak' and achievement_data.achievement.requirement_type != 'total_hours' %}
+            <div class="col-md-4 mb-4">
+                <div class="card achievement-card unearned h-100 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="achievement-icon">
+                            <i class="fas {{ achievement_data.achievement.icon }}"></i>
                         </div>
-                        <small class="text-muted">{{ achievement_data.progress }}% progress</small>
+                        <h3 class="h5">{{ achievement_data.achievement.name }}</h3>
+                        <p>{{ achievement_data.achievement.description }}</p>
+                        <div class="mt-auto">
+                            <div class="progress mb-2">
+                                <div class="progress-bar bg-info" role="progressbar" style='width:{{ achievement_data.progress }}%;'
+                                    aria-valuenow="{{ achievement_data.progress }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <small class="text-muted">{{ achievement_data.progress }}% progress</small>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+            {% endif %}
         {% endfor %}
     </div>
     {% endif %}
