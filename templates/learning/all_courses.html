@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}All My Courses{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h1 class="mb-4">All My Courses</h1>
+    <div class="row">
+        {% if all_progress %}
+            {% for progress in all_progress %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ progress.course.title }}</h5>
+                        <div class="mb-2">
+                            <span class="badge bg-secondary me-2">{{ progress.course.instructor }}</span>
+                            <span class="badge bg-info me-2">{{ progress.course.get_difficulty_level_display }}</span>
+                            {% if progress.course.is_free %}
+                                <span class="badge bg-success">Free</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark">Paid</span>
+                            {% endif %}
+                        </div>
+                        <p class="card-text">{{ progress.course.description|truncatechars:100 }}</p>
+                        <div class="mb-2">
+                            <strong>Status:</strong> {{ progress.get_status_display }}<br>
+                            <strong>Last Updated:</strong> {{ progress.last_activity_date|date:"M d, Y H:i" }}
+                        </div>
+                        <a href="{{ progress.course.course_url }}" target="_blank" class="btn btn-sm btn-outline-primary mb-2">
+                            <i class="fas fa-external-link-alt me-1"></i> View Course
+                        </a>
+                        <a href="{% url 'learning:update_progress' progress.course.id %}" class="btn btn-sm btn-primary mb-2">
+                            <i class="fas fa-edit me-1"></i> Update Progress
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="alert alert-info">No courses found.</div>
+            </div>
+        {% endif %}
+    </div>
+    <a href="{% url 'learning:dashboard' %}" class="btn btn-outline-secondary mt-3"><i class="fas fa-arrow-left me-1"></i> Back to Dashboard</a>
+</div>
+{% endblock %} 

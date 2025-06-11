@@ -469,5 +469,41 @@
         <p class="text-muted mb-4">Update your profile to get more personalized recommendations</p>
         <a href="{% url 'users:edit_profile' %}" class="btn btn-primary btn-lg">Update My Profile</a>
     </div>
+
+    <!-- Add Custom Course Form -->
+    <div class="container mb-5">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body p-4">
+                <h2 class="h5 mb-3"><i class="fas fa-plus text-primary me-2"></i>Add a Custom Course</h2>
+                <form method="post" action="" class="row g-3 align-items-end">
+                    {% csrf_token %}
+                    <div class="col-md-5">
+                        <label for="custom_course_title" class="form-label">Course Title</label>
+                        <input type="text" name="custom_course_title" id="custom_course_title" class="form-control" required>
+                    </div>
+                    <div class="col-md-5">
+                        <label for="custom_course_url" class="form-label">Course URL</label>
+                        <input type="url" name="custom_course_url" id="custom_course_url" class="form-control" required>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="custom_course_is_free" class="form-label">Type</label>
+                        <select name="custom_course_is_free" id="custom_course_is_free" class="form-select" required>
+                            <option value="free">Free</option>
+                            <option value="paid">Paid</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="custom_course_hours" class="form-label">Estimated Hours</label>
+                        <input type="number" name="custom_course_hours" id="custom_course_hours" class="form-control" min="1" step="1" required>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" name="add_custom_course" class="btn btn-primary w-100">
+                            <i class="fas fa-plus me-1"></i>Add Course
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %} 

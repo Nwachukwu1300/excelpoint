@@ -18,4 +18,5 @@ urlpatterns = [
     path('resources/add/', views.add_resource, name='add_resource'),
     path('resources/<int:resource_id>/edit/', views.edit_resource, name='edit_resource'),
     path('resources/<int:resource_id>/delete/', views.delete_resource, name='delete_resource'),
+    path('courses/all/', views.all_courses, name='all_courses'),
 ]

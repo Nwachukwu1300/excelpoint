@@ -29,6 +29,7 @@ class Course(models.Model):
         help_text="External link to the course (e.g., Coursera, Udemy, etc.)"
     )
     created_at = models.DateTimeField(auto_now_add=True)
+    is_free = models.BooleanField(default=True, help_text="Is this course free?")
     
     def __str__(self):
         return self.title

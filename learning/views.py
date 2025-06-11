@@ -710,6 +710,39 @@ def dream_path(request):
     circumference = 351.86
     stroke_dashoffset = circumference - (progress_percentage / 100 * circumference)
     
+    # Handle custom course addition
+    if request.method == 'POST' and 'add_custom_course' in request.POST:
+        custom_title = request.POST.get('custom_course_title')
+        custom_url = request.POST.get('custom_course_url')
+        custom_is_free = request.POST.get('custom_course_is_free')
+        custom_hours = request.POST.get('custom_course_hours')
+        try:
+            custom_hours = int(custom_hours)
+        except (TypeError, ValueError):
+            custom_hours = 0
+        is_free = True if custom_is_free == 'free' else False
+        if custom_title and custom_url:
+            # Create the custom course if it doesn't exist
+            course, created = Course.objects.get_or_create(
+                title=custom_title,
+                defaults={
+                    'description': 'Custom course added by user',
+                    'instructor': user.get_full_name() or user.username,
+                    'duration_hours': custom_hours,
+                    'difficulty_level': 'beginner',
+                    'course_url': custom_url,
+                    'is_free': is_free
+                }
+            )
+            # Add to user's progress as in_progress
+            CourseProgress.objects.get_or_create(
+                user=user,
+                course=course,
+                defaults={'status': 'in_progress'}
+            )
+            messages.success(request, f'Custom course "{custom_title}" added!')
+            return redirect('learning:dream_path')
+    
     context = {
         'selected_path': selected_path,
         'available_paths': available_paths,
@@ -729,3 +762,11 @@ def dream_path(request):
     }
     
     return render(request, 'learning/dream_path.html', context)
+
+@login_required
+def all_courses(request):
+    user = request.user
+    all_progress = CourseProgress.objects.filter(user=user, status__in=['in_progress', 'completed']).select_related('course').order_by('-last_activity_date')
+    return render(request, 'learning/all_courses.html', {
+        'all_progress': all_progress
+    })
