@@ -1,0 +1,49 @@
+# Product Requirements Document: Fix Duplicate Flashcard/Quiz Generation Issue
+
+## Problem Statement
+Users are experiencing an issue where flashcards and quizzes generated from different subject materials are identical, regardless of which specific material is selected. This prevents personalized learning content and defeats the purpose of material-specific AI generation.
+
+## Root Cause Investigation Areas
+1. Content extraction pipeline - verify unique content is being extracted per material
+2. AI prompt generation - ensure material-specific content is being passed to OpenAI
+3. Database storage and retrieval - check if content chunks are properly associated with materials
+4. Caching mechanisms - identify any unintended content reuse or caching
+
+## Technical Requirements
+
+### Content Processing Verification
+- Verify that each uploaded material creates unique ContentChunk entries
+- Ensure material-specific text extraction is working correctly
+- Validate that embedding vectors are unique per material
+- Check that content chunks are properly associated with their source materials
+
+### AI Generation Pipeline Analysis
+- Review the flashcard generation process in tasks.py and llm_utils.py
+- Verify that material-specific content is being passed to OpenAI prompts
+- Ensure no content mixing between different materials
+- Validate that each generation call uses the correct material's content
+
+### Database Integrity Checks
+- Verify foreign key relationships between materials and generated content
+- Check for any content duplication in the database
+- Ensure proper isolation between different subjects and materials
+- Validate that queries filter content by specific material IDs
+
+### Implementation Fixes
+- Fix any content mixing issues in the generation pipeline
+- Implement proper content isolation per material
+- Add logging and debugging capabilities to track content flow
+- Create validation mechanisms to prevent content duplication
+
+## Acceptance Criteria
+1. Each uploaded material generates unique flashcards based on its specific content
+2. Quiz questions are material-specific and reflect the actual content of each document
+3. No content leakage between different materials or subjects
+4. Clear logging shows which material content is being used for each generation
+5. Database queries properly filter and associate content with correct materials
+
+## Success Metrics
+- 100% unique flashcard generation per unique material
+- Material-specific quiz questions that accurately reflect document content
+- Zero instances of identical content across different materials
+- Comprehensive logging and debugging capabilities implemented 

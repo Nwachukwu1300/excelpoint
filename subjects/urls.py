@@ -25,4 +25,13 @@ urlpatterns = [
     # Quiz History URLs
     path('quiz/history/', views.quiz_history, name='quiz_history'),
     path('quiz/attempt/<int:attempt_id>/detail/', views.quiz_attempt_detail, name='quiz_attempt_detail'),
+    
+    # XP Chatbot API URLs - Subject-specific endpoints
+    path('subjects/<int:subject_id>/chat/session/', views.ChatSessionCreateAPIView.as_view(), name='chat-session-create'),
+    path('subjects/<int:subject_id>/chat/sessions/', views.ChatSessionListAPIView.as_view(), name='chat-session-list'),
+    path('subjects/<int:subject_id>/chat/messages/', views.ChatMessageListCreateAPIView.as_view(), name='chat-messages'),
+    path('subjects/<int:subject_id>/chat/stats/', views.ChatStatsAPIView.as_view(), name='chat-stats'),
+    
+    # XP Chatbot API URLs - Session management
+    path('chat/sessions/<int:pk>/', views.ChatSessionDetailAPIView.as_view(), name='chat-session-detail'),
 ] + router.urls 

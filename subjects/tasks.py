@@ -24,6 +24,7 @@ import re
 from django.conf import settings
 from .utils import extract_text_from_pdf, chunk_text
 from django.utils import timezone
+from django.db import models
 
 logger = logging.getLogger(__name__)
 
@@ -32,26 +33,29 @@ client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
 @shared_task
 def process_material(material_id: int):
-    """Process uploaded material and create chunks."""
+    """Process uploaded material and create chunks with enhanced embedding status tracking."""
     try:
         material = SubjectMaterial.objects.get(id=material_id)
         material.status = 'PROCESSING'
         material.save()
         
-        processor = ContentProcessor()
+        # Initialize ContentProcessor with batch processing for large files
+        processor = ContentProcessor(memory_threshold=0.7)  # Use batch processing if memory > 70%
         file_path = material.file.path
         
-        # Process the file using the unified processor
+        # Process the file using the unified processor with automatic batch processing
         chunks_data = processor.process_file(file_path)
         
-        # Create ContentChunk objects
+        # Create ContentChunk objects with embedding status tracking
         for chunk_data in chunks_data:
-            ContentChunk.objects.create(
+            chunk = ContentChunk.objects.create(
                 material=material,
                 content=chunk_data['content'],
                 chunk_index=chunk_data['chunk_index'],
-                embedding_vector=chunk_data['embedding_vector']
+                embedding_vector=chunk_data['embedding_vector'],
+                embedding_status='completed'  # Mark as completed since we just generated it
             )
+            logger.debug(f"Created chunk {chunk.chunk_index} with embedding for material {material.file.name}")
         
         # Generate flashcards and quiz questions
         generate_flashcards.delay(material_id)
@@ -60,9 +64,16 @@ def process_material(material_id: int):
         material.status = 'COMPLETED'
         material.save()
         
+        logger.info(f"Successfully processed material {material.file.name} with {len(chunks_data)} chunks")
+        
     except Exception as e:
-        material.status = 'FAILED'
-        material.save()
+        logger.exception(f"Error processing material {material_id}: {str(e)}")
+        try:
+            material = SubjectMaterial.objects.get(id=material_id)
+            material.status = 'FAILED'
+            material.save()
+        except:
+            pass
         raise e
 
 @shared_task
@@ -696,3 +707,305 @@ def _parse_dynamic_response(response):
         questions.append(current_question)
     
     return questions 
+
+
+# Enhanced Embedding Generation Tasks
+
+@shared_task(bind=True, max_retries=3)
+def process_subject_embeddings(self, subject_id: int):
+    """
+    Process embeddings for all materials in a subject.
+    Handles materials that don't have embeddings or have failed embedding generation.
+    """
+    try:
+        from .models import Subject, SubjectMaterial, ContentChunk
+        
+        subject = Subject.objects.get(id=subject_id)
+        logger.info(f"Starting embedding processing for subject: {subject.name} (ID: {subject_id})")
+        
+        # Get all materials for this subject
+        materials = SubjectMaterial.objects.filter(subject=subject)
+        
+        processed_count = 0
+        error_count = 0
+        
+        for material in materials:
+            try:
+                # Check if material has chunks that need embedding processing
+                pending_chunks = ContentChunk.objects.filter(
+                    material=material, 
+                    embedding_status__in=['pending', 'failed']
+                ).count()
+                
+                missing_embedding_chunks = ContentChunk.objects.filter(
+                    material=material,
+                    embedding_vector__isnull=True
+                ).count()
+                
+                if pending_chunks > 0 or missing_embedding_chunks > 0:
+                    logger.info(f"Processing material: {material.file.name} ({pending_chunks} pending, {missing_embedding_chunks} missing embeddings)")
+                    
+                    # Process material embeddings with retry logic
+                    process_material_embeddings.delay(material.id)
+                    processed_count += 1
+                else:
+                    logger.info(f"Skipping material: {material.file.name} (all embeddings completed)")
+                    
+            except Exception as e:
+                logger.error(f"Error processing material {material.id}: {str(e)}")
+                error_count += 1
+                continue
+        
+        logger.info(f"Subject embedding processing completed: {processed_count} materials queued, {error_count} errors")
+        
+        return {
+            'status': 'success',
+            'subject_id': subject_id,
+            'materials_processed': processed_count,
+            'errors': error_count
+        }
+        
+    except Subject.DoesNotExist:
+        logger.error(f"Subject with id {subject_id} not found")
+        return {'status': 'error', 'message': 'Subject not found'}
+        
+    except Exception as e:
+        logger.exception(f"Error processing subject embeddings for {subject_id}: {str(e)}")
+        
+        # Retry with exponential backoff
+        if self.request.retries < self.max_retries:
+            countdown = 2 ** self.request.retries * 60  # 1, 2, 4 minutes
+            logger.info(f"Retrying subject embedding processing in {countdown} seconds (attempt {self.request.retries + 1})")
+            raise self.retry(countdown=countdown, exc=e)
+        else:
+            logger.error(f"Max retries exceeded for subject embedding processing: {subject_id}")
+            return {'status': 'error', 'message': str(e)}
+
+
+@shared_task(bind=True, max_retries=3)
+def process_material_embeddings(self, material_id: int):
+    """
+    Process embeddings for all chunks in a material with retry logic.
+    Only processes chunks that need embedding generation (pending/failed/missing).
+    """
+    try:
+        from .models import SubjectMaterial, ContentChunk
+        
+        material = SubjectMaterial.objects.get(id=material_id)
+        logger.info(f"Processing embeddings for material: {material.file.name} (ID: {material_id})")
+        
+        # Update material status
+        material.status = 'PROCESSING'
+        material.save()
+        
+        # Get chunks that need embedding processing
+        chunks_to_process = ContentChunk.objects.filter(
+            material=material,
+            embedding_status__in=['pending', 'failed']
+        )
+        
+        # Also include chunks that somehow don't have embeddings
+        chunks_missing_embeddings = ContentChunk.objects.filter(
+            material=material,
+            embedding_vector__isnull=True
+        )
+        
+        # Combine and deduplicate
+        all_chunks_to_process = chunks_to_process.union(chunks_missing_embeddings)
+        
+        total_chunks = all_chunks_to_process.count()
+        
+        if total_chunks == 0:
+            logger.info(f"No chunks need embedding processing for material: {material.file.name}")
+            material.status = 'COMPLETED'
+            material.save()
+            return {
+                'status': 'success',
+                'material_id': material_id,
+                'chunks_processed': 0,
+                'message': 'No chunks needed processing'
+            }
+        
+        logger.info(f"Found {total_chunks} chunks needing embedding processing")
+        
+        # Process chunks in smaller batches to avoid memory issues
+        batch_size = 10  # Process 10 chunks at a time
+        processed_count = 0
+        failed_count = 0
+        
+        for i in range(0, total_chunks, batch_size):
+            batch_chunks = all_chunks_to_process[i:i + batch_size]
+            
+            for chunk in batch_chunks:
+                try:
+                    # Generate embedding for individual chunk
+                    generate_chunk_embedding.delay(chunk.id)
+                    processed_count += 1
+                    
+                except Exception as e:
+                    logger.error(f"Error queuing embedding for chunk {chunk.id}: {str(e)}")
+                    chunk.mark_embedding_failed()
+                    failed_count += 1
+                    continue
+        
+        logger.info(f"Queued embedding generation for {processed_count} chunks (material: {material.file.name})")
+        
+        # Material will be marked as completed by the individual chunk tasks
+        return {
+            'status': 'success',
+            'material_id': material_id,
+            'chunks_processed': processed_count,
+            'chunks_failed': failed_count
+        }
+        
+    except SubjectMaterial.DoesNotExist:
+        logger.error(f"Material with id {material_id} not found")
+        return {'status': 'error', 'message': 'Material not found'}
+        
+    except Exception as e:
+        logger.exception(f"Error processing material embeddings for {material_id}: {str(e)}")
+        
+        # Update material status to failed
+        try:
+            material = SubjectMaterial.objects.get(id=material_id)
+            material.status = 'FAILED'
+            material.save()
+        except:
+            pass
+        
+        # Retry with exponential backoff
+        if self.request.retries < self.max_retries:
+            countdown = 2 ** self.request.retries * 30  # 30, 60, 120 seconds
+            logger.info(f"Retrying material embedding processing in {countdown} seconds (attempt {self.request.retries + 1})")
+            raise self.retry(countdown=countdown, exc=e)
+        else:
+            logger.error(f"Max retries exceeded for material embedding processing: {material_id}")
+            return {'status': 'error', 'message': str(e)}
+
+
+@shared_task(bind=True, max_retries=5)
+def generate_chunk_embedding(self, chunk_id: int):
+    """
+    Generate embedding for a single content chunk with retry logic.
+    Uses the existing ContentProcessor for consistency.
+    """
+    try:
+        from .models import ContentChunk
+        from .utils import ContentProcessor
+        
+        chunk = ContentChunk.objects.get(id=chunk_id)
+        logger.debug(f"Generating embedding for chunk {chunk_id} (material: {chunk.material.file.name})")
+        
+        # Mark as pending if not already
+        if chunk.embedding_status != 'pending':
+            chunk.embedding_status = 'pending'
+            chunk.save(update_fields=['embedding_status', 'updated_at'])
+        
+        # Initialize ContentProcessor with memory-conscious settings
+        processor = ContentProcessor(batch_size=1, memory_threshold=0.9)  # Single chunk processing
+        
+        # Generate embedding for chunk content
+        embedding = processor.model.encode(chunk.content)
+        
+        # Update chunk with embedding and mark as completed
+        chunk.embedding_vector = embedding.tolist()
+        chunk.mark_embedding_completed()
+        
+        logger.debug(f"Successfully generated embedding for chunk {chunk_id}")
+        
+        # Check if all chunks in the material are now completed
+        material = chunk.material
+        pending_chunks = ContentChunk.objects.filter(
+            material=material,
+            embedding_status__in=['pending', 'failed']
+        ).count()
+        
+        if pending_chunks == 0:
+            # All chunks completed, update material status
+            material.status = 'COMPLETED'
+            material.save()
+            logger.info(f"All embeddings completed for material: {material.file.name}")
+        
+        return {
+            'status': 'success',
+            'chunk_id': chunk_id,
+            'material_id': material.id,
+            'embedding_length': len(embedding)
+        }
+        
+    except ContentChunk.DoesNotExist:
+        logger.error(f"ContentChunk with id {chunk_id} not found")
+        return {'status': 'error', 'message': 'Content chunk not found'}
+        
+    except Exception as e:
+        logger.exception(f"Error generating embedding for chunk {chunk_id}: {str(e)}")
+        
+        # Mark chunk as failed
+        try:
+            chunk = ContentChunk.objects.get(id=chunk_id)
+            chunk.mark_embedding_failed()
+        except:
+            pass
+        
+        # Retry with exponential backoff
+        if self.request.retries < self.max_retries:
+            countdown = 2 ** self.request.retries * 10  # 10, 20, 40, 80, 160 seconds
+            logger.info(f"Retrying chunk embedding generation in {countdown} seconds (attempt {self.request.retries + 1})")
+            raise self.retry(countdown=countdown, exc=e)
+        else:
+            logger.error(f"Max retries exceeded for chunk embedding generation: {chunk_id}")
+            return {'status': 'error', 'message': str(e)}
+
+
+@shared_task
+def update_existing_material_embeddings(material_id: int):
+    """
+    Update embeddings for an existing material that already has content chunks.
+    Useful for backfilling embeddings or re-processing failed chunks.
+    """
+    try:
+        from .models import SubjectMaterial, ContentChunk
+        
+        material = SubjectMaterial.objects.get(id=material_id)
+        logger.info(f"Updating embeddings for existing material: {material.file.name}")
+        
+        # Find chunks that need embedding updates
+        chunks_needing_update = ContentChunk.objects.filter(
+            material=material
+        ).filter(
+            models.Q(embedding_vector__isnull=True) |
+            models.Q(embedding_status='failed')
+        )
+        
+        update_count = chunks_needing_update.count()
+        
+        if update_count == 0:
+            logger.info(f"No chunks need embedding updates for material: {material.file.name}")
+            return {
+                'status': 'success',
+                'material_id': material_id,
+                'chunks_updated': 0,
+                'message': 'No chunks needed updates'
+            }
+        
+        logger.info(f"Updating embeddings for {update_count} chunks")
+        
+        # Reset chunks to pending status and queue for processing
+        chunks_needing_update.update(embedding_status='pending')
+        
+        # Process through the material embeddings task
+        process_material_embeddings.delay(material_id)
+        
+        return {
+            'status': 'success',
+            'material_id': material_id,
+            'chunks_updated': update_count
+        }
+        
+    except SubjectMaterial.DoesNotExist:
+        logger.error(f"Material with id {material_id} not found")
+        return {'status': 'error', 'message': 'Material not found'}
+        
+    except Exception as e:
+        logger.exception(f"Error updating material embeddings for {material_id}: {str(e)}")
+        return {'status': 'error', 'message': str(e)} 

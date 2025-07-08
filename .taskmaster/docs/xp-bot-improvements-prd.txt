@@ -1,0 +1,123 @@
+# RAG-Based XP Bot Enhancement Requirements Document
+
+## Project Overview
+Enhance the existing XP chatbot system to strictly enforce material-only responses, improve user experience, and ensure proper subject scoping. The bot must function as a subject-specific assistant trained exclusively on user-uploaded materials.
+
+## Current State Analysis
+- ✅ Basic RAG pipeline implemented with vector search
+- ✅ Content chunk processing and embedding generation 
+- ✅ OpenAI integration for response generation
+- ❌ Bot still provides general knowledge responses outside uploaded materials
+- ❌ UI messaging suggests general AI assistant rather than material-specific helper
+- ❌ No proper session memory implementation
+- ❌ Insufficient enforcement of material-only responses
+
+## Core Requirements
+
+### 1. Strict Material-Only Response Enforcement
+**Priority:** CRITICAL
+**Description:** XP must ONLY answer using subject-uploaded materials. No fallback to general knowledge.
+
+**Acceptance Criteria:**
+- When vector retrieval returns no relevant chunks above threshold, XP responds with helpful message about insufficient material
+- LLM system prompt explicitly prohibits general knowledge responses
+- Response validation rejects any answer that goes beyond provided context
+- Comprehensive testing shows zero general knowledge leakage
+
+### 2. Enhanced RAG and Vector Search System
+**Priority:** HIGH  
+**Description:** Optimize the existing RAG pipeline for better material binding and retrieval accuracy.
+
+**Acceptance Criteria:**
+- Vector search scoped strictly to user + subject combination
+- Improved similarity thresholds based on content analysis
+- Better chunk context preparation with source attribution
+- Enhanced relevance scoring and filtering
+
+### 3. Subject-Scoped Material Binding
+**Priority:** HIGH
+**Description:** Ensure XP operates within strict subject boundaries with no cross-contamination.
+
+**Acceptance Criteria:**
+- Vector index built only from materials uploaded under the current subject
+- No access to materials from other subjects or users
+- Clear subject identification in all queries and responses
+- Audit trail for material access patterns
+
+### 4. Session Memory Implementation
+**Priority:** MEDIUM
+**Description:** XP should remember past conversations within the same subject and provide continuity.
+
+**Acceptance Criteria:**
+- Chat history preserved per user per subject
+- Context from previous messages influences current responses
+- Memory stays scoped to the same subject only
+- Session management with proper cleanup
+
+### 5. Subject-Specific UI and Messaging
+**Priority:** MEDIUM
+**Description:** Update all user-facing text to reflect XP as a subject-based assistant, not general AI.
+
+**Acceptance Criteria:**
+- Welcome message: "Hi! I can help you review this subject using the materials you've uploaded."
+- Error messages specifically mention uploaded materials
+- UI elements reflect material-based nature
+- Help text explains XP's material-only capabilities
+
+## Technical Implementation Strategy
+
+### Technology Stack
+- **Backend:** Django with existing RAG service
+- **Vector Search:** Current sentence-transformers implementation
+- **LLM:** OpenAI GPT-3.5-turbo with enhanced prompting
+- **Database:** PostgreSQL for session storage
+- **Frontend:** React components for chat interface
+
+### System Architecture
+- Enhanced RAG service with stricter validation
+- Improved prompt engineering for material-only responses
+- Session management service for chat continuity
+- Subject-scoped vector indexing
+- Response validation layer
+
+### Performance Requirements
+- Response time: < 3 seconds for typical queries
+- Memory usage: Efficient handling of chat history
+- Scalability: Support multiple concurrent subject sessions
+- Reliability: 99.9% uptime for chat functionality
+
+## Implementation Phases
+
+### Phase 1: Core Response Enforcement (Week 1)
+Focus on preventing general knowledge responses and improving material binding.
+
+### Phase 2: UI and Messaging Updates (Week 1) 
+Update all user-facing elements to reflect subject-specific nature.
+
+### Phase 3: Enhanced RAG Pipeline (Week 2)
+Optimize vector search and improve retrieval accuracy.
+
+### Phase 4: Session Memory System (Week 2)
+Implement proper chat history and session management.
+
+### Phase 5: Testing and Validation (Week 3)
+Comprehensive testing to ensure all requirements are met.
+
+## Success Metrics
+- 100% material-only responses (zero general knowledge leakage)
+- User satisfaction with subject-specific assistance
+- Improved response relevance scores
+- Successful session continuity across conversations
+- Clear understanding of XP's role and capabilities
+
+## Risk Mitigation
+- Comprehensive testing prevents general knowledge responses
+- Gradual rollout with feature flags
+- Monitoring and alerting for response quality
+- Fallback mechanisms for edge cases
+
+## Dependencies
+- OpenAI API access for LLM responses
+- Existing content processing pipeline
+- User authentication system
+- Subject material upload functionality 

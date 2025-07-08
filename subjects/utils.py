@@ -19,9 +19,14 @@ import mimetypes
 from pydub import AudioSegment
 import speech_recognition as sr
 import tempfile
+import psutil
+import gc
+import logging
 from .llm_utils import generate_flashcards as llm_generate_flashcards
 from .llm_utils import generate_quiz_questions as llm_generate_quiz_questions
 from .llm_utils import answer_question as llm_answer_question
+
+logger = logging.getLogger(__name__)
 
 def extract_text_from_pdf(file_path: str) -> str:
     """Extract text from PDF file using PyPDF2."""
@@ -46,7 +51,7 @@ def chunk_text(text: str, chunk_size: int = 1000, chunk_overlap: int = 200) -> L
     return splitter.split_text(text)
 
 class ContentProcessor:
-    def __init__(self):
+    def __init__(self, batch_size: int = None, memory_threshold: float = 0.8):
         # Initialize the text splitter with optimal parameters
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=1000,  # Characters per chunk
@@ -61,6 +66,61 @@ class ContentProcessor:
         # Initialize speech recognizer
         self.recognizer = sr.Recognizer()
         
+        # Batch processing configuration
+        self.batch_size = batch_size or self._calculate_optimal_batch_size()
+        self.memory_threshold = memory_threshold  # Memory usage threshold before triggering batch processing
+        
+        logger.info(f"ContentProcessor initialized with batch_size={self.batch_size}, memory_threshold={self.memory_threshold}")
+    
+    def _calculate_optimal_batch_size(self) -> int:
+        """Calculate optimal batch size based on available memory and model requirements."""
+        try:
+            # Get available memory in GB
+            available_memory_gb = psutil.virtual_memory().available / (1024**3)
+            
+            # Estimate memory usage per chunk (rough calculation)
+            # all-MiniLM-L6-v2 produces 384-dimensional embeddings (float32 = 4 bytes each)
+            # Plus overhead for text processing and model inference
+            estimated_memory_per_chunk_mb = 2  # Conservative estimate
+            
+            # Calculate batch size to use ~50% of available memory for embedding generation
+            target_memory_usage_gb = available_memory_gb * 0.5
+            target_memory_usage_mb = target_memory_usage_gb * 1024
+            
+            batch_size = max(1, int(target_memory_usage_mb / estimated_memory_per_chunk_mb))
+            
+            # Cap batch size to reasonable limits
+            batch_size = min(batch_size, 100)  # Max 100 chunks per batch
+            batch_size = max(batch_size, 5)    # Min 5 chunks per batch
+            
+            logger.info(f"Calculated optimal batch size: {batch_size} (available memory: {available_memory_gb:.2f}GB)")
+            return batch_size
+            
+        except Exception as e:
+            logger.warning(f"Error calculating optimal batch size: {e}. Using default batch size of 20.")
+            return 20
+    
+    def _get_memory_usage(self) -> float:
+        """Get current memory usage percentage."""
+        try:
+            return psutil.virtual_memory().percent / 100.0
+        except:
+            return 0.5  # Default to 50% if can't determine
+    
+    def _should_use_batch_processing(self, num_chunks: int) -> bool:
+        """Determine if batch processing should be used based on chunk count and memory."""
+        memory_usage = self._get_memory_usage()
+        
+        # Use batch processing if:
+        # 1. Memory usage is above threshold, OR
+        # 2. Number of chunks exceeds 2x batch size
+        should_batch = (memory_usage > self.memory_threshold) or (num_chunks > self.batch_size * 2)
+        
+        if should_batch:
+            logger.info(f"Using batch processing: chunks={num_chunks}, memory={memory_usage:.1%}, threshold={self.memory_threshold:.1%}")
+        
+        return should_batch
+
     def get_file_type(self, file_path: str) -> str:
         """Determine the type of file based on its extension and mime type."""
         mime_type, _ = mimetypes.guess_type(file_path)
@@ -105,7 +165,7 @@ class ContentProcessor:
         except Exception as e:
             raise Exception(f"Error processing audio file: {str(e)}")
 
-    def process_file(self, file_path: str) -> List[Dict[str, Any]]:
+    def process_file(self, file_path: str, use_batch_processing: bool = None) -> List[Dict[str, Any]]:
         """Process any type of file and return chunks with embeddings."""
         try:
             file_type = self.get_file_type(file_path)
@@ -158,23 +218,90 @@ class ContentProcessor:
             
             # Split into chunks
             chunks = self.text_splitter.split_text(text)
+            logger.info(f"Split file into {len(chunks)} chunks")
             
-            # Generate embeddings for each chunk
-            chunk_data = []
-            for i, chunk in enumerate(chunks):
-                # Generate embedding
-                embedding = self.model.encode(chunk)
-                
-                chunk_data.append({
-                    'content': chunk,
-                    'chunk_index': i,
-                    'embedding_vector': embedding.tolist()
-                })
+            # Determine if batch processing should be used
+            if use_batch_processing is None:
+                use_batch_processing = self._should_use_batch_processing(len(chunks))
             
-            return chunk_data
+            if use_batch_processing:
+                return self.process_chunks_in_batches(chunks)
+            else:
+                return self.process_chunks_immediately(chunks)
             
         except Exception as e:
             raise Exception(f"Error processing file: {str(e)}")
+    
+    def process_chunks_immediately(self, chunks: List[str]) -> List[Dict[str, Any]]:
+        """Process all chunks immediately (original behavior)."""
+        logger.info(f"Processing {len(chunks)} chunks immediately")
+        
+        chunk_data = []
+        for i, chunk in enumerate(chunks):
+            # Generate embedding
+            embedding = self.model.encode(chunk)
+            
+            chunk_data.append({
+                'content': chunk,
+                'chunk_index': i,
+                'embedding_vector': embedding.tolist()
+            })
+        
+        return chunk_data
+    
+    def process_chunks_in_batches(self, chunks: List[str], progress_callback=None) -> List[Dict[str, Any]]:
+        """Process chunks in batches to manage memory usage efficiently."""
+        total_chunks = len(chunks)
+        chunk_data = []
+        
+        logger.info(f"Processing {total_chunks} chunks in batches of {self.batch_size}")
+        
+        for batch_start in range(0, total_chunks, self.batch_size):
+            batch_end = min(batch_start + self.batch_size, total_chunks)
+            batch_chunks = chunks[batch_start:batch_end]
+            batch_num = (batch_start // self.batch_size) + 1
+            total_batches = (total_chunks + self.batch_size - 1) // self.batch_size
+            
+            logger.info(f"Processing batch {batch_num}/{total_batches} ({len(batch_chunks)} chunks)")
+            
+            # Check memory usage before processing batch
+            memory_before = self._get_memory_usage()
+            
+            # Process batch
+            batch_embeddings = self.model.encode(batch_chunks)
+            
+            # Convert to list format and add to results
+            for i, (chunk, embedding) in enumerate(zip(batch_chunks, batch_embeddings)):
+                chunk_data.append({
+                    'content': chunk,
+                    'chunk_index': batch_start + i,
+                    'embedding_vector': embedding.tolist()
+                })
+            
+            # Monitor memory usage
+            memory_after = self._get_memory_usage()
+            logger.debug(f"Batch {batch_num} completed. Memory: {memory_before:.1%} -> {memory_after:.1%}")
+            
+            # Call progress callback if provided
+            if progress_callback:
+                progress = batch_end / total_chunks
+                progress_callback(progress, batch_num, total_batches)
+            
+            # Force garbage collection if memory usage is high
+            if memory_after > 0.85:
+                logger.info("High memory usage detected, forcing garbage collection")
+                gc.collect()
+                
+                # Clear CUDA cache if using GPU
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
+        
+        logger.info(f"Completed processing {total_chunks} chunks in {total_batches} batches")
+        return chunk_data
+    
+    def process_file_with_progress(self, file_path: str, progress_callback=None) -> List[Dict[str, Any]]:
+        """Process file with progress tracking callback."""
+        return self.process_file(file_path, use_batch_processing=True)
     
     def find_relevant_chunks(self, query: str, chunks: List[Dict[str, Any]], top_k: int = 3) -> List[Dict[str, Any]]:
         """Find the most relevant chunks for a given query using cosine similarity."""

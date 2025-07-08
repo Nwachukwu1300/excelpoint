@@ -1,0 +1,90 @@
+# Task ID: 1
+# Title: Analyze Content Extraction Pipeline
+# Status: done
+# Dependencies: None
+# Priority: high
+# Description: Investigate and verify the content extraction process to ensure unique content is being extracted per material.
+# Details:
+1. Review the current content extraction code in the project.
+2. Use logging framework (e.g., Python's `logging` module) to add detailed logs at each step of the extraction process.
+3. Implement unit tests using pytest (version 7.3.1) to verify:
+   - Unique ContentChunk entries are created for each material
+   - Text extraction is material-specific
+   - Embedding vectors (using a library like sentence-transformers 2.2.2) are unique per material
+   - Content chunks are correctly associated with source materials
+4. Use pandas (version 2.0.2) for data analysis to compare extracted content across different materials.
+5. Implement SHA-256 hashing (using Python's `hashlib`) to create unique identifiers for each content chunk and material combination.
+
+# Test Strategy:
+1. Create a set of test materials with known content.
+2. Run the extraction process on these materials.
+3. Use pytest to automate tests that verify:
+   - ContentChunk uniqueness
+   - Correct text extraction
+   - Unique embedding vectors
+   - Proper content-material association
+4. Manually review logs to ensure proper extraction flow.
+5. Compare hash values to confirm uniqueness across materials.
+
+# Subtasks:
+## 1. Examine current content extraction code [done]
+### Dependencies: None
+### Description: Analyze the content extraction logic in subjects/tasks.py and subjects/utils.py to understand the current flow
+### Details:
+Review process_material, generate_flashcards, and generate_quiz_from_material functions to identify potential issues with content isolation per material
+<info added on 2025-07-08T12:13:12.156Z>
+**CRITICAL ISSUE IDENTIFIED**: 
+
+**Root Cause Found**: Flashcards and quiz questions are being linked to `Subject` instead of specific `SubjectMaterial`. This causes content mixing across all materials within the same subject.
+
+**Specific Problems**:
+1. In `tasks.py` line ~69: `Flashcard.objects.create(subject=material.subject, ...)` - should link to material
+2. In `tasks.py` line ~92: `QuizQuestion.objects.create(subject=material.subject, ...)` - should link to material  
+3. API endpoints filter by subject (`subject=subject`) instead of material (`material=material`)
+4. Database schema lacks proper material-to-flashcard/quiz relationships
+
+**Evidence**:
+- All flashcards from different materials in same subject get mixed together
+- No way to distinguish which material generated which content
+- API queries return ALL content from subject, not material-specific content
+
+**Next Steps**: Update database schema and fix generation pipeline to properly associate content with specific materials.
+</info added on 2025-07-08T12:13:12.156Z>
+
+## 2. Verify database content chunk associations [done]
+### Dependencies: None
+### Description: Check if ContentChunk entries are properly linked to their specific SubjectMaterial instances
+### Details:
+Query the database to verify that each material has unique content chunks and examine foreign key relationships
+<info added on 2025-07-08T12:17:07.934Z>
+DATABASE VERIFICATION COMPLETED - Status: FIXED - All content is now properly linked to materials. Migration Results: Fixed 15 existing flashcards linked to specific material, Fixed 15 existing quiz questions linked to specific material, 0 orphaned content remaining. Database Structure Verified: Flashcard.material field added and populated, QuizQuestion.material field added and populated, Foreign key relationships working correctly. Materials Status: 3 materials in system, 1 material has content previously generated, 2 materials ready for new material-specific generation. Ready to test new content generation to verify it creates material-specific content.
+</info added on 2025-07-08T12:17:07.934Z>
+
+## 3. Add debugging logging to content extraction [done]
+### Dependencies: None
+### Description: Implement detailed logging in the content extraction pipeline to track which material's content is being processed
+### Details:
+Add logger statements in process_material, generate_flashcards, and generate_quiz_from_material to track material IDs and content being processed
+<info added on 2025-07-08T12:17:23.618Z>
+DEBUGGING LOGGING IMPLEMENTED: ✅ COMPLETED
+
+**Logging Added To**:
+- `generate_flashcards()`: Logs material ID, filename, chunk count, creation count
+- `generate_quiz_questions()`: Logs material ID, filename, chunk count, creation count  
+- Error handling: Logs specific errors per material
+
+**Evidence in Code**:
+- Line ~58: `logger.info(f"Generating flashcards for material ID {material_id}: {material.file.name}")`
+- Line ~60: `logger.info(f"Found {chunks.count()} content chunks for material {material_id}")`
+- Line ~79: `logger.info(f"Successfully created {flashcard_count} flashcards for material {material_id}: {material.file.name}")`
+- Similar logging added to quiz generation
+
+**Benefit**: Now we can track in Celery logs exactly which material is being processed and verify content isolation per material
+</info added on 2025-07-08T12:17:23.618Z>
+
+## 4. Test with distinct material content [done]
+### Dependencies: None
+### Description: Upload test materials with clearly distinct content and verify unique extraction
+### Details:
+Create test PDFs with unique content, upload them to different subjects, and verify that generated flashcards/quizzes reflect the specific content
+

@@ -7,23 +7,36 @@ from django.views.decorators.http import require_http_methods
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
-from rest_framework import viewsets, status, permissions
+from django.conf import settings
+from rest_framework import viewsets, status, permissions, generics
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.views import APIView
+from django.db import transaction
+from django.utils import timezone
+import logging
+
 from .models import (
     Subject, SubjectMaterial, Flashcard, QuizQuestion, QuizAttempt,
-    Quiz, Question, Choice, Answer, UserQuizAttempt, UserAnswer
+    Quiz, Question, Choice, Answer, UserQuizAttempt, UserAnswer,
+    ChatSession, ChatMessage
 )
 from .serializers import (
     SubjectSerializer, SubjectMaterialSerializer, FlashcardSerializer,
-    QuizQuestionSerializer, QuizAttemptSerializer, QuizAnswerSerializer
+    QuizQuestionSerializer, QuizAttemptSerializer, QuizAnswerSerializer,
+    ChatSessionSerializer, ChatMessageSerializer, ChatMessageCreateSerializer,
+    ChatHistorySerializer, ChatResponseSerializer
 )
+from .permissions import IsSubjectOwner, ChatAPIPermission, IsChatSessionOwner
+from .services.rag_service import RAGService
 from .tasks import process_material, generate_quiz_from_material, generate_dynamic_quiz_questions
 import json
 import os
 from django.utils import timezone
 from django.db import models
 from django.db.models import Avg, Max
+
+logger = logging.getLogger(__name__)
 
 # Create your views here.
 
@@ -895,3 +908,335 @@ class QuizViewSet(viewsets.ModelViewSet):
             'earned_points': earned_points,
             'results': results
         })
+
+
+# XP Chatbot API Views
+
+class ChatSessionCreateAPIView(generics.CreateAPIView):
+    """
+    API endpoint for creating new chat sessions.
+    
+    POST /api/subjects/{subject_id}/chat/session/
+    """
+    serializer_class = ChatSessionSerializer
+    permission_classes = [permissions.IsAuthenticated, IsSubjectOwner]
+    
+    def perform_create(self, serializer):
+        """Create a new chat session for the specified subject."""
+        subject_id = self.kwargs.get('subject_id')
+        subject = get_object_or_404(Subject, id=subject_id, user=self.request.user)
+        
+        # Deactivate any existing sessions for this user-subject pair
+        ChatSession.objects.filter(
+            user=self.request.user,
+            subject=subject,
+            is_active=True
+        ).update(is_active=False)
+        
+        # Create new active session
+        serializer.save(user=self.request.user, subject=subject, is_active=True)
+        
+        logger.info(f"Created new chat session for user {self.request.user.id} and subject {subject_id}")
+
+
+class ChatSessionListAPIView(generics.ListAPIView):
+    """
+    API endpoint for listing chat sessions for a subject.
+    
+    GET /api/subjects/{subject_id}/chat/sessions/
+    """
+    serializer_class = ChatSessionSerializer
+    permission_classes = [permissions.IsAuthenticated, IsSubjectOwner]
+    
+    def get_queryset(self):
+        """Get all chat sessions for the subject owned by the current user."""
+        subject_id = self.kwargs.get('subject_id')
+        return ChatSession.objects.filter(
+            subject_id=subject_id,
+            user=self.request.user
+        ).order_by('-updated_at')
+
+
+class ChatMessageListCreateAPIView(generics.ListCreateAPIView):
+    """
+    API endpoint for chat messages.
+    
+    GET /api/subjects/{subject_id}/chat/messages/ - Get chat history
+    POST /api/subjects/{subject_id}/chat/messages/ - Send a message and get XP response
+    """
+    permission_classes = [permissions.IsAuthenticated, ChatAPIPermission]
+    
+    def get_serializer_class(self):
+        """Return appropriate serializer based on request method."""
+        if self.request.method == 'POST':
+            return ChatMessageCreateSerializer
+        return ChatMessageSerializer
+    
+    def get_queryset(self):
+        """Get chat messages for the active session of this subject."""
+        subject_id = self.kwargs.get('subject_id')
+        subject = get_object_or_404(Subject, id=subject_id, user=self.request.user)
+        
+        # Get the active session for this user-subject pair
+        try:
+            session = ChatSession.objects.get(
+                user=self.request.user,
+                subject=subject,
+                is_active=True
+            )
+            return ChatMessage.objects.filter(session=session).order_by('timestamp')
+        except ChatSession.DoesNotExist:
+            # Return empty queryset if no active session
+            return ChatMessage.objects.none()
+    
+    def list(self, request, *args, **kwargs):
+        """
+        Return chat history with pagination and session info.
+        """
+        subject_id = self.kwargs.get('subject_id')
+        subject = get_object_or_404(Subject, id=subject_id, user=self.request.user)
+        
+        try:
+            session = ChatSession.objects.get(
+                user=self.request.user,
+                subject=subject,
+                is_active=True
+            )
+            
+            messages = self.get_queryset()
+            page = self.paginate_queryset(messages)
+            
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                response = self.get_paginated_response(serializer.data)
+                # Add session info to response
+                response.data['session'] = ChatSessionSerializer(session).data
+                return response
+            
+            serializer = self.get_serializer(messages, many=True)
+            return Response({
+                'session': ChatSessionSerializer(session).data,
+                'messages': serializer.data,
+                'total_messages': len(serializer.data),
+                'has_more': False
+            })
+            
+        except ChatSession.DoesNotExist:
+            return Response({
+                'session': None,
+                'messages': [],
+                'total_messages': 0,
+                'has_more': False
+            })
+    
+    @transaction.atomic
+    def create(self, request, *args, **kwargs):
+        """
+        Send a message and get XP response using RAG pipeline.
+        """
+        subject_id = self.kwargs.get('subject_id')
+        subject = get_object_or_404(Subject, id=subject_id, user=self.request.user)
+        
+        # Validate input
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        user_message_content = serializer.validated_data['message']
+        
+        try:
+            # Get or create active session
+            session, created = ChatSession.objects.get_or_create(
+                user=self.request.user,
+                subject=subject,
+                is_active=True,
+                defaults={
+                    'title': user_message_content[:50] + '...' if len(user_message_content) > 50 else user_message_content
+                }
+            )
+            
+            if created:
+                logger.info(f"Created new chat session {session.id} for user {request.user.id} and subject {subject_id}")
+            
+            # Save user message
+            user_message = ChatMessage.objects.create(
+                session=session,
+                role='user',
+                content=user_message_content,
+                metadata={}
+            )
+            
+            # Get chat history for context (last 10 exchanges)
+            previous_messages = ChatMessage.objects.filter(
+                session=session
+            ).exclude(
+                id=user_message.id
+            ).order_by('-timestamp')[:20]  # Get last 20 messages (10 exchanges)
+            
+            # Format chat history for RAG service
+            chat_history = []
+            messages_list = list(reversed(previous_messages))  # Reverse to chronological order
+            
+            for i in range(0, len(messages_list), 2):
+                if i + 1 < len(messages_list):
+                    if (messages_list[i].role == 'user' and 
+                        messages_list[i + 1].role == 'assistant'):
+                        chat_history.append({
+                            'user': messages_list[i].content,
+                            'assistant': messages_list[i + 1].content
+                        })
+            
+            # Generate response using RAG service
+            rag_service = RAGService()
+            
+            logger.info(f"Generating RAG response for user {request.user.id}, subject {subject_id}, query: {user_message_content[:100]}...")
+            
+            rag_response = rag_service.generate_response(
+                query=user_message_content,
+                subject_id=subject.id,
+                chat_history=chat_history,
+                user_id=request.user.id
+            )
+            
+            # Save assistant message with metadata
+            assistant_message = ChatMessage.objects.create(
+                session=session,
+                role='assistant',
+                content=rag_response['response'],
+                metadata={
+                    'retrieved_chunks': rag_response['retrieved_chunks'],
+                    'response_time': rag_response['response_time'],
+                    'context_used': rag_response['context_used'],
+                    'model_info': rag_response['metadata']
+                }
+            )
+            
+            # Update session timestamp
+            session.updated_at = timezone.now()
+            session.save()
+            
+            logger.info(f"Successfully generated chat response for user {request.user.id}, session {session.id}")
+            
+            # Prepare response
+            response_data = {
+                'user_message': ChatMessageSerializer(user_message).data,
+                'assistant_message': ChatMessageSerializer(assistant_message).data,
+                'session': ChatSessionSerializer(session).data,
+                'response_metadata': {
+                    'chunks_retrieved': len(rag_response['retrieved_chunks']),
+                    'response_time_seconds': rag_response['response_time'],
+                    'context_was_used': rag_response['context_used']
+                }
+            }
+            
+            return Response(response_data, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            logger.error(f"Error generating chat response for user {request.user.id}, subject {subject_id}: {str(e)}")
+            
+            # Return error response
+            return Response({
+                'error': 'Failed to generate response',
+                'message': 'XP is currently unavailable. Please try again later.',
+                'details': str(e) if settings.DEBUG else None
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class ChatSessionDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    API endpoint for individual chat session operations.
+    
+    GET /api/chat/sessions/{session_id}/ - Get session details
+    PATCH /api/chat/sessions/{session_id}/ - Update session (e.g., title)
+    DELETE /api/chat/sessions/{session_id}/ - Delete session
+    """
+    serializer_class = ChatSessionSerializer
+    permission_classes = [permissions.IsAuthenticated, IsChatSessionOwner]
+    
+    def get_queryset(self):
+        """Get sessions owned by the current user."""
+        return ChatSession.objects.filter(user=self.request.user)
+    
+    def destroy(self, request, *args, **kwargs):
+        """Delete the chat session and all its messages."""
+        session = self.get_object()
+        session_id = session.id
+        user_id = request.user.id
+        
+        # Delete the session (messages will be cascade deleted)
+        self.perform_destroy(session)
+        
+        logger.info(f"Deleted chat session {session_id} for user {user_id}")
+        
+        return Response({
+            'message': 'Chat session deleted successfully',
+            'session_id': session_id
+        }, status=status.HTTP_200_OK)
+
+
+class ChatStatsAPIView(APIView):
+    """
+    API endpoint for chat statistics and status.
+    
+    GET /api/subjects/{subject_id}/chat/stats/
+    """
+    permission_classes = [permissions.IsAuthenticated, IsSubjectOwner]
+    
+    def get(self, request, subject_id):
+        """Get chat statistics and readiness status for a subject."""
+        subject = get_object_or_404(Subject, id=subject_id, user=request.user)
+        
+        try:
+            # Get RAG service stats
+            rag_service = RAGService()
+            rag_stats = rag_service.get_service_stats(subject.id)
+            
+            # Get chat session stats
+            session_count = ChatSession.objects.filter(
+                user=request.user,
+                subject=subject
+            ).count()
+            
+            active_session = ChatSession.objects.filter(
+                user=request.user,
+                subject=subject,
+                is_active=True
+            ).first()
+            
+            total_messages = ChatMessage.objects.filter(
+                session__user=request.user,
+                session__subject=subject
+            ).count()
+            
+            # Get recent activity
+            recent_messages = ChatMessage.objects.filter(
+                session__user=request.user,
+                session__subject=subject
+            ).order_by('-timestamp')[:5]
+            
+            return Response({
+                'subject_id': subject.id,
+                'subject_name': subject.name,
+                'chat_ready': rag_stats.get('ready_for_chat', False),
+                'total_sessions': session_count,
+                'total_messages': total_messages,
+                'total_content_chunks': rag_stats.get('total_chunks', 0),
+                'is_ready_for_chat': rag_stats.get('ready_for_chat', False),
+                'has_active_session': active_session is not None,
+                'active_session_id': active_session.id if active_session else None,
+                'session_stats': {
+                    'total_sessions': session_count,
+                    'has_active_session': active_session is not None,
+                    'active_session_id': active_session.id if active_session else None,
+                    'total_messages': total_messages
+                },
+                'rag_stats': rag_stats,
+                'recent_activity': ChatMessageSerializer(recent_messages, many=True).data,
+                'last_activity': recent_messages[0].timestamp if recent_messages else None
+            })
+            
+        except Exception as e:
+            logger.error(f"Error getting chat stats for subject {subject_id}: {str(e)}")
+            return Response({
+                'error': 'Failed to get chat statistics',
+                'details': str(e) if settings.DEBUG else None
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

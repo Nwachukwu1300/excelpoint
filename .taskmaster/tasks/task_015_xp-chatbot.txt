@@ -1,0 +1,66 @@
+# Task ID: 15
+# Title: Transform XP to Natural RAG-Enhanced Assistant
+# Status: pending
+# Dependencies: 13, 10
+# Priority: medium
+# Description: Convert XP from a strict material-only assistant to a natural, helpful RAG-enhanced LLM that uses uploaded materials as knowledge enhancement while providing natural responses and maintaining user experience focus.
+# Details:
+1. Update System Prompt in RAGService:
+   a. Replace restrictive prompt with natural, encouraging tone: "You are XP, a knowledgeable AI assistant that helps users understand their subjects. Use the provided context from uploaded materials as your primary knowledge source, but you can supplement with general knowledge when helpful and accurate."
+   b. Add guidance for natural conversation flow: "Maintain context across conversations, provide helpful follow-ups, and focus on being genuinely useful to the user."
+   c. Include accuracy emphasis: "Prioritize accuracy and clearly distinguish between material-based information and general knowledge when supplementing."
+
+2. Modify Response Generation Logic:
+   a. Update RAGService.generate_response() to remove strict material-only validation
+   b. Implement tiered response approach: prioritize material context, supplement with general knowledge when beneficial
+   c. Remove "insufficient material" blocking messages, replace with helpful responses that acknowledge material limitations
+   d. Add context grounding indicators: "Based on your materials..." vs "Additionally, from general knowledge..."
+
+3. Enhance Conversation Flow:
+   a. Remove restrictive fallback messages that block general knowledge
+   b. Implement natural conversation continuity that doesn't reset context unnecessarily
+   c. Allow follow-up questions and clarifications without strict material validation
+   d. Maintain conversation memory while being more flexible about knowledge sources
+
+4. Update Response Validation:
+   a. Replace binary material-only validation with accuracy-focused validation
+   b. Implement hallucination detection rather than general knowledge blocking
+   c. Add source attribution system that clearly indicates information sources
+   d. Focus on factual accuracy rather than source restriction
+
+5. Improve User Experience:
+   a. Remove "I can only assist with info on this subject" messaging
+   b. Provide helpful responses even when materials don't contain perfect matches
+   c. Maintain professional but natural tone throughout interactions
+   d. Implement graceful handling of edge cases without blocking responses
+
+# Test Strategy:
+1. Response Quality Tests:
+   a. Test queries with partial material matches to ensure natural supplementation
+   b. Verify responses maintain accuracy while being more helpful than restrictive
+   c. Test conversation flow with follow-up questions and context maintenance
+   d. Validate that responses clearly indicate source of information (materials vs general knowledge)
+
+2. System Prompt Validation:
+   a. Test updated prompts generate natural, helpful responses
+   b. Verify accuracy emphasis prevents hallucinations while allowing general knowledge
+   c. Test conversation continuity and context handling improvements
+   d. Validate tone and messaging align with natural assistant behavior
+
+3. Integration Tests:
+   a. Test RAG pipeline with new flexible approach using real subject materials
+   b. Verify vector search still prioritizes uploaded materials appropriately
+   c. Test conversation memory works with enhanced natural responses
+   d. Validate performance impact of more flexible response generation
+
+4. User Experience Tests:
+   a. Test edge cases where materials provide limited information
+   b. Verify removal of restrictive messaging improves user satisfaction
+   c. Test various query types (factual, conceptual, clarification) for natural handling
+   d. Validate that accuracy is maintained while improving helpfulness
+
+5. Accuracy and Safety Tests:
+   a. Test hallucination detection and prevention mechanisms
+   b. Verify source attribution works correctly for mixed-source responses
+   c. Test boundary cases to ensure accuracy isn't compromised by flexibility
+   d. Validate that general knowledge supplementation is appropriate and helpful

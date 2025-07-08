@@ -1,0 +1,37 @@
+# Task ID: 2
+# Title: Enhance Vector Search Service
+# Status: done
+# Dependencies: 1
+# Priority: high
+# Description: Build efficient vector similarity search functionality using existing ContentChunk embeddings
+# Details:
+Create VectorSearchService class in subjects/services.py using cosine similarity with numpy/scipy. Implement search_similar_chunks(query_embedding, subject_id, top_k=5, threshold=0.7) method. Use existing sentence-transformers/all-MiniLM-L6-v2 model for query embedding generation. Filter ContentChunks by subject_id and embedding_vector IS NOT NULL. Calculate cosine similarity using numpy.dot() and numpy.linalg.norm(). Return chunks above threshold sorted by similarity score with metadata including similarity scores.
+
+# Test Strategy:
+Unit tests with mock embeddings to verify similarity calculations. Integration tests with real ContentChunk data. Performance tests with large datasets to ensure sub-second response times.
+
+# Subtasks:
+## 1. Create VectorSearchService Class [done]
+### Dependencies: None
+### Description: Implement VectorSearchService in subjects/services/vector_search.py for similarity search functionality
+### Details:
+Create VectorSearchService class with methods: encode_query(text) using sentence-transformers, search_similar_chunks(query_embedding, subject_id, top_k=5, threshold=0.7) that filters ContentChunks by subject and calculates cosine similarity using numpy. Return chunks sorted by similarity score with metadata.
+
+## 2. Implement Cosine Similarity Algorithm [done]
+### Dependencies: None
+### Description: Add efficient cosine similarity calculation using numpy for vector comparison
+### Details:
+Implement cosine_similarity function using numpy.dot() and numpy.linalg.norm() for efficient vector comparison. Handle edge cases (zero vectors, empty embeddings). Add batch processing for multiple chunks. Optimize for performance with large vector sets using vectorized operations.
+
+## 3. Add Caching and Optimization [done]
+### Dependencies: 2.1, 2.2
+### Description: Implement caching layer and performance optimizations for vector search operations
+### Details:
+Add Redis caching for query embeddings with TTL. Implement database query optimization with proper indexes on subject_id. Add query result caching for frequently accessed chunks. Use Django's cache framework to store similarity results. Monitor query performance and add logging.
+
+## 4. Test Vector Search Service [done]
+### Dependencies: 2.3
+### Description: Create comprehensive tests for vector search functionality with real and mock data
+### Details:
+Write unit tests for VectorSearchService methods with mock embeddings. Create integration tests with real ContentChunk data. Add performance tests to ensure sub-second response times. Test edge cases (no embeddings, empty queries, invalid subject_ids). Verify similarity threshold filtering works correctly.
+

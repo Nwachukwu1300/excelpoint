@@ -46,18 +46,49 @@ class SubjectMaterial(models.Model):
         return f"{self.file.name} - {self.subject.name}"
 
 class ContentChunk(models.Model):
+    EMBEDDING_STATUS_CHOICES = (
+        ('pending', 'Pending'),
+        ('completed', 'Completed'),
+        ('failed', 'Failed'),
+    )
+    
     material = models.ForeignKey(SubjectMaterial, on_delete=models.CASCADE, related_name='chunks')
     content = models.TextField()
     chunk_index = models.IntegerField()
     embedding_vector = models.JSONField(null=True, blank=True)  # Store vector embeddings for AI search
+    embedding_status = models.CharField(
+        max_length=10, 
+        choices=EMBEDDING_STATUS_CHOICES, 
+        default='pending',
+        help_text="Status of embedding generation for this chunk"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ['chunk_index']
         unique_together = ['material', 'chunk_index']
+        indexes = [
+            models.Index(fields=['embedding_status']),
+            models.Index(fields=['material', 'embedding_status']),
+        ]
 
     def __str__(self):
-        return f"Chunk {self.chunk_index} - {self.material.file.name}"
+        return f"Chunk {self.chunk_index} - {self.material.file.name} ({self.embedding_status})"
+    
+    def has_embedding(self):
+        """Check if chunk has a valid embedding vector"""
+        return self.embedding_vector is not None and len(self.embedding_vector) > 0
+    
+    def mark_embedding_completed(self):
+        """Mark embedding as completed and update timestamp"""
+        self.embedding_status = 'completed'
+        self.save(update_fields=['embedding_status', 'updated_at'])
+    
+    def mark_embedding_failed(self):
+        """Mark embedding as failed and update timestamp"""
+        self.embedding_status = 'failed'
+        self.save(update_fields=['embedding_status', 'updated_at'])
 
 class Flashcard(models.Model):
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='flashcards')
@@ -269,6 +300,73 @@ class UserAnswer(models.Model):
         return self.is_correct
 
 # Legacy models (keeping for backwards compatibility)
+# XP Chatbot Models
+class ChatSession(models.Model):
+    """Model for managing XP chat sessions per user per subject"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='chat_sessions')
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='chat_sessions')
+    title = models.CharField(max_length=255, blank=True, null=True, help_text="Optional session title")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-updated_at']
+        # Removed unique_together constraint - multiple sessions allowed, only one active
+        indexes = [
+            models.Index(fields=['user', 'subject']),
+            models.Index(fields=['updated_at']),
+            models.Index(fields=['user', 'subject', 'is_active']),  # For finding active sessions
+        ]
+
+    def __str__(self):
+        return f"Chat: {self.user.username} - {self.subject.name}"
+
+    def get_message_count(self):
+        """Get total number of messages in this session"""
+        return self.messages.count()
+
+    def get_last_message(self):
+        """Get the most recent message in this session"""
+        return self.messages.first()
+
+class ChatMessage(models.Model):
+    """Model for storing individual chat messages in XP sessions"""
+    ROLE_CHOICES = (
+        ('user', 'User'),
+        ('assistant', 'Assistant'),
+        ('system', 'System'),
+    )
+
+    session = models.ForeignKey(ChatSession, on_delete=models.CASCADE, related_name='messages')
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES)
+    content = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+    metadata = models.JSONField(
+        default=dict, 
+        blank=True,
+        help_text="Store context info like retrieved chunks, response time, etc."
+    )
+
+    class Meta:
+        ordering = ['-timestamp']
+        indexes = [
+            models.Index(fields=['session', 'timestamp']),
+            models.Index(fields=['role']),
+        ]
+
+    def __str__(self):
+        content_preview = self.content[:50] + "..." if len(self.content) > 50 else self.content
+        return f"{self.role}: {content_preview}"
+
+    def get_retrieved_chunks(self):
+        """Extract retrieved chunk information from metadata"""
+        return self.metadata.get('retrieved_chunks', [])
+
+    def get_response_time(self):
+        """Get response generation time from metadata"""
+        return self.metadata.get('response_time', None)
+
 class QuizQuestion(models.Model):
     """Legacy model - keeping for backwards compatibility"""
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='legacy_quiz_questions')

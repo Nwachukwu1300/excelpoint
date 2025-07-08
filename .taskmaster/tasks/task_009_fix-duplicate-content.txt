@@ -1,0 +1,121 @@
+# Task ID: 9
+# Title: Fix Quiz Submission Database Constraint Error and Standardize Question Format
+# Status: done
+# Dependencies: 2, 3
+# Priority: high
+# Description: Resolve the NOT NULL constraint failure on subjects_useranswer.question_id during quiz submissions and ensure all quiz questions are generated in multiple choice format.
+# Details:
+1. Database Schema Investigation and Fix:
+   - Analyze the subjects_useranswer table structure and identify the root cause of the NOT NULL constraint failure
+   - Review the quiz submission flow in views.py to ensure question_id is properly populated before saving UserAnswer objects
+   - Add database migration if needed to handle existing orphaned records or adjust constraints
+   - Implement proper foreign key relationships and cascading rules between Question and UserAnswer models
+
+2. Quiz Question Format Standardization:
+   - Modify the quiz generation logic in llm_utils.py to enforce multiple choice format
+   - Update AI prompts to explicitly request multiple choice questions with 4 options (A, B, C, D)
+   - Implement validation in the Question model to ensure all questions have exactly 4 choices
+   - Add a question_type field to distinguish multiple choice from other formats if needed
+
+3. Data Validation and Error Handling:
+   - Implement comprehensive validation in the quiz submission endpoint
+   - Add try-catch blocks around database operations with proper error logging
+   - Create a data cleanup script to handle any existing malformed quiz data
+   - Implement rollback mechanisms for failed quiz submissions
+
+4. Frontend Integration:
+   - Update quiz templates to consistently display multiple choice options
+   - Ensure JavaScript quiz submission logic properly sends question_id with each answer
+   - Add client-side validation to prevent submission of incomplete quiz data
+
+5. Database Query Optimization:
+   - Review and optimize queries related to quiz submission to prevent race conditions
+   - Implement proper transaction handling for quiz submission operations
+   - Add database indexes on frequently queried fields like question_id and user_id
+
+# Test Strategy:
+1. Database Testing:
+   - Create unit tests to verify UserAnswer objects are created with valid question_id values
+   - Test database constraints and foreign key relationships
+   - Verify migration scripts work correctly on test databases
+   - Test quiz submission with various edge cases (missing data, invalid IDs)
+
+2. Quiz Generation Testing:
+   - Write tests to ensure all generated questions are multiple choice format
+   - Verify each question has exactly 4 answer choices
+   - Test AI prompt modifications produce consistent multiple choice output
+   - Validate question format across different subject materials
+
+3. Integration Testing:
+   - Test complete quiz flow from generation to submission
+   - Verify question_id is properly maintained throughout the process
+   - Test quiz submission with multiple users simultaneously
+   - Validate error handling for malformed quiz data
+
+4. Manual Testing:
+   - Generate quizzes from various materials and verify format consistency
+   - Submit quizzes and monitor database for constraint violations
+   - Test quiz functionality across different browsers and devices
+   - Verify error messages are user-friendly and informative
+
+5. Performance Testing:
+   - Test quiz submission under load to ensure no race conditions
+   - Verify database performance with optimized queries
+   - Monitor memory usage during quiz generation and submission
+
+# Subtasks:
+## 1. Fix UserAnswer NULL constraint error for dynamic questions [done]
+### Dependencies: None
+### Description: Fix the NOT NULL constraint error on question_id when submitting dynamic quizzes
+### Details:
+The issue is in submit_quiz view line ~356 where UserAnswer.objects.create() is called with question=None for dynamic questions, but the question field is a NOT NULL foreign key. Need to either make question field nullable or create temporary Question objects for dynamic questions.
+<info added on 2025-07-08T12:27:05.861Z>
+**FIXED**: ✅ UserAnswer NULL constraint error resolved
+
+**Changes Made**:
+1. **Model Update**: Modified `UserAnswer.question` field to allow NULL values (`null=True, blank=True`)
+2. **Migration**: Created and applied migration `0006_allow_null_question_in_useranswer.py`
+3. **Database**: Updated to support NULL question_id for dynamic questions
+
+**Solution**: The issue was that dynamic quiz questions don't have actual `Question` model objects, but the `UserAnswer.question` field was required. By making it nullable, dynamic questions can now be submitted without triggering the NOT NULL constraint error.
+
+**Next**: Test quiz submission to verify the fix works correctly.
+</info added on 2025-07-08T12:27:05.861Z>
+
+## 2. Convert all quiz questions to multiple choice format [done]
+### Dependencies: None
+### Description: Update AI prompts and generation logic to ensure all quiz questions are generated in multiple choice format with 4 options
+### Details:
+Modify the quiz generation prompts in llm_utils.py and subjects/tasks.py to explicitly request only multiple choice questions with exactly 4 options (A, B, C, D). Remove generation of short_answer and true_false questions.
+<info added on 2025-07-08T12:31:09.155Z>
+**MULTIPLE CHOICE CONVERSION COMPLETED**: ✅ FIXED
+
+**Changes Made**:
+
+1. **Static Quiz Generation** (`_generate_questions_with_openai()`):
+   - Removed true/false and short answer question distribution logic
+   - Now only generates multiple choice questions
+   - Updated chunk processing to only call multiple choice generation
+
+2. **Dynamic Quiz Generation** (`_generate_dynamic_questions_with_openai()`):
+   - Updated prompt to explicitly request "multiple-choice questions ONLY"
+   - Modified instructions to require exactly 4 options (A, B, C, D)
+   - Removed mixed-type generation logic
+
+3. **Response Parsing** (`_parse_dynamic_response()`):
+   - Simplified to only handle multiple choice parsing
+   - Removed true/false and short answer parsing logic
+   - Forces all questions to type 'multiple_choice'
+
+4. **llm_utils.py**: 
+   - Updated prompt to only request multiple choice questions
+   - Clarified system message for multiple choice focus
+
+5. **Database Creation** (`generate_quiz_from_material()`):
+   - Forces all questions to 'multiple_choice' type in database
+   - Removed conditional choice/answer creation logic
+   - Only creates Choice objects (no Answer objects)
+
+**Result**: All new quiz questions will now be generated in multiple choice format with exactly 4 options, regardless of generation method (static or dynamic).
+</info added on 2025-07-08T12:31:09.155Z>
+

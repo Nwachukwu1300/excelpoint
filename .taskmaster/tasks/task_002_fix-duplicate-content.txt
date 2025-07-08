@@ -1,0 +1,25 @@
+# Task ID: 2
+# Title: Review and Enhance AI Prompt Generation
+# Status: pending
+# Dependencies: 1
+# Priority: high
+# Description: Analyze and improve the AI prompt generation process to ensure material-specific content is correctly passed to OpenAI.
+# Details:
+1. Review flashcard generation process in tasks.py and llm_utils.py.
+2. Implement a prompt template system using Jinja2 (version 3.1.2) to ensure consistent and correct prompt structure.
+3. Add a material identifier to each prompt to explicitly specify the source.
+4. Implement a pre-processing step that validates the content being passed to OpenAI:
+   - Use spaCy (version 3.5.3) for named entity recognition to ensure material-specific entities are present.
+   - Implement TF-IDF using scikit-learn (version 1.2.2) to verify content relevance.
+5. Add detailed logging using the `logging` module to track which content is being used for each generation.
+6. Implement rate limiting and error handling for OpenAI API calls using tenacity (version 8.2.2).
+
+# Test Strategy:
+1. Create mock OpenAI responses for testing.
+2. Implement unit tests with pytest to verify:
+   - Correct prompt structure and content
+   - Presence of material-specific identifiers
+   - Proper content validation before API calls
+3. Use integration tests to verify the entire prompt generation and API call process.
+4. Manually review logs to ensure correct content flow.
+5. Perform load testing to verify rate limiting effectiveness.

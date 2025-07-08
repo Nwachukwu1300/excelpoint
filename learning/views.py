@@ -304,8 +304,8 @@ def confirm_course(request, course_id):
         request.session[session_key] = True
 
     if request.method == 'GET' and show_redirect and course.course_url:
-        # Open the course in a new tab using JavaScript in the template
-        pass  # The template already handles this with window.open
+        # The template handles opening the course in a new tab with window.open
+        pass
 
     return render(request, 'learning/course_confirmation.html', {
         'course': course,

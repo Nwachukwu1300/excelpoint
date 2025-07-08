@@ -19,6 +19,31 @@ typing-extensions==4.13.2
 cffi==1.17.1
 pycparser==2.22
 Pillow==11.2.1
+pypdf>=3.0.0
+
+# Content Processing
+langchain>=0.3.25
+langchain-community>=0.3.25
+PyPDF2>=3.0.1
+python-docx>=1.1.2
+sentence-transformers>=4.1.0
+torch>=2.6.0
+numpy==1.26.4
+unstructured==0.12.4
+python-magic==0.4.27
+python-magic-bin==0.4.14
+pydub>=0.25.1
+SpeechRecognition>=3.14.3
+
+# AI Integration
+openai>=1.12.0
+
+# Background Tasks
+celery>=5.5.3
+redis>=6.2.0
+
+# System Monitoring
+psutil>=6.1.0
 
 # Optional - uncomment if needed
 # django-cors-headers==4.3.1
