@@ -1,4 +1,4 @@
-# Career Nexus - Career Development Platform
+# ExcelPoint - Career Development Platform
 
 ## Project Overview
 Career Nexus is a comprehensive career development platform that helps users manage their professional growth through learning management, progress tracking, and career development tools.
