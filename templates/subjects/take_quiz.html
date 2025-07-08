@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ quiz.title }} - Career Nexus</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        .quiz-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .quiz-header h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .quiz-info {
+            display: flex;
+            justify-content: space-around;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 30px;
+        }
+        .quiz-info div {
+            text-align: center;
+        }
+        .quiz-info .label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+        .quiz-info .value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+        .question {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            background: #fafafa;
+        }
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .question-number {
+            background: #007bff;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .question-points {
+            color: #666;
+            font-size: 12px;
+        }
+        .question-text {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 15px;
+            color: #333;
+            line-height: 1.5;
+        }
+        .choices {
+            margin-left: 0;
+            padding-left: 0;
+        }
+        .choice {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .choice:hover {
+            background: #f0f8ff;
+            border-color: #007bff;
+        }
+        .choice input[type="radio"] {
+            margin-right: 10px;
+            transform: scale(1.2);
+        }
+        .choice label {
+            cursor: pointer;
+            flex: 1;
+        }
+        .short-answer-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            min-height: 60px;
+            resize: vertical;
+        }
+        .submit-section {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #e0e0e0;
+        }
+        .submit-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .submit-btn:hover {
+            background: #218838;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #007bff;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="{% url 'subject_detail' quiz.subject.id %}" class="back-link">← Back to Subject</a>
+        
+        <div class="quiz-header">
+            <h1>{{ quiz.title }}</h1>
+            <p>{{ quiz.description }}</p>
+        </div>
+        
+        <div class="quiz-info">
+            <div>
+                <div class="label">Questions</div>
+                <div class="value">{{ total_questions }}</div>
+            </div>
+            <div>
+                <div class="label">Total Points</div>
+                <div class="value">{{ total_points }}</div>
+            </div>
+            <div>
+                <div class="label">Pass Score</div>
+                <div class="value">{{ quiz.pass_score }}%</div>
+            </div>
+            {% if quiz.time_limit %}
+            <div>
+                <div class="label">Time Limit</div>
+                <div class="value">{{ quiz.time_limit }} min</div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <form method="post" action="{% url 'submit_quiz' quiz.id %}">
+            {% csrf_token %}
+            {% if attempt %}
+            <input type="hidden" name="attempt_id" value="{{ attempt.id }}">
+            {% endif %}
+            
+            {% if loading_dynamic %}
+            <div id="loadingSection" style="text-align: center; padding: 40px; background: #f8f9fa; border-radius: 6px; margin: 20px 0;">
+                <div class="spinner" style="border: 4px solid #f3f3f3; border-top: 4px solid #007bff; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 20px;"></div>
+                <h3>🔄 Generating Dynamic Questions...</h3>
+                <p>Please wait while we create personalized questions for you.</p>
+                <p id="statusMessage">Preparing your quiz...</p>
+                <div id="progressBar" style="width: 100%; background-color: #e0e0e0; border-radius: 4px; margin: 20px 0;">
+                    <div id="progressFill" style="width: 0%; height: 20px; background-color: #007bff; border-radius: 4px; transition: width 0.3s;"></div>
+                </div>
+            </div>
+            
+            <style>
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+            </style>
+            
+            <script>
+                let pollCount = 0;
+                const maxPolls = 15; // 30 seconds max (2 second intervals)
+                
+                function pollForQuestions() {
+                    pollCount++;
+                    
+                    // Update progress
+                    const progress = Math.min((pollCount / maxPolls) * 100, 90);
+                    document.getElementById('progressFill').style.width = progress + '%';
+                    
+                    // Update status message
+                    const messages = [
+                        'Analyzing your material...',
+                        'Generating unique questions...',
+                        'Creating answer choices...',
+                        'Finalizing your quiz...'
+                    ];
+                    const messageIndex = Math.floor(pollCount / 15) % messages.length;
+                    document.getElementById('statusMessage').textContent = messages[messageIndex];
+                    
+                    fetch(`/api/quiz/attempt/{{ attempt.id }}/check-questions/`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.ready) {
+                                // Questions are ready, reload the page
+                                document.getElementById('progressFill').style.width = '100%';
+                                document.getElementById('statusMessage').textContent = 'Questions ready! Loading quiz...';
+                                setTimeout(() => {
+                                    window.location.reload();
+                                }, 1000);
+                            } else if (pollCount >= maxPolls) {
+                                // Timeout - show error and refresh option
+                                document.getElementById('loadingSection').innerHTML = `
+                                    <h3>⚠️ Taking longer than expected</h3>
+                                    <p>Question generation is taking longer than usual.</p>
+                                    <a href="${window.location.href}" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">Try Again</a>
+                                `;
+                            } else {
+                                // Continue polling
+                                setTimeout(pollForQuestions, 2000);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error polling for questions:', error);
+                            if (pollCount < maxPolls) {
+                                setTimeout(pollForQuestions, 3000); // Longer delay on error
+                            }
+                        });
+                }
+                
+                // Start polling when page loads
+                setTimeout(pollForQuestions, 2000);
+            </script>
+            {% elif not questions %}
+            <div style="text-align: center; padding: 40px; background: #fff3cd; border-radius: 6px; margin: 20px 0; border: 1px solid #ffeaa7;">
+                <h3>⚠️ No Questions Available</h3>
+                <p>This quiz doesn't have any questions yet. Please contact your instructor.</p>
+            </div>
+            {% else %}
+            {% for question in questions %}
+            <div class="question">
+                <div class="question-header">
+                    <div class="question-number">Question {{ forloop.counter }}</div>
+                    {% if is_dynamic %}
+                        <div class="question-points">{{ question.points }} point{{ question.points|pluralize }}</div>
+                    {% else %}
+                        <div class="question-points">{{ question.points }} point{{ question.points|pluralize }}</div>
+                    {% endif %}
+                </div>
+                
+                {% if is_dynamic %}
+                    <div class="question-text">{{ question.text }}</div>
+                {% else %}
+                    <div class="question-text">{{ question.text }}</div>
+                {% endif %}
+                
+                {% if is_dynamic %}
+                    {% if question.type == 'multiple_choice' %}
+                        <div class="choices">
+                            {% for choice in question.choices %}
+                            <div class="choice">
+                                <input type="radio" 
+                                       id="q{{ question.id }}_c{{ forloop.counter }}" 
+                                       name="question_{{ question.id }}" 
+                                       value="{{ choice.id }}" 
+                                       required>
+                                <label for="q{{ question.id }}_c{{ forloop.counter }}">{{ choice.text }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    
+                    {% elif question.type == 'true_false' %}
+                        <div class="choices">
+                            {% for choice in question.choices %}
+                            <div class="choice">
+                                <input type="radio" 
+                                       id="q{{ question.id }}_c{{ forloop.counter }}" 
+                                       name="question_{{ question.id }}" 
+                                       value="{{ choice.id }}" 
+                                       required>
+                                <label for="q{{ question.id }}_c{{ forloop.counter }}">{{ choice.text }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    
+                    {% elif question.type == 'short_answer' %}
+                        <textarea name="question_{{ question.id }}" 
+                                  class="short-answer-input" 
+                                  placeholder="Enter your answer here..."
+                                  required></textarea>
+                    {% endif %}
+                
+                {% else %}
+                    {% if question.question_type == 'multiple_choice' %}
+                        <div class="choices">
+                            {% for choice in question.choices.all %}
+                            <div class="choice">
+                                <input type="radio" 
+                                       id="q{{ question.id }}_c{{ choice.id }}" 
+                                       name="question_{{ question.id }}" 
+                                       value="{{ choice.id }}" 
+                                       required>
+                                <label for="q{{ question.id }}_c{{ choice.id }}">{{ choice.text }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    
+                    {% elif question.question_type == 'true_false' %}
+                        <div class="choices">
+                            {% for choice in question.choices.all %}
+                            <div class="choice">
+                                <input type="radio" 
+                                       id="q{{ question.id }}_c{{ choice.id }}" 
+                                       name="question_{{ question.id }}" 
+                                       value="{{ choice.id }}" 
+                                       required>
+                                <label for="q{{ question.id }}_c{{ choice.id }}">{{ choice.text }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    
+                    {% elif question.question_type == 'short_answer' %}
+                        <textarea name="question_{{ question.id }}" 
+                                  class="short-answer-input" 
+                                  placeholder="Enter your answer here..."
+                                  required></textarea>
+                    {% endif %}
+                {% endif %}
+            </div>
+            {% endfor %}
+            {% endif %}
+            
+            {% if questions and not loading_dynamic %}
+            <div class="submit-section">
+                <button type="submit" class="submit-btn">Submit Quiz</button>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+</body>
+</html> 

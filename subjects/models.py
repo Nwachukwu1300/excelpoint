@@ -1,0 +1,301 @@
+from django.db import models
+from django.contrib.auth import get_user_model
+from django.core.validators import FileExtensionValidator
+from django.utils import timezone
+
+User = get_user_model()
+
+class Subject(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='subjects')
+    name = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        unique_together = ['user', 'name']
+
+    def __str__(self):
+        return f"{self.name} ({self.user.username})"
+
+class SubjectMaterial(models.Model):
+    FILE_TYPES = (
+        ('PDF', 'PDF Document'),
+        ('DOCX', 'Word Document'),
+        ('DOC', 'Word Document (Legacy)'),
+        ('VIDEO', 'Video File'),
+    )
+    STATUS_CHOICES = (
+        ('PENDING', 'Pending'),
+        ('PROCESSING', 'Processing'),
+        ('COMPLETED', 'Completed'),
+        ('FAILED', 'Failed'),
+    )
+
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='materials')
+    file = models.FileField(
+        upload_to='subject_materials/',
+        validators=[FileExtensionValidator(allowed_extensions=['pdf', 'docx', 'doc', 'mp4', 'mov', 'avi'])]
+    )
+    file_type = models.CharField(max_length=10, choices=FILE_TYPES)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PENDING')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.file.name} - {self.subject.name}"
+
+class ContentChunk(models.Model):
+    material = models.ForeignKey(SubjectMaterial, on_delete=models.CASCADE, related_name='chunks')
+    content = models.TextField()
+    chunk_index = models.IntegerField()
+    embedding_vector = models.JSONField(null=True, blank=True)  # Store vector embeddings for AI search
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['chunk_index']
+        unique_together = ['material', 'chunk_index']
+
+    def __str__(self):
+        return f"Chunk {self.chunk_index} - {self.material.file.name}"
+
+class Flashcard(models.Model):
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='flashcards')
+    material = models.ForeignKey(SubjectMaterial, on_delete=models.CASCADE, related_name='flashcards', null=True, blank=True)
+    question = models.TextField()
+    answer = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Flashcard: {self.question[:50]}..."
+
+# Enhanced Quiz Models
+class Quiz(models.Model):
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='quizzes')
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    time_limit = models.IntegerField(help_text="Time limit in minutes", null=True, blank=True)
+    pass_score = models.FloatField(default=60.0, help_text="Passing score in percentage")
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.title} - {self.subject.name}"
+
+    def get_total_points(self):
+        return sum(question.points for question in self.questions.all())
+
+class Question(models.Model):
+    QUESTION_TYPES = (
+        ('multiple_choice', 'Multiple Choice'),
+        ('short_answer', 'Short Answer'),
+        ('true_false', 'True/False'),
+    )
+    
+    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name='questions')
+    text = models.TextField()
+    question_type = models.CharField(max_length=20, choices=QUESTION_TYPES)
+    points = models.IntegerField(default=1)
+    order = models.IntegerField(default=0)
+    explanation = models.TextField(blank=True, help_text="Explanation for the correct answer")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['order']
+        unique_together = ['quiz', 'order']
+
+    def __str__(self):
+        return f"{self.quiz.title} - Question {self.order}: {self.text[:50]}..."
+
+class Choice(models.Model):
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='choices')
+    text = models.CharField(max_length=500)
+    is_correct = models.BooleanField(default=False)
+    order = models.IntegerField(default=0)
+
+    class Meta:
+        ordering = ['order']
+
+    def __str__(self):
+        return f"{self.text} ({'Correct' if self.is_correct else 'Incorrect'})"
+
+class Answer(models.Model):
+    """Model for storing correct answers for short answer and true/false questions"""
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='answers')
+    text = models.TextField()
+    is_correct = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"Answer for {self.question.text[:30]}..."
+
+class UserQuizAttempt(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='quiz_attempts')
+    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name='attempts')
+    start_time = models.DateTimeField(auto_now_add=True)
+    end_time = models.DateTimeField(null=True, blank=True)
+    score = models.FloatField(null=True, blank=True)
+    total_points = models.IntegerField(default=0)
+    earned_points = models.IntegerField(default=0)
+    is_completed = models.BooleanField(default=False)
+    
+    # New field to store dynamic questions for this specific attempt
+    dynamic_questions = models.JSONField(
+        null=True, 
+        blank=True, 
+        help_text="Stores dynamically generated questions for this attempt"
+    )
+    
+    # Track if this attempt uses dynamic questions
+    uses_dynamic_questions = models.BooleanField(
+        default=False,
+        help_text="True if this attempt uses dynamically generated questions"
+    )
+
+    class Meta:
+        ordering = ['-start_time']
+
+    def __str__(self):
+        return f"{self.user.username} - {self.quiz.title} ({self.start_time.strftime('%Y-%m-%d %H:%M')})"
+
+    def calculate_score(self):
+        """Calculate the score for this quiz attempt"""
+        if self.uses_dynamic_questions and self.dynamic_questions:
+            # Calculate score for dynamic questions
+            self.total_points = sum(q.get('points', 1) for q in self.dynamic_questions)
+            
+            # For dynamic questions, we need to get points from the dynamic_questions data
+            # since answer.question is None for dynamic questions
+            self.earned_points = 0
+            correct_answers = self.user_answers.filter(is_correct=True)
+            
+            # Since we can't rely on answer.question.points for dynamic questions,
+            # we'll assign points based on the dynamic questions structure
+            for answer in correct_answers:
+                # For dynamic questions, all questions have the same points (usually 1)
+                # We can get this from the first question in dynamic_questions
+                if self.dynamic_questions:
+                    points_per_question = self.dynamic_questions[0].get('points', 1)
+                    self.earned_points += points_per_question
+        else:
+            # Calculate score for static questions (original logic)
+            self.total_points = sum(question.points for question in self.quiz.questions.all())
+            self.earned_points = sum(
+                answer.question.points for answer in self.user_answers.filter(is_correct=True)
+            )
+        
+        if self.total_points > 0:
+            self.score = (self.earned_points / self.total_points) * 100
+        else:
+            self.score = 0.0
+        self.save()
+        return self.score
+
+    def is_passed(self):
+        """Check if the user passed the quiz"""
+        return self.score >= self.quiz.pass_score if self.score is not None else False
+
+    def complete_attempt(self):
+        """Mark the attempt as completed and calculate final score"""
+        self.end_time = timezone.now()
+        self.is_completed = True
+        self.calculate_score()
+        self.save()
+        
+    def get_questions(self):
+        """Get questions for this attempt - either dynamic or static"""
+        if self.uses_dynamic_questions and self.dynamic_questions:
+            return self.dynamic_questions
+        else:
+            # Return static questions from the quiz
+            return [
+                {
+                    'id': q.id,
+                    'text': q.text,
+                    'type': q.question_type,
+                    'points': q.points,
+                    'explanation': q.explanation,
+                    'choices': [
+                        {
+                            'id': c.id,
+                            'text': c.text,
+                            'order': c.order
+                        }
+                        for c in q.choices.all().order_by('order')
+                    ] if q.question_type in ['multiple_choice', 'true_false'] else []
+                }
+                for q in self.quiz.questions.all().order_by('order')
+            ]
+
+class UserAnswer(models.Model):
+    attempt = models.ForeignKey(UserQuizAttempt, on_delete=models.CASCADE, related_name='user_answers')
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, null=True, blank=True)  # Allow null for dynamic questions
+    answer_text = models.TextField(blank=True, null=True)
+    selected_choice = models.ForeignKey(Choice, on_delete=models.SET_NULL, null=True, blank=True)
+    is_correct = models.BooleanField(default=False)
+    answered_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['attempt', 'question']
+
+    def __str__(self):
+        return f"Answer by {self.attempt.user.username} for {self.question.text[:30]}..."
+
+    def check_answer(self):
+        """Check if the user's answer is correct based on question type"""
+        if self.question.question_type == 'multiple_choice':
+            if self.selected_choice:
+                self.is_correct = self.selected_choice.is_correct
+        elif self.question.question_type == 'short_answer':
+            if self.answer_text:
+                correct_answers = self.question.answers.values_list('text', flat=True)
+                # Case-insensitive comparison and strip whitespace
+                user_answer = self.answer_text.lower().strip()
+                self.is_correct = any(
+                    user_answer == correct_answer.lower().strip() 
+                    for correct_answer in correct_answers
+                )
+        elif self.question.question_type == 'true_false':
+            if self.selected_choice:
+                self.is_correct = self.selected_choice.is_correct
+        
+        self.save()
+        return self.is_correct
+
+# Legacy models (keeping for backwards compatibility)
+class QuizQuestion(models.Model):
+    """Legacy model - keeping for backwards compatibility"""
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='legacy_quiz_questions')
+    material = models.ForeignKey(SubjectMaterial, on_delete=models.CASCADE, related_name='legacy_quiz_questions', null=True, blank=True)
+    question = models.TextField()
+    correct_answer = models.CharField(max_length=255)
+    options = models.JSONField()  # Store multiple choice options
+    hint = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Legacy Quiz: {self.question[:50]}..."
+
+class QuizAttempt(models.Model):
+    """Legacy model - keeping for backwards compatibility"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='legacy_quiz_attempts')
+    quiz_question = models.ForeignKey(QuizQuestion, on_delete=models.CASCADE, related_name='attempts')
+    selected_answer = models.CharField(max_length=255)
+    used_hint = models.BooleanField(default=False)
+    is_correct = models.BooleanField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Legacy Attempt by {self.user.username} on {self.quiz_question.question[:30]}..."

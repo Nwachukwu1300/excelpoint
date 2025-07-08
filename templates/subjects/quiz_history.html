@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz History - Career Nexus</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #007bff;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        .filters {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        .filters h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        .filter-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .filter-group label {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .filter-group select,
+        .filter-group input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        .btn:hover {
+            opacity: 0.9;
+        }
+        .attempts-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+        .attempts-table th,
+        .attempts-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .attempts-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+        .attempts-table tr:hover {
+            background: #f8f9fa;
+        }
+        .score-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        .score-excellent {
+            background: #d4edda;
+            color: #155724;
+        }
+        .score-good {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        .score-fair {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .score-poor {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .subject-stats {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 30px;
+        }
+        .subject-stats h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        .subject-stat {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #ddd;
+        }
+        .subject-stat:last-child {
+            border-bottom: none;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        .empty-state i {
+            font-size: 3em;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            .filter-row {
+                grid-template-columns: 1fr;
+            }
+            .attempts-table {
+                font-size: 0.9em;
+            }
+            .attempts-table th,
+            .attempts-table td {
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="{% url 'subject_list' %}" class="back-link">← Back to Subjects</a>
+        
+        <div class="header">
+            <h1>📊 Quiz History</h1>
+            <p>Track your learning progress and quiz performance over time</p>
+        </div>
+        
+        <!-- Statistics -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number">{{ total_attempts }}</div>
+                <div class="stat-label">Total Attempts</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ avg_score }}%</div>
+                <div class="stat-label">Average Score</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ best_score }}%</div>
+                <div class="stat-label">Best Score</div>
+            </div>
+        </div>
+        
+        <!-- Filters -->
+        <div class="filters">
+            <h3>🔍 Filter Results</h3>
+            <form method="get">
+                <div class="filter-row">
+                    <div class="filter-group">
+                        <label for="subject">Subject</label>
+                        <select name="subject" id="subject">
+                            <option value="">All Subjects</option>
+                            {% for subject in user_subjects %}
+                            <option value="{{ subject.id }}" {% if filters.subject_id == subject.id|stringformat:"s" %}selected{% endif %}>
+                                {{ subject.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="quiz">Quiz</label>
+                        <select name="quiz" id="quiz">
+                            <option value="">All Quizzes</option>
+                            {% for quiz in user_quizzes %}
+                            <option value="{{ quiz.id }}" {% if filters.quiz_id == quiz.id|stringformat:"s" %}selected{% endif %}>
+                                {{ quiz.title }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="date_from">From Date</label>
+                        <input type="date" name="date_from" id="date_from" value="{{ filters.date_from }}">
+                    </div>
+                    <div class="filter-group">
+                        <label for="date_to">To Date</label>
+                        <input type="date" name="date_to" id="date_to" value="{{ filters.date_to }}">
+                    </div>
+                </div>
+                <div class="filter-buttons">
+                    <button type="submit" class="btn btn-primary">Apply Filters</button>
+                    <a href="{% url 'quiz_history' %}" class="btn btn-secondary">Clear All</a>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Quiz Attempts Table -->
+        {% if attempts %}
+        <div style="overflow-x: auto;">
+            <table class="attempts-table">
+                <thead>
+                    <tr>
+                        <th>Quiz</th>
+                        <th>Subject</th>
+                        <th>Date</th>
+                        <th>Score</th>
+                        <th>Questions</th>
+                        <th>Time Taken</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for attempt in attempts %}
+                    <tr>
+                        <td>{{ attempt.quiz.title|truncatechars:30 }}</td>
+                        <td>{{ attempt.quiz.subject.name }}</td>
+                        <td>{{ attempt.start_time|date:"M j, Y H:i" }}</td>
+                        <td>
+                            {% if attempt.score >= 90 %}
+                                <span class="score-badge score-excellent">{{ attempt.score|floatformat:1 }}%</span>
+                            {% elif attempt.score >= 70 %}
+                                <span class="score-badge score-good">{{ attempt.score|floatformat:1 }}%</span>
+                            {% elif attempt.score >= 50 %}
+                                <span class="score-badge score-fair">{{ attempt.score|floatformat:1 }}%</span>
+                            {% else %}
+                                <span class="score-badge score-poor">{{ attempt.score|floatformat:1 }}%</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ attempt.earned_points }}/{{ attempt.total_points }}</td>
+                        <td>
+                            {% if attempt.end_time and attempt.start_time %}
+                                {% with time_diff=attempt.end_time|timesince:attempt.start_time %}
+                                    {{ time_diff|slice:":5" }}
+                                {% endwith %}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'quiz_attempt_detail' attempt.id %}" class="btn btn-primary" style="padding: 5px 10px; font-size: 0.8em;">
+                                View Details
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div style="font-size: 3em; margin-bottom: 15px; opacity: 0.5;">📝</div>
+            <h3>No Quiz Attempts Found</h3>
+            <p>{% if filters.subject_id or filters.quiz_id or filters.date_from or filters.date_to %}
+                Try adjusting your filters or <a href="{% url 'quiz_history' %}">clear all filters</a>.
+            {% else %}
+                Start taking quizzes to see your progress here!
+            {% endif %}</p>
+        </div>
+        {% endif %}
+        
+        <!-- Subject Performance Stats -->
+        {% if subject_stats %}
+        <div class="subject-stats">
+            <h3>📈 Performance by Subject</h3>
+            {% for stat in subject_stats %}
+            <div class="subject-stat">
+                <div>
+                    <strong>{{ stat.quiz__subject__name }}</strong>
+                    <small>({{ stat.attempt_count }} attempt{{ stat.attempt_count|pluralize }})</small>
+                </div>
+                <div>
+                    <span class="score-badge {% if stat.avg_score >= 80 %}score-excellent{% elif stat.avg_score >= 70 %}score-good{% elif stat.avg_score >= 50 %}score-fair{% else %}score-poor{% endif %}">
+                        {{ stat.avg_score|floatformat:1 }}%
+                    </span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html> 

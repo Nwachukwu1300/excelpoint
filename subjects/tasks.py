@@ -1,0 +1,698 @@
+# Force CPU usage and prevent MPS crashes on macOS - MUST BE FIRST!
+import os
+os.environ['TOKENIZERS_PARALLELISM'] = 'false'
+os.environ['PYTORCH_ENABLE_MPS_FALLBACK'] = '1'
+os.environ['PYTORCH_MPS_HIGH_WATERMARK_RATIO'] = '0.0'
+
+# Force PyTorch to use CPU before any ML libraries are imported
+try:
+    import torch
+    torch.set_default_device('cpu')
+    # Disable MPS backend completely
+    if hasattr(torch.backends, 'mps'):
+        torch.backends.mps.is_available = lambda: False
+except ImportError:
+    pass
+
+from celery import shared_task
+from .models import SubjectMaterial, ContentChunk, Flashcard, QuizQuestion, Quiz, Question, Choice, Answer, UserQuizAttempt
+from .utils import ContentProcessor
+from openai import OpenAI
+import logging
+import json
+import re
+from django.conf import settings
+from .utils import extract_text_from_pdf, chunk_text
+from django.utils import timezone
+
+logger = logging.getLogger(__name__)
+
+# Configure OpenAI Client
+client = OpenAI(api_key=settings.OPENAI_API_KEY)
+
+@shared_task
+def process_material(material_id: int):
+    """Process uploaded material and create chunks."""
+    try:
+        material = SubjectMaterial.objects.get(id=material_id)
+        material.status = 'PROCESSING'
+        material.save()
+        
+        processor = ContentProcessor()
+        file_path = material.file.path
+        
+        # Process the file using the unified processor
+        chunks_data = processor.process_file(file_path)
+        
+        # Create ContentChunk objects
+        for chunk_data in chunks_data:
+            ContentChunk.objects.create(
+                material=material,
+                content=chunk_data['content'],
+                chunk_index=chunk_data['chunk_index'],
+                embedding_vector=chunk_data['embedding_vector']
+            )
+        
+        # Generate flashcards and quiz questions
+        generate_flashcards.delay(material_id)
+        generate_quiz_questions.delay(material_id)
+        
+        material.status = 'COMPLETED'
+        material.save()
+        
+    except Exception as e:
+        material.status = 'FAILED'
+        material.save()
+        raise e
+
+@shared_task
+def generate_flashcards(material_id: int):
+    """Generate flashcards from processed material."""
+    try:
+        material = SubjectMaterial.objects.get(id=material_id)
+        logger.info(f"Generating flashcards for material ID {material_id}: {material.file.name}")
+        chunks = ContentChunk.objects.filter(material=material)
+        logger.info(f"Found {chunks.count()} content chunks for material {material_id}")
+        
+        processor = ContentProcessor()
+        chunks_data = [
+            {
+                'content': chunk.content,
+                'chunk_index': chunk.chunk_index,
+                'embedding_vector': chunk.embedding_vector
+            }
+            for chunk in chunks
+        ]
+        
+        flashcards = processor.generate_flashcards(chunks_data)
+        
+        # Create Flashcard objects
+        flashcard_count = 0
+        for flashcard in flashcards:
+            Flashcard.objects.create(
+                subject=material.subject,
+                material=material,  # Link to specific material
+                question=flashcard['question'],
+                answer=flashcard['answer']
+            )
+            flashcard_count += 1
+        
+        logger.info(f"Successfully created {flashcard_count} flashcards for material {material_id}: {material.file.name}")
+            
+    except Exception as e:
+        logger.error(f"Error generating flashcards for material {material_id}: {str(e)}")
+        raise e
+
+@shared_task
+def generate_quiz_questions(material_id: int):
+    """Generate quiz questions from processed material."""
+    try:
+        material = SubjectMaterial.objects.get(id=material_id)
+        logger.info(f"Generating quiz questions for material ID {material_id}: {material.file.name}")
+        chunks = ContentChunk.objects.filter(material=material)
+        logger.info(f"Found {chunks.count()} content chunks for material {material_id}")
+        
+        processor = ContentProcessor()
+        chunks_data = [
+            {
+                'content': chunk.content,
+                'chunk_index': chunk.chunk_index,
+                'embedding_vector': chunk.embedding_vector
+            }
+            for chunk in chunks
+        ]
+        
+        questions = processor.generate_quiz_questions(chunks_data)
+        
+        # Create QuizQuestion objects
+        question_count = 0
+        for question in questions:
+            QuizQuestion.objects.create(
+                subject=material.subject,
+                material=material,  # Link to specific material
+                question=question['question'],
+                correct_answer=question['correct_answer'],
+                options=question['options'],
+                hint=question['hint']
+            )
+            question_count += 1
+        
+        logger.info(f"Successfully created {question_count} quiz questions for material {material_id}: {material.file.name}")
+            
+    except Exception as e:
+        logger.error(f"Error generating quiz questions for material {material_id}: {str(e)}")
+        raise e
+
+@shared_task(bind=True, max_retries=3)
+def generate_quiz_from_material(self, material_id, num_questions=10):
+    """
+    Generate a quiz with mixed question types from uploaded material content
+    """
+    try:
+        material = SubjectMaterial.objects.get(id=material_id)
+        logger.info(f"Starting quiz generation for material: {material.file.name}")
+        
+        # Update material status
+        material.status = 'PROCESSING'
+        material.save()
+        
+        # Extract text content
+        if material.file_type == 'PDF':
+            text_content = extract_text_from_pdf(material.file.path)
+        elif material.file_type in ['DOCX', 'DOC']:
+            # Use ContentProcessor for Word documents
+            processor = ContentProcessor()
+            chunks_data = processor.process_file(material.file.path)
+            text_content = '\n'.join([chunk['content'] for chunk in chunks_data])
+        else:
+            # For other file types, read as text
+            with open(material.file.path, 'r', encoding='utf-8') as f:
+                text_content = f.read()
+        
+        if not text_content.strip():
+            raise ValueError("No text content found in the uploaded file")
+        
+        # Create or get quiz for this material
+        quiz, created = Quiz.objects.get_or_create(
+            subject=material.subject,
+            title=f"Quiz: {material.file.name}",
+            defaults={
+                'description': f"Auto-generated quiz from {material.file.name}",
+                'pass_score': 70.0,
+                'time_limit': 30  # 30 minutes default
+            }
+        )
+        
+        # Clear existing questions if regenerating
+        if not created:
+            quiz.questions.all().delete()
+        
+        # Generate questions using OpenAI
+        questions_data = _generate_questions_with_openai(text_content, num_questions)
+        
+        # Save questions to database
+        question_order = 1
+        for q_data in questions_data:
+            question = Question.objects.create(
+                quiz=quiz,
+                text=q_data['question'],
+                question_type='multiple_choice',  # Force all questions to be multiple choice
+                points=q_data.get('points', 1),
+                order=question_order,
+                explanation=q_data.get('explanation', '')
+            )
+            
+            # Create choices for multiple choice questions
+            for i, choice_data in enumerate(q_data['options']):
+                Choice.objects.create(
+                    question=question,
+                    text=choice_data['text'],
+                    is_correct=choice_data['is_correct'],
+                    order=i + 1
+                )
+            
+            question_order += 1
+        
+        # Update material status
+        material.status = 'COMPLETED'
+        material.save()
+        
+        logger.info(f"Successfully generated {len(questions_data)} questions for material: {material.file.name}")
+        return {
+            'status': 'success',
+            'quiz_id': quiz.id,
+            'questions_generated': len(questions_data)
+        }
+        
+    except SubjectMaterial.DoesNotExist:
+        logger.error(f"Material with id {material_id} not found")
+        return {'status': 'error', 'message': 'Material not found'}
+    
+    except Exception as e:
+        logger.exception(f"Error generating quiz for material {material_id}: {str(e)}")
+        
+        # Update material status to failed
+        try:
+            material = SubjectMaterial.objects.get(id=material_id)
+            material.status = 'FAILED'
+            material.save()
+        except:
+            pass
+        
+        # Retry the task
+        if self.request.retries < self.max_retries:
+            logger.info(f"Retrying quiz generation for material {material_id} (attempt {self.request.retries + 1})")
+            raise self.retry(countdown=60 * (2 ** self.request.retries))
+        
+        return {'status': 'error', 'message': str(e)}
+
+def _generate_questions_with_openai(text_content, num_questions=10):
+    """
+    Use OpenAI to generate quiz questions from text content
+    """
+    # Chunk the text if it's too long
+    chunks = chunk_text(text_content, chunk_size=2000)
+    
+    all_questions = []
+    questions_per_chunk = max(2, num_questions // len(chunks))
+    
+    for i, chunk in enumerate(chunks):
+        try:
+            # Generate only multiple choice questions
+            chunk_questions = []
+            
+            # Generate multiple choice questions only
+            mc_prompt = _create_multiple_choice_prompt(chunk, questions_per_chunk)
+            mc_response = _call_openai_api(mc_prompt)
+            chunk_questions.extend(_parse_multiple_choice_response(mc_response))
+            
+            all_questions.extend(chunk_questions)
+            
+        except Exception as e:
+            logger.warning(f"Error generating questions for chunk {i + 1}: {str(e)}")
+            continue
+    
+    # Limit to requested number of questions
+    return all_questions[:num_questions]
+
+def _create_multiple_choice_prompt(text, num_questions):
+    """Create prompt for multiple choice questions"""
+    return f"""
+Based on the following text, generate {num_questions} multiple-choice questions that test understanding of key concepts.
+
+Text:
+{text}
+
+Instructions:
+1. Create {num_questions} multiple-choice questions
+2. Each question should have 4 options (A, B, C, D)
+3. Only one option should be correct
+4. Vary difficulty levels from basic recall to analysis
+5. Questions should cover important concepts from the text
+
+Output format (JSON):
+{{
+    "questions": [
+        {{
+            "question": "Question text here?",
+            "options": [
+                {{"text": "Option A", "is_correct": false}},
+                {{"text": "Option B", "is_correct": true}},
+                {{"text": "Option C", "is_correct": false}},
+                {{"text": "Option D", "is_correct": false}}
+            ],
+            "explanation": "Brief explanation of why the answer is correct"
+        }}
+    ]
+}}
+"""
+
+def _create_true_false_prompt(text, num_questions):
+    """Create prompt for true/false questions"""
+    return f"""
+Based on the following text, generate {num_questions} true/false questions that test understanding.
+
+Text:
+{text}
+
+Instructions:
+1. Create {num_questions} true/false questions
+2. Include a mix of true and false statements
+3. Focus on important facts and concepts from the text
+4. Avoid ambiguous statements
+
+Output format (JSON):
+{{
+    "questions": [
+        {{
+            "question": "Statement to evaluate",
+            "options": [
+                {{"text": "True", "is_correct": true}},
+                {{"text": "False", "is_correct": false}}
+            ],
+            "explanation": "Brief explanation of why the statement is true or false"
+        }}
+    ]
+}}
+"""
+
+def _create_short_answer_prompt(text, num_questions):
+    """Create prompt for short answer questions"""
+    return f"""
+Based on the following text, generate {num_questions} short answer questions that require brief responses.
+
+Text:
+{text}
+
+Instructions:
+1. Create {num_questions} short answer questions
+2. Questions should require 1-3 sentence responses
+3. Focus on key concepts, definitions, and explanations
+4. Provide model answers and acceptable variations
+
+Output format (JSON):
+{{
+    "questions": [
+        {{
+            "question": "Question text here?",
+            "correct_answers": ["Primary answer", "Alternative answer", "Another acceptable answer"],
+            "explanation": "Brief explanation of what makes a good answer"
+        }}
+    ]
+}}
+"""
+
+def _call_openai_api(prompt, temperature=0.3):
+    """
+    Call OpenAI API with error handling and retries
+    """
+    try:
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are a quiz generation assistant. Generate high-quality educational questions based on the provided text. Always respond with valid JSON format."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=temperature,
+            max_tokens=2000
+        )
+        
+        return response.choices[0].message.content.strip()
+    
+    except Exception as e:
+        # Handle rate limiting with exponential backoff
+        if "rate limit" in str(e).lower():
+            logger.warning("OpenAI rate limit reached, waiting 20 seconds...")
+            import time
+            time.sleep(20)
+            return _call_openai_api(prompt, temperature)
+        
+        logger.error(f"OpenAI API error: {str(e)}")
+        raise
+
+def _parse_multiple_choice_response(response):
+    """Parse OpenAI response for multiple choice questions"""
+    try:
+        data = json.loads(response)
+        questions = []
+        
+        for q in data.get('questions', []):
+            questions.append({
+                'type': 'multiple_choice',
+                'question': q['question'],
+                'options': q['options'],
+                'explanation': q.get('explanation', ''),
+                'points': 1
+            })
+        
+        return questions
+    
+    except (json.JSONDecodeError, KeyError) as e:
+        logger.warning(f"Error parsing multiple choice response: {str(e)}")
+        return []
+
+def _parse_true_false_response(response):
+    """Parse OpenAI response for true/false questions"""
+    try:
+        data = json.loads(response)
+        questions = []
+        
+        for q in data.get('questions', []):
+            questions.append({
+                'type': 'true_false',
+                'question': q['question'],
+                'options': q['options'],
+                'explanation': q.get('explanation', ''),
+                'points': 1
+            })
+        
+        return questions
+    
+    except (json.JSONDecodeError, KeyError) as e:
+        logger.warning(f"Error parsing true/false response: {str(e)}")
+        return []
+
+def _parse_short_answer_response(response):
+    """Parse OpenAI response for short answer questions"""
+    try:
+        data = json.loads(response)
+        questions = []
+        
+        for q in data.get('questions', []):
+            questions.append({
+                'type': 'short_answer',
+                'question': q['question'],
+                'correct_answers': q['correct_answers'],
+                'explanation': q.get('explanation', ''),
+                'points': 2  # Short answer questions worth more points
+            })
+        
+        return questions
+    
+    except (json.JSONDecodeError, KeyError) as e:
+        logger.warning(f"Error parsing short answer response: {str(e)}")
+        return []
+
+@shared_task(bind=True)
+def generate_dynamic_quiz_questions(self, attempt_id, num_questions=10):
+    """
+    Generate dynamic questions for a specific quiz attempt.
+    This creates unique questions for each attempt rather than using static questions.
+    """
+    try:
+        attempt = UserQuizAttempt.objects.get(id=attempt_id)
+        quiz = attempt.quiz
+        material = quiz.subject.materials.first()  # Get the first material for now
+        
+        if not material:
+            raise ValueError("No material found for this quiz")
+        
+        logger.info(f"Generating dynamic questions for attempt {attempt_id}")
+        
+        # Extract text content from the material
+        if material.file_type == 'PDF':
+            text_content = extract_text_from_pdf(material.file.path)
+        elif material.file_type in ['DOCX', 'DOC']:
+            # Use ContentProcessor for Word documents
+            processor = ContentProcessor()
+            chunks_data = processor.process_file(material.file.path)
+            text_content = '\n'.join([chunk['content'] for chunk in chunks_data])
+        else:
+            with open(material.file.path, 'r', encoding='utf-8') as f:
+                text_content = f.read()
+        
+        if not text_content.strip():
+            raise ValueError("No text content found in the material")
+        
+        # Generate dynamic questions with variation
+        questions_data = _generate_dynamic_questions_with_openai(
+            text_content, 
+            num_questions, 
+            attempt_number=attempt.user.quiz_attempts.filter(quiz=quiz).count()
+        )
+        
+        # Store the generated questions directly in the attempt as JSON
+        formatted_questions = []
+        for i, q_data in enumerate(questions_data):
+            formatted_question = {
+                'id': f"dynamic_{i+1}",
+                'text': q_data['question'],
+                'type': q_data['type'],
+                'points': q_data.get('points', 1),
+                'explanation': q_data.get('explanation', ''),
+                'order': i + 1
+            }
+            
+            # Add choices for multiple choice and true/false
+            if q_data['type'] in ['multiple_choice', 'true_false']:
+                formatted_question['choices'] = []
+                for j, choice_data in enumerate(q_data['options']):
+                    formatted_question['choices'].append({
+                        'id': f"dynamic_{i+1}_choice_{j+1}",
+                        'text': choice_data['text'],
+                        'is_correct': choice_data['is_correct'],
+                        'order': j + 1
+                    })
+            
+            # Add correct answers for short answer
+            elif q_data['type'] == 'short_answer':
+                formatted_question['correct_answers'] = q_data.get('correct_answers', [])
+            
+            formatted_questions.append(formatted_question)
+        
+        # Store questions in the attempt
+        attempt.dynamic_questions = formatted_questions
+        attempt.save()
+        
+        logger.info(f"Successfully generated {len(questions_data)} dynamic questions for attempt {attempt_id}")
+        return {
+            'status': 'success',
+            'attempt_id': attempt_id,
+            'questions_generated': len(questions_data)
+        }
+        
+    except UserQuizAttempt.DoesNotExist:
+        logger.error(f"Quiz attempt with id {attempt_id} not found")
+        return {'status': 'error', 'message': 'Quiz attempt not found'}
+    
+    except Exception as e:
+        logger.exception(f"Error generating dynamic questions for attempt {attempt_id}: {str(e)}")
+        return {'status': 'error', 'message': str(e)}
+
+def _generate_dynamic_questions_with_openai(text_content, num_questions=10, attempt_number=1):
+    """
+    Generate dynamic questions with variation based on attempt number
+    """
+    # Add variation to the prompt based on attempt number
+    variation_instructions = {
+        1: "Focus on fundamental concepts and definitions.",
+        2: "Emphasize practical applications and examples.",
+        3: "Create questions about relationships and comparisons between concepts.",
+        4: "Focus on analysis and critical thinking questions.",
+    }
+    
+    variation_instruction = variation_instructions.get(
+        attempt_number, 
+        "Create diverse questions covering different aspects of the material."
+    )
+    
+    # Chunk the text if it's too long
+    chunks = chunk_text(text_content, chunk_size=2000)
+    
+    all_questions = []
+    questions_per_chunk = max(2, num_questions // len(chunks))
+    
+    for i, chunk in enumerate(chunks):
+        try:
+            # Generate questions with variation
+            chunk_questions = []
+            
+            # Create a dynamic prompt that requests JSON format
+            dynamic_prompt = f"""
+Based on the following text, generate {questions_per_chunk} multiple-choice quiz questions in JSON format.
+
+Variation Focus: {variation_instruction}
+Attempt Number: {attempt_number}
+
+Text:
+{chunk}
+
+Instructions:
+1. Create {questions_per_chunk} multiple-choice questions ONLY
+2. Each question must have exactly 4 options (A, B, C, D)
+3. Only one option should be correct
+4. {variation_instruction}
+5. Vary difficulty and focus areas
+6. Avoid repetitive patterns
+
+Please respond with valid JSON in this exact format:
+{{
+    "questions": [
+        {{
+            "QUESTION_TYPE": "multiple_choice",
+            "QUESTION": "Your question here?",
+            "OPTIONS": "A) option1, B) option2, C) option3, D) option4",
+            "CORRECT": "B) option2",
+            "EXPLANATION": "Brief explanation of the correct answer",
+            "POINTS": 1
+        }}
+    ]
+}}
+
+Generate exactly {questions_per_chunk} multiple-choice questions:
+"""
+            
+            response = _call_openai_api(dynamic_prompt, temperature=0.8)  # Higher temperature for more variation
+            chunk_questions.extend(_parse_dynamic_response(response))
+            
+            all_questions.extend(chunk_questions)
+            
+        except Exception as e:
+            logger.warning(f"Error generating dynamic questions for chunk {i + 1}: {str(e)}")
+            continue
+    
+    # Shuffle and limit to requested number
+    import random
+    random.shuffle(all_questions)
+    return all_questions[:num_questions]
+
+def _parse_dynamic_response(response):
+    """Parse the dynamic question response format - handles multiple choice questions only"""
+    questions = []
+    
+    # First try to parse as JSON
+    try:
+        import json
+        data = json.loads(response)
+        if 'questions' in data:
+            for q_data in data['questions']:
+                question = {
+                    'type': 'multiple_choice',  # Force multiple choice
+                    'question': q_data.get('QUESTION', ''),
+                    'explanation': q_data.get('EXPLANATION', ''),
+                    'points': q_data.get('POINTS', 1)
+                }
+                
+                # Parse multiple choice options
+                options_text = q_data.get('OPTIONS', '')
+                correct_answer = q_data.get('CORRECT', '')
+                
+                options = []
+                # Parse options like "A) option1, B) option2, C) option3, D) option4"
+                for opt in options_text.split(', '):
+                    opt = opt.strip()
+                    if len(opt) > 3 and opt[1] == ')':
+                        letter = opt[0].upper()
+                        text = opt[3:].strip()
+                        is_correct = correct_answer.startswith(letter)
+                        options.append({'text': text, 'is_correct': is_correct})
+                
+                question['options'] = options
+                questions.append(question)
+        
+        return questions
+    
+    except (json.JSONDecodeError, KeyError):
+        # Fall back to text parsing if JSON fails
+        pass
+    
+    # Text format parsing for multiple choice only
+    lines = response.strip().split('\n')
+    current_question = {}
+    
+    for line in lines:
+        line = line.strip()
+        if line.startswith('QUESTION_TYPE:'):
+            if current_question:
+                questions.append(current_question)
+            current_question = {'type': 'multiple_choice'}  # Force multiple choice
+        elif line.startswith('QUESTION:'):
+            current_question['question'] = line.split(':', 1)[1].strip()
+        elif line.startswith('OPTIONS:'):
+            options_text = line.split(':', 1)[1].strip()
+            options = []
+            for opt in options_text.split(', '):
+                letter = opt.strip()[0]
+                text = opt.strip()[3:]
+                options.append({'text': text, 'is_correct': False})
+            current_question['options'] = options
+        elif line.startswith('CORRECT:'):
+            correct_answer = line.split(':', 1)[1].strip()
+            # Mark the correct option
+            if 'options' in current_question:
+                correct_letter = correct_answer[0].upper()
+                correct_index = ord(correct_letter) - ord('A')
+                if 0 <= correct_index < len(current_question['options']):
+                    current_question['options'][correct_index]['is_correct'] = True
+        elif line.startswith('EXPLANATION:'):
+            current_question['explanation'] = line.split(':', 1)[1].strip()
+        elif line.startswith('POINTS:'):
+            try:
+                current_question['points'] = int(line.split(':', 1)[1].strip())
+            except:
+                current_question['points'] = 1
+    
+    if current_question:
+        questions.append(current_question)
+    
+    return questions 

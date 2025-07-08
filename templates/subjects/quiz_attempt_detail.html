@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Attempt Details - Career Nexus</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #007bff;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .quiz-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        .info-item {
+            text-align: center;
+        }
+        .info-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .info-value {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+        }
+        .score-display {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .score-number {
+            font-size: 3em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .score-details {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        .questions-section {
+            margin-top: 30px;
+        }
+        .question-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .question-header {
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .question-number {
+            font-weight: bold;
+            color: #333;
+        }
+        .question-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        .status-correct {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-incorrect {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .question-content {
+            padding: 20px;
+        }
+        .question-text {
+            font-size: 1.1em;
+            margin-bottom: 15px;
+            color: #333;
+            line-height: 1.5;
+        }
+        .answer-section {
+            margin-bottom: 15px;
+        }
+        .answer-label {
+            font-weight: bold;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .answer-value {
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            border-left: 4px solid #007bff;
+        }
+        .correct-answer {
+            border-left-color: #28a745;
+            background: #d4edda;
+        }
+        .incorrect-answer {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+        .explanation {
+            margin-top: 15px;
+            padding: 15px;
+            background: #e3f2fd;
+            border-radius: 4px;
+            border-left: 4px solid #2196f3;
+        }
+        .explanation-label {
+            font-weight: bold;
+            color: #1976d2;
+            margin-bottom: 5px;
+        }
+        .summary-stats {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 30px;
+        }
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            text-align: center;
+        }
+        .summary-item {
+            padding: 15px;
+            background: white;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .summary-number {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .summary-label {
+            font-size: 0.9em;
+            color: #666;
+        }
+        .retake-section {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            text-decoration: none;
+            display: inline-block;
+            font-weight: 500;
+            margin: 0 10px;
+        }
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            .score-number {
+                font-size: 2em;
+            }
+            .question-content {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="{% url 'quiz_history' %}" class="back-link">← Back to Quiz History</a>
+        
+        <div class="header">
+            <h1>📝 Quiz Attempt Details</h1>
+            <p>{{ attempt.quiz.title }} - {{ attempt.quiz.subject.name }}</p>
+        </div>
+        
+        <!-- Quiz Information -->
+        <div class="quiz-info">
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Date Taken</div>
+                    <div class="info-value">{{ attempt.start_time|date:"M j, Y" }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Time Started</div>
+                    <div class="info-value">{{ attempt.start_time|time:"H:i" }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Time Completed</div>
+                    <div class="info-value">
+                        {% if attempt.end_time %}
+                            {{ attempt.end_time|time:"H:i" }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Duration</div>
+                    <div class="info-value">
+                        {% if attempt.end_time and attempt.start_time %}
+                            {% with time_diff=attempt.end_time|timesince:attempt.start_time %}
+                                {{ time_diff|slice:":10" }}
+                            {% endwith %}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Score Display -->
+        <div class="score-display">
+            <div class="score-number">{{ attempt.score|floatformat:1 }}%</div>
+            <div class="score-details">
+                {{ correct_answers }} out of {{ total_questions }} questions correct
+                {% if attempt.is_passed %}
+                    <br>✅ <strong>PASSED</strong> (Required: {{ attempt.quiz.pass_score }}%)
+                {% else %}
+                    <br>❌ <strong>FAILED</strong> (Required: {{ attempt.quiz.pass_score }}%)
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Questions Review -->
+        <div class="questions-section">
+            <h2>📋 Question-by-Question Review</h2>
+            
+            {% for result in question_results %}
+            <div class="question-card">
+                <div class="question-header">
+                    <span class="question-number">Question {{ forloop.counter }}</span>
+                    <span class="question-status {% if result.is_correct %}status-correct{% else %}status-incorrect{% endif %}">
+                        {% if result.is_correct %}✓ Correct{% else %}✗ Incorrect{% endif %}
+                    </span>
+                </div>
+                <div class="question-content">
+                    <div class="question-text">{{ result.question.text }}</div>
+                    
+                    {% if result.question.type == 'multiple_choice' %}
+                        <!-- Multiple Choice Display -->
+                        <div class="answer-section">
+                            <div class="answer-label">Your Answer:</div>
+                            <div class="answer-value {% if result.is_correct %}correct-answer{% else %}incorrect-answer{% endif %}">
+                                {% if result.user_answer.selected_choice %}
+                                    {{ result.user_answer.selected_choice.text }}
+                                {% else %}
+                                    No answer selected
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if not result.is_correct %}
+                        <div class="answer-section">
+                            <div class="answer-label">Correct Answer:</div>
+                            <div class="answer-value correct-answer">
+                                {% for choice in result.question.choices %}
+                                    {% if choice.is_correct %}{{ choice.text }}{% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                    {% elif result.question.type == 'short_answer' %}
+                        <!-- Short Answer Display -->
+                        <div class="answer-section">
+                            <div class="answer-label">Your Answer:</div>
+                            <div class="answer-value {% if result.is_correct %}correct-answer{% else %}incorrect-answer{% endif %}">
+                                {% if result.user_answer.answer_text %}
+                                    {{ result.user_answer.answer_text }}
+                                {% else %}
+                                    No answer provided
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if not result.is_correct %}
+                        <div class="answer-section">
+                            <div class="answer-label">Correct Answer:</div>
+                            <div class="answer-value correct-answer">
+                                {% for answer in result.question.answers %}
+                                    {{ answer.text }}{% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                    {% elif result.question.type == 'true_false' %}
+                        <!-- True/False Display -->
+                        <div class="answer-section">
+                            <div class="answer-label">Your Answer:</div>
+                            <div class="answer-value {% if result.is_correct %}correct-answer{% else %}incorrect-answer{% endif %}">
+                                {% if result.user_answer.selected_choice %}
+                                    {{ result.user_answer.selected_choice.text }}
+                                {% else %}
+                                    No answer selected
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if not result.is_correct %}
+                        <div class="answer-section">
+                            <div class="answer-label">Correct Answer:</div>
+                            <div class="answer-value correct-answer">
+                                {% for choice in result.question.choices %}
+                                    {% if choice.is_correct %}{{ choice.text }}{% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% endif %}
+                    
+                    {% if result.question.explanation %}
+                    <div class="explanation">
+                        <div class="explanation-label">💡 Explanation:</div>
+                        <div>{{ result.question.explanation }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Summary Statistics -->
+        <div class="summary-stats">
+            <h3>📊 Attempt Summary</h3>
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <div class="summary-number">{{ total_questions }}</div>
+                    <div class="summary-label">Total Questions</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-number">{{ correct_answers }}</div>
+                    <div class="summary-label">Correct Answers</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-number">{{ attempt.earned_points }}</div>
+                    <div class="summary-label">Points Earned</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-number">{{ attempt.total_points }}</div>
+                    <div class="summary-label">Total Points</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Retake Section -->
+        <div class="retake-section">
+            <h3>Want to improve your score?</h3>
+            <p>Practice makes perfect! Take the quiz again to reinforce your learning.</p>
+            <a href="{% url 'take_quiz' attempt.quiz.id %}" class="btn btn-success">
+                🔄 Retake Quiz
+            </a>
+            <a href="{% url 'subject_detail' attempt.quiz.subject.id %}" class="btn btn-primary">
+                📚 Back to Subject
+            </a>
+        </div>
+    </div>
+</body>
+</html> 

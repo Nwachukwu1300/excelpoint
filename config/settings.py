@@ -12,6 +12,10 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 import os
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -41,9 +45,11 @@ INSTALLED_APPS = [
     # our apps
     'users',
     'learning',
+    'subjects',
     'rest_framework',
     'rest_framework_simplejwt',
     'requests',
+    'config.celery',
 ]
 
 MIDDLEWARE = [
@@ -143,6 +149,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
@@ -152,39 +159,26 @@ REST_FRAMEWORK = {
 # Session settings
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 SESSION_COOKIE_AGE = 1209600  # 2 weeks in seconds
+SESSION_COOKIE_SECURE = False  # Set to True only in production with HTTPS
 SESSION_COOKIE_HTTPONLY = True
-
-# Session settings for persistence
-SESSION_ENGINE = 'django.contrib.sessions.backends.db'
-SESSION_COOKIE_AGE = 1209600  # 2 weeks in seconds
-SESSION_COOKIE_SECURE = True  # Use only with HTTPS
-SESSION_COOKIE_HTTPONLY = True
-
-
-
-API_CONFIGS = {
-    'LINKEDIN': {
-        'CLIENT_ID': 'your_linkedin_client_id',
-        'CLIENT_SECRET': 'your_linkedin_client_secret',
-        'BASE_URL': 'https://api.linkedin.com/v2',
-    },
-    'GLASSDOOR': {
-        'API_KEY': 'your_glassdoor_api_key',
-        'PARTNER_ID': 'your_glassdoor_partner_id',
-        'BASE_URL': 'https://api.glassdoor.com/v1',
-    },
-    'COURSERA': {
-        'API_KEY': 'your_coursera_api_key',
-        'BASE_URL': 'https://api.coursera.org/api/courses.v1',
-    },
-    'UDEMY': {
-        'CLIENT_ID': 'your_udemy_client_id',
-        'CLIENT_SECRET': 'your_udemy_client_secret',
-        'BASE_URL': 'https://api.udemy.com/api-2.0',
-    }
-}
 
 # Authentication URLs
 LOGIN_URL = '/users/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
+
+# File upload settings
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB
+
+# Celery Configuration
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
+
+# OpenAI Configuration
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+OPENAI_MODEL = 'gpt-3.5-turbo'  # Cost-effective for development

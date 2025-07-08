@@ -1,0 +1,939 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ subject.name }} - Subject Materials{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'subjects' %}">Subjects</a></li>
+            <li class="breadcrumb-item active">{{ subject.name }}</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2 mb-0">{{ subject.name }}</h1>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadMaterialModal">
+            <i class="fas fa-upload"></i> Upload Material
+        </button>
+    </div>
+
+    <!-- Materials Section -->
+    <div class="materials-section mb-5">
+            {% if materials %}
+            <div class="row g-4">
+                {% for material in materials %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100 shadow-sm hover-shadow">
+                        <div class="card-body">
+                            <h3 class="h5 mb-3">{{ material.file.name|slice:"16:" }}</h3>
+                            <p class="text-muted mb-3">
+                                <small>
+                                    <i class="fas fa-file"></i> {{ material.file_type }}
+                                    <span class="ms-2">
+                                        <i class="fas fa-clock"></i> {{ material.created_at|date:"M d, Y" }}
+                                    </span>
+                                </small>
+                            </p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="material-status-container" data-material-id="{{ material.id }}">
+                                    <span class="badge status-badge {% if material.status == 'COMPLETED' %}bg-success{% elif material.status == 'PROCESSING' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                        {{ material.status }}
+                                    </span>
+                                    {% if material.status == 'PROCESSING' or material.status == 'PENDING' %}
+                                    <div class="progress mt-2" style="height: 4px;">
+                                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                             role="progressbar" 
+                                             style="width: {% if material.status == 'PROCESSING' %}50%{% else %}10%{% endif %};">
+                                        </div>
+                                    </div>
+                                    <small class="text-muted processing-info">Processing...</small>
+                                    {% endif %}
+                                </div>
+                                {% if material.status == 'COMPLETED' %}
+                                <div class="btn-group">
+                                    <a href="{{ material.file.url }}" class="btn btn-outline-primary btn-sm" target="_blank">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
+                                    <button type="button" class="btn btn-primary btn-sm" onclick="selectMaterial({{ material.id }}, '{{ material.file.name|escapejs }}')">
+                                        <i class="fas fa-mouse-pointer"></i> Select
+                                    </button>
+                                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="confirmDelete({{ material.id }}, '{{ material.file.name|escapejs }}')">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                </div>
+                                {% else %}
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="confirmDelete({{ material.id }}, '{{ material.file.name|escapejs }}')">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <div class="mb-3">
+                    <i class="fas fa-file-alt fa-3x text-muted"></i>
+                </div>
+                <h3 class="h4 mb-3">No Materials Yet</h3>
+                <p class="text-muted mb-4">Upload your first material to start generating flashcards and quizzes.</p>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadMaterialModal">
+                    <i class="fas fa-upload"></i> Upload Material
+                </button>
+            </div>
+            {% endif %}
+    </div>
+
+    <!-- Selected Material Content Section -->
+    <div id="selectedMaterialSection" class="d-none">
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="fas fa-file-alt me-2"></i>
+                                <span id="selectedMaterialName">Material Name</span>
+                            </h5>
+                            <button type="button" class="btn btn-outline-light btn-sm" onclick="clearSelection()">
+                                <i class="fas fa-times"></i> Close
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <ul class="nav nav-pills mb-4" id="materialContentTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="flashcards-tab" data-bs-toggle="pill" data-bs-target="#flashcards-content" type="button" role="tab">
+                                    <i class="fas fa-cards"></i> Flashcards
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="quiz-tab" data-bs-toggle="pill" data-bs-target="#quiz-content" type="button" role="tab">
+                                    <i class="fas fa-question-circle"></i> Quiz
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="results-tab" data-bs-toggle="pill" data-bs-target="#results-content" type="button" role="tab">
+                                    <i class="fas fa-chart-line"></i> Past Results
+                                </button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content" id="materialContentTabsContent">
+                            <!-- Flashcards Content -->
+                            <div class="tab-pane fade show active" id="flashcards-content" role="tabpanel">
+                                <div id="flashcardsContainer" class="text-center py-5">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading flashcards...</span>
+                                    </div>
+                                    <p class="mt-3 text-muted">Loading flashcards...</p>
+                                </div>
+                            </div>
+
+                            <!-- Quiz Content -->
+                            <div class="tab-pane fade" id="quiz-content" role="tabpanel">
+                                <div id="quizContainer" class="text-center py-5">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading quiz...</span>
+                                    </div>
+                                    <p class="mt-3 text-muted">Loading quiz...</p>
+                                </div>
+                            </div>
+
+                            <!-- Past Results Content -->
+                            <div class="tab-pane fade" id="results-content" role="tabpanel">
+                                <div id="resultsContainer" class="py-3">
+                                    <div class="text-center py-5" id="resultsLoading">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Loading results...</span>
+                                        </div>
+                                        <p class="mt-3 text-muted">Loading past quiz results...</p>
+                                    </div>
+                                    <div id="resultsContent" class="d-none">
+                                        <!-- Statistics Cards -->
+                                        <div class="row mb-4" id="statisticsCards">
+                                            <div class="col-md-4">
+                                                <div class="card bg-primary text-white">
+                                                    <div class="card-body text-center">
+                                                        <h5 class="card-title mb-1" id="totalAttempts">0</h5>
+                                                        <p class="card-text">Total Attempts</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="card bg-success text-white">
+                                                    <div class="card-body text-center">
+                                                        <h5 class="card-title mb-1" id="averageScore">0%</h5>
+                                                        <p class="card-text">Average Score</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="card bg-warning text-white">
+                                                    <div class="card-body text-center">
+                                                        <h5 class="card-title mb-1" id="bestScore">0%</h5>
+                                                        <p class="card-text">Best Score</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Results Table -->
+                                        <div class="card">
+                                            <div class="card-header">
+                                                <h6 class="mb-0">Quiz History</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="table-responsive">
+                                                    <table class="table table-hover" id="resultsTable">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Quiz</th>
+                                                                <th>Score</th>
+                                                                <th>Correct Answers</th>
+                                                                <th>Duration</th>
+                                                                <th>Date</th>
+                                                                <th>Status</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody id="resultsTableBody">
+                                                            <!-- Results will be loaded here -->
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                                <div id="noResultsMessage" class="text-center py-4 d-none">
+                                                    <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
+                                                    <h5 class="text-muted">No Quiz Results Yet</h5>
+                                                    <p class="text-muted">Complete some quizzes to see your results here.</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Material Modal -->
+<div class="modal fade" id="uploadMaterialModal" tabindex="-1" aria-labelledby="uploadMaterialModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="uploadMaterialModalLabel">Upload Material</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="uploadMaterialForm" method="post" action="{% url 'upload_material' subject.id %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="materialFile" class="form-label">File</label>
+                        <input type="file" class="form-control" id="materialFile" name="file" required>
+                        <div class="form-text">Supported formats: PDF, MP4, MOV, AVI</div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Upload</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+// Material Progress Monitoring
+class MaterialProgressMonitor {
+    constructor() {
+        this.processingMaterials = new Set();
+        this.pollInterval = 2000; // 2 seconds
+        this.maxRetries = 180; // 6 minutes max
+        this.retryCount = new Map();
+        this.init();
+    }
+    
+    init() {
+        // Find all materials that are currently processing
+        document.querySelectorAll('.material-status-container').forEach(container => {
+            const materialId = container.dataset.materialId;
+            const statusBadge = container.querySelector('.status-badge');
+            const status = statusBadge.textContent.trim();
+            
+            if (status === 'PROCESSING' || status === 'PENDING') {
+                this.processingMaterials.add(materialId);
+                this.retryCount.set(materialId, 0);
+            }
+        });
+        
+        if (this.processingMaterials.size > 0) {
+            this.startPolling();
+        }
+    }
+    
+    startPolling() {
+        this.pollTimer = setInterval(() => {
+            this.checkMaterialStatuses();
+        }, this.pollInterval);
+    }
+    
+    async checkMaterialStatuses() {
+        const promises = Array.from(this.processingMaterials).map(materialId => 
+            this.checkMaterialStatus(materialId)
+        );
+        
+        await Promise.all(promises);
+        
+        // Stop polling if no materials are processing
+        if (this.processingMaterials.size === 0) {
+            clearInterval(this.pollTimer);
+        }
+    }
+    
+    async checkMaterialStatus(materialId) {
+        try {
+            const response = await fetch(`/api/material/${materialId}/status/`);
+            if (response.ok) {
+                const data = await response.json();
+                this.updateMaterialStatus(materialId, data);
+            } else {
+                this.handleError(materialId);
+            }
+        } catch (error) {
+            console.error('Error checking material status:', error);
+            this.handleError(materialId);
+        }
+    }
+    
+    updateMaterialStatus(materialId, data) {
+        const container = document.querySelector(`[data-material-id="${materialId}"]`);
+        if (!container) return;
+        
+        const statusBadge = container.querySelector('.status-badge');
+        const progressBar = container.querySelector('.progress-bar');
+        const processingInfo = container.querySelector('.processing-info');
+        
+        // Update status badge
+        statusBadge.textContent = data.status;
+        statusBadge.className = `badge status-badge ${this.getStatusClass(data.status)}`;
+        
+        if (data.status === 'COMPLETED') {
+            // Remove from processing set
+            this.processingMaterials.delete(materialId);
+            
+            // Hide progress bar and show success
+            if (progressBar) {
+                progressBar.style.width = '100%';
+                progressBar.classList.remove('progress-bar-striped', 'progress-bar-animated');
+                progressBar.classList.add('bg-success');
+                
+                setTimeout(() => {
+                    const progressContainer = container.querySelector('.progress');
+                    if (progressContainer) progressContainer.remove();
+                    if (processingInfo) processingInfo.remove();
+                }, 1500);
+            }
+            
+            // Update the UI to show completed state
+            this.updateCompletedMaterialUI(materialId, data);
+            
+            // Show success notification
+            this.showNotification(`Material "${data.filename}" processing completed!`, 'success');
+            
+        } else if (data.status === 'PROCESSING') {
+            // Update progress info
+            if (processingInfo) {
+                processingInfo.textContent = `Processing... (${data.chunks_count} chunks processed)`;
+            }
+            if (progressBar) {
+                progressBar.style.width = '75%';
+            }
+            
+        } else if (data.status === 'FAILED') {
+            // Remove from processing set
+            this.processingMaterials.delete(materialId);
+            
+            // Update UI to show failed state
+            if (progressBar) {
+                progressBar.style.width = '100%';
+                progressBar.classList.remove('progress-bar-striped', 'progress-bar-animated');
+                progressBar.classList.add('bg-danger');
+            }
+            if (processingInfo) {
+                processingInfo.textContent = 'Processing failed';
+                processingInfo.classList.add('text-danger');
+            }
+            
+            this.showNotification(`Material "${data.filename}" processing failed!`, 'error');
+        }
+    }
+    
+    getStatusClass(status) {
+        switch(status) {
+            case 'COMPLETED': return 'bg-success';
+            case 'PROCESSING': return 'bg-warning';
+            case 'FAILED': return 'bg-danger';
+            default: return 'bg-secondary';
+        }
+    }
+    
+    updateCompletedMaterialUI(materialId, data) {
+        // Find the material card and update buttons
+        const card = document.querySelector(`[data-material-id="${materialId}"]`).closest('.card');
+        if (!card) return;
+        
+        const buttonContainer = card.querySelector('.btn-group');
+        if (buttonContainer && buttonContainer.children.length === 1) {
+            // Replace the delete-only button group with full action buttons
+            buttonContainer.innerHTML = `
+                <a href="#" class="btn btn-outline-primary btn-sm" target="_blank">
+                    <i class="fas fa-eye"></i> View
+                </a>
+                <button type="button" class="btn btn-primary btn-sm" onclick="selectMaterial(${materialId}, '${data.filename}')">
+                    <i class="fas fa-mouse-pointer"></i> Select
+                </button>
+                <button type="button" class="btn btn-outline-danger btn-sm" onclick="confirmDelete(${materialId}, '${data.filename}')">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+            `;
+        }
+    }
+    
+    handleError(materialId) {
+        const retryCount = this.retryCount.get(materialId) || 0;
+        if (retryCount >= this.maxRetries) {
+            this.processingMaterials.delete(materialId);
+            this.showNotification('Material processing check timed out', 'error');
+        } else {
+            this.retryCount.set(materialId, retryCount + 1);
+        }
+    }
+    
+    showNotification(message, type) {
+        // Create a simple notification
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
+        notification.style.cssText = 'top: 20px; right: 20px; z-index: 1050; max-width: 300px;';
+        notification.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 5000);
+    }
+}
+
+// Initialize monitor when page loads
+document.addEventListener('DOMContentLoaded', () => {
+    new MaterialProgressMonitor();
+});
+
+// Material Selection Functions
+let selectedMaterialId = null;
+
+function selectMaterial(materialId, materialName) {
+    selectedMaterialId = materialId;
+    
+    // Update material name in the header
+    document.getElementById('selectedMaterialName').textContent = materialName;
+    
+    // Show the selected material section
+    const section = document.getElementById('selectedMaterialSection');
+    section.classList.remove('d-none');
+    
+    // Scroll to the section
+    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    
+    // Load flashcards by default
+    loadFlashcards(materialId);
+    
+    // Set up tab switching listeners
+    setupMaterialContentTabs(materialId);
+}
+
+function clearSelection() {
+    selectedMaterialId = null;
+    document.getElementById('selectedMaterialSection').classList.add('d-none');
+}
+
+function setupMaterialContentTabs(materialId) {
+    // Remove existing listeners
+    const flashcardsTab = document.getElementById('flashcards-tab');
+    const quizTab = document.getElementById('quiz-tab');
+    const resultsTab = document.getElementById('results-tab');
+    
+    // Clone elements to remove all event listeners
+    const newFlashcardsTab = flashcardsTab.cloneNode(true);
+    const newQuizTab = quizTab.cloneNode(true);
+    const newResultsTab = resultsTab.cloneNode(true);
+    
+    flashcardsTab.parentNode.replaceChild(newFlashcardsTab, flashcardsTab);
+    quizTab.parentNode.replaceChild(newQuizTab, quizTab);
+    resultsTab.parentNode.replaceChild(newResultsTab, resultsTab);
+    
+    // Add new listeners
+    newFlashcardsTab.addEventListener('shown.bs.tab', () => {
+        loadFlashcards(materialId);
+    });
+    
+    newQuizTab.addEventListener('shown.bs.tab', () => {
+        loadQuiz(materialId);
+    });
+    
+    newResultsTab.addEventListener('shown.bs.tab', () => {
+        loadQuizResults();
+    });
+}
+
+async function loadFlashcards(materialId) {
+    const container = document.getElementById('flashcardsContainer');
+    
+    // Show loading state
+    container.innerHTML = `
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading flashcards...</span>
+            </div>
+            <p class="mt-3 text-muted">Loading flashcards...</p>
+        </div>
+    `;
+    
+    try {
+        const response = await fetch(`/api/materials/${materialId}/flashcards/`);
+        if (response.ok) {
+            const flashcards = await response.json();
+            displayFlashcards(flashcards);
+        } else {
+            container.innerHTML = `
+                <div class="text-center py-5">
+                    <i class="fas fa-exclamation-triangle fa-2x text-warning mb-3"></i>
+                    <h5>Failed to load flashcards</h5>
+                    <p class="text-muted">There was an error loading the flashcards for this material.</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error loading flashcards:', error);
+        container.innerHTML = `
+            <div class="text-center py-5">
+                <i class="fas fa-exclamation-triangle fa-2x text-danger mb-3"></i>
+                <h5>Error loading flashcards</h5>
+                <p class="text-muted">An unexpected error occurred.</p>
+            </div>
+        `;
+    }
+}
+
+function displayFlashcards(flashcards) {
+    const container = document.getElementById('flashcardsContainer');
+    
+    if (flashcards.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-5">
+                <i class="fas fa-cards fa-3x text-muted mb-3"></i>
+                <h5>No flashcards available</h5>
+                <p class="text-muted">Revision cards haven't been generated for this material yet.</p>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = `
+        <div class="mb-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <h6 class="text-muted mb-0">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    Key Concepts & Information
+                </h6>
+                <span class="badge bg-primary">${flashcards.length} Cards</span>
+            </div>
+        </div>
+        <div class="row g-4">
+    `;
+    
+    flashcards.forEach((card, index) => {
+        // Create topic/concept title from question if available
+        const conceptTitle = card.question ? extractConceptTitle(card.question) : `Concept ${index + 1}`;
+        const informationContent = card.answer || card.question || 'No information available';
+        
+        html += `
+            <div class="col-md-6 col-xl-4">
+                <div class="card revision-card h-100">
+                    <div class="card-header bg-light">
+                        <h6 class="card-title mb-0 text-primary">
+                            <i class="fas fa-bookmark me-2"></i>
+                            ${conceptTitle}
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="revision-content">
+                            <div class="concept-info">
+                                <p class="card-text">${informationContent}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    html += '</div>';
+    
+    container.innerHTML = html;
+}
+
+function extractConceptTitle(question) {
+    // Extract meaningful concept title from question text
+    if (!question) return 'Key Concept';
+    
+    // Remove question words and clean up
+    let title = question
+        .replace(/^(what|who|when|where|why|how|which|describe|explain|define)\s+/i, '')
+        .replace(/\?.*$/, '') // Remove question mark and everything after
+        .trim();
+    
+    // Take first 50 characters and add ellipsis if longer
+    if (title.length > 50) {
+        title = title.substring(0, 50) + '...';
+    }
+    
+    // Capitalize first letter
+    title = title.charAt(0).toUpperCase() + title.slice(1);
+    
+    return title || 'Key Concept';
+}
+
+
+
+async function loadQuiz(materialId) {
+    const container = document.getElementById('quizContainer');
+    
+    // Show loading state
+    container.innerHTML = `
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading quiz...</span>
+            </div>
+            <p class="mt-3 text-muted">Loading quiz...</p>
+        </div>
+    `;
+    
+    try {
+        const response = await fetch(`/api/materials/${materialId}/quiz/`);
+        if (response.ok) {
+            const quizData = await response.json();
+            displayQuiz(quizData);
+        } else {
+            container.innerHTML = `
+                <div class="text-center py-5">
+                    <i class="fas fa-exclamation-triangle fa-2x text-warning mb-3"></i>
+                    <h5>Failed to load quiz</h5>
+                    <p class="text-muted">There was an error loading the quiz for this material.</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error loading quiz:', error);
+        container.innerHTML = `
+            <div class="text-center py-5">
+                <i class="fas fa-exclamation-triangle fa-2x text-danger mb-3"></i>
+                <h5>Error loading quiz</h5>
+                <p class="text-muted">An unexpected error occurred.</p>
+            </div>
+        `;
+    }
+}
+
+async function loadQuizResults() {
+    const container = document.getElementById('resultsContainer');
+    const loadingDiv = document.getElementById('resultsLoading');
+    const contentDiv = document.getElementById('resultsContent');
+    
+    // Show loading state
+    loadingDiv.classList.remove('d-none');
+    contentDiv.classList.add('d-none');
+    
+    try {
+                        const response = await fetch(`/api/subjects/{{ subject.id }}/quiz_results/`);
+        if (response.ok) {
+            const data = await response.json();
+            displayQuizResults(data);
+        } else {
+            loadingDiv.innerHTML = `
+                <div class="text-center py-5">
+                    <i class="fas fa-exclamation-triangle fa-2x text-warning mb-3"></i>
+                    <h5>Failed to load results</h5>
+                    <p class="text-muted">There was an error loading your quiz results.</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error loading quiz results:', error);
+        loadingDiv.innerHTML = `
+            <div class="text-center py-5">
+                <i class="fas fa-exclamation-triangle fa-2x text-danger mb-3"></i>
+                <h5>Error loading results</h5>
+                <p class="text-muted">An unexpected error occurred.</p>
+            </div>
+        `;
+    }
+}
+
+function displayQuizResults(data) {
+    const loadingDiv = document.getElementById('resultsLoading');
+    const contentDiv = document.getElementById('resultsContent');
+    const noResultsDiv = document.getElementById('noResultsMessage');
+    const tableBody = document.getElementById('resultsTableBody');
+    
+    // Hide loading
+    loadingDiv.classList.add('d-none');
+    
+    if (data.attempts.length === 0) {
+        contentDiv.classList.add('d-none');
+        noResultsDiv.classList.remove('d-none');
+        return;
+    }
+    
+    // Update statistics
+    document.getElementById('totalAttempts').textContent = data.statistics.total_attempts;
+    document.getElementById('averageScore').textContent = data.statistics.average_score + '%';
+    document.getElementById('bestScore').textContent = data.statistics.best_score + '%';
+    
+    // Populate results table
+    let tableHtml = '';
+    data.attempts.forEach(attempt => {
+        const date = new Date(attempt.start_time).toLocaleDateString();
+        const duration = attempt.duration ? formatDuration(attempt.duration) : 'N/A';
+        const statusBadge = attempt.passed ? 
+            '<span class="badge bg-success">Passed</span>' : 
+            '<span class="badge bg-danger">Failed</span>';
+        
+        tableHtml += `
+            <tr>
+                <td>${attempt.quiz_title}</td>
+                <td>
+                    <strong>${attempt.score}%</strong>
+                    <small class="text-muted">(${attempt.earned_points}/${attempt.total_points})</small>
+                </td>
+                <td>${attempt.correct_answers}/${attempt.question_count}</td>
+                <td>${duration}</td>
+                <td>${date}</td>
+                <td>${statusBadge}</td>
+            </tr>
+        `;
+    });
+    
+    tableBody.innerHTML = tableHtml;
+    contentDiv.classList.remove('d-none');
+    noResultsDiv.classList.add('d-none');
+}
+
+function formatDuration(durationStr) {
+    // Parse duration string (e.g., "0:05:23.123456") and format nicely
+    try {
+        const parts = durationStr.split(':');
+        const hours = parseInt(parts[0]);
+        const minutes = parseInt(parts[1]);
+        const seconds = parseInt(parts[2].split('.')[0]);
+        
+        if (hours > 0) {
+            return `${hours}h ${minutes}m ${seconds}s`;
+        } else if (minutes > 0) {
+            return `${minutes}m ${seconds}s`;
+        } else {
+            return `${seconds}s`;
+        }
+    } catch (error) {
+        return durationStr;
+    }
+}
+
+function displayQuiz(quizData) {
+    const container = document.getElementById('quizContainer');
+    
+    if (!quizData.quiz || !quizData.quiz.id) {
+        container.innerHTML = `
+            <div class="text-center py-5">
+                <i class="fas fa-question-circle fa-3x text-muted mb-3"></i>
+                <h5>No quiz available</h5>
+                <p class="text-muted">A quiz hasn't been generated for this material yet.</p>
+            </div>
+        `;
+        return;
+    }
+    
+    const quiz = quizData.quiz;
+    container.innerHTML = `
+        <div class="text-center">
+            <div class="card mx-auto" style="max-width: 500px;">
+                <div class="card-body">
+                    <div class="mb-4">
+                        <i class="fas fa-magic fa-3x text-primary mb-3"></i>
+                        <h5 class="card-title">Dynamic Quiz</h5>
+                        <p class="card-text text-muted">
+                            Generate new questions each time you take the quiz based on your material content
+                        </p>
+                    </div>
+                    
+                    <div class="quiz-info mb-4">
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <div class="stat-item">
+                                    <h6 class="text-primary">10</h6>
+                                    <small class="text-muted">Questions</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stat-item">
+                                    <h6 class="text-success">60%</h6>
+                                    <small class="text-muted">Pass Score</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info mb-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Fresh Questions:</strong> Each quiz attempt generates new questions from your material
+                    </div>
+                    
+                    <div class="d-grid">
+                        <a href="/api/quiz/${quiz.id}/take/?dynamic=true" class="btn btn-primary btn-lg">
+                            <i class="fas fa-rocket me-2"></i>Start Dynamic Quiz
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// Legacy functions redirect to new material selection
+async function viewFlashcards(materialId) {
+    // Get material name for selection
+    const materialCard = document.querySelector(`[data-material-id="${materialId}"]`).closest('.card');
+    const materialName = materialCard.querySelector('h3').textContent;
+    selectMaterial(materialId, materialName);
+}
+
+async function takeQuiz(materialId) {
+    // Get material name for selection  
+    const materialCard = document.querySelector(`[data-material-id="${materialId}"]`).closest('.card');
+    const materialName = materialCard.querySelector('h3').textContent;
+    selectMaterial(materialId, materialName);
+    
+    // Switch to quiz tab after selection
+    setTimeout(() => {
+        document.getElementById('quiz-tab').click();
+    }, 500);
+}
+
+// Confirm Delete Material
+function confirmDelete(materialId, filename) {
+    if (confirm(`Are you sure you want to delete "${filename}"? This action cannot be undone.`)) {
+        // Create a form and submit it
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `{% url 'delete_material' subject.id 0 %}`.replace('0', materialId);
+        
+        // Add CSRF token
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = csrfToken;
+        form.appendChild(csrfInput);
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>
+{% endblock %}
+
+<style>
+.hover-shadow {
+    transition: all 0.3s ease;
+}
+.hover-shadow:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+}
+
+.revision-card {
+    transition: all 0.3s ease;
+    border-left: 4px solid #e9ecef;
+}
+
+.revision-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    border-left-color: #007bff;
+}
+
+.revision-content {
+    min-height: 80px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+}
+
+.concept-info {
+    width: 100%;
+    line-height: 1.6;
+}
+
+.concept-info p {
+    margin-bottom: 0;
+    color: #495057;
+}
+
+.stat-item h6 {
+    margin-bottom: 0;
+}
+
+#selectedMaterialSection {
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.materials-section .card {
+    position: relative;
+}
+
+.material-status-container {
+    min-width: 120px;
+}
+
+.processing-info {
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+}
+</style>
+{% endblock %} 
