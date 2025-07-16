@@ -1,111 +1,439 @@
 {% extends "base.html" %}
 
-{% block title %}Excel Point - Home{% endblock %}
+{% block title %}Career Nexus - Your Path to Professional Excellence{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary-color: #2563eb;
+        --primary-dark: #1d4ed8;
+        --secondary-color: #64748b;
+        --accent-color: #06d6a0;
+        --text-dark: #1e293b;
+        --text-light: #64748b;
+        --bg-light: #f8fafc;
+        --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --shadow-light: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        --shadow-medium: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        --shadow-large: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    }
+
+    .hero-section {
+        background: var(--bg-gradient);
+        min-height: 90vh;
+        display: flex;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 2;
+    }
+
+    .hero-title {
+        font-size: 3.5rem;
+        font-weight: 800;
+        color: white;
+        margin-bottom: 1.5rem;
+        line-height: 1.2;
+    }
+
+    .hero-subtitle {
+        font-size: 1.25rem;
+        color: rgba(255, 255, 255, 0.9);
+        margin-bottom: 2rem;
+        font-weight: 400;
+        line-height: 1.6;
+    }
+
+    .btn-hero {
+        padding: 1rem 2rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        border-radius: 50px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        box-shadow: var(--shadow-medium);
+    }
+
+    .btn-hero-primary {
+        background: white;
+        color: var(--primary-color);
+        border: 2px solid white;
+    }
+
+    .btn-hero-primary:hover {
+        background: var(--primary-color);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-large);
+    }
+
+    .btn-hero-secondary {
+        background: transparent;
+        color: white;
+        border: 2px solid rgba(255, 255, 255, 0.7);
+    }
+
+    .btn-hero-secondary:hover {
+        background: white;
+        color: var(--primary-color);
+        border-color: white;
+        transform: translateY(-2px);
+        text-decoration: none;
+    }
+
+    .features-section {
+        padding: 100px 0;
+        background: var(--bg-light);
+    }
+
+    .feature-card {
+        background: white;
+        border-radius: 20px;
+        padding: 3rem 2rem;
+        box-shadow: var(--shadow-light);
+        transition: all 0.3s ease;
+        border: none;
+        height: 100%;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-10px);
+        box-shadow: var(--shadow-large);
+    }
+
+    .feature-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 20px;
+        background: var(--bg-gradient);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 2rem;
+    }
+
+    .feature-icon i {
+        font-size: 2rem;
+        color: white;
+    }
+
+    .feature-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 1rem;
+    }
+
+    .feature-description {
+        color: var(--text-light);
+        line-height: 1.7;
+        margin-bottom: 2rem;
+    }
+
+    .feature-link {
+        color: var(--primary-color);
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .feature-link:hover {
+        color: var(--primary-dark);
+        text-decoration: none;
+    }
+
+    .stats-section {
+        background: var(--text-dark);
+        padding: 80px 0;
+        color: white;
+    }
+
+    .stat-item {
+        text-align: center;
+        padding: 0 2rem;
+    }
+
+    .stat-number {
+        font-size: 3rem;
+        font-weight: 800;
+        color: var(--accent-color);
+        display: block;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+        font-size: 1.1rem;
+        color: rgba(255, 255, 255, 0.8);
+        font-weight: 500;
+    }
+
+    .cta-section {
+        background: white;
+        padding: 100px 0;
+        text-align: center;
+    }
+
+    .cta-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 1rem;
+    }
+
+    .cta-subtitle {
+        font-size: 1.2rem;
+        color: var(--text-light);
+        margin-bottom: 3rem;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .section-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+
+    .section-subtitle {
+        font-size: 1.2rem;
+        color: var(--text-light);
+        text-align: center;
+        margin-bottom: 4rem;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    @media (max-width: 768px) {
+        .hero-title {
+            font-size: 2.5rem;
+        }
+        
+        .hero-subtitle {
+            font-size: 1.1rem;
+        }
+        
+        .btn-hero {
+            padding: 0.8rem 1.5rem;
+            font-size: 1rem;
+        }
+        
+        .feature-card {
+            padding: 2rem 1.5rem;
+        }
+        
+        .stats-section {
+            padding: 60px 0;
+        }
+        
+        .stat-item {
+            margin-bottom: 2rem;
+        }
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-5 bg-light">
+<!-- Hero Section -->
+<section class="hero-section">
     <div class="container">
         <div class="row align-items-center">
-            <div class="col-lg-7">
-                <h1 class="display-4 fw-bold mb-3">Welcome to Excel Point</h1>
-                <p class="lead mb-4">Your all-in-one platform for career development and skill enhancement. Discover opportunities, build your skills, and chart your path to success.</p>
-                <div class="d-flex gap-3">
+            <div class="col-lg-7 hero-content">
+                <h1 class="hero-title">Accelerate Your Career Journey</h1>
+                <p class="hero-subtitle">
+                    Transform your professional future with personalized learning paths, AI-powered insights, 
+                    and comprehensive skill development tailored to your career goals.
+                </p>
+                <div class="d-flex flex-column flex-sm-row gap-3">
                     {% if user.is_authenticated %}
-                    <a href="{% url 'learning:dashboard' %}" class="btn btn-primary btn-lg">My Dashboard</a>
+                        <a href="{% url 'learning:dashboard' %}" class="btn btn-hero btn-hero-primary">Continue Learning</a>
+                        <a href="{% url 'learning:dream_path' %}" class="btn btn-hero btn-hero-secondary">Explore Career Paths</a>
                     {% else %}
-                    <a href="/users/register/" class="btn btn-primary btn-lg">Get Started</a>
-                    <a href="/users/login/" class="btn btn-outline-secondary btn-lg">Login</a>
+                        <a href="/users/register/" class="btn btn-hero btn-hero-primary">Start Your Journey</a>
+                        <a href="/users/login/" class="btn btn-hero btn-hero-secondary">Sign In</a>
                     {% endif %}
                 </div>
             </div>
             <div class="col-lg-5 d-none d-lg-block">
-                <img src="https://via.placeholder.com/600x400" alt="Career Development" class="img-fluid rounded shadow-lg">
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="container my-5">
-    <h2 class="text-center mb-5">Career Development Tools</h2>
-    
-    <div class="row g-4">
-        <!-- Feature 1: Learning Platform -->
-        <div class="col-md-6 col-lg-4">
-            <div class="card h-100 shadow-sm border-0 hover-shadow">
-                <div class="card-body text-center p-4">
-                    <div class="rounded-circle bg-primary bg-opacity-10 p-3 d-inline-block mb-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-mortarboard text-primary" viewBox="0 0 16 16">
-                            <path d="M8.211 2.047a.5.5 0 0 0-.422 0l-7.5 3.5a.5.5 0 0 0 .025.917l7.5 3a.5.5 0 0 0 .372 0L14 7.14V13a1 1 0 0 0-1 1v2h3v-2a1 1 0 0 0-1-1V6.739l.686-.275a.5.5 0 0 0 .025-.917l-7.5-3.5ZM8 8.46 1.758 5.965 8 3.052l6.242 2.913L8 8.46Z"/>
-                            <path d="M4.176 9.032a.5.5 0 0 0-.656.327l-.5 1.7a.5.5 0 0 0 .294.605l4.5 1.8a.5.5 0 0 0 .372 0l4.5-1.8a.5.5 0 0 0 .294-.605l-.5-1.7a.5.5 0 0 0-.656-.327L8 10.466 4.176 9.032Zm-.068 1.873.22-.748 3.496 1.311a.5.5 0 0 0 .352 0l3.496-1.311.22.748L8 12.46l-3.892-1.556Z"/>
-                        </svg>
+                <div class="text-center">
+                    <div style="background: rgba(255,255,255,0.1); border-radius: 20px; padding: 2rem; backdrop-filter: blur(10px);">
+                        <i class="fas fa-chart-line" style="font-size: 8rem; color: rgba(255,255,255,0.8);"></i>
+                        <h3 style="color: white; margin-top: 1rem;">Professional Growth</h3>
                     </div>
-                    <h3 class="h4 mb-3">Learning Platform</h3>
-                    <p class="text-muted mb-4">Access curated courses, track your progress, and build in-demand skills for your career advancement.</p>
-                    <a href="{% url 'learning:dashboard' %}" class="btn btn-outline-primary">Explore Courses</a>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Feature 2: Dream Job Path -->
-        <div class="col-md-6 col-lg-4">
-            <div class="card h-100 shadow-sm border-0 hover-shadow">
-                <div class="card-body text-center p-4">
-                    <div class="rounded-circle bg-primary bg-opacity-10 p-3 d-inline-block mb-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-stars text-primary" viewBox="0 0 16 16">
-                            <path d="M7.657 6.247c.11-.33.576-.33.686 0l.645 1.937a2.89 2.89 0 0 0 1.829 1.828l1.936.645c.33.11.33.576 0 .686l-1.937.645a2.89 2.89 0 0 0-1.828 1.829l-.645 1.936a.361.361 0 0 1-.686 0l-.645-1.937a2.89 2.89 0 0 0-1.828-1.828l-1.937-.645a.361.361 0 0 1 0-.686l1.937-.645a2.89 2.89 0 0 0 1.828-1.828l.645-1.937z"/>
-                        </svg>
-                    </div>
-                    <h3 class="h4 mb-3">Career Path Planning</h3>
-                    <p class="text-muted mb-4">Get a personalized learning path based on your career goals with custom course recommendations.</p>
-                    <a href="{% url 'learning:dream_path' %}" class="btn btn-outline-primary">Plan Your Path</a>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Feature 3: Subject Materials -->
-        <div class="col-md-6 col-lg-4">
-            <div class="card h-100 shadow-sm border-0 hover-shadow">
-                <div class="card-body text-center p-4">
-                    <div class="rounded-circle bg-primary bg-opacity-10 p-3 d-inline-block mb-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-journal-text text-primary" viewBox="0 0 16 16">
-                            <path d="M5 10.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5zm0-2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm0-2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm0-2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5z"/>
-                            <path d="M3 0h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2v-1h1v1a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v1H1V2a2 2 0 0 1 2-2z"/>
-                            <path d="M1 5v-.5a.5.5 0 0 1 1 0V5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H1zm0 3v-.5a.5.5 0 0 1 1 0V8h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H1zm0 3v-.5a.5.5 0 0 1 1 0v.5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H1z"/>
-                        </svg>
-                    </div>
-                    <h3 class="h4 mb-3">Subject Materials</h3>
-                    <p class="text-muted mb-4">Upload and organize your study materials, generate flashcards, and take quizzes to enhance your learning experience.</p>
-                    <a href="/subjects/" class="btn btn-outline-primary">Manage Materials</a>
                 </div>
             </div>
         </div>
     </div>
-</div>
+</section>
 
-<div class="container-fluid py-5 bg-primary bg-opacity-10">
+<!-- Features Section -->
+<section class="features-section">
     <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-lg-8 text-center">
-                <h2 class="mb-4">Begin Your Career Journey Today</h2>
-                <p class="lead mb-4">Join thousands of professionals who are using Excel Point to advance their careers and achieve their goals.</p>
-                {% if not user.is_authenticated %}
-                <div class="d-flex justify-content-center gap-3">
-                    <a href="/users/register/" class="btn btn-primary btn-lg">Sign Up Now</a>
-                    <a href="/users/login/" class="btn btn-outline-primary btn-lg">Login</a>
+        <h2 class="section-title">Everything You Need to Succeed</h2>
+        <p class="section-subtitle">
+            Comprehensive tools and resources designed to accelerate your professional development
+        </p>
+        
+        <div class="row g-4">
+            <!-- Feature 1: Smart Learning -->
+            <div class="col-lg-4 col-md-6">
+                <div class="card feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <h3 class="feature-title">AI-Powered Learning</h3>
+                    <p class="feature-description">
+                        Get personalized course recommendations and adaptive learning paths powered by advanced AI 
+                        that understands your goals and learning style.
+                    </p>
+                    <a href="{% url 'learning:dashboard' %}" class="feature-link">Explore Courses →</a>
                 </div>
-                {% else %}
-                <a href="{% url 'learning:dashboard' %}" class="btn btn-primary btn-lg">Go to Dashboard</a>
-                {% endif %}
+            </div>
+            
+            <!-- Feature 2: Career Planning -->
+            <div class="col-lg-4 col-md-6">
+                <div class="card feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-route"></i>
+                    </div>
+                    <h3 class="feature-title">Strategic Career Planning</h3>
+                    <p class="feature-description">
+                        Map out your dream career path with data-driven insights, skill gap analysis, 
+                        and personalized roadmaps to reach your professional goals.
+                    </p>
+                    <a href="{% url 'learning:dream_path' %}" class="feature-link">Plan Your Path →</a>
+                </div>
+            </div>
+            
+            <!-- Feature 3: Knowledge Management -->
+            <div class="col-lg-4 col-md-6">
+                <div class="card feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <h3 class="feature-title">Smart Content Hub</h3>
+                    <p class="feature-description">
+                        Upload, organize, and learn from your materials with AI-generated flashcards, 
+                        quizzes, and intelligent content analysis.
+                    </p>
+                    <a href="/subjects/" class="feature-link">Manage Content →</a>
+                </div>
+            </div>
+            
+            <!-- Feature 4: Progress Tracking -->
+            <div class="col-lg-4 col-md-6">
+                <div class="card feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <h3 class="feature-title">Progress Analytics</h3>
+                    <p class="feature-description">
+                        Track your learning progress with detailed analytics, skill assessments, 
+                        and achievement milestones to stay motivated.
+                    </p>
+                    <a href="{% url 'learning:dashboard' %}" class="feature-link">View Progress →</a>
+                </div>
+            </div>
+            
+            <!-- Feature 5: Expert Support -->
+            <div class="col-lg-4 col-md-6">
+                <div class="card feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3 class="feature-title">Expert Community</h3>
+                    <p class="feature-description">
+                        Connect with industry experts, mentors, and peers to accelerate your learning 
+                        and expand your professional network.
+                    </p>
+                    <a href="#" class="feature-link">Join Community →</a>
+                </div>
+            </div>
+            
+            <!-- Feature 6: XP Assistant -->
+            <div class="col-lg-4 col-md-6">
+                <div class="card feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <h3 class="feature-title">XP Assistant</h3>
+                    <p class="feature-description">
+                        Get instant answers and guidance from our AI assistant, available 24/7 
+                        to help with learning questions and career advice.
+                    </p>
+                    <a href="/subjects/1/" class="feature-link">Try Assistant →</a>
+                </div>
             </div>
         </div>
     </div>
-</div>
+</section>
 
-<style>
-.hover-shadow:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
-    transition: all 0.3s ease;
-}
-</style>
+<!-- Stats Section -->
+<section class="stats-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-item">
+                    <span class="stat-number">10K+</span>
+                    <span class="stat-label">Active Learners</span>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-item">
+                    <span class="stat-number">500+</span>
+                    <span class="stat-label">Expert Courses</span>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-item">
+                    <span class="stat-number">95%</span>
+                    <span class="stat-label">Success Rate</span>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-item">
+                    <span class="stat-number">24/7</span>
+                    <span class="stat-label">AI Support</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Call to Action Section -->
+<section class="cta-section">
+    <div class="container">
+        <h2 class="cta-title">Ready to Transform Your Career?</h2>
+        <p class="cta-subtitle">
+            Join thousands of professionals who have accelerated their careers with Career Nexus. 
+            Start your personalized learning journey today.
+        </p>
+        {% if not user.is_authenticated %}
+            <div class="d-flex justify-content-center gap-3 flex-column flex-sm-row">
+                <a href="/users/register/" class="btn btn-hero btn-hero-primary">Get Started Free</a>
+                <a href="/users/login/" class="btn btn-hero btn-hero-secondary" style="color: var(--primary-color); border-color: var(--primary-color);">Sign In</a>
+            </div>
+        {% else %}
+            <a href="{% url 'learning:dashboard' %}" class="btn btn-hero btn-hero-primary">Continue Your Journey</a>
+        {% endif %}
+    </div>
+</section>
 {% endblock %}

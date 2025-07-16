@@ -1,58 +1,406 @@
-/* Main styles for Excel Point */
+/* Career Nexus - Modern CSS Framework */
 
-/* Progress bars styling */
-.progress {
-    height: 20px;
-    margin-bottom: 10px;
+/* CSS Variables for consistent theming */
+:root {
+    --primary-color: #2563eb;
+    --primary-dark: #1d4ed8;
+    --primary-light: #3b82f6;
+    --secondary-color: #64748b;
+    --accent-color: #06d6a0;
+    --accent-dark: #059669;
+    --text-dark: #1e293b;
+    --text-light: #64748b;
+    --text-muted: #94a3b8;
+    --bg-light: #f8fafc;
+    --bg-white: #ffffff;
+    --border-light: #e2e8f0;
+    --border-medium: #cbd5e1;
+    --success-color: #10b981;
+    --warning-color: #f59e0b;
+    --danger-color: #ef4444;
+    --info-color: #3b82f6;
+    
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    
+    /* Border radius */
+    --radius-sm: 0.375rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.75rem;
+    --radius-xl: 1rem;
+    --radius-2xl: 1.5rem;
 }
 
-.progress-bar {
-    color: white;
-    text-align: center;
+/* Typography Improvements */
+.h1, .h2, .h3, .h4, .h5, .h6,
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--text-dark);
+}
+
+.display-1, .display-2, .display-3, .display-4 {
+    font-weight: 700;
+}
+
+.text-muted {
+    color: var(--text-light) !important;
+}
+
+.lead {
+    font-weight: 400;
+    line-height: 1.6;
+}
+
+/* Enhanced Button Styles */
+.btn {
     font-weight: 500;
-}
-
-/* Form styling */
-.form-control {
-    margin-bottom: 1rem;
-}
-
-/* Table styling */
-.table-responsive {
-    margin-top: 1rem;
-}
-
-/* Range slider styling */
-.range-container {
-    display: flex;
+    border-radius: var(--radius-lg);
+    padding: 0.75rem 1.5rem;
+    transition: all 0.3s ease;
+    border: none;
+    text-decoration: none;
+    display: inline-flex;
     align-items: center;
+    gap: 0.5rem;
 }
 
-.range-container .badge {
-    margin-left: 10px;
+.btn:hover {
+    transform: translateY(-1px);
+    text-decoration: none;
 }
 
-/* Card styling */
+.btn-primary {
+    background: var(--primary-color);
+    color: white;
+    box-shadow: var(--shadow-md);
+}
+
+.btn-primary:hover {
+    background: var(--primary-dark);
+    box-shadow: var(--shadow-lg);
+    color: white;
+}
+
+.btn-outline-primary {
+    border: 2px solid var(--primary-color);
+    color: var(--primary-color);
+    background: transparent;
+}
+
+.btn-outline-primary:hover {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.btn-success {
+    background: var(--success-color);
+    color: white;
+}
+
+.btn-warning {
+    background: var(--warning-color);
+    color: white;
+}
+
+.btn-danger {
+    background: var(--danger-color);
+    color: white;
+}
+
+.btn-lg {
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    border-radius: var(--radius-xl);
+}
+
+.btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+}
+
+/* Enhanced Card Styles */
 .card {
+    border: none;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-sm);
+    transition: all 0.3s ease;
     margin-bottom: 1.5rem;
+    background: var(--bg-white);
+}
+
+.card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
 }
 
 .card-header {
-    background-color: #f8f9fa;
-    border-bottom: 1px solid #e9ecef;
+    background: var(--bg-light);
+    border-bottom: 1px solid var(--border-light);
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0 !important;
+    padding: 1.25rem 1.5rem;
+    font-weight: 600;
 }
 
-/* Skill badge styling */
+.card-body {
+    padding: 1.5rem;
+}
+
+.card-footer {
+    background: var(--bg-light);
+    border-top: 1px solid var(--border-light);
+    border-radius: 0 0 var(--radius-xl) var(--radius-xl) !important;
+}
+
+/* Enhanced Form Styles */
+.form-control {
+    border-radius: var(--radius-md);
+    border: 2px solid var(--border-light);
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+    background: var(--bg-white);
+}
+
+.form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.25);
+    background: var(--bg-white);
+}
+
+.form-label {
+    font-weight: 500;
+    color: var(--text-dark);
+    margin-bottom: 0.5rem;
+}
+
+.form-select {
+    border-radius: var(--radius-md);
+    border: 2px solid var(--border-light);
+    padding: 0.75rem 1rem;
+}
+
+/* Enhanced Progress Bars */
+.progress {
+    height: 12px;
+    margin-bottom: 1rem;
+    border-radius: var(--radius-lg);
+    background: var(--border-light);
+    overflow: hidden;
+}
+
+.progress-bar {
+    background: linear-gradient(90deg, var(--primary-color) 0%, var(--primary-light) 100%);
+    color: white;
+    text-align: center;
+    font-weight: 500;
+    font-size: 0.75rem;
+    transition: width 0.6s ease;
+}
+
+.progress-bar.bg-success {
+    background: linear-gradient(90deg, var(--success-color) 0%, #34d399 100%);
+}
+
+.progress-bar.bg-warning {
+    background: linear-gradient(90deg, var(--warning-color) 0%, #fbbf24 100%);
+}
+
+.progress-bar.bg-danger {
+    background: linear-gradient(90deg, var(--danger-color) 0%, #f87171 100%);
+}
+
+/* Enhanced Table Styles */
+.table {
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+}
+
+.table th {
+    background: var(--bg-light);
+    font-weight: 600;
+    color: var(--text-dark);
+    border: none;
+    padding: 1rem;
+}
+
+.table td {
+    padding: 1rem;
+    border-color: var(--border-light);
+}
+
+.table-responsive {
+    margin-top: 1rem;
+    border-radius: var(--radius-lg);
+}
+
+/* Enhanced Skill Badge Styling */
 .skill-badge {
-    display: inline-block;
-    padding: 0.25rem 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.375rem 0.75rem;
     font-size: 0.875rem;
     font-weight: 500;
     line-height: 1;
     text-align: center;
     white-space: nowrap;
-    vertical-align: baseline;
-    border-radius: 0.25rem;
+    border-radius: var(--radius-lg);
     margin-right: 0.5rem;
     margin-bottom: 0.5rem;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.skill-badge:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.skill-badge.badge-success {
+    background: var(--success-color);
+}
+
+.skill-badge.badge-warning {
+    background: var(--warning-color);
+}
+
+.skill-badge.badge-info {
+    background: var(--info-color);
+}
+
+/* Range Slider Improvements */
+.range-container {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.range-container input[type="range"] {
+    flex: 1;
+    height: 8px;
+    border-radius: var(--radius-lg);
+    background: var(--border-light);
+    outline: none;
+    -webkit-appearance: none;
+}
+
+.range-container input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    cursor: pointer;
+    box-shadow: var(--shadow-md);
+}
+
+.range-container input[type="range"]::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    cursor: pointer;
+    border: none;
+    box-shadow: var(--shadow-md);
+}
+
+.range-container .badge {
+    background: var(--primary-color);
+    color: white;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-md);
+    font-weight: 500;
+    min-width: 3rem;
+    text-align: center;
+}
+
+/* Alert Enhancements */
+.alert {
+    border: none;
+    border-radius: var(--radius-lg);
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+}
+
+.alert-primary {
+    background: rgba(37, 99, 235, 0.1);
+    color: var(--primary-dark);
+}
+
+.alert-success {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success-color);
+}
+
+.alert-warning {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--warning-color);
+}
+
+.alert-danger {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger-color);
+}
+
+/* Utility Classes */
+.shadow-sm { box-shadow: var(--shadow-sm); }
+.shadow-md { box-shadow: var(--shadow-md); }
+.shadow-lg { box-shadow: var(--shadow-lg); }
+.shadow-xl { box-shadow: var(--shadow-xl); }
+
+.rounded-sm { border-radius: var(--radius-sm); }
+.rounded-md { border-radius: var(--radius-md); }
+.rounded-lg { border-radius: var(--radius-lg); }
+.rounded-xl { border-radius: var(--radius-xl); }
+.rounded-2xl { border-radius: var(--radius-2xl); }
+
+.text-primary { color: var(--primary-color) !important; }
+.text-secondary { color: var(--secondary-color) !important; }
+.text-accent { color: var(--accent-color) !important; }
+
+.bg-light-custom { background: var(--bg-light) !important; }
+.bg-white-custom { background: var(--bg-white) !important; }
+
+/* Animation Utilities */
+.transition-all {
+    transition: all 0.3s ease;
+}
+
+.hover-lift:hover {
+    transform: translateY(-2px);
+}
+
+.hover-scale:hover {
+    transform: scale(1.05);
+}
+
+/* Responsive Improvements */
+@media (max-width: 768px) {
+    .btn {
+        padding: 0.625rem 1.25rem;
+        font-size: 0.9rem;
+    }
+    
+    .btn-lg {
+        padding: 0.875rem 1.75rem;
+        font-size: 1rem;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .skill-badge {
+        font-size: 0.8rem;
+        padding: 0.25rem 0.5rem;
+    }
 } 

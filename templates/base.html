@@ -4,64 +4,171 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token }}">
-    <title>{% block title %}Excel Point{% endblock %}</title>
+    <title>{% block title %}Career Nexus - Your Path to Professional Excellence{% endblock %}</title>
+    
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
     <!-- Custom CSS -->
     {% load static %}
     <link href="{% static 'css/styles.css' %}" rel="stylesheet">
+    
     <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary-color: #64748b;
+            --accent-color: #06d6a0;
+            --text-dark: #1e293b;
+            --text-light: #64748b;
+            --bg-light: #f8fafc;
+            --navbar-bg: #1e293b;
+            --shadow-medium: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+
         body {
-            padding-top: 1rem;
-            padding-bottom: 2rem;
+            padding-top: 0;
+            padding-bottom: 0;
+            background: var(--bg-light);
         }
+
         .navbar {
-            margin-bottom: 1.5rem;
+            background: var(--navbar-bg) !important;
+            box-shadow: var(--shadow-medium);
+            padding: 1rem 0;
+            margin-bottom: 0;
         }
-        .progress {
-            height: 20px;
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: white !important;
+            text-decoration: none;
+        }
+
+        .navbar-brand i {
+            color: var(--accent-color);
+            margin-right: 0.5rem;
+        }
+
+        .navbar-nav .nav-link {
+            color: rgba(255, 255, 255, 0.8) !important;
+            font-weight: 500;
+            padding: 0.5rem 1rem !important;
+            border-radius: 8px;
+            margin: 0 0.25rem;
+            transition: all 0.3s ease;
+        }
+
+        .navbar-nav .nav-link:hover {
+            color: white !important;
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .navbar-nav .nav-link.active {
+            color: var(--accent-color) !important;
+            background: rgba(6, 214, 160, 0.1);
+        }
+
+        .dropdown-menu {
+            border: none;
+            box-shadow: var(--shadow-medium);
+            border-radius: 12px;
+            padding: 0.5rem;
+        }
+
+        .dropdown-item {
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .dropdown-item:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .container-main {
+            min-height: calc(100vh - 80px);
+        }
+
+        /* Ensure proper spacing for pages that extend the new base */
+        .container:not(.hero-container) {
+            padding-top: 2rem;
         }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
-            <a class="navbar-brand" href="/"><i class="fas fa-rocket"></i> Excel Point</a>
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-rocket"></i> Career Nexus
+            </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item">
-                        <a class="nav-link" href="/"><i class="fas fa-home"></i> Home</a>
+                        <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="/">
+                            <i class="fas fa-home"></i> Home
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'learning:dashboard' %}"><i class="fas fa-tachometer-alt"></i> Courses Dashboard</a>
+                        <a class="nav-link {% if 'learning' in request.resolver_match.namespace %}active{% endif %}" href="{% url 'learning:dashboard' %}">
+                            <i class="fas fa-graduation-cap"></i> Learning
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'learning:dream_path' %}"><i class="fas fa-route"></i> Dream Path</a>
+                        <a class="nav-link" href="{% url 'learning:dream_path' %}">
+                            <i class="fas fa-route"></i> Career Path
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/subjects/"><i class="fas fa-book"></i> Subject Materials</a>
+                        <a class="nav-link {% if request.resolver_match.url_name == 'subjects' %}active{% endif %}" href="/subjects/">
+                            <i class="fas fa-book-open"></i> Materials
+                        </a>
                     </li>
                 </ul>
                 
                 <ul class="navbar-nav">
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-user"></i> User
+                            {% if user.is_authenticated %}
+                                <i class="fas fa-user-circle"></i> {{ user.username }}
+                            {% else %}
+                                <i class="fas fa-user"></i> Account
+                            {% endif %}
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                             {% if user.is_authenticated %}
-                                <li><a class="dropdown-item" href="{% url 'users:profile' %}"><i class="fas fa-id-card"></i> My Profile</a></li>
+                                <li><a class="dropdown-item" href="{% url 'users:profile' %}">
+                                    <i class="fas fa-id-card"></i> My Profile
+                                </a></li>
+                                <li><a class="dropdown-item" href="{% url 'learning:dashboard' %}">
+                                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                                </a></li>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="{% url 'users:logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+                                <li><a class="dropdown-item" href="{% url 'users:logout' %}">
+                                    <i class="fas fa-sign-out-alt"></i> Logout
+                                </a></li>
                             {% else %}
-                                <li><a class="dropdown-item" href="{% url 'users:login' %}"><i class="fas fa-sign-in-alt"></i> Login</a></li>
-                                <li><a class="dropdown-item" href="{% url 'users:register' %}"><i class="fas fa-user-plus"></i> Register</a></li>
+                                <li><a class="dropdown-item" href="{% url 'users:login' %}">
+                                    <i class="fas fa-sign-in-alt"></i> Sign In
+                                </a></li>
+                                <li><a class="dropdown-item" href="{% url 'users:register' %}">
+                                    <i class="fas fa-user-plus"></i> Get Started
+                                </a></li>
                             {% endif %}
                         </ul>
                     </li>
@@ -70,9 +177,15 @@
         </div>
     </nav>
 
-    <div class="container">
-        {% block content %}{% endblock %}
-    </div>
+    <main class="container-main">
+        {% if request.resolver_match.url_name != 'home' %}
+        <div class="container">
+        {% endif %}
+            {% block content %}{% endblock %}
+        {% if request.resolver_match.url_name != 'home' %}
+        </div>
+        {% endif %}
+    </main>
 
     <!-- Bootstrap JS and Popper.js -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -80,8 +193,6 @@
     <!-- Chat Widget Script (only on subject detail pages) -->
     {% if request.resolver_match.url_name == 'subject_detail' %}
     <script src="{% static 'js/chat-widget.js' %}" defer></script>
-    {% else %}
-    <!-- Debug: URL name is {{ request.resolver_match.url_name }} -->
     {% endif %}
     
     {% block extra_js %}{% endblock %}
