@@ -19,7 +19,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import TemplateView  
-from subjects.views import SubjectListView, SubjectDetailView, create_subject, upload_material, chat_fullscreen
+from subjects.views import SubjectListView, SubjectDetailView, create_subject, upload_material
 from django.http import JsonResponse
 
 def test_view(request, pk):
@@ -37,6 +37,5 @@ urlpatterns = [
     path('subjects/', SubjectListView.as_view(), name='subjects'),
     path('subjects/create/', create_subject, name='create_subject'),
     path('subjects/<int:pk>/upload/', upload_material, name='upload_material'),
-    path('subjects/<int:pk>/chat/', chat_fullscreen, name='chat_fullscreen'),
     path('subjects/<int:pk>/', SubjectDetailView.as_view(), name='subject_detail'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

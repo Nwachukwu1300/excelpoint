@@ -26,9 +26,6 @@ urlpatterns = [
     path('quiz/history/', views.quiz_history, name='quiz_history'),
     path('quiz/attempt/<int:attempt_id>/detail/', views.quiz_attempt_detail, name='quiz_attempt_detail'),
     
-    # Full-screen chat interface
-    path('<int:pk>/chat/', views.chat_fullscreen, name='chat_fullscreen'),
-    
     # XP Chatbot API URLs - Subject-specific endpoints
     path('subjects/<int:subject_id>/chat/session/', views.ChatSessionCreateAPIView.as_view(), name='chat-session-create'),
     path('subjects/<int:subject_id>/chat/sessions/', views.ChatSessionListAPIView.as_view(), name='chat-session-list'),

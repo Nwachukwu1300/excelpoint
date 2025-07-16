@@ -1,43 +1,40 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { ChatBubble } from './ChatBubble'
 import { ChatPanel } from './ChatPanel'
-import { useChatWidget } from '@/hooks/useChat'
-import type { ChatWidgetProps, ChatWidgetState } from '@/types/chat'
 
-interface ChatWidgetComponent extends React.FC<ChatWidgetProps> {}
+interface ChatWidgetProps {
+  subjectId: number;
+  initialState?: 'collapsed' | 'expanded';
+}
 
-export const ChatWidget: ChatWidgetComponent = ({ 
+export const ChatWidget: React.FC<ChatWidgetProps> = ({ 
   subjectId, 
   initialState = 'collapsed' 
 }) => {
-  const {
-    widgetState,
-    hasNewMessages,
-    isCollapsed,
-    isExpanded,
-    isFullscreen,
-    openChat,
-    closeChat,
-    toggleFullscreen,
-    markAsRead,
-  } = useChatWidget(initialState)
+  const [isExpanded, setIsExpanded] = useState(initialState === 'expanded')
+  const [hasNewMessages, setHasNewMessages] = useState(false)
+
+  const openChat = () => {
+    setIsExpanded(true)
+    setHasNewMessages(false)
+  }
+
+  const closeChat = () => {
+    setIsExpanded(false)
+  }
 
   // Handle keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      // Escape key closes chat or exits fullscreen
-      if (event.key === 'Escape') {
-        if (isFullscreen) {
-          toggleFullscreen()
-        } else if (isExpanded) {
-          closeChat()
-        }
+      // Escape key closes chat
+      if (event.key === 'Escape' && isExpanded) {
+        closeChat()
       }
       
       // Ctrl/Cmd + K opens chat
       if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
         event.preventDefault()
-        if (isCollapsed) {
+        if (!isExpanded) {
           openChat()
         }
       }
@@ -45,9 +42,9 @@ export const ChatWidget: ChatWidgetComponent = ({
 
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [isCollapsed, isExpanded, isFullscreen, openChat, closeChat, toggleFullscreen])
+  }, [isExpanded])
 
-  // Handle click outside to close (only for expanded state, not fullscreen)
+  // Handle click outside to close
   useEffect(() => {
     if (!isExpanded) return
 
@@ -69,26 +66,24 @@ export const ChatWidget: ChatWidgetComponent = ({
       clearTimeout(timer)
       document.removeEventListener('mousedown', handleClickOutside)
     }
-  }, [isExpanded, closeChat])
+  }, [isExpanded])
 
   return (
     <>
-      {/* Chat Bubble - Always rendered, only visible when collapsed */}
-      {isCollapsed && (
+      {/* Chat Bubble - Only visible when collapsed */}
+      {!isExpanded && (
         <ChatBubble
           onClick={openChat}
           hasNewMessages={hasNewMessages}
         />
       )}
       
-      {/* Chat Panel - Rendered when expanded or fullscreen */}
-      {(isExpanded || isFullscreen) && (
+      {/* Chat Panel - Only rendered when expanded */}
+      {isExpanded && (
         <div data-chat-panel>
           <ChatPanel
             subjectId={subjectId}
             onClose={closeChat}
-            onToggleFullscreen={toggleFullscreen}
-            isFullscreen={isFullscreen}
           />
         </div>
       )}

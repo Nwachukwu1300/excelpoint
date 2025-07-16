@@ -467,63 +467,14 @@ def check_dynamic_questions(request, attempt_id):
 
 @login_required
 def quiz_history(request):
-    """Display user's quiz attempt history with filtering and statistics"""
-    # Get all quiz attempts for the current user
+    """Display user's quiz history across all subjects"""
     attempts = UserQuizAttempt.objects.filter(
         user=request.user,
         is_completed=True
-    ).select_related('quiz', 'quiz__subject').prefetch_related('user_answers')
-    
-    # Apply filters if provided
-    subject_id = request.GET.get('subject')
-    quiz_id = request.GET.get('quiz')
-    date_from = request.GET.get('date_from')
-    date_to = request.GET.get('date_to')
-    
-    if subject_id:
-        attempts = attempts.filter(quiz__subject_id=subject_id)
-    
-    if quiz_id:
-        attempts = attempts.filter(quiz_id=quiz_id)
-    
-    if date_from:
-        attempts = attempts.filter(start_time__date__gte=date_from)
-    
-    if date_to:
-        attempts = attempts.filter(start_time__date__lte=date_to)
-    
-    # Calculate statistics
-    total_attempts = attempts.count()
-    avg_score = attempts.aggregate(avg_score=models.Avg('score'))['avg_score'] or 0
-    best_score = attempts.aggregate(max_score=models.Max('score'))['max_score'] or 0
-    
-    # Get subject performance
-    subject_stats = attempts.values('quiz__subject__name').annotate(
-        avg_score=models.Avg('score'),
-        attempt_count=models.Count('id')
-    ).order_by('-avg_score')
-    
-    # Get recent attempts
-    recent_attempts = attempts.order_by('-start_time')[:10]
-    
-    # Get all subjects and quizzes for filtering
-    user_subjects = Subject.objects.filter(user=request.user)
-    user_quizzes = Quiz.objects.filter(subject__user=request.user)
+    ).select_related('quiz', 'quiz__subject').order_by('-end_time')[:50]  # Last 50 attempts
     
     context = {
-        'attempts': recent_attempts,
-        'total_attempts': total_attempts,
-        'avg_score': round(avg_score, 1),
-        'best_score': round(best_score, 1),
-        'subject_stats': subject_stats,
-        'user_subjects': user_subjects,
-        'user_quizzes': user_quizzes,
-        'filters': {
-            'subject_id': subject_id,
-            'quiz_id': quiz_id,
-            'date_from': date_from,
-            'date_to': date_to,
-        }
+        'attempts': attempts,
     }
     
     return render(request, 'subjects/quiz_history.html', context)
@@ -573,19 +524,9 @@ def quiz_attempt_detail(request, attempt_id):
     
     return render(request, 'subjects/quiz_attempt_detail.html', context)
 
-@login_required
-def chat_fullscreen(request, pk):
-    """Full-screen ChatGPT-style chat interface"""
-    subject = get_object_or_404(Subject, id=pk, user=request.user)
-    
-    context = {
-        'subject': subject,
-        'subject_id': subject.id,
-    }
-    
-    return render(request, 'subjects/chat_fullscreen.html', context)
 
-# API Views
+# XP Chatbot API Views
+
 class SubjectViewSet(viewsets.ModelViewSet):
     serializer_class = SubjectSerializer
     permission_classes = [permissions.IsAuthenticated]
