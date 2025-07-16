@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Test Page</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div id="chat-root"></div>
+    
+    <script type="text/babel">
+        // Simple test to check if chat components are working
+        const { useState } = React;
+        
+        function ChatTest() {
+            const [showDebug, setShowDebug] = useState(false);
+            
+            return (
+                <div className="min-h-screen bg-gray-100 p-8">
+                    <div className="max-w-4xl mx-auto">
+                        <h1 className="text-3xl font-bold mb-6">Chat Component Test</h1>
+                        
+                        <div className="bg-white p-6 rounded-lg shadow-lg mb-6">
+                            <h2 className="text-xl font-semibold mb-4">Instructions:</h2>
+                            <ol className="list-decimal list-inside space-y-2">
+                                <li>Go back to your main chat widget at <code>127.0.0.1:8001/subjects/1/</code></li>
+                                <li>Open the chat widget (click the blue chat bubble)</li>
+                                <li>Look for the <strong>green "+"</strong> button for new chat</li>
+                                <li>Look for the <strong>clock icon</strong> button for chat history</li>
+                                <li>Open browser console (F12) and click the history button</li>
+                                <li>Watch for console messages about chat history loading</li>
+                            </ol>
+                        </div>
+                        
+                        <div className="bg-blue-50 p-6 rounded-lg">
+                            <h3 className="text-lg font-semibold mb-2">Debug Info:</h3>
+                            <button 
+                                onClick={() => setShowDebug(!showDebug)}
+                                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                            >
+                                {showDebug ? 'Hide' : 'Show'} Debug Steps
+                            </button>
+                            
+                            {showDebug && (
+                                <div className="mt-4 text-sm">
+                                    <p><strong>If you don't see the buttons:</strong></p>
+                                    <ul className="list-disc list-inside mt-2 space-y-1">
+                                        <li>Make sure you're looking at the chat widget header (blue area)</li>
+                                        <li>Check browser console for any JavaScript errors</li>
+                                        <li>Try refreshing the page</li>
+                                    </ul>
+                                    
+                                    <p className="mt-4"><strong>If buttons exist but history is empty:</strong></p>
+                                    <ul className="list-disc list-inside mt-2 space-y-1">
+                                        <li>This might be normal if you haven't had many chat sessions</li>
+                                        <li>Check console for API errors when clicking history button</li>
+                                        <li>The "No chat sessions found" message will show subject ID for debugging</li>
+                                    </ul>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+        
+        ReactDOM.render(<ChatTest />, document.getElementById('chat-root'));
+    </script>
+</body>
+</html> 

@@ -60,10 +60,10 @@ class ChatSessionSerializer(serializers.ModelSerializer):
         model = ChatSession
         fields = [
             'id', 'user', 'subject', 'user_username', 'subject_name', 
-            'title', 'created_at', 'updated_at', 'is_active',
-            'message_count', 'last_activity'
+            'title', 'status', 'is_active', 'last_activity', 'created_at', 'updated_at',
+            'message_count'
         ]
-        read_only_fields = ['id', 'user', 'subject', 'created_at', 'updated_at', 'user_username', 'subject_name']
+        read_only_fields = ['id', 'user', 'subject', 'created_at', 'updated_at', 'user_username', 'subject_name', 'last_activity']
     
     def get_message_count(self, obj):
         """Get the total number of messages in this session"""

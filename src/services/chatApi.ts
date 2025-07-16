@@ -98,6 +98,50 @@ export const chatApi = {
     return response.data
   },
 
+  // Get session history for a subject with filtering options
+  getSessionHistory: async (subjectId: number, options?: {
+    limit?: number
+    status?: 'active' | 'expired' | 'archived'
+    includeInactive?: boolean
+  }): Promise<{
+    sessions: ChatSession[]
+    metadata: {
+      total_sessions: number
+      active_sessions: number
+      returned_count: number
+      max_limit: number
+    }
+  }> => {
+    const params = new URLSearchParams()
+    if (options?.limit) params.append('limit', options.limit.toString())
+    if (options?.status) params.append('status', options.status)
+    if (options?.includeInactive !== undefined) {
+      params.append('include_inactive', options.includeInactive.toString())
+    }
+    
+    const queryString = params.toString()
+    const url = `/subjects/${subjectId}/chat/sessions/${queryString ? '?' + queryString : ''}`
+    
+    const response = await api.get(url)
+    return response.data
+  },
+
+  // Validate session
+  validateSession: async (subjectId: number, sessionId: number): Promise<{
+    valid: boolean
+    session: ChatSession | null
+    message: string
+  }> => {
+    const response: AxiosResponse<{
+      valid: boolean
+      session: ChatSession | null
+      message: string
+    }> = await api.get(
+      `/subjects/${subjectId}/chat/sessions/${sessionId}/validate/`
+    )
+    return response.data
+  },
+
   // Deactivate session
   deactivateSession: async (sessionId: number): Promise<ChatSession> => {
     const response: AxiosResponse<ChatSession> = await api.patch(

@@ -2,6 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ChatWidget } from '@/components/chat/ChatWidget'
+import { ChatPage } from '@/components/chat/ChatPage'
 
 // Create a client
 const queryClient = new QueryClient({
@@ -46,5 +47,39 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 })
 
+// Initialize fullscreen chat interface (called from Django template)
+declare global {
+  interface Window {
+    initializeChatFullscreen: (containerId: string, config: any) => void;
+  }
+}
+
+window.initializeChatFullscreen = (containerId: string, config: any) => {
+  console.log('Initializing fullscreen chat with config:', config)
+  
+  const container = document.getElementById(containerId)
+  if (!container) {
+    throw new Error(`Container element #${containerId} not found`)
+  }
+  
+  if (!config.subjectId) {
+    throw new Error('subjectId is required in config')
+  }
+  
+  const root = ReactDOM.createRoot(container)
+  root.render(
+    <React.StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <ChatPage 
+          subjectId={parseInt(config.subjectId, 10)}
+          onClose={() => window.history.back()}
+        />
+      </QueryClientProvider>
+    </React.StrictMode>
+  )
+  
+  console.log('Fullscreen chat initialized successfully')
+}
+
 // Export for potential programmatic usage
-export { ChatWidget, queryClient } 
+export { ChatWidget, ChatPage, queryClient } 

@@ -29,6 +29,7 @@ from .serializers import (
 )
 from .permissions import IsSubjectOwner, ChatAPIPermission, IsChatSessionOwner
 from .services.rag_service import RAGService
+from .services.session_manager import SessionManager
 from .tasks import process_material, generate_quiz_from_material, generate_dynamic_quiz_questions
 import json
 import os
@@ -572,6 +573,18 @@ def quiz_attempt_detail(request, attempt_id):
     
     return render(request, 'subjects/quiz_attempt_detail.html', context)
 
+@login_required
+def chat_fullscreen(request, pk):
+    """Full-screen ChatGPT-style chat interface"""
+    subject = get_object_or_404(Subject, id=pk, user=request.user)
+    
+    context = {
+        'subject': subject,
+        'subject_id': subject.id,
+    }
+    
+    return render(request, 'subjects/chat_fullscreen.html', context)
+
 # API Views
 class SubjectViewSet(viewsets.ModelViewSet):
     serializer_class = SubjectSerializer
@@ -941,20 +954,71 @@ class ChatSessionCreateAPIView(generics.CreateAPIView):
 
 class ChatSessionListAPIView(generics.ListAPIView):
     """
-    API endpoint for listing chat sessions for a subject.
+    API endpoint for listing chat sessions for a subject with history filtering.
     
     GET /api/subjects/{subject_id}/chat/sessions/
+    Query params:
+    - limit: Number of sessions to return (default: 30, max: 100)
+    - status: Filter by session status ('active', 'expired', 'archived')
+    - include_inactive: Include inactive sessions (default: true)
     """
     serializer_class = ChatSessionSerializer
     permission_classes = [permissions.IsAuthenticated, IsSubjectOwner]
     
     def get_queryset(self):
-        """Get all chat sessions for the subject owned by the current user."""
+        """Get chat sessions for the subject owned by the current user with filtering."""
         subject_id = self.kwargs.get('subject_id')
-        return ChatSession.objects.filter(
-            subject_id=subject_id,
+        subject = get_object_or_404(Subject, id=subject_id, user=self.request.user)
+        
+        # Get query parameters
+        limit = min(int(self.request.query_params.get('limit', 30)), 100)
+        status_filter = self.request.query_params.get('status')
+        include_inactive = self.request.query_params.get('include_inactive', 'true').lower() == 'true'
+        
+        queryset = ChatSession.objects.filter(
+            subject=subject,
             user=self.request.user
-        ).order_by('-updated_at')
+        )
+        
+        # Apply status filter
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+        
+        # Apply inactive filter
+        if not include_inactive:
+            queryset = queryset.filter(is_active=True)
+        
+        # Order by last activity (most recent first) and limit results
+        return queryset.select_related('subject', 'user').prefetch_related('messages').order_by('-last_activity', '-updated_at')[:limit]
+
+    def list(self, request, *args, **kwargs):
+        """Enhanced list response with metadata for chat history"""
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        
+        # Add metadata about session history
+        subject_id = kwargs.get('subject_id')
+        total_sessions = ChatSession.objects.filter(
+            subject_id=subject_id,
+            user=request.user
+        ).count()
+        
+        active_sessions = ChatSession.objects.filter(
+            subject_id=subject_id,
+            user=request.user,
+            status='active',
+            is_active=True
+        ).count()
+        
+        return Response({
+            'sessions': serializer.data,
+            'metadata': {
+                'total_sessions': total_sessions,
+                'active_sessions': active_sessions,
+                'returned_count': len(serializer.data),
+                'max_limit': 100
+            }
+        })
 
 
 class ChatMessageListCreateAPIView(generics.ListCreateAPIView):
@@ -1044,18 +1108,18 @@ class ChatMessageListCreateAPIView(generics.ListCreateAPIView):
         user_message_content = serializer.validated_data['message']
         
         try:
-            # Get or create active session
-            session, created = ChatSession.objects.get_or_create(
+            # Use SessionManager for intelligent session management with timeout logic
+            session_manager = SessionManager()
+            session, created = session_manager.get_or_create_session(
                 user=self.request.user,
                 subject=subject,
-                is_active=True,
-                defaults={
-                    'title': user_message_content[:50] + '...' if len(user_message_content) > 50 else user_message_content
-                }
+                content=user_message_content  # Used for title generation
             )
             
             if created:
                 logger.info(f"Created new chat session {session.id} for user {request.user.id} and subject {subject_id}")
+            else:
+                logger.info(f"Using existing session {session.id} for user {request.user.id} and subject {subject_id}")
             
             # Save user message
             user_message = ChatMessage.objects.create(
@@ -1110,9 +1174,18 @@ class ChatMessageListCreateAPIView(generics.ListCreateAPIView):
                 }
             )
             
-            # Update session timestamp
-            session.updated_at = timezone.now()
-            session.save()
+            # Update session activity timestamp using SessionManager
+            session_manager.extend_session(session)
+            
+            # Generate session title if this is the first exchange (no title yet)
+            if not session.title or session.title == "New conversation":
+                try:
+                    title = self._generate_session_title(user_message_content, rag_response['response'], subject.name)
+                    session.title = title
+                    session.save(update_fields=['title'])
+                    logger.info(f"Generated title for session {session.id}: {title}")
+                except Exception as e:
+                    logger.warning(f"Failed to generate title for session {session.id}: {str(e)}")
             
             logger.info(f"Successfully generated chat response for user {request.user.id}, session {session.id}")
             
@@ -1138,6 +1211,85 @@ class ChatMessageListCreateAPIView(generics.ListCreateAPIView):
                 'error': 'Failed to generate response',
                 'message': 'XP is currently unavailable. Please try again later.',
                 'details': str(e) if settings.DEBUG else None
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def _generate_session_title(self, user_message, assistant_response, subject_name):
+        """Generate a concise title for the chat session based on the first exchange."""
+        try:
+            from openai import OpenAI
+            client = OpenAI(api_key=settings.OPENAI_API_KEY)
+            
+            prompt = f"""Based on this conversation about {subject_name}, create a concise, descriptive title (max 50 characters) that captures the main topic:
+
+User: {user_message[:200]}
+Assistant: {assistant_response[:200]}
+
+Generate a title that is:
+- Specific to the topic discussed
+- Maximum 50 characters
+- Clear and descriptive
+- No quotes or special formatting
+
+Title:"""
+            
+            response = client.chat.completions.create(
+                model=settings.OPENAI_MODEL,
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=50,
+                temperature=0.7
+            )
+            
+            title = response.choices[0].message.content.strip()
+            
+            # Clean up the title and ensure it's not too long
+            title = title.replace('"', '').replace("'", '').strip()
+            if len(title) > 50:
+                title = title[:47] + "..."
+            
+            return title if title else "New conversation"
+            
+        except Exception as e:
+            logger.warning(f"Failed to generate session title: {str(e)}")
+            return "New conversation"
+
+
+class ChatSessionValidateAPIView(APIView):
+    """
+    API endpoint for validating chat sessions and checking if they're still active.
+    
+    GET /api/subjects/{subject_id}/chat/sessions/{session_id}/validate/
+    """
+    permission_classes = [permissions.IsAuthenticated, IsSubjectOwner]
+    
+    def get(self, request, subject_id, session_id):
+        """Validate that a session exists, belongs to the user, and is still active."""
+        subject = get_object_or_404(Subject, id=subject_id, user=request.user)
+        
+        try:
+            session_manager = SessionManager()
+            session = session_manager.validate_session(session_id, request.user, subject)
+            
+            if session:
+                # Session is valid and active
+                return Response({
+                    'valid': True,
+                    'session': ChatSessionSerializer(session).data,
+                    'message': 'Session is active and valid'
+                })
+            else:
+                # Session is invalid or expired
+                return Response({
+                    'valid': False,
+                    'session': None,
+                    'message': 'Session is expired or invalid'
+                }, status=status.HTTP_410_GONE)
+                
+        except Exception as e:
+            logger.error(f"Error validating session {session_id} for user {request.user.id}: {str(e)}")
+            return Response({
+                'valid': False,
+                'session': None,
+                'message': 'Error validating session'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 

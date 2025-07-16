@@ -121,7 +121,9 @@ export const MessageInput: MessageInputComponent = ({
     e?.preventDefault()
     
     const trimmedMessage = message.trim()
+    console.log('MessageInput: handleSubmit called with:', trimmedMessage)
     if (trimmedMessage && !isLoading && !disabled) {
+      console.log('MessageInput: Calling onSendMessage')
       onSendMessage(trimmedMessage)
       setMessage('')
       
@@ -129,6 +131,12 @@ export const MessageInput: MessageInputComponent = ({
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto'
       }
+    } else {
+      console.log('MessageInput: Message not sent - conditions not met:', {
+        trimmedMessage,
+        isLoading,
+        disabled
+      })
     }
   }
 

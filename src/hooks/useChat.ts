@@ -1,7 +1,34 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { chatApi } from '@/services/chatApi'
+import { SessionStorageManager } from '@/utils/sessionStorage'
 import type { ChatMessage, ChatSession, SendMessageRequest } from '@/types/chat'
+
+// Utility function for throttling
+const throttle = <T extends (...args: any[]) => any>(
+  func: T,
+  delay: number
+): ((...args: Parameters<T>) => void) => {
+  let timeoutId: NodeJS.Timeout | null = null
+  let lastExecTime = 0
+  
+  return (...args: Parameters<T>) => {
+    const currentTime = Date.now()
+    
+    if (currentTime - lastExecTime > delay) {
+      func(...args)
+      lastExecTime = currentTime
+    } else {
+      if (timeoutId) {
+        clearTimeout(timeoutId)
+      }
+      timeoutId = setTimeout(() => {
+        func(...args)
+        lastExecTime = Date.now()
+      }, delay - (currentTime - lastExecTime))
+    }
+  }
+}
 
 // Query keys for React Query caching
 export const chatQueryKeys = {
@@ -13,23 +40,110 @@ export const chatQueryKeys = {
     ['chat', 'stats', subjectId],
 }
 
-// Custom hook for managing chat messages and sessions
-export const useChatMessages = (subjectId: number) => {
+// Custom hook for managing chat messages and sessions with persistence
+export const useChatMessages = (subjectId: number, selectedSessionId?: number) => {
   const queryClient = useQueryClient()
   const [currentSession, setCurrentSession] = useState<ChatSession | null>(null)
+  const [isValidatingSession, setIsValidatingSession] = useState(false)
 
-  // Get or create chat session
+  // Session validation and restoration logic
+  const validateAndRestoreSession = useCallback(async () => {
+    try {
+      const storedSession = SessionStorageManager.getStoredSession(subjectId)
+      
+      if (!storedSession || !storedSession.isValid) {
+        // No valid stored session, will create new one
+        return null
+      }
+
+      setIsValidatingSession(true)
+      
+      // Add timeout to prevent hanging
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Session validation timeout')), 10000) // 10 second timeout
+      })
+      
+      const validationPromise = chatApi.validateSession(subjectId, storedSession.sessionId)
+      
+      const validation = await Promise.race([validationPromise, timeoutPromise]) as Awaited<ReturnType<typeof chatApi.validateSession>>
+      
+      if (validation.valid && validation.session) {
+        // Session is still valid, restore it
+        SessionStorageManager.storeSession(subjectId, validation.session)
+        setCurrentSession(validation.session)
+        return validation.session
+      } else {
+        // Session is invalid, clear storage
+        SessionStorageManager.clearSession(subjectId)
+        return null
+      }
+    } catch (error) {
+      console.warn('Session validation failed:', error)
+      SessionStorageManager.markSessionInvalid(subjectId)
+      return null
+    } finally {
+      setIsValidatingSession(false)
+    }
+  }, [subjectId])
+
+  // Get or create chat session with persistence
   const { 
     data: session, 
-    isLoading: isSessionLoading 
+    isLoading: isSessionLoading,
+    error: sessionError
   } = useQuery({
-    queryKey: chatQueryKeys.session(subjectId),
-    queryFn: () => chatApi.getOrCreateSession(subjectId),
+    queryKey: selectedSessionId 
+      ? ['chat', 'session', subjectId, selectedSessionId] 
+      : chatQueryKeys.session(subjectId),
+    queryFn: async () => {
+      // If a specific session is selected, try to get it
+      if (selectedSessionId) {
+        try {
+          const sessionData = await chatApi.validateSession(subjectId, selectedSessionId)
+          if (sessionData.valid && sessionData.session) {
+            return sessionData.session
+          } else {
+            throw new Error('Selected session is no longer valid')
+          }
+        } catch (error) {
+          console.warn('Failed to load selected session:', error)
+          throw error
+        }
+      }
+
+      // Default session logic for new chats
+      try {
+        // First try to restore an existing session (with timeout)
+        const restoredSession = await validateAndRestoreSession()
+        if (restoredSession) {
+          return restoredSession
+        }
+      } catch (error) {
+        console.warn('Session restoration failed, creating new session:', error)
+        // Continue to create new session
+      }
+      
+      // No valid session, create a new one
+      const newSession = await chatApi.getOrCreateSession(subjectId)
+      SessionStorageManager.storeSession(subjectId, newSession)
+      return newSession
+    },
     onSuccess: (data) => {
       setCurrentSession(data)
+      SessionStorageManager.storeSession(subjectId, data)
     },
-    staleTime: 1000 * 60 * 30, // 30 minutes
-    retry: 2,
+    onError: (error) => {
+      console.error('Failed to initialize chat session:', error)
+      // Clear any stored session on fatal error
+      SessionStorageManager.clearSession(subjectId)
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes (shorter due to timeout logic)
+    retry: (failureCount, error) => {
+      // Only retry network errors, not validation timeouts
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      return failureCount < 2 && !errorMessage.includes('timeout')
+    },
+    retryDelay: 1000, // 1 second between retries
   })
 
   // Get messages for the current session
@@ -108,7 +222,7 @@ export const useChatMessages = (subjectId: number) => {
     },
   })
 
-  // Send a message
+  // Send a message with activity tracking
   const sendMessage = async (content: string) => {
     if (!content.trim()) return
 
@@ -117,8 +231,58 @@ export const useChatMessages = (subjectId: number) => {
       session_id: currentSession?.id,
     }
 
-    return sendMessageMutation.mutateAsync(messageData)
+    try {
+      const result = await sendMessageMutation.mutateAsync(messageData)
+      
+      // Update activity timestamp on successful message send
+      SessionStorageManager.updateActivity(subjectId)
+      
+      return result
+    } catch (error) {
+      console.error('Failed to send message:', error)
+      throw error
+    }
   }
+
+  // Cleanup effect for expired sessions
+  useEffect(() => {
+    const cleanup = () => {
+      SessionStorageManager.cleanupExpiredSessions()
+    }
+    
+    // Run cleanup on mount and when subject changes
+    cleanup()
+    
+    // Set up periodic cleanup (every 5 minutes)
+    const cleanupInterval = setInterval(cleanup, 5 * 60 * 1000)
+    
+    return () => {
+      clearInterval(cleanupInterval)
+    }
+  }, [subjectId])
+
+  // Activity tracking effect
+  useEffect(() => {
+    if (currentSession) {
+      const trackActivity = () => {
+        SessionStorageManager.updateActivity(subjectId)
+      }
+      
+      // Track user activity (mouse moves, clicks, keystrokes)
+      const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart']
+      const throttledTrackActivity = throttle(trackActivity, 30000) // Throttle to once per 30 seconds
+      
+      events.forEach(event => {
+        document.addEventListener(event, throttledTrackActivity, { passive: true })
+      })
+      
+      return () => {
+        events.forEach(event => {
+          document.removeEventListener(event, throttledTrackActivity)
+        })
+      }
+    }
+  }, [currentSession, subjectId])
 
   return {
     // Data
@@ -126,15 +290,16 @@ export const useChatMessages = (subjectId: number) => {
     session: currentSession,
     
     // Loading states
-    isLoading: isSessionLoading || isMessagesLoading,
+    isLoading: isSessionLoading || isMessagesLoading || isValidatingSession,
     isSending: sendMessageMutation.isPending,
+    isValidatingSession,
     
     // Actions
     sendMessage,
     
     // Error states
-    error: sendMessageMutation.error,
-    isError: sendMessageMutation.isError,
+    error: sessionError || sendMessageMutation.error,
+    isError: !!sessionError || sendMessageMutation.isError,
   }
 }
 

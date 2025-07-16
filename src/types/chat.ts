@@ -12,9 +12,13 @@ export interface ChatSession {
   id: number
   user: number
   subject: number
+  title?: string | null
+  status: 'active' | 'expired' | 'archived'
   is_active: boolean
+  last_activity: string
   created_at: string
   updated_at: string
+  message_count?: number
 }
 
 // Chat API request/response types
@@ -69,9 +73,11 @@ export interface ChatBubbleProps {
 
 export interface ChatPanelProps {
   subjectId: number
-  onClose: () => void
-  onToggleFullscreen: () => void
+  selectedSessionId?: number
+  onClose?: () => void
+  onToggleFullscreen?: () => void
   isFullscreen?: boolean
+  className?: string
 }
 
 // Error types

@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat - {{ subject.name }} | Career Nexus</title>
+    {% load static %}
+    
+    <!-- Meta tags for better SEO -->
+    <meta name="description" content="AI-powered chat interface for {{ subject.name }} in Career Nexus">
+    <meta name="robots" content="noindex, nofollow">
+    
+    <!-- Preload important assets -->
+    <link rel="preload" href="{% static 'js/chat-widget.js' %}" as="script">
+    
+    <!-- Base styles for fullscreen -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html, body {
+            height: 100%;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8fafc;
+        }
+        
+        #chat-fullscreen-root {
+            height: 100vh;
+            width: 100vw;
+        }
+        
+        /* Loading state */
+        .loading-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+            color: white;
+            flex-direction: column;
+            gap: 24px;
+        }
+        
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            font-size: 18px;
+            font-weight: 500;
+            opacity: 0.9;
+        }
+        
+        .loading-subtitle {
+            font-size: 14px;
+            opacity: 0.7;
+            text-align: center;
+            max-width: 300px;
+        }
+        
+        /* Error state */
+        .error-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: #fee2e2;
+            color: #dc2626;
+            flex-direction: column;
+            gap: 16px;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .error-title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+        
+        .error-message {
+            font-size: 14px;
+            opacity: 0.8;
+            max-width: 400px;
+        }
+        
+        .retry-button {
+            margin-top: 16px;
+            padding: 12px 24px;
+            background: #dc2626;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .retry-button:hover {
+            background: #b91c1c;
+        }
+        
+        /* Back button */
+        .back-link {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            background: rgba(255, 255, 255, 0.95);
+            color: #374151;
+            text-decoration: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .back-link:hover {
+            background: white;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 8px -1px rgba(0, 0, 0, 0.15);
+            text-decoration: none;
+            color: #111827;
+        }
+        
+        .back-arrow {
+            width: 16px;
+            height: 16px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Back to Subject button -->
+    <a href="{% url 'subject_detail' subject.id %}" class="back-link">
+        <svg class="back-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+        Back to {{ subject.name }}
+    </a>
+
+    <!-- React app container -->
+    <div id="chat-fullscreen-root">
+        <!-- Loading state (shown while React loads) -->
+        <div class="loading-container" id="loading-state">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Initializing XP Assistant</div>
+            <div class="loading-subtitle">
+                Preparing your AI-powered learning companion for {{ subject.name }}
+            </div>
+        </div>
+        
+        <!-- Error state (shown if React fails to load) -->
+        <div class="error-container" id="error-state" style="display: none;">
+            <div class="error-title">Chat Interface Unavailable</div>
+            <div class="error-message">
+                We're having trouble loading the chat interface. This might be due to a network issue or the chat service being temporarily unavailable.
+            </div>
+            <button class="retry-button" onclick="window.location.reload()">
+                Try Again
+            </button>
+        </div>
+    </div>
+
+    <!-- Subject data for React app -->
+    <script>
+        window.CHAT_CONFIG = {
+            subjectId: {{ subject_id }},
+            subjectName: "{{ subject.name|escapejs }}",
+            apiBaseUrl: '/subjects/',
+            csrfToken: '{{ csrf_token }}',
+            isFullscreen: true,
+            user: {
+                id: {{ request.user.id }},
+                username: "{{ request.user.username|escapejs }}"
+            }
+        };
+        
+        // Error handling for React initialization
+        window.onerror = function(message, source, lineno, colno, error) {
+            console.error('Chat interface error:', error);
+            document.getElementById('loading-state').style.display = 'none';
+            document.getElementById('error-state').style.display = 'flex';
+        };
+        
+        // Timeout fallback
+        setTimeout(function() {
+            const loadingState = document.getElementById('loading-state');
+            if (loadingState && loadingState.style.display !== 'none') {
+                console.warn('Chat interface took too long to load');
+                loadingState.style.display = 'none';
+                document.getElementById('error-state').style.display = 'flex';
+            }
+        }, 10000); // 10 second timeout
+    </script>
+
+    <!-- Load React chat component -->
+    <script src="{% static 'js/chat-widget.js' %}?v={{ subject.updated_at|date:'U' }}" defer></script>
+    
+    <!-- Initialize React app after DOM is ready -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Give React a moment to load
+            setTimeout(function() {
+                if (window.initializeChatFullscreen) {
+                    try {
+                        window.initializeChatFullscreen('chat-fullscreen-root', window.CHAT_CONFIG);
+                        document.getElementById('loading-state').style.display = 'none';
+                    } catch (error) {
+                        console.error('Failed to initialize chat:', error);
+                        document.getElementById('loading-state').style.display = 'none';
+                        document.getElementById('error-state').style.display = 'flex';
+                    }
+                } else {
+                    console.error('Chat initialization function not found');
+                    document.getElementById('loading-state').style.display = 'none';
+                    document.getElementById('error-state').style.display = 'flex';
+                }
+            }, 100);
+        });
+    </script>
+
+    <!-- Keyboard shortcuts -->
+    <script>
+        document.addEventListener('keydown', function(e) {
+            // ESC key to go back
+            if (e.key === 'Escape') {
+                window.history.back();
+            }
+            
+            // Alt+B or Cmd+B to go back to subject
+            if ((e.altKey || e.metaKey) && e.key === 'b') {
+                e.preventDefault();
+                window.location.href = '{% url "subject_detail" subject.id %}';
+            }
+        });
+    </script>
+</body>
+</html> 

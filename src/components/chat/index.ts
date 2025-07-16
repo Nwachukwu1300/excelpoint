@@ -4,6 +4,8 @@ export { ChatWidget } from './ChatWidget'
 // Individual chat components
 export { ChatBubble } from './ChatBubble'
 export { ChatPanel } from './ChatPanel'
+export { ChatPage } from './ChatPage'
+export { ChatHistoryPanel } from './ChatHistoryPanel'
 export { MessageList } from './MessageList'
 export { MessageInput } from './MessageInput'
 export { TypingIndicator } from './TypingIndicator'

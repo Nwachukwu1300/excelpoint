@@ -1,10 +1,12 @@
-import React from 'react'
+import React, { useState } from 'react'
 import styled from 'styled-components'
-import { X, Maximize2, Minimize2, Brain } from 'lucide-react'
-import type { ChatPanelProps } from '@/types/chat'
+import { X, History, Brain, ExternalLink } from 'lucide-react'
+import { useChatMessages } from '@/hooks/useChat'
 import { MessageList } from './MessageList'
 import { MessageInput } from './MessageInput'
-import { useChatMessages } from '@/hooks/useChat'
+import { TypingIndicator } from './TypingIndicator'
+import { ChatHistoryPanel } from './ChatHistoryPanel'
+import type { ChatSession, ChatPanelProps } from '@/types/chat'
 
 // Styled components
 const PanelContainer = styled.div<{ isFullscreen?: boolean }>`
@@ -169,16 +171,20 @@ interface ChatPanelComponent extends React.FC<ChatPanelProps> {}
 
 export const ChatPanel: ChatPanelComponent = ({
   subjectId,
+  selectedSessionId,
   onClose,
-  onToggleFullscreen,
-  isFullscreen = false
+  isFullscreen = false,
+  className
 }) => {
+  const [isHistoryVisible, setIsHistoryVisible] = useState(false)
+  
   const { 
     messages, 
+    session,
     isLoading, 
     sendMessage, 
     isSending 
-  } = useChatMessages(subjectId)
+  } = useChatMessages(subjectId, selectedSessionId)
 
   const handleSendMessage = async (content: string) => {
     try {
@@ -189,9 +195,53 @@ export const ChatPanel: ChatPanelComponent = ({
     }
   }
 
+
+  const handleToggleHistory = () => {
+    console.log('🔄 Toggling chat history, current state:', isHistoryVisible)
+    setIsHistoryVisible(!isHistoryVisible)
+    console.log('🔄 New history state will be:', !isHistoryVisible)
+  }
+
+  const handleSessionSelect = (selectedSession: ChatSession | null) => {
+    console.log('Selected session:', selectedSession)
+    setIsHistoryVisible(false)
+    
+    if (selectedSession) {
+      // For now, reload with session parameter - this will trigger the hook to load that session
+      const url = new URL(window.location.href)
+      url.searchParams.set('session', selectedSession.id.toString())
+      window.location.href = url.toString()
+    }
+  }
+
+  const handleCloseHistory = () => {
+    setIsHistoryVisible(false)
+  }
+
+  const handleOpenFullscreenPage = () => {
+    // Open the dedicated fullscreen chat page
+    const fullscreenUrl = `/subjects/${subjectId}/chat/`
+    window.open(fullscreenUrl, '_blank')
+  }
+
+  // Use className for page mode, styled component for widget mode
+  const ContainerComponent = className ? 'div' : PanelContainer
+  const containerProps = className ? { className } : { isFullscreen }
+
   return (
-    <PanelContainer isFullscreen={isFullscreen}>
-      <PanelHeader>
+    <>
+      {isFullscreen && (
+        <ChatHistoryPanel
+          subjectId={subjectId}
+          currentSessionId={session?.id}
+          onSessionSelect={handleSessionSelect}
+          isVisible={isHistoryVisible}
+          onClose={handleCloseHistory}
+        />
+      )}
+      
+      <ContainerComponent {...containerProps}>
+        <PanelHeader>
         <HeaderLeft>
           <HeaderIcon>
             <Brain size={20} />
@@ -203,21 +253,29 @@ export const ChatPanel: ChatPanelComponent = ({
         </HeaderLeft>
         
         <HeaderControls>
-          <ControlButton
-            onClick={onToggleFullscreen}
-            aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-            title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-          >
-            {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
-          </ControlButton>
+          {!className && (
+            <>
+              {/* Removed Chat History Button */}
+              <ControlButton
+                onClick={handleOpenFullscreenPage}
+                aria-label="Open fullscreen chat"
+                title="Open ChatGPT-style fullscreen interface"
+                style={{ background: 'rgba(255, 255, 255, 0.2)' }}
+              >
+                <ExternalLink size={16} />
+              </ControlButton>
+            </>
+          )}
           
-          <ControlButton
-            onClick={onClose}
-            aria-label="Close chat"
-            title="Close chat"
-          >
-            <X size={16} />
-          </ControlButton>
+          {onClose && (
+            <ControlButton
+              onClick={onClose}
+              aria-label="Close chat"
+              title="Close chat"
+            >
+              <X size={16} />
+            </ControlButton>
+          )}
         </HeaderControls>
       </PanelHeader>
       
@@ -242,7 +300,8 @@ export const ChatPanel: ChatPanelComponent = ({
           disabled={isLoading}
         />
       </PanelContent>
-    </PanelContainer>
+    </ContainerComponent>
+    </>
   )
 }
 

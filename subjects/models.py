@@ -303,10 +303,18 @@ class UserAnswer(models.Model):
 # XP Chatbot Models
 class ChatSession(models.Model):
     """Model for managing XP chat sessions per user per subject"""
+    STATUS_CHOICES = (
+        ('active', 'Active'),
+        ('expired', 'Expired'),
+        ('archived', 'Archived'),
+    )
+    
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='chat_sessions')
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='chat_sessions')
     title = models.CharField(max_length=255, blank=True, null=True, help_text="Optional session title")
     is_active = models.BooleanField(default=True)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='active')
+    last_activity = models.DateTimeField(default=timezone.now, help_text="Last activity timestamp for timeout tracking")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -329,6 +337,29 @@ class ChatSession(models.Model):
     def get_last_message(self):
         """Get the most recent message in this session"""
         return self.messages.first()
+    
+    def is_expired(self, timeout_minutes=5):
+        """Check if session has expired based on last_activity"""
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        if not self.last_activity:
+            return False
+            
+        timeout_threshold = timezone.now() - timedelta(minutes=timeout_minutes)
+        return self.last_activity < timeout_threshold
+    
+    def extend_session(self):
+        """Update last_activity to current time to extend session"""
+        from django.utils import timezone
+        self.last_activity = timezone.now()
+        self.save(update_fields=['last_activity'])
+    
+    def expire_session(self):
+        """Mark session as expired and inactive"""
+        self.status = 'expired'
+        self.is_active = False
+        self.save(update_fields=['status', 'is_active'])
 
 class ChatMessage(models.Model):
     """Model for storing individual chat messages in XP sessions"""
