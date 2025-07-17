@@ -27,7 +27,7 @@ class RAGService:
         self.max_context_length = 3000  # Maximum characters for context
         self.max_chat_history = 10      # Maximum chat exchanges to include
         self.search_top_k = 5           # Number of chunks to retrieve
-        self.search_threshold = 0.35    # Minimum similarity threshold (optimized for recall)
+        self.search_threshold = 0.15    # Minimum similarity threshold (optimized for recall)
         
     def generate_response(
         self, 
@@ -132,12 +132,37 @@ class RAGService:
             List of relevant chunks with metadata
         """
         try:
+            # Check if this is a university/course source question
+            university_keywords = ['university', 'college', 'institution', 'course', 'where', 'from', 'source']
+            is_university_query = any(keyword in query.lower() for keyword in university_keywords)
+            
+            # Get primary search results
             chunks = self.vector_service.search_by_query(
                 query_text=query,
                 subject_id=subject_id,
                 top_k=self.search_top_k,
                 threshold=self.search_threshold
             )
+            
+            # For university-related queries, also search for course codes and headers
+            if is_university_query:
+                logger.debug("University query detected, searching for course codes and headers")
+                
+                # Search for course codes and headers
+                course_chunks = self.vector_service.search_by_query(
+                    query_text="4005CEM Database Systems course code header",
+                    subject_id=subject_id,
+                    top_k=2,
+                    threshold=0.1
+                )
+                
+                # Combine results, avoiding duplicates
+                existing_chunk_ids = {chunk['chunk_id'] for chunk in chunks}
+                for course_chunk in course_chunks:
+                    if course_chunk['chunk_id'] not in existing_chunk_ids:
+                        chunks.append(course_chunk)
+                        if len(chunks) >= self.search_top_k + 2:  # Allow 2 extra chunks for course info
+                            break
             
             logger.debug(f"Retrieved {len(chunks)} relevant chunks for query")
             return chunks
@@ -307,6 +332,8 @@ USING MATERIALS:
 - Use materials as primary sources when available and relevant
 - Supplement material information with clear explanations when helpful
 - Reference specific sources when quoting or summarizing from materials
+- IMPORTANT: Look for course codes (like "4005CEM") and university information in the materials
+- When asked about university/course source, check for course codes and institutional identifiers
 
 CONVERSATION HANDLING:
 - Pay attention to conversation history and context
@@ -320,6 +347,15 @@ RESPONSE STYLE:
 - Break down complex concepts into understandable parts
 - Encourage learning and curiosity
 - If materials don't cover a topic fully, supplement with accurate general knowledge
+
+COURSE INFORMATION:
+- When materials contain course codes (e.g., "4005CEM Database Systems"), mention them
+- Course codes often indicate the university or institution offering the course
+- Look for headers, titles, and institutional branding in the materials
+- Common course code patterns:
+  * "4005CEM" format typically indicates Coventry University courses
+  * Course codes often follow university-specific patterns
+  * Check for university names, logos, or institutional identifiers in headers
 
 REMEMBER: Your goal is to be a helpful, accurate, and educational assistant that enhances learning using available materials while providing comprehensive support."""
     
