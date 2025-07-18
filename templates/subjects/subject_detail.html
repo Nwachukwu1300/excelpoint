@@ -3,18 +3,115 @@
 
 {% block title %}{{ subject.name }} - Subject Materials{% endblock %}
 
+{% block extra_css %}
+<style>
+.hover-shadow {
+    transition: all 0.3s ease;
+}
+.hover-shadow:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(118,75,162,0.15) !important;
+}
+.bg-purple {
+    background: #764ba2 !important;
+    color: white !important;
+}
+.btn-purple {
+    background: #764ba2 !important;
+    color: white !important;
+    border: none;
+    box-shadow: 0 4px 12px rgba(118,75,162,0.08);
+    transition: all 0.2s;
+}
+.btn-purple:hover, .btn-purple:focus {
+    background: #5a357d !important;
+    color: white !important;
+}
+.btn-outline-purple {
+    border: 2px solid #764ba2 !important;
+    color: #764ba2 !important;
+    background: transparent !important;
+}
+.btn-outline-purple:hover, .btn-outline-purple:focus {
+    background: #764ba2 !important;
+    color: white !important;
+}
+
+/* Purple nav-pills for tabs */
+.nav-pills .nav-link {
+    color: #764ba2;
+    border: 2px solid transparent;
+    background: transparent;
+    font-weight: 500;
+    border-radius: 50px;
+    margin-right: 0.5rem;
+    transition: all 0.2s;
+}
+.nav-pills .nav-link.active, .nav-pills .nav-link:focus {
+    color: white !important;
+    background: #764ba2 !important;
+    border-color: #764ba2 !important;
+    box-shadow: 0 2px 8px rgba(118,75,162,0.10);
+}
+.nav-pills .nav-link:hover {
+    color: #5a357d;
+    background: #f3eaff;
+}
+
+/* Card border for selected flashcard */
+.card.selected, .card.active {
+    border: 2px solid #764ba2 !important;
+    box-shadow: 0 4px 16px rgba(118,75,162,0.10);
+}
+/* Remove purple border from all cards, add subtle shadow for separation */
+.card {
+    border: none !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+/* Blue badge for card count to purple */
+.badge.bg-primary, .badge.bg-info {
+    background: #764ba2 !important;
+}
+
+/* Blue text links to purple */
+.text-primary, .text-info {
+    color: #764ba2 !important;
+}
+
+/* Fallback modal styles */
+.modal.show {
+    display: block !important;
+}
+
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1040;
+}
+
+.modal-open {
+    overflow: hidden;
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container py-4">
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{% url 'subjects' %}">Subjects</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'subjects' %}" style="color: #764ba2;">Subjects</a></li>
             <li class="breadcrumb-item active">{{ subject.name }}</li>
         </ol>
     </nav>
 
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h2 mb-0">{{ subject.name }}</h1>
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadMaterialModal">
+        <h1 class="h2 mb-0" style="color: #764ba2;">{{ subject.name }}</h1>
+        <button type="button" class="btn btn-purple" data-bs-toggle="modal" data-bs-target="#uploadMaterialModal">
             <i class="fas fa-upload"></i> Upload Material
         </button>
     </div>
@@ -27,7 +124,7 @@
                 <div class="col-md-6 col-lg-4">
                     <div class="card h-100 shadow-sm hover-shadow">
                         <div class="card-body">
-                            <h3 class="h5 mb-3">{{ material.file.name|slice:"16:" }}</h3>
+                            <h3 class="h5 mb-3" style="color: #764ba2;">{{ material.file.name|slice:"16:" }}</h3>
                             <p class="text-muted mb-3">
                                 <small>
                                     <i class="fas fa-file"></i> {{ material.file_type }}
@@ -38,12 +135,12 @@
                             </p>
                             <div class="d-flex justify-content-between align-items-center">
                                 <div class="material-status-container" data-material-id="{{ material.id }}">
-                                    <span class="badge status-badge {% if material.status == 'COMPLETED' %}bg-success{% elif material.status == 'PROCESSING' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                    <span class="badge status-badge {% if material.status == 'COMPLETED' %}bg-purple{% elif material.status == 'PROCESSING' %}bg-warning{% else %}bg-secondary{% endif %}">
                                         {{ material.status }}
                                     </span>
                                     {% if material.status == 'PROCESSING' or material.status == 'PENDING' %}
                                     <div class="progress mt-2" style="height: 4px;">
-                                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-purple" 
                                              role="progressbar" 
                                              style="width: {% if material.status == 'PROCESSING' %}50%{% else %}10%{% endif %};">
                                         </div>
@@ -53,10 +150,10 @@
                                 </div>
                                 {% if material.status == 'COMPLETED' %}
                                 <div class="btn-group">
-                                    <a href="{{ material.file.url }}" class="btn btn-outline-primary btn-sm" target="_blank">
+                                    <a href="{{ material.file.url }}" class="btn btn-outline-purple btn-sm" target="_blank">
                                         <i class="fas fa-eye"></i> View
                                     </a>
-                                    <button type="button" class="btn btn-primary btn-sm" onclick="selectMaterial({{ material.id }}, '{{ material.file.name|escapejs }}')">
+                                    <button type="button" class="btn btn-purple btn-sm" onclick="selectMaterial({{ material.id }}, '{{ material.file.name|escapejs }}')">
                                         <i class="fas fa-mouse-pointer"></i> Select
                                     </button>
                                     <button type="button" class="btn btn-outline-danger btn-sm" onclick="confirmDelete({{ material.id }}, '{{ material.file.name|escapejs }}')">
@@ -83,7 +180,7 @@
                 </div>
                 <h3 class="h4 mb-3">No Materials Yet</h3>
                 <p class="text-muted mb-4">Upload your first material to start generating flashcards and quizzes.</p>
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadMaterialModal">
+                <button type="button" class="btn btn-purple" data-bs-toggle="modal" data-bs-target="#uploadMaterialModal">
                     <i class="fas fa-upload"></i> Upload Material
                 </button>
             </div>
@@ -95,7 +192,7 @@
         <div class="row">
             <div class="col-12">
                 <div class="card shadow-sm">
-                    <div class="card-header bg-primary text-white">
+                    <div class="card-header bg-purple text-white">
                         <div class="d-flex justify-content-between align-items-center">
                             <h5 class="mb-0">
                                 <i class="fas fa-file-alt me-2"></i>
@@ -129,7 +226,7 @@
                             <!-- Flashcards Content -->
                             <div class="tab-pane fade show active" id="flashcards-content" role="tabpanel">
                                 <div id="flashcardsContainer" class="text-center py-5">
-                                    <div class="spinner-border text-primary" role="status">
+                                    <div class="spinner-border bg-purple" role="status">
                                         <span class="visually-hidden">Loading flashcards...</span>
                                     </div>
                                     <p class="mt-3 text-muted">Loading flashcards...</p>
@@ -139,7 +236,7 @@
                             <!-- Quiz Content -->
                             <div class="tab-pane fade" id="quiz-content" role="tabpanel">
                                 <div id="quizContainer" class="text-center py-5">
-                                    <div class="spinner-border text-primary" role="status">
+                                    <div class="spinner-border bg-purple" role="status">
                                         <span class="visually-hidden">Loading quiz...</span>
                                     </div>
                                     <p class="mt-3 text-muted">Loading quiz...</p>
@@ -150,7 +247,7 @@
                             <div class="tab-pane fade" id="results-content" role="tabpanel">
                                 <div id="resultsContainer" class="py-3">
                                     <div class="text-center py-5" id="resultsLoading">
-                                        <div class="spinner-border text-primary" role="status">
+                                        <div class="spinner-border bg-purple" role="status">
                                             <span class="visually-hidden">Loading results...</span>
                                         </div>
                                         <p class="mt-3 text-muted">Loading past quiz results...</p>
@@ -159,7 +256,7 @@
                                         <!-- Statistics Cards -->
                                         <div class="row mb-4" id="statisticsCards">
                                             <div class="col-md-4">
-                                                <div class="card bg-primary text-white">
+                                                <div class="card bg-purple text-white">
                                                     <div class="card-body text-center">
                                                         <h5 class="card-title mb-1" id="totalAttempts">0</h5>
                                                         <p class="card-text">Total Attempts</p>
@@ -186,7 +283,7 @@
                                         
                                         <!-- Results Table -->
                                         <div class="card">
-                                            <div class="card-header">
+                                            <div class="card-header" style="color: #764ba2; font-weight: 600;">
                                                 <h6 class="mb-0">Quiz History</h6>
                                             </div>
                                             <div class="card-body">
@@ -225,37 +322,162 @@
     </div>
 </div>
 
-<!-- Upload Material Modal -->
-<div class="modal fade" id="uploadMaterialModal" tabindex="-1" aria-labelledby="uploadMaterialModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="uploadMaterialModalLabel">Upload Material</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="uploadMaterialForm" method="post" action="{% url 'upload_material' subject.id %}" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    <div class="mb-3">
-                        <label for="materialFile" class="form-label">File</label>
-                        <input type="file" class="form-control" id="materialFile" name="file" required>
-                        <div class="form-text">Supported formats: PDF, MP4, MOV, AVI</div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Upload</button>
-                    </div>
-                </form>
+    <!-- Upload Material Modal -->
+    <div class="modal fade" id="uploadMaterialModal" tabindex="-1" aria-labelledby="uploadMaterialModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                    <h5 class="modal-title" id="uploadMaterialModalLabel">Upload Material</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="uploadMaterialForm" method="post" action="{% url 'upload_material' subject.id %}" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="materialFile" class="form-label">File</label>
+                            <input type="file" class="form-control" id="materialFile" name="file" required>
+                            <div class="form-text">Supported formats: PDF, MP4, MOV, AVI</div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-purple" id="uploadSubmitBtn">Upload</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
+
+
 </div>
 
-<!-- Chat Widget Container -->
-<div id="chat-widget-root" data-subject-id="{{ subject.id }}"></div>
+{% endblock %}
 
 {% block extra_js %}
 <script>
+// Upload Form Debugging
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadForm = document.getElementById('uploadMaterialForm');
+    const uploadBtn = document.getElementById('uploadSubmitBtn');
+    const fileInput = document.getElementById('materialFile');
+    const uploadModal = document.getElementById('uploadMaterialModal');
+    
+    console.log('Upload form found:', uploadForm);
+    console.log('Upload button found:', uploadBtn);
+    console.log('File input found:', fileInput);
+    console.log('Upload modal found:', uploadModal);
+    
+    // Fallback modal functionality
+    function showUploadModal() {
+        if (uploadModal) {
+            try {
+                // Try to get existing modal instance first
+                let modal = bootstrap.Modal.getInstance(uploadModal);
+                if (!modal) {
+                    // Create new modal instance with safe options
+                    modal = new bootstrap.Modal(uploadModal, {
+                        backdrop: true,
+                        keyboard: true,
+                        focus: true,
+                        show: false
+                    });
+                }
+                modal.show();
+            } catch (error) {
+                console.warn('Bootstrap modal failed, using fallback:', error);
+                // Fallback: show modal manually
+                uploadModal.style.display = 'block';
+                uploadModal.classList.add('show');
+                document.body.classList.add('modal-open');
+                
+                // Add backdrop
+                const backdrop = document.createElement('div');
+                backdrop.className = 'modal-backdrop fade show';
+                backdrop.id = 'fallback-backdrop';
+                document.body.appendChild(backdrop);
+            }
+        }
+    }
+    
+    function hideUploadModal() {
+        if (uploadModal) {
+            try {
+                // Try Bootstrap modal first
+                const modal = bootstrap.Modal.getInstance(uploadModal);
+                if (modal) {
+                    modal.hide();
+                } else {
+                    // Fallback: hide modal manually
+                    uploadModal.style.display = 'none';
+                    uploadModal.classList.remove('show');
+                    document.body.classList.remove('modal-open');
+                    
+                    // Remove backdrop
+                    const backdrop = document.getElementById('fallback-backdrop');
+                    if (backdrop) backdrop.remove();
+                }
+            } catch (error) {
+                console.warn('Error hiding modal:', error);
+                // Force hide
+                uploadModal.style.display = 'none';
+                document.body.classList.remove('modal-open');
+            }
+        }
+    }
+    
+    // Override the data-bs-toggle behavior
+    document.querySelectorAll('[data-bs-toggle="modal"][data-bs-target="#uploadMaterialModal"]').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            showUploadModal();
+        });
+    });
+    
+    // Handle modal close buttons
+    document.querySelectorAll('[data-bs-dismiss="modal"]').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            hideUploadModal();
+        });
+    });
+    
+    if (uploadForm) {
+        uploadForm.addEventListener('submit', function(e) {
+            console.log('Form submission triggered');
+            
+            if (!fileInput.files[0]) {
+                e.preventDefault();
+                alert('Please select a file to upload.');
+                return false;
+            }
+            
+            console.log('File selected:', fileInput.files[0].name);
+            console.log('Form action:', uploadForm.action);
+            
+            // Show loading state
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+            
+            // Hide modal after successful submission
+            setTimeout(() => {
+                hideUploadModal();
+            }, 1000);
+        });
+    }
+    
+    if (uploadBtn) {
+        uploadBtn.addEventListener('click', function(e) {
+            console.log('Upload button clicked');
+        });
+    }
+    
+    if (fileInput) {
+        fileInput.addEventListener('change', function(e) {
+            console.log('File selected:', e.target.files[0]?.name);
+        });
+    }
+});
+
 // Material Progress Monitoring
 class MaterialProgressMonitor {
     constructor() {
@@ -399,10 +621,10 @@ class MaterialProgressMonitor {
         if (buttonContainer && buttonContainer.children.length === 1) {
             // Replace the delete-only button group with full action buttons
             buttonContainer.innerHTML = `
-                <a href="#" class="btn btn-outline-primary btn-sm" target="_blank">
+                <a href="#" class="btn btn-outline-purple btn-sm" target="_blank">
                     <i class="fas fa-eye"></i> View
                 </a>
-                <button type="button" class="btn btn-primary btn-sm" onclick="selectMaterial(${materialId}, '${data.filename}')">
+                <button type="button" class="btn btn-purple btn-sm" onclick="selectMaterial(${materialId}, '${data.filename}')">
                     <i class="fas fa-mouse-pointer"></i> Select
                 </button>
                 <button type="button" class="btn btn-outline-danger btn-sm" onclick="confirmDelete(${materialId}, '${data.filename}')">
@@ -511,7 +733,7 @@ async function loadFlashcards(materialId) {
     // Show loading state
     container.innerHTML = `
         <div class="text-center py-5">
-            <div class="spinner-border text-primary" role="status">
+            <div class="spinner-border bg-purple" role="status">
                 <span class="visually-hidden">Loading flashcards...</span>
             </div>
             <p class="mt-3 text-muted">Loading flashcards...</p>
@@ -630,7 +852,7 @@ async function loadQuiz(materialId) {
     // Show loading state
     container.innerHTML = `
         <div class="text-center py-5">
-            <div class="spinner-border text-primary" role="status">
+            <div class="spinner-border bg-purple" role="status">
                 <span class="visually-hidden">Loading quiz...</span>
             </div>
             <p class="mt-3 text-muted">Loading quiz...</p>
@@ -868,75 +1090,4 @@ function confirmDelete(materialId, filename) {
     }
 }
 </script>
-{% endblock %}
-
-<style>
-.hover-shadow {
-    transition: all 0.3s ease;
-}
-.hover-shadow:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
-}
-
-.revision-card {
-    transition: all 0.3s ease;
-    border-left: 4px solid #e9ecef;
-}
-
-.revision-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-    border-left-color: #007bff;
-}
-
-.revision-content {
-    min-height: 80px;
-    display: flex;
-    align-items: flex-start;
-    justify-content: flex-start;
-}
-
-.concept-info {
-    width: 100%;
-    line-height: 1.6;
-}
-
-.concept-info p {
-    margin-bottom: 0;
-    color: #495057;
-}
-
-.stat-item h6 {
-    margin-bottom: 0;
-}
-
-#selectedMaterialSection {
-    animation: slideIn 0.3s ease-out;
-}
-
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.materials-section .card {
-    position: relative;
-}
-
-.material-status-container {
-    min-width: 120px;
-}
-
-.processing-info {
-    font-size: 0.75rem;
-    margin-top: 0.25rem;
-}
-</style>
 {% endblock %} 

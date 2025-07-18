@@ -13,7 +13,22 @@ from .models import User, UserProfile, UserAchievement, UserCertification, UserE
 from django.db.models import Count, Sum
 from django.utils import timezone
 from datetime import timedelta
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 from learning.models import CourseProgress, UserAchievement as LearningUserAchievement
+import json
+import logging
+
+# Import Google OAuth service with error handling
+try:
+    from .services import GoogleOAuthService, GoogleOAuthBackend
+    GOOGLE_OAUTH_AVAILABLE = True
+except (ImportError, ValueError) as e:
+    GOOGLE_OAUTH_AVAILABLE = False
+    logging.warning(f"Google OAuth not available: {e}")
+
+logger = logging.getLogger(__name__)
 
 
 def register_user(request):
@@ -33,7 +48,7 @@ def register_user(request):
            user = form.save()
            # Log the user in
            login(request, user)
-           messages.success(request, 'Your account has been created successfully! Welcome to Career Nexus.')
+           messages.success(request, 'Your account has been created successfully! Welcome to ExcelPoint.')
            return redirect('home')
    else:
        # GET request: show registration form
@@ -41,6 +56,65 @@ def register_user(request):
    
    return render(request, 'users/register.html', {'form': form})
 
+
+def google_oauth_initiate(request):
+    """
+    Initiate Google OAuth flow.
+    """
+    if not GOOGLE_OAUTH_AVAILABLE:
+        messages.error(request, "Google OAuth is not configured. Please contact the administrator.")
+        return redirect('users:login')
+    
+    try:
+        oauth_service = GoogleOAuthService()
+        authorization_url = oauth_service.get_authorization_url()
+        return redirect(authorization_url)
+    except Exception as e:
+        logger.error(f"Error initiating Google OAuth: {e}")
+        messages.error(request, "Unable to connect to Google. Please try again later.")
+        return redirect('users:login')
+
+def google_oauth_callback(request):
+    """
+    Handle Google OAuth callback.
+    """
+    if not GOOGLE_OAUTH_AVAILABLE:
+        messages.error(request, "Google OAuth is not configured. Please contact the administrator.")
+        return redirect('users:login')
+    
+    try:
+        # Get authorization code from request
+        authorization_code = request.GET.get('code')
+        if not authorization_code:
+            messages.error(request, "Authorization code not received from Google.")
+            return redirect('users:login')
+        
+        # Exchange code for token
+        oauth_service = GoogleOAuthService()
+        credentials = oauth_service.exchange_code_for_token(authorization_code)
+        
+        # Get user info from Google
+        user_info = oauth_service.get_user_info(credentials)
+        
+        # Authenticate or create user
+        user = oauth_service.authenticate_or_create_user(user_info)
+        
+        if user:
+            # Log the user in
+            login(request, user)
+            messages.success(request, f"Welcome back, {user.first_name or user.username}!")
+            
+            # Redirect to dashboard or next page
+            next_url = request.GET.get('next', 'learning:dashboard')
+            return redirect(next_url)
+        else:
+            messages.error(request, "Unable to authenticate with Google. Please try again.")
+            return redirect('users:login')
+            
+    except Exception as e:
+        logger.error(f"Error in Google OAuth callback: {e}")
+        messages.error(request, "Authentication failed. Please try again or use email login.")
+        return redirect('users:login')
 
 
 @api_view(['GET', 'POST'])

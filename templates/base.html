@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token }}">
-    <title>{% block title %}Career Nexus - Your Path to Professional Excellence{% endblock %}</title>
+    <title>{% block title %}ExcelPoint - Your Path to Professional Excellence{% endblock %}</title>
     
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <!-- Google Fonts -->
@@ -112,7 +112,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
             <a class="navbar-brand" href="/">
-                <i class="fas fa-rocket"></i> Career Nexus
+                <i class="fas fa-rocket"></i> ExcelPoint
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -188,11 +188,149 @@
     </main>
 
     <!-- Bootstrap JS and Popper.js -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Modal Fallback Script -->
+    <script>
+    // Complete Bootstrap modal override to fix backdrop errors
+    document.addEventListener('DOMContentLoaded', function() {
+        // Check if Bootstrap is loaded
+        if (typeof bootstrap === 'undefined') {
+            console.warn('Bootstrap not loaded, using fallback modal system');
+            return;
+        }
+
+        // Completely override Bootstrap Modal constructor
+        const OriginalModal = bootstrap.Modal;
+        bootstrap.Modal = function(element, options) {
+            // Always use safe options
+            const safeOptions = {
+                backdrop: true,
+                keyboard: true,
+                focus: true,
+                show: false,
+                ...options
+            };
+            
+            try {
+                // Try to create modal with safe options
+                const modalInstance = new OriginalModal(element, safeOptions);
+                
+                // Override the show method to handle any backdrop errors
+                const originalShow = modalInstance.show;
+                modalInstance.show = function() {
+                    try {
+                        return originalShow.call(this);
+                    } catch (error) {
+                        console.warn('Modal show failed, using manual fallback:', error);
+                        // Manual fallback
+                        if (element) {
+                            element.style.display = 'block';
+                            element.classList.add('show');
+                            document.body.classList.add('modal-open');
+                            
+                            // Create backdrop manually
+                            const backdrop = document.createElement('div');
+                            backdrop.className = 'modal-backdrop fade show';
+                            backdrop.id = 'fallback-backdrop';
+                            document.body.appendChild(backdrop);
+                        }
+                    }
+                };
+                
+                // Override the hide method
+                const originalHide = modalInstance.hide;
+                modalInstance.hide = function() {
+                    try {
+                        return originalHide.call(this);
+                    } catch (error) {
+                        console.warn('Modal hide failed, using manual fallback:', error);
+                        // Manual fallback
+                        if (element) {
+                            element.style.display = 'none';
+                            element.classList.remove('show');
+                            document.body.classList.remove('modal-open');
+                            
+                            // Remove backdrop
+                            const backdrop = document.getElementById('fallback-backdrop');
+                            if (backdrop) backdrop.remove();
+                        }
+                    }
+                };
+                
+                return modalInstance;
+            } catch (error) {
+                console.warn('Modal creation failed, using complete fallback:', error);
+                // Complete fallback modal object
+                return {
+                    show: function() {
+                        if (element) {
+                            element.style.display = 'block';
+                            element.classList.add('show');
+                            document.body.classList.add('modal-open');
+                            
+                            // Create backdrop
+                            const backdrop = document.createElement('div');
+                            backdrop.className = 'modal-backdrop fade show';
+                            backdrop.id = 'fallback-backdrop';
+                            document.body.appendChild(backdrop);
+                        }
+                    },
+                    hide: function() {
+                        if (element) {
+                            element.style.display = 'none';
+                            element.classList.remove('show');
+                            document.body.classList.remove('modal-open');
+                            
+                            // Remove backdrop
+                            const backdrop = document.getElementById('fallback-backdrop');
+                            if (backdrop) backdrop.remove();
+                        }
+                    }
+                };
+            }
+        };
+        
+        // Also override the getInstance method to handle errors
+        const originalGetInstance = bootstrap.Modal.getInstance;
+        bootstrap.Modal.getInstance = function(element) {
+            try {
+                return originalGetInstance.call(this, element);
+            } catch (error) {
+                console.warn('getInstance failed, returning null:', error);
+                return null;
+            }
+        };
+        
+        // Fix any existing modals
+        document.querySelectorAll('.modal').forEach(modalElement => {
+            try {
+                // Try to get existing instance
+                let modal = bootstrap.Modal.getInstance(modalElement);
+                if (!modal) {
+                    // Create new instance with safe options
+                    modal = new bootstrap.Modal(modalElement, {
+                        backdrop: true,
+                        keyboard: true,
+                        focus: true,
+                        show: false
+                    });
+                }
+            } catch (error) {
+                console.warn('Error fixing modal:', error);
+            }
+        });
+    });
+    </script>
+    
+    <!-- Chat Widget Container (only on subject detail pages) -->
+    {% if request.resolver_match.url_name == 'subject_detail' %}
+    <div id="chat-widget-root" data-subject-id="{{ subject.id }}"></div>
+    {% endif %}
     
     <!-- Chat Widget Script (only on subject detail pages) -->
     {% if request.resolver_match.url_name == 'subject_detail' %}
-    <script src="{% static 'js/chat-widget.js' %}" defer></script>
+    <script src="{% static 'js/chat-widget.js' %}?v=1.2" defer></script>
     {% endif %}
     
     {% block extra_js %}{% endblock %}

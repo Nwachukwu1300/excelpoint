@@ -9,6 +9,10 @@ urlpatterns = [
     path('login/', views.login_user, name='login'),
     path('logout/', views.logout_user, name='logout'),
     
+    # Google OAuth endpoints
+    path('google/login/', views.google_oauth_initiate, name='google_login'),
+    path('google/callback/', views.google_oauth_callback, name='google_callback'),
+    
     # Profile endpoints
     path('profile/', views.profile, name='profile'),
     path('profile/edit/', views.edit_profile, name='edit_profile'),

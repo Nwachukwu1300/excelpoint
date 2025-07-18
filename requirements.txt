@@ -45,5 +45,10 @@ redis>=6.2.0
 # System Monitoring
 psutil>=6.1.0
 
+# OAuth Authentication
+google-auth>=2.23.0
+google-auth-oauthlib>=1.1.0
+google-auth-httplib2>=0.1.1
+
 # Optional - uncomment if needed
 # django-cors-headers==4.3.1

@@ -87,10 +87,18 @@ def upload_material(request, pk):
     """Handle material upload from form submission"""
     subject = get_object_or_404(Subject, id=pk, user=request.user)
     
+    print(f"Upload material called for subject {pk}")
+    print(f"Request method: {request.method}")
+    print(f"Request FILES: {request.FILES}")
+    
     if request.method == 'POST':
         uploaded_file = request.FILES.get('file')
+        print(f"Uploaded file: {uploaded_file}")
+        
         if uploaded_file:
             try:
+                print(f"Processing file: {uploaded_file.name}")
+                
                 # Determine file type
                 file_extension = uploaded_file.name.split('.')[-1].upper()
                 if file_extension == 'PDF':
@@ -105,6 +113,8 @@ def upload_material(request, pk):
                     messages.error(request, 'Unsupported file type. Please upload PDF, Word (DOC/DOCX), or video files.')
                     return redirect('subject_detail', pk=pk)
                 
+                print(f"File type determined: {file_type}")
+                
                 # Create the material
                 material = SubjectMaterial.objects.create(
                     subject=subject,
@@ -113,11 +123,14 @@ def upload_material(request, pk):
                     status='PENDING'
                 )
                 
+                print(f"Material created with ID: {material.id}")
+                
                 # Trigger background processing for material and quiz generation
                 try:
                     process_material.delay(material.id)
                     # Also generate quiz from the uploaded material
                     generate_quiz_from_material.delay(material.id, num_questions=10)
+                    print("Background tasks queued successfully")
                 except Exception as e:
                     # If Celery is not running, just log the error
                     print(f"Background processing failed: {e}")
@@ -126,9 +139,13 @@ def upload_material(request, pk):
                 return redirect('subject_detail', pk=pk)
                 
             except Exception as e:
+                print(f"Error creating material: {e}")
                 messages.error(request, f'Failed to upload material: {str(e)}')
         else:
+            print("No file uploaded")
             messages.error(request, 'Please select a file to upload.')
+    else:
+        print("Not a POST request")
     
     return redirect('subject_detail', pk=pk)
 

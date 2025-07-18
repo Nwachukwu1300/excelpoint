@@ -13,6 +13,15 @@ class User(AbstractUser):
         ('senior', 'Senior Level'),
     ]
 
+    # OAuth fields
+    google_id = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        unique=True,
+        help_text="Google OAuth user ID"
+    )
+
     # Career-specific fields
     current_role = models.CharField(
         max_length=100, 

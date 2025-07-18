@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Log Out - Career Nexus{% endblock %}
+{% block title %}Log Out - ExcelPoint{% endblock %}
 
 {% block extra_head %}
 <style>
@@ -84,7 +84,7 @@
             <p class="text-light mb-0 mt-2">Are you sure you want to leave?</p>
         </div>
         <div class="card-body p-4 text-center">
-            <p class="mb-4">You're about to log out from your Career Nexus account. Your progress and data will be saved for when you return.</p>
+                            <p class="mb-4">You're about to log out from your ExcelPoint account. Your progress and data will be saved for when you return.</p>
             
             <form method="post" action="{% url 'users:logout' %}">
                 {% csrf_token %}
