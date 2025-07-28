@@ -1,0 +1,86 @@
+# Home Page Improvements PRD
+
+## Project Overview
+Transform the current landing page-style home page into a more functional, personalized home page that serves as a central hub for authenticated users while maintaining an attractive entry point for new visitors.
+
+## Current State Analysis
+The current home page is designed as a marketing landing page with:
+- Large hero section with call-to-action buttons
+- Feature showcase section
+- Statistics section
+- Generic call-to-action section
+- Limited personalization for logged-in users
+
+## Target State
+Create a home page that:
+- Serves as a personalized dashboard for authenticated users
+- Provides quick access to key features and recent activity
+- Maintains attractive marketing elements for new visitors
+- Offers a seamless transition from landing page to home dashboard
+
+## Key Requirements
+
+### For Authenticated Users (Primary Focus)
+1. **Personalized Welcome Section**
+   - Greet user by name
+   - Show current learning progress
+   - Display recent achievements or milestones
+   - Quick stats (courses completed, current streak, etc.)
+
+2. **Quick Actions Dashboard**
+   - Continue last course/activity
+   - Upload new materials
+   - Start a new quiz
+   - Chat with AI assistant
+   - View recent progress
+
+3. **Recent Activity Feed**
+   - Last uploaded documents
+   - Recent quiz attempts and scores
+   - New achievements unlocked
+   - Learning streak status
+
+4. **Recommended Content**
+   - Suggested courses based on user's goals
+   - Recommended materials to upload
+   - Next steps in learning path
+
+5. **Progress Overview**
+   - Visual progress indicators
+   - Skill development tracking
+   - Career path progress
+
+### For Non-Authenticated Users (Secondary)
+1. **Attractive Hero Section** (simplified)
+   - Clear value proposition
+   - Single call-to-action button
+   - Brief feature highlights
+
+2. **Feature Preview**
+   - Key features with brief descriptions
+   - Social proof elements
+   - Clear path to registration
+
+## Technical Requirements
+- Responsive design for all screen sizes
+- Fast loading times
+- Integration with existing user data
+- Maintain existing styling and branding
+- Ensure accessibility standards
+
+## Success Metrics
+- Increased user engagement (time spent on home page)
+- Higher conversion rate for new users
+- Improved user retention
+- Positive user feedback on home page experience
+
+## Implementation Priority
+1. High Priority: Personalized welcome and quick actions
+2. Medium Priority: Recent activity feed and progress overview
+3. Low Priority: Enhanced recommendations and advanced features
+
+## Constraints
+- Must work with existing Django templates
+- Should not break current functionality
+- Limited to frontend changes (no backend API changes unless necessary)
+- Maintain existing URL structure 

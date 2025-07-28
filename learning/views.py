@@ -180,10 +180,14 @@ def learning_dashboard(request):
     
     # -------------------- END ANALYTICS --------------------
     
+    # Count earned achievements
+    earned_achievements_count = earned_achievements.count()
+    
     return render(request, 'learning/dashboard.html', {
         'course_progress': course_progress,
         'recent_activity': recent_activity,
         'achievements': achievements_data,
+        'earned_achievements_count': earned_achievements_count,
         'analytics_data': analytics_data,
     })
 
@@ -250,12 +254,14 @@ def confirm_course(request, course_id):
     already_tracking = False
     progress_status = None
     session_key = f'course_redirected_{course_id}'
-    show_redirect = False
+    show_redirect = True  # Always show redirect on first load
+    
     try:
         progress = CourseProgress.objects.get(user=request.user, course=course)
         progress_status = progress.status
         if progress.status != 'not_started':
             already_tracking = True
+            show_redirect = False  # Don't auto-redirect if already tracking
     except CourseProgress.DoesNotExist:
         # Create a not_started progress entry to track the view
         ProgressService.update_course_progress(
@@ -267,7 +273,7 @@ def confirm_course(request, course_id):
         progress = CourseProgress.objects.get(user=request.user, course=course)
 
     if already_tracking and progress_status == 'in_progress':
-        # If already in progress, show a status update form instead of redirecting or asking if started
+        # If already in progress, show a status update form instead
         if request.method == 'POST':
             status = request.POST.get('status')
             if status in ['in_progress', 'completed', 'quit']:
@@ -286,32 +292,26 @@ def confirm_course(request, course_id):
             # Mark as in_progress and redirect to update progress page
             progress.status = 'in_progress'
             progress.save()
-            # Remove session flag so next time user starts this course, it will redirect again
-            if session_key in request.session:
-                del request.session[session_key]
+            messages.success(request, f"Started tracking '{course.title}'. You can now update your progress.")
             return redirect('learning:update_progress', course_id=course.id)
         elif confirm == 'no':
             # Remove not_started progress and redirect to dashboard
             if progress.status == 'not_started':
                 progress.delete()
-            if session_key in request.session:
-                del request.session[session_key]
+            messages.info(request, f"Removed '{course.title}' from tracking.")
             return redirect('learning:dashboard')
 
-    # On GET: only show redirect if not already done for this course in this session
-    if not request.session.get(session_key, False):
-        show_redirect = True
+    # Check if we should show the redirect
+    if request.session.get(session_key, False):
+        show_redirect = False
+    else:
         request.session[session_key] = True
-
-    if request.method == 'GET' and show_redirect and course.course_url:
-        # The template handles opening the course in a new tab with window.open
-        pass
 
     return render(request, 'learning/course_confirmation.html', {
         'course': course,
         'already_tracking': already_tracking,
         'progress_status': progress_status,
-        'show_redirect': show_redirect
+        'show_redirect': show_redirect and course.course_url  # Only show redirect if URL exists
     })
 
 @login_required
@@ -654,7 +654,56 @@ def dream_path(request):
                 selected_dream_role_key = role_key
                 break
     
-    # Get all courses and filter relevant ones
+    # Define specific course mappings for each career path
+    course_mappings = {
+        'frontend_developer': {
+            'core': ['Advanced JavaScript and ES6+', 'React.js Complete Guide', 'UI/UX Design Principles'],
+            'beginner': ['Database Design and SQL'],
+            'advanced': ['DevOps and CI/CD']
+        },
+        'backend_developer': {
+            'core': ['Python Programming Fundamentals', 'Database Design and SQL', 'DevOps and CI/CD'],
+            'beginner': ['Cybersecurity Fundamentals'],
+            'advanced': ['Cloud Computing with AWS']
+        },
+        'fullstack_developer': {
+            'core': ['Python Programming Fundamentals', 'Advanced JavaScript and ES6+', 'React.js Complete Guide', 'Database Design and SQL'],
+            'beginner': ['Cybersecurity Fundamentals'],
+            'advanced': ['Cloud Computing with AWS', 'DevOps and CI/CD']
+        },
+        'data_scientist': {
+            'core': ['Python Programming Fundamentals', 'Data Science with Python', 'Machine Learning Basics'],
+            'beginner': ['Database Design and SQL'],
+            'advanced': ['Artificial Intelligence Foundations']
+        },
+        'python_developer': {
+            'core': ['Python Programming Fundamentals', 'Data Science with Python', 'Database Design and SQL'],
+            'beginner': ['Cybersecurity Fundamentals'],
+            'advanced': ['Machine Learning Basics', 'Artificial Intelligence Foundations']
+        },
+        'javascript_developer': {
+            'core': ['Advanced JavaScript and ES6+', 'React.js Complete Guide', 'Database Design and SQL'],
+            'beginner': ['UI/UX Design Principles'],
+            'advanced': ['DevOps and CI/CD']
+        },
+        'mobile_developer': {
+            'core': ['Mobile App Development with Flutter', 'Advanced JavaScript and ES6+', 'UI/UX Design Principles'],
+            'beginner': ['Database Design and SQL'],
+            'advanced': ['Cloud Computing with AWS']
+        },
+        'devops_engineer': {
+            'core': ['DevOps and CI/CD', 'Cloud Computing with AWS', 'Database Design and SQL'],
+            'beginner': ['Python Programming Fundamentals'],
+            'advanced': ['Cybersecurity Fundamentals']
+        },
+        'ui_ux_designer': {
+            'core': ['UI/UX Design Principles', 'Advanced JavaScript and ES6+', 'React.js Complete Guide'],
+            'beginner': ['Database Design and SQL'],
+            'advanced': ['Mobile App Development with Flutter']
+        }
+    }
+    
+    # Get all courses
     all_courses = Course.objects.all()
     
     # Get recommended courses based on role
@@ -662,35 +711,21 @@ def dream_path(request):
     beginner_courses = []
     advanced_courses = []
     
+    # Get the course mapping for the selected role, or use default for unknown roles
+    role_courses = course_mappings.get(selected_dream_role_key, {
+        'core': ['Python Programming Fundamentals', 'Database Design and SQL', 'Cybersecurity Fundamentals'],
+        'beginner': ['UI/UX Design Principles'],
+        'advanced': ['Machine Learning Basics']
+    })
+    
+    # Map courses to their categories
     for course in all_courses:
-        course_title_lower = course.title.lower()
-        course_desc_lower = course.description.lower()
-        
-        # Check if course matches user's path
-        is_relevant = False
-        for skill in selected_path['skills']:
-            skill_lower = skill.lower()
-            # Split skill into individual words for better matching
-            skill_words = skill_lower.replace('/', ' ').split()
-            if (skill_lower in course_title_lower or 
-                skill_lower in course_desc_lower or
-                any(word in course_title_lower or word in course_desc_lower for word in skill_words if len(word) > 2)):
-                is_relevant = True
-                break
-        
-        # Also include generally relevant programming/tech courses
-        tech_keywords = ['programming', 'development', 'software', 'web', 'app', 'technology', 'computer']
-        if not is_relevant and any(keyword in course_title_lower or keyword in course_desc_lower for keyword in tech_keywords):
-            is_relevant = True
-        
-        if is_relevant:
-            # Categorize by difficulty level
-            if any(word in course_title_lower for word in ['beginner', 'intro', 'basic', 'fundamentals']):
-                beginner_courses.append(course)
-            elif any(word in course_title_lower for word in ['advanced', 'expert', 'master', 'deep']):
-                advanced_courses.append(course)
-            else:
-                recommended_courses.append(course)
+        if course.title in role_courses['core']:
+            recommended_courses.append(course)
+        elif course.title in role_courses['beginner']:
+            beginner_courses.append(course)
+        elif course.title in role_courses['advanced']:
+            advanced_courses.append(course)
     
     # Get user's current progress
     user_progress = CourseProgress.objects.filter(user=user).select_related('course')

@@ -28,8 +28,7 @@ from django.db import models
 
 logger = logging.getLogger(__name__)
 
-# Configure OpenAI Client
-client = OpenAI(api_key=settings.OPENAI_API_KEY)
+# Remove global client initialization - we'll create it dynamically in each function
 
 @shared_task
 def process_material(material_id: int):
@@ -378,7 +377,11 @@ def _call_openai_api(prompt, temperature=0.3):
     Call OpenAI API with error handling and retries
     """
     try:
-        response = client.chat.completions.create(
+        # Create client dynamically to ensure fresh settings
+        from django.conf import settings
+        dynamic_client = OpenAI(api_key=settings.OPENAI_API_KEY)
+        
+        response = dynamic_client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": "You are a quiz generation assistant. Generate high-quality educational questions based on the provided text. Always respond with valid JSON format."},

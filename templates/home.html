@@ -18,9 +18,232 @@
         --shadow-large: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     }
 
+    /* Authenticated User Home Page Styles */
+    .welcome-section {
+        background: var(--bg-gradient);
+        padding: 3rem 0;
+        color: white;
+        margin-bottom: 2rem;
+    }
+
+    .welcome-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .welcome-subtitle {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin-bottom: 2rem;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 1.5rem;
+        text-align: center;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 800;
+        display: block;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+    }
+
+    .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+    }
+
+    .action-card {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: var(--shadow-light);
+        border: 1px solid #e2e8f0;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        color: var(--text-dark);
+    }
+
+    .action-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-medium);
+        text-decoration: none;
+        color: var(--text-dark);
+    }
+
+    .action-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 15px;
+        background: var(--bg-gradient);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+        font-size: 1.5rem;
+        color: white;
+    }
+
+    .action-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .action-description {
+        color: var(--text-light);
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+
+    .content-section {
+        margin-bottom: 3rem;
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin: 0;
+    }
+
+    .section-link {
+        color: var(--primary-color);
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 0.9rem;
+    }
+
+    .section-link:hover {
+        color: var(--primary-dark);
+        text-decoration: none;
+    }
+
+    .activity-item {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        background: white;
+        border-radius: 10px;
+        margin-bottom: 0.75rem;
+        box-shadow: var(--shadow-light);
+        border: 1px solid #e2e8f0;
+        transition: all 0.3s ease;
+    }
+
+    .activity-item:hover {
+        transform: translateX(5px);
+        box-shadow: var(--shadow-medium);
+    }
+
+    .activity-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: var(--bg-gradient);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        font-size: 1.2rem;
+        color: white;
+    }
+
+    .activity-content {
+        flex: 1;
+    }
+
+    .activity-title {
+        font-weight: 600;
+        color: var(--text-dark);
+        margin-bottom: 0.25rem;
+        font-size: 0.95rem;
+    }
+
+    .activity-description {
+        color: var(--text-light);
+        font-size: 0.85rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .activity-time {
+        color: var(--text-light);
+        font-size: 0.8rem;
+    }
+
+    .progress-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: var(--shadow-light);
+        border: 1px solid #e2e8f0;
+        margin-bottom: 1rem;
+    }
+
+    .progress-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .progress-title {
+        font-weight: 600;
+        color: var(--text-dark);
+        margin: 0;
+    }
+
+    .progress-percentage {
+        color: var(--primary-color);
+        font-weight: 600;
+    }
+
+    .progress-bar {
+        width: 100%;
+        height: 8px;
+        background: #e2e8f0;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: var(--bg-gradient);
+        border-radius: 4px;
+        transition: width 0.3s ease;
+    }
+
+    /* Marketing Home Page Styles (for non-authenticated users) */
     .hero-section {
         background: var(--bg-gradient);
-        min-height: 90vh;
+        min-height: 70vh;
         display: flex;
         align-items: center;
         position: relative;
@@ -44,7 +267,7 @@
     }
 
     .hero-title {
-        font-size: 3.5rem;
+        font-size: 3rem;
         font-weight: 800;
         color: white;
         margin-bottom: 1.5rem;
@@ -82,33 +305,20 @@
         box-shadow: var(--shadow-large);
     }
 
-    .btn-hero-secondary {
-        background: transparent;
-        color: white;
-        border: 2px solid rgba(255, 255, 255, 0.7);
-    }
-
-    .btn-hero-secondary:hover {
-        background: white;
-        color: var(--primary-color);
-        border-color: white;
-        transform: translateY(-2px);
-        text-decoration: none;
-    }
-
     .features-section {
-        padding: 100px 0;
+        padding: 80px 0;
         background: var(--bg-light);
     }
 
     .feature-card {
         background: white;
         border-radius: 20px;
-        padding: 3rem 2rem;
+        padding: 2.5rem 2rem;
         box-shadow: var(--shadow-light);
         transition: all 0.3s ease;
         border: none;
         height: 100%;
+        text-align: center;
     }
 
     .feature-card:hover {
@@ -142,66 +352,6 @@
     .feature-description {
         color: var(--text-light);
         line-height: 1.7;
-        margin-bottom: 2rem;
-    }
-
-    .feature-link {
-        color: var(--primary-color);
-        text-decoration: none;
-        font-weight: 600;
-        transition: all 0.3s ease;
-    }
-
-    .feature-link:hover {
-        color: var(--primary-dark);
-        text-decoration: none;
-    }
-
-    .stats-section {
-        background: var(--text-dark);
-        padding: 80px 0;
-        color: white;
-    }
-
-    .stat-item {
-        text-align: center;
-        padding: 0 2rem;
-    }
-
-    .stat-number {
-        font-size: 3rem;
-        font-weight: 800;
-        color: var(--accent-color);
-        display: block;
-        margin-bottom: 0.5rem;
-    }
-
-    .stat-label {
-        font-size: 1.1rem;
-        color: rgba(255, 255, 255, 0.8);
-        font-weight: 500;
-    }
-
-    .cta-section {
-        background: white;
-        padding: 100px 0;
-        text-align: center;
-    }
-
-    .cta-title {
-        font-size: 2.5rem;
-        font-weight: 700;
-        color: var(--text-dark);
-        margin-bottom: 1rem;
-    }
-
-    .cta-subtitle {
-        font-size: 1.2rem;
-        color: var(--text-light);
-        margin-bottom: 3rem;
-        max-width: 600px;
-        margin-left: auto;
-        margin-right: auto;
     }
 
     .section-title {
@@ -223,6 +373,10 @@
     }
 
     @media (max-width: 768px) {
+        .welcome-title {
+            font-size: 2rem;
+        }
+        
         .hero-title {
             font-size: 2.5rem;
         }
@@ -236,189 +390,251 @@
             font-size: 1rem;
         }
         
-        .feature-card {
-            padding: 2rem 1.5rem;
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
         }
         
-        .stats-section {
-            padding: 60px 0;
-        }
-        
-        .stat-item {
-            margin-bottom: 2rem;
+        .quick-actions {
+            grid-template-columns: 1fr;
         }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Hero Section -->
-<section class="hero-section">
+{% if user.is_authenticated %}
+    <!-- Authenticated User Home Page -->
+    
+    <!-- Welcome Section -->
+    <section class="welcome-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8">
+                    <h1 class="welcome-title">Welcome back, {{ user.first_name|default:user.username }}! 👋</h1>
+                    <p class="welcome-subtitle">Ready to continue your learning journey? Here's what's happening with your progress.</p>
+                </div>
+            </div>
+            
+            <!-- Quick Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <span class="stat-number">{{ total_subjects }}</span>
+                    <span class="stat-label">Subjects</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number">{{ total_materials }}</span>
+                    <span class="stat-label">Materials</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number">{{ total_quizzes_taken }}</span>
+                    <span class="stat-label">Quizzes Taken</span>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
     <div class="container">
-        <div class="row align-items-center">
-            <div class="col-lg-7 hero-content">
-                <h1 class="hero-title">Accelerate Your Career Journey</h1>
-                <p class="hero-subtitle">
-                    Transform your professional future with personalized learning paths, AI-powered insights, 
-                    and comprehensive skill development tailored to your career goals.
-                </p>
-                <div class="d-flex flex-column flex-sm-row gap-3">
-                    {% if user.is_authenticated %}
-                        <a href="{% url 'learning:dashboard' %}" class="btn btn-hero btn-hero-primary">Continue Learning</a>
-                        <a href="{% url 'learning:dream_path' %}" class="btn btn-hero btn-hero-secondary">Explore Career Paths</a>
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <a href="/subjects/" class="action-card">
+                <div class="action-icon">
+                    <i class="fas fa-folder-open"></i>
+                </div>
+                <h3 class="action-title">My Subjects</h3>
+                <p class="action-description">Manage your learning materials and create new subjects</p>
+            </a>
+            
+            <a href="/learning/dashboard/" class="action-card">
+                <div class="action-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <h3 class="action-title">Learning Dashboard</h3>
+                <p class="action-description">Track your progress and view detailed analytics</p>
+            </a>
+            
+            <a href="/learning/dream-path/" class="action-card">
+                <div class="action-icon">
+                    <i class="fas fa-route"></i>
+                </div>
+                <h3 class="action-title">Career Path</h3>
+                <p class="action-description">Explore and plan your professional development</p>
+            </a>
+            
+            <a href="/subjects/1/" class="action-card">
+                <div class="action-icon">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <h3 class="action-title">AI Assistant</h3>
+                <p class="action-description">Chat with our AI to get help with your studies</p>
+            </a>
+        </div>
+
+        <div class="row">
+            <!-- Recent Activity -->
+            <div class="col-lg-8">
+                <div class="content-section">
+                    <div class="section-header">
+                        <h2 class="section-title">Recent Activity</h2>
+                        <a href="/learning/recent-activity/" class="section-link">View All →</a>
+                    </div>
+                    
+                    {% if recent_activity %}
+                        {% for activity in recent_activity %}
+                            <a href="{{ activity.url }}" class="activity-item">
+                                <div class="activity-icon">
+                                    {{ activity.icon }}
+                                </div>
+                                <div class="activity-content">
+                                    <div class="activity-title">{{ activity.title }}</div>
+                                    <div class="activity-description">{{ activity.description }}</div>
+                                    <div class="activity-time">{{ activity.timestamp|timesince }} ago</div>
+                                </div>
+                            </a>
+                        {% endfor %}
                     {% else %}
-                        <a href="/users/register/" class="btn btn-hero btn-hero-primary">Start Your Journey</a>
-                        <a href="/users/login/" class="btn btn-hero btn-hero-secondary">Sign In</a>
+                        <div class="text-center py-4">
+                            <p class="text-muted">No recent activity. Start learning to see your progress here!</p>
+                        </div>
                     {% endif %}
                 </div>
             </div>
-            <div class="col-lg-5 d-none d-lg-block">
-                <div class="text-center">
-                    <div style="background: rgba(255,255,255,0.1); border-radius: 20px; padding: 2rem; backdrop-filter: blur(10px);">
-                        <i class="fas fa-chart-line" style="font-size: 8rem; color: rgba(255,255,255,0.8);"></i>
-                        <h3 style="color: white; margin-top: 1rem;">Professional Growth</h3>
+
+            <!-- Sidebar -->
+            <div class="col-lg-4">
+                <!-- Course Progress -->
+                {% if course_progress %}
+                    <div class="content-section">
+                        <div class="section-header">
+                            <h3 class="section-title">Course Progress</h3>
+                        </div>
+                        
+                        {% for progress in course_progress %}
+                            <div class="progress-card">
+                                <div class="progress-header">
+                                    <h4 class="progress-title">{{ progress.course.title }}</h4>
+                                    <span class="progress-percentage">
+                                        {% if progress.status == 'completed' %}100%
+                                        {% elif progress.status == 'in_progress' %}50%
+                                        {% elif progress.status == 'paused' %}25%
+                                        {% else %}0%{% endif %}
+                                    </span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 
+                                        {% if progress.status == 'completed' %}100%
+                                        {% elif progress.status == 'in_progress' %}50%
+                                        {% elif progress.status == 'paused' %}25%
+                                        {% else %}0%{% endif %}%">
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <!-- Recent Achievements -->
+                {% if user_achievements %}
+                    <div class="content-section">
+                        <div class="section-header">
+                            <h3 class="section-title">Recent Achievements</h3>
+                            <a href="/learning/achievements/" class="section-link">View All →</a>
+                        </div>
+                        
+                        {% for user_achievement in user_achievements %}
+                            <div class="activity-item">
+                                <div class="activity-icon">
+                                    {{ user_achievement.achievement.icon|default:"🏆" }}
+                                </div>
+                                <div class="activity-content">
+                                    <div class="activity-title">{{ user_achievement.achievement.name }}</div>
+                                    <div class="activity-description">{{ user_achievement.achievement.description }}</div>
+                                    <div class="activity-time">{{ user_achievement.date_earned|timesince }} ago</div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+{% else %}
+    <!-- Non-Authenticated User Marketing Home Page -->
+    
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-7 hero-content">
+                    <h1 class="hero-title">Accelerate Your Career Journey</h1>
+                    <p class="hero-subtitle">
+                        Transform your professional future with personalized learning paths, AI-powered insights, 
+                        and comprehensive skill development tailored to your career goals.
+                    </p>
+                    <div class="d-flex flex-column flex-sm-row gap-3">
+                        <a href="/users/register/" class="btn btn-hero btn-hero-primary">Start Your Journey</a>
+                        <a href="/users/login/" class="btn btn-hero btn-hero-secondary">Sign In</a>
+                    </div>
+                </div>
+                <div class="col-lg-5 d-none d-lg-block">
+                    <div class="text-center">
+                        <div style="background: rgba(255,255,255,0.1); border-radius: 20px; padding: 2rem; backdrop-filter: blur(10px);">
+                            <i class="fas fa-chart-line" style="font-size: 8rem; color: rgba(255,255,255,0.8);"></i>
+                            <h3 style="color: white; margin-top: 1rem;">Professional Growth</h3>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-</section>
+    </section>
 
-<!-- Features Section -->
-<section class="features-section">
-    <div class="container">
-        <h2 class="section-title">Everything You Need to Succeed</h2>
-        <p class="section-subtitle">
-            Comprehensive tools and resources designed to accelerate your professional development
-        </p>
-        
-        <div class="row g-4">
-            <!-- Feature 1: Smart Learning -->
-            <div class="col-lg-4 col-md-6">
-                <div class="card feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-brain"></i>
-                    </div>
-                    <h3 class="feature-title">AI-Powered Learning</h3>
-                    <p class="feature-description">
-                        Get personalized course recommendations and adaptive learning paths powered by advanced AI 
-                        that understands your goals and learning style.
-                    </p>
-                    <a href="{% url 'learning:dashboard' %}" class="feature-link">Explore Courses →</a>
-                </div>
-            </div>
+    <!-- Features Section -->
+    <section class="features-section">
+        <div class="container">
+            <h2 class="section-title">Everything You Need to Succeed</h2>
+            <p class="section-subtitle">
+                Comprehensive tools and resources designed to accelerate your professional development
+            </p>
             
-            <!-- Feature 2: Career Planning -->
-            <div class="col-lg-4 col-md-6">
-                <div class="card feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-route"></i>
+            <div class="row g-4">
+                <div class="col-lg-4 col-md-6">
+                    <div class="card feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-brain"></i>
+                        </div>
+                        <h3 class="feature-title">AI-Powered Learning</h3>
+                        <p class="feature-description">
+                            Get personalized course recommendations and adaptive learning paths powered by advanced AI.
+                        </p>
                     </div>
-                    <h3 class="feature-title">Strategic Career Planning</h3>
-                    <p class="feature-description">
-                        Map out your dream career path with data-driven insights, skill gap analysis, 
-                        and personalized roadmaps to reach your professional goals.
-                    </p>
-                    <a href="{% url 'learning:dream_path' %}" class="feature-link">Plan Your Path →</a>
                 </div>
-            </div>
-            
-            <!-- Feature 3: Knowledge Management -->
-            <div class="col-lg-4 col-md-6">
-                <div class="card feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-file-alt"></i>
+                
+                <div class="col-lg-4 col-md-6">
+                    <div class="card feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-route"></i>
+                        </div>
+                        <h3 class="feature-title">Strategic Career Planning</h3>
+                        <p class="feature-description">
+                            Map out your dream career path with data-driven insights and personalized roadmaps.
+                        </p>
                     </div>
-                    <h3 class="feature-title">Smart Content Hub</h3>
-                    <p class="feature-description">
-                        Upload, organize, and learn from your materials with AI-generated flashcards, 
-                        quizzes, and intelligent content analysis.
-                    </p>
-                    <a href="/subjects/" class="feature-link">Manage Content →</a>
                 </div>
-            </div>
-            
-            <!-- Feature 4: Progress Tracking -->
-            <div class="col-lg-4 col-md-6">
-                <div class="card feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-chart-bar"></i>
+                
+                <div class="col-lg-4 col-md-6">
+                    <div class="card feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <h3 class="feature-title">AI Learning Assistant</h3>
+                        <p class="feature-description">
+                            Get instant answers and guidance from our AI assistant, available 24/7.
+                        </p>
                     </div>
-                    <h3 class="feature-title">Progress Analytics</h3>
-                    <p class="feature-description">
-                        Track your learning progress with detailed analytics, skill assessments, 
-                        and achievement milestones to stay motivated.
-                    </p>
-                    <a href="{% url 'learning:dashboard' %}" class="feature-link">View Progress →</a>
-                </div>
-            </div>
-            
-            <!-- Feature 6: XP Assistant -->
-            <div class="col-lg-4 col-md-6">
-                <div class="card feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-robot"></i>
-                    </div>
-                    <h3 class="feature-title">XP Assistant</h3>
-                    <p class="feature-description">
-                        Get instant answers and guidance from our AI assistant, available 24/7 
-                        to help with learning questions and career advice.
-                    </p>
-                    <a href="/subjects/1/" class="feature-link">Try Assistant →</a>
                 </div>
             </div>
         </div>
-    </div>
-</section>
-
-<!-- Stats Section -->
-<section class="stats-section">
-    <div class="container">
-        <div class="row">
-            <div class="col-lg-3 col-md-6">
-                <div class="stat-item">
-                    <span class="stat-number">10K+</span>
-                    <span class="stat-label">Active Learners</span>
-                </div>
-            </div>
-            <div class="col-lg-3 col-md-6">
-                <div class="stat-item">
-                    <span class="stat-number">500+</span>
-                    <span class="stat-label">Expert Courses</span>
-                </div>
-            </div>
-            <div class="col-lg-3 col-md-6">
-                <div class="stat-item">
-                    <span class="stat-number">95%</span>
-                    <span class="stat-label">Success Rate</span>
-                </div>
-            </div>
-            <div class="col-lg-3 col-md-6">
-                <div class="stat-item">
-                    <span class="stat-number">24/7</span>
-                    <span class="stat-label">AI Support</span>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Call to Action Section -->
-<section class="cta-section">
-    <div class="container">
-        <h2 class="cta-title">Ready to Transform Your Career?</h2>
-        <p class="cta-subtitle">
-            Join thousands of professionals who have accelerated their careers with ExcelPoint. 
-            Start your personalized learning journey today.
-        </p>
-        {% if not user.is_authenticated %}
-            <div class="d-flex justify-content-center gap-3 flex-column flex-sm-row">
-                <a href="/users/register/" class="btn btn-hero btn-hero-primary">Get Started Free</a>
-                <a href="/users/login/" class="btn btn-hero btn-hero-secondary" style="color: var(--primary-color); border-color: var(--primary-color);">Sign In</a>
-            </div>
-        {% else %}
-            <a href="{% url 'learning:dashboard' %}" class="btn btn-hero btn-hero-primary">Continue Your Journey</a>
-        {% endif %}
-    </div>
-</section>
+    </section>
+{% endif %}
 {% endblock %}

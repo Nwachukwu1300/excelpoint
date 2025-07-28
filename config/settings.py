@@ -180,7 +180,7 @@ CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
 
 # OpenAI Configuration
-OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '').replace('\n', '').strip()
 OPENAI_MODEL = 'gpt-3.5-turbo'  # Cost-effective for development
 
 # Google OAuth Configuration

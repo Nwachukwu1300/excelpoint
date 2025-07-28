@@ -21,6 +21,7 @@ from django.conf.urls.static import static
 from django.views.generic import TemplateView  
 from subjects.views import SubjectListView, SubjectDetailView, create_subject, upload_material
 from django.http import JsonResponse
+from .views import home
 
 def test_view(request, pk):
     return JsonResponse({'ok': pk})
@@ -30,7 +31,7 @@ def test_chat_view(request, pk):
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', TemplateView.as_view(template_name='home.html'), name='home'),
+    path('', home, name='home'),
     path('users/', include('users.urls')),
     path('learning/', include('learning.urls')),
     path('api/', include('subjects.urls')),

@@ -3,6 +3,7 @@
 
 {% block title %}Dream Path - {{ selected_path.title }}{% endblock %}
 
+<!-- Cache busting: Updated course flow - direct URL opening -->
 {% block extra_css %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
@@ -30,10 +31,17 @@
         width: 120px;
         height: 120px;
         margin: 0 auto 1rem;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
     
     .progress-ring svg {
         transform: rotate(-90deg);
+        position: absolute;
+        top: 0;
+        left: 0;
     }
     
     .progress-ring-circle {
@@ -275,9 +283,9 @@
                                 stroke-dasharray="351.86" 
                                 stroke-dashoffset="{{ stroke_dashoffset }}"></circle>
                     </svg>
-                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10; color: white; text-shadow: 0 1px 3px rgba(0,0,0,0.3);">
                         <div style="font-size: 1.5rem; font-weight: 700;">{{ progress_percentage }}%</div>
-                        <div style="font-size: 0.8rem; opacity: 0.8;">Complete</div>
+                        <div style="font-size: 0.8rem; opacity: 0.9;">Complete</div>
                     </div>
                 </div>
             </div>
@@ -364,15 +372,34 @@
                         <div class="text-muted small">
                             <i class="far fa-clock me-1"></i>{{ course.duration_hours }} hours
                         </div>
-                        <a href="{% url 'learning:confirm_course' course.id %}" class="btn btn-course btn-primary-custom">
-                            {% if course.id in completed_course_ids %}
-                                <i class="fas fa-external-link-alt me-1"></i>Review Course
-                            {% elif course.id in in_progress_course_ids %}
-                                <i class="fas fa-external-link-alt me-1"></i>Continue
+                        <div class="d-flex gap-2">
+                            {% if course.course_url %}
+                            <a href="{{ course.course_url }}" target="_blank" class="btn btn-course btn-primary-custom" onclick="openCourseAndTrack('{{ course.id }}', '{{ course.title }}')">
+                                {% if course.id in completed_course_ids %}
+                                    <i class="fas fa-external-link-alt me-1"></i>Review Course
+                                {% elif course.id in in_progress_course_ids %}
+                                    <i class="fas fa-external-link-alt me-1"></i>Continue
+                                {% else %}
+                                    <i class="fas fa-external-link-alt me-1"></i>Start Course
+                                {% endif %}
+                            </a>
                             {% else %}
-                                <i class="fas fa-external-link-alt me-1"></i>Start Course
+                            <a href="{% url 'learning:confirm_course' course.id %}" class="btn btn-course btn-primary-custom">
+                                {% if course.id in completed_course_ids %}
+                                    <i class="fas fa-external-link-alt me-1"></i>Review Course
+                                {% elif course.id in in_progress_course_ids %}
+                                    <i class="fas fa-external-link-alt me-1"></i>Continue
+                                {% else %}
+                                    <i class="fas fa-external-link-alt me-1"></i>Start Course
+                                {% endif %}
+                            </a>
                             {% endif %}
-                        </a>
+                            {% if course.id not in completed_course_ids and course.id not in in_progress_course_ids %}
+                            <a href="{% url 'learning:confirm_course' course.id %}" class="btn btn-outline-secondary btn-sm" title="Track your progress">
+                                <i class="fas fa-chart-line me-1"></i>Track
+                            </a>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -405,15 +432,34 @@
                             <i class="far fa-clock me-1"></i>{{ course.duration_hours }} hours
                             <span class="badge bg-success ms-2">Beginner-Friendly</span>
                         </div>
-                        <a href="{% url 'learning:confirm_course' course.id %}" class="btn btn-course btn-primary-custom">
-                            {% if course.id in completed_course_ids %}
-                                <i class="fas fa-external-link-alt me-1"></i>Review Course
-                            {% elif course.id in in_progress_course_ids %}
-                                <i class="fas fa-external-link-alt me-1"></i>Continue
+                        <div class="d-flex gap-2">
+                            {% if course.course_url %}
+                            <a href="{{ course.course_url }}" target="_blank" class="btn btn-course btn-primary-custom" onclick="openCourseAndTrack('{{ course.id }}', '{{ course.title }}')">
+                                {% if course.id in completed_course_ids %}
+                                    <i class="fas fa-external-link-alt me-1"></i>Review Course
+                                {% elif course.id in in_progress_course_ids %}
+                                    <i class="fas fa-external-link-alt me-1"></i>Continue
+                                {% else %}
+                                    <i class="fas fa-external-link-alt me-1"></i>Start Course
+                                {% endif %}
+                            </a>
                             {% else %}
-                                <i class="fas fa-external-link-alt me-1"></i>Start Course
+                            <a href="{% url 'learning:confirm_course' course.id %}" class="btn btn-course btn-primary-custom">
+                                {% if course.id in completed_course_ids %}
+                                    <i class="fas fa-external-link-alt me-1"></i>Review Course
+                                {% elif course.id in in_progress_course_ids %}
+                                    <i class="fas fa-external-link-alt me-1"></i>Continue
+                                {% else %}
+                                    <i class="fas fa-external-link-alt me-1"></i>Start Course
+                                {% endif %}
+                            </a>
                             {% endif %}
-                        </a>
+                            {% if course.id not in completed_course_ids and course.id not in in_progress_course_ids %}
+                            <a href="{% url 'learning:confirm_course' course.id %}" class="btn btn-outline-secondary btn-sm" title="Track your progress">
+                                <i class="fas fa-chart-line me-1"></i>Track
+                            </a>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -446,15 +492,34 @@
                             <i class="far fa-clock me-1"></i>{{ course.duration_hours }} hours
                             <span class="badge bg-warning ms-2">Advanced</span>
                         </div>
-                        <a href="{% url 'learning:confirm_course' course.id %}" class="btn btn-course btn-primary-custom">
-                            {% if course.id in completed_course_ids %}
-                                <i class="fas fa-external-link-alt me-1"></i>Review Course
-                            {% elif course.id in in_progress_course_ids %}
-                                <i class="fas fa-external-link-alt me-1"></i>Continue
+                        <div class="d-flex gap-2">
+                            {% if course.course_url %}
+                            <a href="{{ course.course_url }}" target="_blank" class="btn btn-course btn-primary-custom" onclick="openCourseAndTrack('{{ course.id }}', '{{ course.title }}')">
+                                {% if course.id in completed_course_ids %}
+                                    <i class="fas fa-external-link-alt me-1"></i>Review Course
+                                {% elif course.id in in_progress_course_ids %}
+                                    <i class="fas fa-external-link-alt me-1"></i>Continue
+                                {% else %}
+                                    <i class="fas fa-external-link-alt me-1"></i>Start Course
+                                {% endif %}
+                            </a>
                             {% else %}
-                                <i class="fas fa-external-link-alt me-1"></i>Start Course
+                            <a href="{% url 'learning:confirm_course' course.id %}" class="btn btn-course btn-primary-custom">
+                                {% if course.id in completed_course_ids %}
+                                    <i class="fas fa-external-link-alt me-1"></i>Review Course
+                                {% elif course.id in in_progress_course_ids %}
+                                    <i class="fas fa-external-link-alt me-1"></i>Continue
+                                {% else %}
+                                    <i class="fas fa-external-link-alt me-1"></i>Start Course
+                                {% endif %}
+                            </a>
                             {% endif %}
-                        </a>
+                            {% if course.id not in completed_course_ids and course.id not in in_progress_course_ids %}
+                            <a href="{% url 'learning:confirm_course' course.id %}" class="btn btn-outline-secondary btn-sm" title="Track your progress">
+                                <i class="fas fa-chart-line me-1"></i>Track
+                            </a>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -506,4 +571,92 @@
         </div>
     </div>
 </div>
-{% endblock %} 
+{% endblock %}
+
+<script>
+function openCourseAndTrack(courseId, courseTitle) {
+    console.log('openCourseAndTrack called:', courseId, courseTitle);
+    
+    // Store the course info in sessionStorage for when user returns
+    sessionStorage.setItem('lastOpenedCourse', JSON.stringify({
+        id: courseId,
+        title: courseTitle,
+        timestamp: new Date().toISOString()
+    }));
+    
+    // Show a subtle notification that the course was opened
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #28a745;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 1000;
+        font-size: 14px;
+        max-width: 300px;
+    `;
+    notification.innerHTML = `
+        <i class="fas fa-external-link-alt me-2"></i>
+        <strong>${courseTitle}</strong> opened in new tab
+        <br><small>Return here to track your progress</small>
+    `;
+    document.body.appendChild(notification);
+    
+    // Remove notification after 4 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+        }
+    }, 4000);
+}
+
+// Check if user returned from a course and show tracking prompt
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, checking for last course...');
+    const lastCourse = sessionStorage.getItem('lastOpenedCourse');
+    if (lastCourse) {
+        console.log('Found last course:', lastCourse);
+        const courseData = JSON.parse(lastCourse);
+        const timeDiff = new Date() - new Date(courseData.timestamp);
+        
+        // If user returned within 30 minutes, show tracking prompt
+        if (timeDiff < 30 * 60 * 1000) {
+            console.log('Showing tracking prompt for course:', courseData.title);
+            const prompt = document.createElement('div');
+            prompt.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: white;
+                border-radius: 12px;
+                box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+                padding: 24px;
+                z-index: 1001;
+                max-width: 400px;
+                text-align: center;
+            `;
+            prompt.innerHTML = `
+                <h5 class="mb-3">Did you start <strong>${courseData.title}</strong>?</h5>
+                <p class="text-muted mb-4">Track your progress to see your learning journey!</p>
+                <div class="d-flex gap-2 justify-content-center">
+                    <a href="/learning/course/${courseData.id}/confirm/" class="btn btn-primary">
+                        <i class="fas fa-check me-1"></i>Yes, track it
+                    </a>
+                    <button onclick="this.parentElement.parentElement.parentElement.remove()" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-1"></i>Not now
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(prompt);
+            
+            // Clear the stored course data
+            sessionStorage.removeItem('lastOpenedCourse');
+        }
+    }
+});
+</script> 

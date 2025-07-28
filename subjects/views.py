@@ -270,6 +270,27 @@ def take_quiz(request, quiz_id):
             print(f"Synchronous generation failed: {e}")
             import traceback
             traceback.print_exc()
+            
+            # If API fails, provide user-friendly error and fallback to static questions
+            messages.warning(request, "Dynamic question generation is temporarily unavailable. Using static questions instead.")
+            
+            # Fall back to static questions
+            questions = quiz.questions.all().order_by('order')
+            if questions.exists():
+                context = {
+                    'quiz': quiz,
+                    'attempt': attempt,
+                    'questions': questions,
+                    'total_questions': questions.count(),
+                    'total_points': sum(q.points for q in questions),
+                    'loading_dynamic': False,
+                    'is_dynamic': False,
+                    'api_error': True
+                }
+                return render(request, 'subjects/take_quiz.html', context)
+            else:
+                messages.error(request, "No questions available for this quiz. Please contact support.")
+                return redirect('subject_detail', pk=quiz.subject.id)
         
         # Fall back to background generation if sync fails
         try:

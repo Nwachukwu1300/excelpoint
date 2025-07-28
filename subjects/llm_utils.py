@@ -3,7 +3,7 @@ from typing import List, Dict, Any
 from openai import OpenAI
 from django.conf import settings
 
-client = OpenAI(api_key=settings.OPENAI_API_KEY)
+# Remove the global client initialization - we'll create it dynamically in each function
 
 def generate_flashcards(chunks: List[Dict[str, Any]], num_cards: int = 5) -> List[Dict[str, str]]:
     """Generate informational flashcards using OpenAI's GPT model."""
@@ -28,8 +28,11 @@ def generate_flashcards(chunks: List[Dict[str, Any]], num_cards: int = 5) -> Lis
         
         Generate exactly {num_cards} informational study cards:"""
         
+        # Create client dynamically to ensure fresh settings
+        dynamic_client = OpenAI(api_key=settings.OPENAI_API_KEY)
+        
         # Call OpenAI API
-        response = client.chat.completions.create(
+        response = dynamic_client.chat.completions.create(
             model=settings.OPENAI_MODEL,
             messages=[
                 {"role": "system", "content": "You are a helpful assistant that creates educational study cards with informative content. Focus on clear, concise explanations rather than questions."},
@@ -90,8 +93,11 @@ def generate_quiz_questions(chunks: List[Dict[str, Any]], num_questions: int = 5
         
         Generate exactly {num_questions} multiple-choice questions:"""
         
+        # Create client dynamically to ensure fresh settings
+        dynamic_client = OpenAI(api_key=settings.OPENAI_API_KEY)
+        
         # Call OpenAI API
-        response = client.chat.completions.create(
+        response = dynamic_client.chat.completions.create(
             model=settings.OPENAI_MODEL,
             messages=[
                 {"role": "system", "content": "You are a helpful assistant that creates educational multiple-choice quiz questions."},
@@ -148,8 +154,11 @@ def answer_question(question: str, chunks: List[Dict[str, Any]]) -> str:
         
         Question: {question}"""
         
+        # Create client dynamically to ensure fresh settings
+        dynamic_client = OpenAI(api_key=settings.OPENAI_API_KEY)
+        
         # Call OpenAI API
-        response = client.chat.completions.create(
+        response = dynamic_client.chat.completions.create(
             model=settings.OPENAI_MODEL,
             messages=[
                 {"role": "system", "content": "You are a helpful assistant that answers questions based on provided content."},

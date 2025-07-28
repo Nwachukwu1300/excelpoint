@@ -15,8 +15,8 @@
                     <div class="course-info mb-4">
                         <h3>{{ course.title }}</h3>
                         <div class="d-flex mb-2">
-                            <span class="badge bg-secondary me-2">{{ course.provider }}</span>
-                            <span class="badge bg-info me-2">{{ course.difficulty }}</span>
+                            <span class="badge bg-secondary me-2">{{ course.instructor }}</span>
+                            <span class="badge bg-info me-2">{{ course.difficulty_level }}</span>
                             {% if course.is_free %}
                             <span class="badge bg-success">Free</span>
                             {% else %}
@@ -24,9 +24,11 @@
                             {% endif %}
                         </div>
                         <p>{{ course.description }}</p>
+                        {% if course.course_url %}
                         <a href="{{ course.course_url }}" target="_blank" class="btn btn-sm btn-outline-primary">
                             <i class="fas fa-external-link-alt me-1"></i> View Course
                         </a>
+                        {% endif %}
                     </div>
                     
                     <form method="post">

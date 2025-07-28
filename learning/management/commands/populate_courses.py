@@ -45,18 +45,18 @@ class Command(BaseCommand):
                 'requirement_value': 5
             },
             {
-                'name': 'Learning Streak',
-                'description': 'Maintain a 7-day learning streak',
-                'icon': '🔥',
-                'requirement_type': 'streak',
-                'requirement_value': 7
+                'name': 'Quiz Champion',
+                'description': 'Score 90% or higher on 10 quizzes',
+                'icon': '🧠',
+                'requirement_type': 'quiz_excellence',
+                'requirement_value': 10
             },
             {
-                'name': 'Dedicated Learner',
-                'description': 'Maintain a 30-day learning streak',
-                'icon': '⭐',
-                'requirement_type': 'streak',
-                'requirement_value': 30
+                'name': 'Subject Explorer',
+                'description': 'Create 5 different subjects',
+                'icon': '📚',
+                'requirement_type': 'subjects_created',
+                'requirement_value': 5
             },
             {
                 'name': 'Course Master',
@@ -64,6 +64,27 @@ class Command(BaseCommand):
                 'icon': '🎓',
                 'requirement_type': 'courses_completed',
                 'requirement_value': 10
+            },
+            {
+                'name': 'AI Assistant',
+                'description': 'Have 20 chat sessions with the AI',
+                'icon': '🤖',
+                'requirement_type': 'chat_sessions',
+                'requirement_value': 20
+            },
+            {
+                'name': 'Material Curator',
+                'description': 'Upload 15 learning materials',
+                'icon': '📄',
+                'requirement_type': 'materials_uploaded',
+                'requirement_value': 15
+            },
+            {
+                'name': 'Perfect Score',
+                'description': 'Get 100% on any quiz',
+                'icon': '💯',
+                'requirement_type': 'perfect_quiz',
+                'requirement_value': 1
             }
         ]
 
