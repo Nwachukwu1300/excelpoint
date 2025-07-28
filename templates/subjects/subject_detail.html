@@ -335,8 +335,14 @@
                         {% csrf_token %}
                         <div class="mb-3">
                             <label for="materialFile" class="form-label">File</label>
-                            <input type="file" class="form-control" id="materialFile" name="file" required>
-                            <div class="form-text">Supported formats: PDF, MP4, MOV, AVI</div>
+                            <input type="file" class="form-control" id="materialFile" name="file" 
+                                   accept=".pdf,.docx,.doc,.mp4,.mov,.avi,.mp3,.wav,.m4a" required>
+                            <div class="form-text">
+                                <strong>Supported formats:</strong><br>
+                                📄 Documents: PDF, DOCX, DOC<br>
+                                🎥 Videos: MP4, MOV, AVI<br>
+                                🎵 Audio: MP3, WAV, M4A
+                            </div>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>

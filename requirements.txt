@@ -34,6 +34,10 @@ python-magic>=0.4.27
 pydub>=0.25.1
 SpeechRecognition>=3.14.3
 
+# Video/Audio Transcription
+openai-whisper>=20231117
+ffmpeg-python>=0.2.0
+
 # AI Integration
 openai>=1.12.0
 

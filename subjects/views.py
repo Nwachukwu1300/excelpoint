@@ -109,8 +109,10 @@ def upload_material(request, pk):
                     file_type = 'DOC'
                 elif file_extension in ['MP4', 'MOV', 'AVI']:
                     file_type = 'VIDEO'
+                elif file_extension in ['MP3', 'WAV', 'M4A']:
+                    file_type = 'AUDIO'
                 else:
-                    messages.error(request, 'Unsupported file type. Please upload PDF, Word (DOC/DOCX), or video files.')
+                    messages.error(request, 'Unsupported file type. Please upload PDF, Word (DOC/DOCX), video (MP4/MOV/AVI), or audio (MP3/WAV/M4A) files.')
                     return redirect('subject_detail', pk=pk)
                 
                 print(f"File type determined: {file_type}")

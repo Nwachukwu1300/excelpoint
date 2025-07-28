@@ -25,6 +25,7 @@ import logging
 from .llm_utils import generate_flashcards as llm_generate_flashcards
 from .llm_utils import generate_quiz_questions as llm_generate_quiz_questions
 from .llm_utils import answer_question as llm_answer_question
+from .services.transcription_service import TranscriptionService
 
 logger = logging.getLogger(__name__)
 
@@ -63,8 +64,11 @@ class ContentProcessor:
         # Initialize the sentence transformer for embeddings
         self.model = SentenceTransformer('all-MiniLM-L6-v2')
         
-        # Initialize speech recognizer
+        # Initialize speech recognizer (legacy)
         self.recognizer = sr.Recognizer()
+        
+        # Initialize transcription service
+        self.transcription_service = TranscriptionService()
         
         # Batch processing configuration
         self.batch_size = batch_size or self._calculate_optimal_batch_size()
@@ -143,6 +147,14 @@ class ContentProcessor:
                 return 'HTML'
             elif mime_type == 'text/markdown':
                 return 'MD'
+        
+        # Fallback to extension-based detection for better audio/video support
+        file_extension = os.path.splitext(file_path)[1].lower()
+        if file_extension in ['.mp3', '.wav', '.m4a', '.aac', '.ogg']:
+            return 'AUDIO'
+        elif file_extension in ['.mp4', '.mov', '.avi', '.mkv', '.webm']:
+            return 'VIDEO'
+        
         return 'UNKNOWN'
 
     def extract_text_from_audio(self, file_path: str) -> str:
@@ -201,17 +213,12 @@ class ContentProcessor:
                 text = loader.load()[0].page_content
             
             elif file_type == 'AUDIO':
-                text = self.extract_text_from_audio(file_path)
+                # Use the new transcription service for audio files
+                text = self.transcription_service.process_media_file(file_path, 'AUDIO')
             
             elif file_type == 'VIDEO':
-                # For video, we'll assume the transcript is already extracted
-                # and saved as a text file with the same name
-                transcript_path = os.path.splitext(file_path)[0] + '.txt'
-                if os.path.exists(transcript_path):
-                    with open(transcript_path, 'r') as f:
-                        text = f.read()
-                else:
-                    raise Exception("Video transcript not found")
+                # Use the new transcription service for video files
+                text = self.transcription_service.process_media_file(file_path, 'VIDEO')
             
             else:
                 raise Exception(f"Unsupported file type: {file_type}")

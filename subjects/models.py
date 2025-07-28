@@ -24,6 +24,7 @@ class SubjectMaterial(models.Model):
         ('DOCX', 'Word Document'),
         ('DOC', 'Word Document (Legacy)'),
         ('VIDEO', 'Video File'),
+        ('AUDIO', 'Audio File'),
     )
     STATUS_CHOICES = (
         ('PENDING', 'Pending'),
@@ -35,7 +36,7 @@ class SubjectMaterial(models.Model):
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='materials')
     file = models.FileField(
         upload_to='subject_materials/',
-        validators=[FileExtensionValidator(allowed_extensions=['pdf', 'docx', 'doc', 'mp4', 'mov', 'avi'])]
+        validators=[FileExtensionValidator(allowed_extensions=['pdf', 'docx', 'doc', 'mp4', 'mov', 'avi', 'mp3', 'wav', 'm4a'])]
     )
     file_type = models.CharField(max_length=10, choices=FILE_TYPES)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PENDING')
