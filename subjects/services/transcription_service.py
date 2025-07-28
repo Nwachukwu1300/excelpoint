@@ -3,8 +3,15 @@ import tempfile
 import logging
 from typing import Optional, Tuple
 from pydub import AudioSegment
-import whisper
 from django.conf import settings
+
+# Conditional import for whisper
+try:
+    import whisper
+    WHISPER_AVAILABLE = True
+except ImportError:
+    whisper = None
+    WHISPER_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +23,10 @@ class TranscriptionService:
     
     def __init__(self):
         """Initialize the transcription service with Whisper model."""
+        if not WHISPER_AVAILABLE:
+            logger.error("Whisper is not available. Please install openai-whisper")
+            raise ImportError("Whisper is not available. Please install openai-whisper")
+        
         try:
             # Load Whisper model (will download on first use)
             self.model = whisper.load_model("base")

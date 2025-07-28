@@ -174,6 +174,11 @@ def generate_quiz_from_material(self, material_id, num_questions=10):
             processor = ContentProcessor()
             chunks_data = processor.process_file(material.file.path)
             text_content = '\n'.join([chunk['content'] for chunk in chunks_data])
+        elif material.file_type in ['VIDEO', 'AUDIO']:
+            # Use ContentProcessor for video/audio files (handles transcription)
+            processor = ContentProcessor()
+            chunks_data = processor.process_file(material.file.path)
+            text_content = '\n'.join([chunk['content'] for chunk in chunks_data])
         else:
             # For other file types, read as text
             with open(material.file.path, 'r', encoding='utf-8') as f:

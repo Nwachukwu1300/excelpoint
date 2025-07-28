@@ -25,7 +25,14 @@ import logging
 from .llm_utils import generate_flashcards as llm_generate_flashcards
 from .llm_utils import generate_quiz_questions as llm_generate_quiz_questions
 from .llm_utils import answer_question as llm_answer_question
-from .services.transcription_service import TranscriptionService
+
+# Conditional import for transcription service
+try:
+    from .services.transcription_service import TranscriptionService
+    TRANSCRIPTION_AVAILABLE = True
+except ImportError:
+    TranscriptionService = None
+    TRANSCRIPTION_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +75,11 @@ class ContentProcessor:
         self.recognizer = sr.Recognizer()
         
         # Initialize transcription service
-        self.transcription_service = TranscriptionService()
+        if TRANSCRIPTION_AVAILABLE:
+            self.transcription_service = TranscriptionService()
+        else:
+            self.transcription_service = None
+            logger.warning("Transcription service not available. Video/audio processing will not work.")
         
         # Batch processing configuration
         self.batch_size = batch_size or self._calculate_optimal_batch_size()
@@ -214,11 +225,17 @@ class ContentProcessor:
             
             elif file_type == 'AUDIO':
                 # Use the new transcription service for audio files
-                text = self.transcription_service.process_media_file(file_path, 'AUDIO')
+                if self.transcription_service:
+                    text = self.transcription_service.process_media_file(file_path, 'AUDIO')
+                else:
+                    raise Exception("Transcription service not available. Cannot process audio files.")
             
             elif file_type == 'VIDEO':
                 # Use the new transcription service for video files
-                text = self.transcription_service.process_media_file(file_path, 'VIDEO')
+                if self.transcription_service:
+                    text = self.transcription_service.process_media_file(file_path, 'VIDEO')
+                else:
+                    raise Exception("Transcription service not available. Cannot process video files.")
             
             else:
                 raise Exception(f"Unsupported file type: {file_type}")
