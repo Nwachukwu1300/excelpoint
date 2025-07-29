@@ -139,14 +139,20 @@ def create_users(num_users=10):
             if status == 'completed':
                 date_completed = date_started + timedelta(days=random.randint(10, 60))
             
-            CourseProgress.objects.create(
+            progress = CourseProgress.objects.create(
                 user=user,
                 course=course,
                 status=status,
                 date_started=date_started,
                 date_completed=date_completed,
-                estimated_hours_spent=random.randint(1, 40),
-                notes=f"{'Really enjoying this course!' if random.random() > 0.5 else 'Learning a lot from this material.'}"
+                estimated_hours_spent=random.randint(1, 40)
+            )
+            
+            # Add a note to the progress
+            from learning.models import CourseProgressNote
+            CourseProgressNote.objects.create(
+                progress=progress,
+                note=f"{'Really enjoying this course!' if random.random() > 0.5 else 'Learning a lot from this material.'}"
             )
         
         users_created += 1

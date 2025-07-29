@@ -56,14 +56,16 @@ def process_material(material_id: int):
             )
             logger.debug(f"Created chunk {chunk.chunk_index} with embedding for material {material.file.name}")
         
-        # Generate flashcards and quiz questions
-        generate_flashcards.delay(material_id)
-        generate_quiz_questions.delay(material_id)
-        
+        # Update material status to completed before queuing additional tasks
         material.status = 'COMPLETED'
         material.save()
         
         logger.info(f"Successfully processed material {material.file.name} with {len(chunks_data)} chunks")
+        
+        # Queue additional tasks only after material is successfully processed
+        # Use apply_async with countdown to ensure material is fully saved
+        generate_flashcards.apply_async(args=[material_id], countdown=2)
+        generate_quiz_from_material.apply_async(args=[material_id, 10], countdown=2)  # Use new quiz system with 10 questions
         
     except Exception as e:
         logger.exception(f"Error processing material {material_id}: {str(e)}")
@@ -79,10 +81,29 @@ def process_material(material_id: int):
 def generate_flashcards(material_id: int):
     """Generate flashcards from processed material."""
     try:
-        material = SubjectMaterial.objects.get(id=material_id)
+        # Add more detailed logging for debugging
+        logger.info(f"Starting flashcard generation for material ID: {material_id}")
+        
+        # Check if material exists before proceeding
+        try:
+            material = SubjectMaterial.objects.get(id=material_id)
+        except SubjectMaterial.DoesNotExist:
+            logger.error(f"Material with ID {material_id} does not exist in database")
+            return {'status': 'error', 'message': f'Material with ID {material_id} not found'}
+        
         logger.info(f"Generating flashcards for material ID {material_id}: {material.file.name}")
+        
+        # Check if material is in completed status
+        if material.status != 'COMPLETED':
+            logger.warning(f"Material {material_id} is not in COMPLETED status (current: {material.status})")
+            return {'status': 'error', 'message': f'Material {material_id} is not ready for processing (status: {material.status})'}
+        
         chunks = ContentChunk.objects.filter(material=material)
         logger.info(f"Found {chunks.count()} content chunks for material {material_id}")
+        
+        if chunks.count() == 0:
+            logger.warning(f"No content chunks found for material {material_id}")
+            return {'status': 'error', 'message': f'No content chunks found for material {material_id}'}
         
         processor = ContentProcessor()
         chunks_data = [
@@ -108,19 +129,40 @@ def generate_flashcards(material_id: int):
             flashcard_count += 1
         
         logger.info(f"Successfully created {flashcard_count} flashcards for material {material_id}: {material.file.name}")
+        return {'status': 'success', 'flashcards_created': flashcard_count}
             
     except Exception as e:
         logger.error(f"Error generating flashcards for material {material_id}: {str(e)}")
-        raise e
+        logger.exception("Full traceback:")
+        return {'status': 'error', 'message': str(e)}
 
 @shared_task
 def generate_quiz_questions(material_id: int):
     """Generate quiz questions from processed material."""
     try:
-        material = SubjectMaterial.objects.get(id=material_id)
+        # Add more detailed logging for debugging
+        logger.info(f"Starting quiz questions generation for material ID: {material_id}")
+        
+        # Check if material exists before proceeding
+        try:
+            material = SubjectMaterial.objects.get(id=material_id)
+        except SubjectMaterial.DoesNotExist:
+            logger.error(f"Material with ID {material_id} does not exist in database")
+            return {'status': 'error', 'message': f'Material with ID {material_id} not found'}
+        
         logger.info(f"Generating quiz questions for material ID {material_id}: {material.file.name}")
+        
+        # Check if material is in completed status
+        if material.status != 'COMPLETED':
+            logger.warning(f"Material {material_id} is not in COMPLETED status (current: {material.status})")
+            return {'status': 'error', 'message': f'Material {material_id} is not ready for processing (status: {material.status})'}
+        
         chunks = ContentChunk.objects.filter(material=material)
         logger.info(f"Found {chunks.count()} content chunks for material {material_id}")
+        
+        if chunks.count() == 0:
+            logger.warning(f"No content chunks found for material {material_id}")
+            return {'status': 'error', 'message': f'No content chunks found for material {material_id}'}
         
         processor = ContentProcessor()
         chunks_data = [
@@ -148,12 +190,14 @@ def generate_quiz_questions(material_id: int):
             question_count += 1
         
         logger.info(f"Successfully created {question_count} quiz questions for material {material_id}: {material.file.name}")
+        return {'status': 'success', 'questions_created': question_count}
             
     except Exception as e:
         logger.error(f"Error generating quiz questions for material {material_id}: {str(e)}")
-        raise e
+        logger.exception("Full traceback:")
+        return {'status': 'error', 'message': str(e)}
 
-@shared_task(bind=True, max_retries=3)
+@shared_task(bind=True, max_retries=3, time_limit=300)  # 5 minute timeout
 def generate_quiz_from_material(self, material_id, num_questions=10):
     """
     Generate a quiz with mixed question types from uploaded material content
@@ -162,9 +206,7 @@ def generate_quiz_from_material(self, material_id, num_questions=10):
         material = SubjectMaterial.objects.get(id=material_id)
         logger.info(f"Starting quiz generation for material: {material.file.name}")
         
-        # Update material status
-        material.status = 'PROCESSING'
-        material.save()
+        # Don't change material status - it should already be COMPLETED from process_material
         
         # Extract text content
         if material.file_type == 'PDF':
@@ -185,7 +227,10 @@ def generate_quiz_from_material(self, material_id, num_questions=10):
                 text_content = f.read()
         
         if not text_content.strip():
-            raise ValueError("No text content found in the uploaded file")
+            logger.warning(f"No text content found in material {material_id}")
+            return {'status': 'error', 'message': 'No text content found in the uploaded file'}
+        
+        logger.info(f"Extracted {len(text_content)} characters from material {material_id}")
         
         # Create or get quiz for this material
         quiz, created = Quiz.objects.get_or_create(
@@ -202,8 +247,13 @@ def generate_quiz_from_material(self, material_id, num_questions=10):
         if not created:
             quiz.questions.all().delete()
         
-        # Generate questions using OpenAI
+        # Generate questions using OpenAI with timeout
+        logger.info(f"Generating {num_questions} questions for material {material_id}")
         questions_data = _generate_questions_with_openai(text_content, num_questions)
+        
+        if not questions_data:
+            logger.warning(f"No questions generated for material {material_id}")
+            return {'status': 'error', 'message': 'Failed to generate questions'}
         
         # Save questions to database
         question_order = 1
@@ -228,9 +278,7 @@ def generate_quiz_from_material(self, material_id, num_questions=10):
             
             question_order += 1
         
-        # Update material status
-        material.status = 'COMPLETED'
-        material.save()
+        # Don't change material status - keep it as is
         
         logger.info(f"Successfully generated {len(questions_data)} questions for material: {material.file.name}")
         return {
@@ -246,49 +294,48 @@ def generate_quiz_from_material(self, material_id, num_questions=10):
     except Exception as e:
         logger.exception(f"Error generating quiz for material {material_id}: {str(e)}")
         
-        # Update material status to failed
-        try:
-            material = SubjectMaterial.objects.get(id=material_id)
-            material.status = 'FAILED'
-            material.save()
-        except:
-            pass
-        
-        # Retry the task
-        if self.request.retries < self.max_retries:
-            logger.info(f"Retrying quiz generation for material {material_id} (attempt {self.request.retries + 1})")
-            raise self.retry(countdown=60 * (2 ** self.request.retries))
-        
+        # Don't change material status on error - let it remain as is
         return {'status': 'error', 'message': str(e)}
 
 def _generate_questions_with_openai(text_content, num_questions=10):
     """
     Use OpenAI to generate quiz questions from text content
     """
-    # Chunk the text if it's too long
-    chunks = chunk_text(text_content, chunk_size=2000)
-    
-    all_questions = []
-    questions_per_chunk = max(2, num_questions // len(chunks))
-    
-    for i, chunk in enumerate(chunks):
-        try:
-            # Generate only multiple choice questions
-            chunk_questions = []
-            
-            # Generate multiple choice questions only
-            mc_prompt = _create_multiple_choice_prompt(chunk, questions_per_chunk)
-            mc_response = _call_openai_api(mc_prompt)
-            chunk_questions.extend(_parse_multiple_choice_response(mc_response))
-            
-            all_questions.extend(chunk_questions)
-            
-        except Exception as e:
-            logger.warning(f"Error generating questions for chunk {i + 1}: {str(e)}")
-            continue
-    
-    # Limit to requested number of questions
-    return all_questions[:num_questions]
+    try:
+        # Chunk the text if it's too long
+        chunks = chunk_text(text_content, chunk_size=2000)
+        logger.info(f"Split text into {len(chunks)} chunks for question generation")
+        
+        all_questions = []
+        questions_per_chunk = max(2, num_questions // len(chunks))
+        
+        for i, chunk in enumerate(chunks):
+            try:
+                logger.info(f"Generating questions for chunk {i + 1}/{len(chunks)}")
+                
+                # Generate only multiple choice questions
+                chunk_questions = []
+                
+                # Generate multiple choice questions only
+                mc_prompt = _create_multiple_choice_prompt(chunk, questions_per_chunk)
+                mc_response = _call_openai_api(mc_prompt)
+                chunk_questions.extend(_parse_multiple_choice_response(mc_response))
+                
+                logger.info(f"Generated {len(chunk_questions)} questions from chunk {i + 1}")
+                all_questions.extend(chunk_questions)
+                
+            except Exception as e:
+                logger.warning(f"Error generating questions for chunk {i + 1}: {str(e)}")
+                continue
+        
+        # Limit to requested number of questions
+        final_questions = all_questions[:num_questions]
+        logger.info(f"Generated {len(final_questions)} total questions (requested: {num_questions})")
+        return final_questions
+        
+    except Exception as e:
+        logger.error(f"Error in _generate_questions_with_openai: {str(e)}")
+        return []
 
 def _create_multiple_choice_prompt(text, num_questions):
     """Create prompt for multiple choice questions"""
@@ -377,37 +424,43 @@ Output format (JSON):
 }}
 """
 
-def _call_openai_api(prompt, temperature=0.3):
+def _call_openai_api(prompt, temperature=0.3, max_retries=3):
     """
     Call OpenAI API with error handling and retries
     """
-    try:
-        # Create client dynamically to ensure fresh settings
-        from django.conf import settings
-        dynamic_client = OpenAI(api_key=settings.OPENAI_API_KEY)
-        
-        response = dynamic_client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "You are a quiz generation assistant. Generate high-quality educational questions based on the provided text. Always respond with valid JSON format."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=temperature,
-            max_tokens=2000
-        )
-        
-        return response.choices[0].message.content.strip()
+    import time
     
-    except Exception as e:
-        # Handle rate limiting with exponential backoff
-        if "rate limit" in str(e).lower():
-            logger.warning("OpenAI rate limit reached, waiting 20 seconds...")
-            import time
-            time.sleep(20)
-            return _call_openai_api(prompt, temperature)
+    for attempt in range(max_retries):
+        try:
+            # Create client dynamically to ensure fresh settings
+            from django.conf import settings
+            dynamic_client = OpenAI(api_key=settings.OPENAI_API_KEY)
+            
+            response = dynamic_client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": "You are a quiz generation assistant. Generate high-quality educational questions based on the provided text. Always respond with valid JSON format."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=temperature,
+                max_tokens=2000,
+                timeout=30  # 30 second timeout
+            )
+            
+            return response.choices[0].message.content.strip()
         
-        logger.error(f"OpenAI API error: {str(e)}")
-        raise
+        except Exception as e:
+            # Handle rate limiting with exponential backoff
+            if "rate limit" in str(e).lower() and attempt < max_retries - 1:
+                wait_time = 20 * (2 ** attempt)  # Exponential backoff: 20s, 40s, 80s
+                logger.warning(f"OpenAI rate limit reached, waiting {wait_time} seconds... (attempt {attempt + 1}/{max_retries})")
+                time.sleep(wait_time)
+                continue
+            
+            logger.error(f"OpenAI API error (attempt {attempt + 1}/{max_retries}): {str(e)}")
+            if attempt == max_retries - 1:
+                raise
+            time.sleep(5)  # Short delay before retry
 
 def _parse_multiple_choice_response(response):
     """Parse OpenAI response for multiple choice questions"""
@@ -488,20 +541,42 @@ def generate_dynamic_quiz_questions(self, attempt_id, num_questions=10):
         
         logger.info(f"Generating dynamic questions for attempt {attempt_id}")
         
-        # Extract text content from the material
-        if material.file_type == 'PDF':
-            text_content = extract_text_from_pdf(material.file.path)
-        elif material.file_type in ['DOCX', 'DOC']:
-            # Use ContentProcessor for Word documents
-            processor = ContentProcessor()
-            chunks_data = processor.process_file(material.file.path)
-            text_content = '\n'.join([chunk['content'] for chunk in chunks_data])
+        # Get text content from processed content chunks instead of raw file
+        content_chunks = ContentChunk.objects.filter(material=material)
+        
+        if not content_chunks.exists():
+            logger.warning(f"No content chunks found for material {material.id}, falling back to file processing")
+            # Fallback: Extract text content from the material file
+            if material.file_type == 'PDF':
+                text_content = extract_text_from_pdf(material.file.path)
+            elif material.file_type in ['DOCX', 'DOC']:
+                # Use ContentProcessor for Word documents
+                processor = ContentProcessor()
+                chunks_data = processor.process_file(material.file.path)
+                text_content = '\n'.join([chunk['content'] for chunk in chunks_data])
+            elif material.file_type in ['VIDEO', 'AUDIO']:
+                # Use ContentProcessor for video/audio files (handles transcription)
+                processor = ContentProcessor()
+                chunks_data = processor.process_file(material.file.path)
+                text_content = '\n'.join([chunk['content'] for chunk in chunks_data])
+            else:
+                # For other file types, try to read as text
+                try:
+                    with open(material.file.path, 'r', encoding='utf-8') as f:
+                        text_content = f.read()
+                except UnicodeDecodeError:
+                    logger.error(f"Cannot read file {material.file.name} as text")
+                    return {'status': 'error', 'message': 'Cannot read file as text'}
         else:
-            with open(material.file.path, 'r', encoding='utf-8') as f:
-                text_content = f.read()
+            # Use processed content chunks
+            logger.info(f"Using {content_chunks.count()} processed content chunks for material {material.id}")
+            text_content = '\n'.join([chunk.content for chunk in content_chunks])
         
         if not text_content.strip():
-            raise ValueError("No text content found in the material")
+            logger.warning(f"No text content found for material {material.id}")
+            return {'status': 'error', 'message': 'No text content found in the material'}
+        
+        logger.info(f"Extracted {len(text_content)} characters for dynamic question generation")
         
         # Generate dynamic questions with variation
         questions_data = _generate_dynamic_questions_with_openai(
@@ -509,6 +584,10 @@ def generate_dynamic_quiz_questions(self, attempt_id, num_questions=10):
             num_questions, 
             attempt_number=attempt.user.quiz_attempts.filter(quiz=quiz).count()
         )
+        
+        if not questions_data:
+            logger.warning(f"No dynamic questions generated for attempt {attempt_id}")
+            return {'status': 'error', 'message': 'Failed to generate dynamic questions'}
         
         # Store the generated questions directly in the attempt as JSON
         formatted_questions = []
@@ -541,6 +620,7 @@ def generate_dynamic_quiz_questions(self, attempt_id, num_questions=10):
         
         # Store questions in the attempt
         attempt.dynamic_questions = formatted_questions
+        attempt.uses_dynamic_questions = True  # Mark this attempt as using dynamic questions
         attempt.save()
         
         logger.info(f"Successfully generated {len(questions_data)} dynamic questions for attempt {attempt_id}")

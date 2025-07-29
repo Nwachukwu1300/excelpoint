@@ -117,25 +117,31 @@ def upload_material(request, pk):
                 
                 print(f"File type determined: {file_type}")
                 
-                # Create the material
-                material = SubjectMaterial.objects.create(
-                    subject=subject,
-                    file=uploaded_file,
-                    file_type=file_type,
-                    status='PENDING'
-                )
-                
-                print(f"Material created with ID: {material.id}")
-                
-                # Trigger background processing for material and quiz generation
-                try:
-                    process_material.delay(material.id)
-                    # Also generate quiz from the uploaded material
-                    generate_quiz_from_material.delay(material.id, num_questions=10)
-                    print("Background tasks queued successfully")
-                except Exception as e:
-                    # If Celery is not running, just log the error
-                    print(f"Background processing failed: {e}")
+                # Create the material within a transaction
+                with transaction.atomic():
+                    material = SubjectMaterial.objects.create(
+                        subject=subject,
+                        file=uploaded_file,
+                        file_type=file_type,
+                        status='PENDING'
+                    )
+                    
+                    print(f"Material created with ID: {material.id}")
+                    print(f"Material object: {material}")
+                    print(f"Material ID type: {type(material.id)}")
+                    
+                    # Trigger background processing for material and quiz generation
+                    try:
+                        # Only queue the main processing task - it will handle the rest
+                        task_result = process_material.delay(material.id)
+                        print(f"Background processing task queued successfully with task ID: {task_result.id}")
+                        print(f"Material ID passed to task: {material.id}")
+                    except Exception as e:
+                        # If Celery is not running, just log the error
+                        print(f"Background processing failed: {e}")
+                        # Update material status to indicate processing failed
+                        material.status = 'FAILED'
+                        material.save()
                 
                 messages.success(request, f'Material "{uploaded_file.name}" uploaded successfully! Quiz generation started.')
                 return redirect('subject_detail', pk=pk)

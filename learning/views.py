@@ -325,8 +325,11 @@ def check_course_registration(request, course_id):
             messages.info(request, f"You are already tracking '{course.title}'")
             return redirect('learning:dashboard')
             
-        if request.method == 'POST':
-            if 'register' in request.POST:
+        # Handle both POST and GET requests
+        if request.method == 'POST' or 'register' in request.GET:
+            register_value = request.POST.get('register') if request.method == 'POST' else request.GET.get('register')
+            
+            if register_value == '1':
                 # User registered for the course
                 progress.status = 'in_progress'
                 progress.save()

@@ -26,11 +26,9 @@
                             <strong>Status:</strong> {{ progress.get_status_display }}<br>
                             <strong>Last Updated:</strong> {{ progress.last_activity_date|date:"M d, Y H:i" }}
                         </div>
-                        <a href="{{ progress.course.course_url }}" target="_blank" class="btn btn-sm btn-outline-primary mb-2">
-                            <i class="fas fa-external-link-alt me-1"></i> View Course
-                        </a>
-                        <a href="{% url 'learning:update_progress' progress.course.id %}" class="btn btn-sm btn-primary mb-2">
-                            <i class="fas fa-edit me-1"></i> Update Progress
+                        <a href="{{ progress.course.course_url }}" target="_blank" class="btn btn-sm btn-primary mb-2 start-course-btn" 
+                           data-course-id="{{ progress.course.id }}" data-course-title="{{ progress.course.title }}">
+                            <i class="fas fa-external-link-alt me-1"></i> Start Course
                         </a>
                     </div>
                 </div>
@@ -44,4 +42,47 @@
     </div>
     <a href="{% url 'learning:dashboard' %}" class="btn btn-outline-secondary mt-3"><i class="fas fa-arrow-left me-1"></i> Back to Dashboard</a>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Track when users click on course links
+    const courseButtons = document.querySelectorAll('.start-course-btn');
+    
+    courseButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const courseId = this.getAttribute('data-course-id');
+            const courseTitle = this.getAttribute('data-course-title');
+            
+            // Store the course info in sessionStorage
+            sessionStorage.setItem('lastViewedCourse', JSON.stringify({
+                id: courseId,
+                title: courseTitle,
+                timestamp: Date.now()
+            }));
+        });
+    });
+    
+    // Check if user is returning from a course
+    const lastViewedCourse = sessionStorage.getItem('lastViewedCourse');
+    if (lastViewedCourse) {
+        const courseData = JSON.parse(lastViewedCourse);
+        const timeDiff = Date.now() - courseData.timestamp;
+        
+        // If user returned within 5 minutes of clicking the course link
+        if (timeDiff < 5 * 60 * 1000) {
+            // Show confirmation dialog
+            if (confirm(`Did you start the course "${courseData.title}"?`)) {
+                // User confirmed they started the course
+                window.location.href = `/learning/course/${courseData.id}/check-registration/?register=1`;
+            } else {
+                // User didn't start the course
+                window.location.href = `/learning/course/${courseData.id}/check-registration/?register=0`;
+            }
+            
+            // Clear the stored data
+            sessionStorage.removeItem('lastViewedCourse');
+        }
+    }
+});
+</script>
 {% endblock %} 

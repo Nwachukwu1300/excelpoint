@@ -1,0 +1,362 @@
+[
+{
+  "model": "learning.course",
+  "pk": 1,
+  "fields": {
+    "title": "Python Programming Fundamentals",
+    "description": "Learn the basics of Python programming from scratch. Cover variables, functions, loops, and object-oriented programming.",
+    "instructor": "Dr. Sarah Johnson",
+    "duration_hours": 25,
+    "difficulty_level": "beginner",
+    "course_url": "https://www.coursera.org/learn/python",
+    "created_at": "2025-07-29T15:50:20.896Z",
+    "is_free": true
+  }
+},
+{
+  "model": "learning.course",
+  "pk": 2,
+  "fields": {
+    "title": "Advanced JavaScript and ES6+",
+    "description": "Master modern JavaScript features including async/await, modules, classes, and advanced DOM manipulation.",
+    "instructor": "Mike Chen",
+    "duration_hours": 30,
+    "difficulty_level": "intermediate",
+    "course_url": "https://www.udemy.com/course/javascript-the-complete-guide-2020-beginner-advanced/",
+    "created_at": "2025-07-29T15:50:20.899Z",
+    "is_free": true
+  }
+},
+{
+  "model": "learning.course",
+  "pk": 3,
+  "fields": {
+    "title": "Data Science with Python",
+    "description": "Comprehensive introduction to data science using Python, pandas, NumPy, and matplotlib for data analysis.",
+    "instructor": "Prof. Emily Davis",
+    "duration_hours": 40,
+    "difficulty_level": "intermediate",
+    "course_url": "https://www.coursera.org/learn/python-data-analysis",
+    "created_at": "2025-07-29T15:50:20.901Z",
+    "is_free": true
+  }
+},
+{
+  "model": "learning.course",
+  "pk": 4,
+  "fields": {
+    "title": "Machine Learning Basics",
+    "description": "Introduction to machine learning concepts, algorithms, and practical applications using scikit-learn.",
+    "instructor": "Dr. Alex Rodriguez",
+    "duration_hours": 35,
+    "difficulty_level": "intermediate",
+    "course_url": "https://www.coursera.org/learn/machine-learning",
+    "created_at": "2025-07-29T15:50:20.902Z",
+    "is_free": true
+  }
+},
+{
+  "model": "learning.course",
+  "pk": 5,
+  "fields": {
+    "title": "React.js Complete Guide",
+    "description": "Build modern web applications with React.js. Learn components, hooks, state management, and routing.",
+    "instructor": "Jessica Park",
+    "duration_hours": 45,
+    "difficulty_level": "intermediate",
+    "course_url": "https://www.udemy.com/course/react-the-complete-guide-incl-redux/",
+    "created_at": "2025-07-29T15:50:20.904Z",
+    "is_free": true
+  }
+},
+{
+  "model": "learning.course",
+  "pk": 6,
+  "fields": {
+    "title": "Database Design and SQL",
+    "description": "Learn database fundamentals, SQL queries, database design principles, and optimization techniques.",
+    "instructor": "Robert Wilson",
+    "duration_hours": 28,
+    "difficulty_level": "beginner",
+    "course_url": "https://www.coursera.org/learn/database-design",
+    "created_at": "2025-07-29T15:50:20.905Z",
+    "is_free": true
+  }
+},
+{
+  "model": "learning.course",
+  "pk": 7,
+  "fields": {
+    "title": "Cloud Computing with AWS",
+    "description": "Master AWS cloud services including EC2, S3, Lambda, and learn cloud architecture best practices.",
+    "instructor": "Maria Garcia",
+    "duration_hours": 50,
+    "difficulty_level": "advanced",
+    "course_url": "https://www.udemy.com/course/aws-certified-solutions-architect-associate/",
+    "created_at": "2025-07-29T15:50:20.906Z",
+    "is_free": true
+  }
+},
+{
+  "model": "learning.course",
+  "pk": 8,
+  "fields": {
+    "title": "Cybersecurity Fundamentals",
+    "description": "Learn essential cybersecurity concepts, threat analysis, encryption, and security best practices.",
+    "instructor": "David Kim",
+    "duration_hours": 32,
+    "difficulty_level": "beginner",
+    "course_url": "https://www.coursera.org/learn/cybersecurity-fundamentals",
+    "created_at": "2025-07-29T15:50:20.910Z",
+    "is_free": true
+  }
+},
+{
+  "model": "learning.course",
+  "pk": 9,
+  "fields": {
+    "title": "UI/UX Design Principles",
+    "description": "Master user interface and user experience design principles, wireframing, and prototyping.",
+    "instructor": "Anna Thompson",
+    "duration_hours": 30,
+    "difficulty_level": "beginner",
+    "course_url": "https://www.udemy.com/course/ui-ux-web-design-using-adobe-xd/",
+    "created_at": "2025-07-29T15:50:20.914Z",
+    "is_free": true
+  }
+},
+{
+  "model": "learning.course",
+  "pk": 10,
+  "fields": {
+    "title": "DevOps and CI/CD",
+    "description": "Learn DevOps practices, continuous integration, deployment pipelines, and infrastructure automation.",
+    "instructor": "Chris Martinez",
+    "duration_hours": 38,
+    "difficulty_level": "advanced",
+    "course_url": "https://www.udemy.com/course/learn-devops-ci-cd-with-jenkins-all-in-one-guide/",
+    "created_at": "2025-07-29T15:50:20.915Z",
+    "is_free": true
+  }
+},
+{
+  "model": "learning.course",
+  "pk": 11,
+  "fields": {
+    "title": "Mobile App Development with Flutter",
+    "description": "Build cross-platform mobile applications using Flutter and Dart programming language.",
+    "instructor": "Lisa Wang",
+    "duration_hours": 42,
+    "difficulty_level": "intermediate",
+    "course_url": "https://www.udemy.com/course/flutter-bootcamp-with-dart/",
+    "created_at": "2025-07-29T15:50:20.918Z",
+    "is_free": true
+  }
+},
+{
+  "model": "learning.course",
+  "pk": 12,
+  "fields": {
+    "title": "Artificial Intelligence Foundations",
+    "description": "Introduction to AI concepts, neural networks, deep learning, and practical AI applications.",
+    "instructor": "Dr. James Lee",
+    "duration_hours": 48,
+    "difficulty_level": "advanced",
+    "course_url": "https://www.coursera.org/learn/ai-for-everyone",
+    "created_at": "2025-07-29T15:50:20.920Z",
+    "is_free": true
+  }
+},
+{
+  "model": "learning.achievement",
+  "pk": 1,
+  "fields": {
+    "name": "First Steps",
+    "description": "Complete your first course",
+    "icon": "🎯",
+    "requirement_type": "courses_completed",
+    "requirement_value": 1
+  }
+},
+{
+  "model": "learning.achievement",
+  "pk": 2,
+  "fields": {
+    "name": "Course Collector",
+    "description": "Complete 5 courses",
+    "icon": "🏆",
+    "requirement_type": "courses_completed",
+    "requirement_value": 5
+  }
+},
+{
+  "model": "learning.achievement",
+  "pk": 3,
+  "fields": {
+    "name": "Quiz Champion",
+    "description": "Score 90% or higher on 10 quizzes",
+    "icon": "🧠",
+    "requirement_type": "quiz_excellence",
+    "requirement_value": 10
+  }
+},
+{
+  "model": "learning.achievement",
+  "pk": 4,
+  "fields": {
+    "name": "Subject Explorer",
+    "description": "Create 5 different subjects",
+    "icon": "📚",
+    "requirement_type": "subjects_created",
+    "requirement_value": 5
+  }
+},
+{
+  "model": "learning.achievement",
+  "pk": 5,
+  "fields": {
+    "name": "Course Master",
+    "description": "Complete 10 courses",
+    "icon": "🎓",
+    "requirement_type": "courses_completed",
+    "requirement_value": 10
+  }
+},
+{
+  "model": "learning.achievement",
+  "pk": 6,
+  "fields": {
+    "name": "AI Assistant",
+    "description": "Have 20 chat sessions with the AI",
+    "icon": "🤖",
+    "requirement_type": "chat_sessions",
+    "requirement_value": 20
+  }
+},
+{
+  "model": "learning.achievement",
+  "pk": 7,
+  "fields": {
+    "name": "Material Curator",
+    "description": "Upload 15 learning materials",
+    "icon": "📄",
+    "requirement_type": "materials_uploaded",
+    "requirement_value": 15
+  }
+},
+{
+  "model": "learning.achievement",
+  "pk": 8,
+  "fields": {
+    "name": "Perfect Score",
+    "description": "Get 100% on any quiz",
+    "icon": "💯",
+    "requirement_type": "perfect_quiz",
+    "requirement_value": 1
+  }
+},
+{
+  "model": "learning.learningresource",
+  "pk": 1,
+  "fields": {
+    "title": "Python Official Documentation",
+    "platform": "other",
+    "resource_url": "https://docs.python.org/",
+    "description": "Official Python documentation with tutorials and reference materials.",
+    "level": "beginner",
+    "clicks": 0,
+    "last_accessed": "2025-07-29T15:50:20.921Z"
+  }
+},
+{
+  "model": "learning.learningresource",
+  "pk": 2,
+  "fields": {
+    "title": "JavaScript MDN Web Docs",
+    "platform": "other",
+    "resource_url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript",
+    "description": "Comprehensive JavaScript documentation and tutorials.",
+    "level": "beginner",
+    "clicks": 0,
+    "last_accessed": "2025-07-29T15:50:20.924Z"
+  }
+},
+{
+  "model": "learning.learningresource",
+  "pk": 3,
+  "fields": {
+    "title": "React Official Tutorial",
+    "platform": "other",
+    "resource_url": "https://reactjs.org/tutorial/tutorial.html",
+    "description": "Official React tutorial for building interactive applications.",
+    "level": "beginner",
+    "clicks": 0,
+    "last_accessed": "2025-07-29T15:50:20.925Z"
+  }
+},
+{
+  "model": "learning.learningresource",
+  "pk": 4,
+  "fields": {
+    "title": "AWS Free Tier Guide",
+    "platform": "other",
+    "resource_url": "https://aws.amazon.com/free/",
+    "description": "Get started with AWS cloud services using the free tier.",
+    "level": "beginner",
+    "clicks": 0,
+    "last_accessed": "2025-07-29T15:50:20.926Z"
+  }
+},
+{
+  "model": "learning.learningresource",
+  "pk": 5,
+  "fields": {
+    "title": "SQL Tutorial on W3Schools",
+    "platform": "other",
+    "resource_url": "https://www.w3schools.com/sql/",
+    "description": "Interactive SQL tutorial with examples and exercises.",
+    "level": "beginner",
+    "clicks": 0,
+    "last_accessed": "2025-07-29T15:50:20.927Z"
+  }
+},
+{
+  "model": "learning.learningresource",
+  "pk": 6,
+  "fields": {
+    "title": "Machine Learning Course - Andrew Ng",
+    "platform": "coursera",
+    "resource_url": "https://www.coursera.org/learn/machine-learning",
+    "description": "Popular machine learning course by Stanford professor Andrew Ng.",
+    "level": "intermediate",
+    "clicks": 0,
+    "last_accessed": "2025-07-29T15:50:20.928Z"
+  }
+},
+{
+  "model": "learning.learningresource",
+  "pk": 7,
+  "fields": {
+    "title": "GitHub Git Handbook",
+    "platform": "other",
+    "resource_url": "https://guides.github.com/introduction/git-handbook/",
+    "description": "Learn Git version control basics and best practices.",
+    "level": "beginner",
+    "clicks": 0,
+    "last_accessed": "2025-07-29T15:50:20.929Z"
+  }
+},
+{
+  "model": "learning.learningresource",
+  "pk": 8,
+  "fields": {
+    "title": "CSS-Tricks Complete Guide to Flexbox",
+    "platform": "other",
+    "resource_url": "https://css-tricks.com/snippets/css/a-guide-to-flexbox/",
+    "description": "Comprehensive guide to CSS Flexbox layout.",
+    "level": "intermediate",
+    "clicks": 0,
+    "last_accessed": "2025-07-29T15:50:20.934Z"
+  }
+}
+]

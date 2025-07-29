@@ -27,8 +27,9 @@
                     <div class="mb-3">
                         <p>{{ progress.notes|default:"No notes yet." }}</p>
                     </div>
-                    <a href="{% url 'learning:update_progress' course.id %}" class="btn btn-primary mb-3">
-                        <i class="fas fa-edit me-2"></i>Update Progress & Notes
+                    <a href="{{ course.course_url }}" target="_blank" class="btn btn-primary mb-3 start-course-btn" 
+                       data-course-id="{{ course.id }}" data-course-title="{{ course.title }}">
+                        <i class="fas fa-external-link-alt me-2"></i>Start Course
                     </a>
                     {% if notes_history %}
                     <hr>
@@ -50,4 +51,47 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Track when users click on course links
+    const courseButtons = document.querySelectorAll('.start-course-btn');
+    
+    courseButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const courseId = this.getAttribute('data-course-id');
+            const courseTitle = this.getAttribute('data-course-title');
+            
+            // Store the course info in sessionStorage
+            sessionStorage.setItem('lastViewedCourse', JSON.stringify({
+                id: courseId,
+                title: courseTitle,
+                timestamp: Date.now()
+            }));
+        });
+    });
+    
+    // Check if user is returning from a course
+    const lastViewedCourse = sessionStorage.getItem('lastViewedCourse');
+    if (lastViewedCourse) {
+        const courseData = JSON.parse(lastViewedCourse);
+        const timeDiff = Date.now() - courseData.timestamp;
+        
+        // If user returned within 5 minutes of clicking the course link
+        if (timeDiff < 5 * 60 * 1000) {
+            // Show confirmation dialog
+            if (confirm(`Did you start the course "${courseData.title}"?`)) {
+                // User confirmed they started the course
+                window.location.href = `/learning/course/${courseData.id}/check-registration/?register=1`;
+            } else {
+                // User didn't start the course
+                window.location.href = `/learning/course/${courseData.id}/check-registration/?register=0`;
+            }
+            
+            // Clear the stored data
+            sessionStorage.removeItem('lastViewedCourse');
+        }
+    }
+});
+</script>
 {% endblock %} 
