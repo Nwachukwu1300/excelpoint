@@ -36,6 +36,23 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+def clean_text(text: str) -> str:
+    """Clean text by removing null characters and other problematic characters."""
+    if not text:
+        return ""
+    
+    # Remove null characters (0x00)
+    text = text.replace('\x00', '')
+    
+    # Remove other control characters except newlines and tabs
+    import re
+    text = re.sub(r'[\x01-\x08\x0B\x0C\x0E-\x1F\x7F]', '', text)
+    
+    # Normalize whitespace
+    text = re.sub(r'\s+', ' ', text)
+    
+    return text.strip()
+
 def extract_text_from_pdf(file_path: str) -> str:
     """Extract text from PDF file using PyPDF2."""
     try:
@@ -80,6 +97,14 @@ class ContentProcessor:
         else:
             self.transcription_service = None
             logger.warning("Transcription service not available. Video/audio processing will not work.")
+        
+        # Initialize storage service for S3 file handling
+        try:
+            from .services.storage_factory import StorageFactory
+            self.storage_service = StorageFactory.get_storage_service()
+        except ImportError:
+            self.storage_service = None
+            logger.warning("Storage service not available. S3 file processing may not work.")
         
         # Batch processing configuration
         self.batch_size = batch_size or self._calculate_optimal_batch_size()
@@ -188,9 +213,43 @@ class ContentProcessor:
         except Exception as e:
             raise Exception(f"Error processing audio file: {str(e)}")
 
+    def _download_s3_file(self, s3_path: str) -> str:
+        """Download S3 file to temporary location"""
+        import tempfile
+        import os
+        
+        if not self.storage_service:
+            raise Exception("Storage service not available for S3 file download")
+        
+        # Extract bucket and key from S3 path
+        if s3_path.startswith('s3://'):
+            parts = s3_path[5:].split('/', 1)
+            bucket = parts[0]
+            key = parts[1] if len(parts) > 1 else ''
+        else:
+            # Handle URL format
+            parts = s3_path.split('/')
+            bucket = parts[2].split('.')[0]
+            key = '/'.join(parts[3:])
+        
+        # Create temporary file
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(key)[1])
+        
+        # Download from S3
+        self.storage_service.s3_client.download_file(bucket, key, temp_file.name)
+        
+        return temp_file.name
+
     def process_file(self, file_path: str, use_batch_processing: bool = None) -> List[Dict[str, Any]]:
         """Process any type of file and return chunks with embeddings."""
         try:
+            # Handle S3 files
+            temp_file_path = None
+            if file_path.startswith('s3://') or 's3.amazonaws.com' in file_path:
+                logger.info(f"Processing S3 file: {file_path}")
+                temp_file_path = self._download_s3_file(file_path)
+                file_path = temp_file_path
+            
             file_type = self.get_file_type(file_path)
             
             # Extract text based on file type
@@ -240,8 +299,11 @@ class ContentProcessor:
             else:
                 raise Exception(f"Unsupported file type: {file_type}")
             
+            # Clean the extracted text
+            cleaned_text = clean_text(text)
+
             # Split into chunks
-            chunks = self.text_splitter.split_text(text)
+            chunks = self.text_splitter.split_text(cleaned_text)
             logger.info(f"Split file into {len(chunks)} chunks")
             
             # Determine if batch processing should be used
@@ -249,11 +311,27 @@ class ContentProcessor:
                 use_batch_processing = self._should_use_batch_processing(len(chunks))
             
             if use_batch_processing:
-                return self.process_chunks_in_batches(chunks)
+                result = self.process_chunks_in_batches(chunks)
             else:
-                return self.process_chunks_immediately(chunks)
+                result = self.process_chunks_immediately(chunks)
+            
+            # Clean up temporary file if it was created
+            if temp_file_path and os.path.exists(temp_file_path):
+                try:
+                    os.unlink(temp_file_path)
+                    logger.info(f"Cleaned up temporary file: {temp_file_path}")
+                except Exception as e:
+                    logger.warning(f"Failed to clean up temporary file {temp_file_path}: {e}")
+            
+            return result
             
         except Exception as e:
+            # Clean up temporary file on error
+            if temp_file_path and os.path.exists(temp_file_path):
+                try:
+                    os.unlink(temp_file_path)
+                except:
+                    pass
             raise Exception(f"Error processing file: {str(e)}")
     
     def process_chunks_immediately(self, chunks: List[str]) -> List[Dict[str, Any]]:
@@ -262,11 +340,18 @@ class ContentProcessor:
         
         chunk_data = []
         for i, chunk in enumerate(chunks):
+            # Clean the chunk content
+            cleaned_chunk = clean_text(chunk)
+            
+            # Skip empty chunks
+            if not cleaned_chunk:
+                continue
+                
             # Generate embedding
-            embedding = self.model.encode(chunk)
+            embedding = self.model.encode(cleaned_chunk)
             
             chunk_data.append({
-                'content': chunk,
+                'content': cleaned_chunk,
                 'chunk_index': i,
                 'embedding_vector': embedding.tolist()
             })
@@ -296,8 +381,15 @@ class ContentProcessor:
             
             # Convert to list format and add to results
             for i, (chunk, embedding) in enumerate(zip(batch_chunks, batch_embeddings)):
+                # Clean the chunk content
+                cleaned_chunk = clean_text(chunk)
+                
+                # Skip empty chunks
+                if not cleaned_chunk:
+                    continue
+                    
                 chunk_data.append({
-                    'content': chunk,
+                    'content': cleaned_chunk,
                     'chunk_index': batch_start + i,
                     'embedding_vector': embedding.tolist()
                 })

@@ -40,7 +40,14 @@ def process_material(material_id: int):
         
         # Initialize ContentProcessor with batch processing for large files
         processor = ContentProcessor(memory_threshold=0.7)  # Use batch processing if memory > 70%
-        file_path = material.file.path
+        
+        # Handle both local and S3 files
+        if hasattr(material.file, 'url') and 's3.amazonaws.com' in material.file.url:
+            # S3 file - use the URL
+            file_path = material.file.url
+        else:
+            # Local file - use the path
+            file_path = material.file.path
         
         # Process the file using the unified processor with automatic batch processing
         chunks_data = processor.process_file(file_path)
@@ -208,23 +215,20 @@ def generate_quiz_from_material(self, material_id, num_questions=10):
         
         # Don't change material status - it should already be COMPLETED from process_material
         
-        # Extract text content
-        if material.file_type == 'PDF':
-            text_content = extract_text_from_pdf(material.file.path)
-        elif material.file_type in ['DOCX', 'DOC']:
-            # Use ContentProcessor for Word documents
-            processor = ContentProcessor()
-            chunks_data = processor.process_file(material.file.path)
-            text_content = '\n'.join([chunk['content'] for chunk in chunks_data])
-        elif material.file_type in ['VIDEO', 'AUDIO']:
-            # Use ContentProcessor for video/audio files (handles transcription)
-            processor = ContentProcessor()
-            chunks_data = processor.process_file(material.file.path)
-            text_content = '\n'.join([chunk['content'] for chunk in chunks_data])
+        # Use ContentProcessor to handle both local and S3 files
+        processor = ContentProcessor()
+        
+        # Determine file path for processing
+        if hasattr(material.file, 'url') and 's3.amazonaws.com' in material.file.url:
+            # S3 file - use the URL
+            file_path = material.file.url
         else:
-            # For other file types, read as text
-            with open(material.file.path, 'r', encoding='utf-8') as f:
-                text_content = f.read()
+            # Local file - use the path
+            file_path = material.file.path
+        
+        # Process the file to get text content
+        chunks_data = processor.process_file(file_path)
+        text_content = '\n'.join([chunk['content'] for chunk in chunks_data])
         
         if not text_content.strip():
             logger.warning(f"No text content found in material {material_id}")
@@ -235,6 +239,7 @@ def generate_quiz_from_material(self, material_id, num_questions=10):
         # Create or get quiz for this material
         quiz, created = Quiz.objects.get_or_create(
             subject=material.subject,
+            material=material,  # Link to specific material
             title=f"Quiz: {material.file.name}",
             defaults={
                 'description': f"Auto-generated quiz from {material.file.name}",
@@ -534,7 +539,7 @@ def generate_dynamic_quiz_questions(self, attempt_id, num_questions=10):
     try:
         attempt = UserQuizAttempt.objects.get(id=attempt_id)
         quiz = attempt.quiz
-        material = quiz.subject.materials.first()  # Get the first material for now
+        material = quiz.material  # Get the specific material this quiz was generated from
         
         if not material:
             raise ValueError("No material found for this quiz")

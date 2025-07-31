@@ -53,5 +53,8 @@ google-auth>=2.23.0
 google-auth-oauthlib>=1.1.0
 google-auth-httplib2>=0.1.1
 
+# AWS S3 Storage
+django-storages>=1.14.0
+
 # Optional - uncomment if needed
 # django-cors-headers==4.3.1

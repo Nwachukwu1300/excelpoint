@@ -756,10 +756,8 @@ class SubjectMaterialViewSet(viewsets.ModelViewSet):
         """Get quiz for this specific material"""
         material = self.get_object()
         try:
-            quiz = Quiz.objects.get(
-                subject=material.subject,
-                title__icontains=material.file.name
-            )
+            # Use the material field to find the quiz
+            quiz = Quiz.objects.get(material=material)
             
             questions_data = []
             for question in quiz.questions.all().order_by('order'):

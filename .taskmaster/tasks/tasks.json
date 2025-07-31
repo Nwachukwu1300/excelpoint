@@ -693,11 +693,50 @@
             "testStrategy": "Performance tests for database optimizations. Unit tests for new hooks and context updates. End-to-end tests for overall system behavior with multiple sessions."
           }
         ]
+      },
+      {
+        "id": 17,
+        "title": "Fix Quiz Generation Material Isolation Issue",
+        "description": "Fix the bug where quiz questions are generated from wrong materials. When user uploads CV to subject 2, quiz questions should come from CV content, not from church newsletter in same subject.",
+        "details": "The issue is in the quiz generation logic where questions are being pulled from all materials in a subject instead of being isolated to the specific uploaded material. Need to investigate and fix the material filtering in quiz generation tasks and API endpoints.",
+        "testStrategy": "Test by uploading different materials to same subject and verifying quiz questions come from correct material only.",
+        "status": "done",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Investigate Current Quiz Generation Logic",
+            "description": "Examine the quiz generation code to understand why questions are being pulled from wrong materials. Check the material filtering logic in quiz generation tasks and API endpoints.",
+            "details": "",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 17
+          },
+          {
+            "id": 2,
+            "title": "Fix Material Isolation in Quiz Generation",
+            "description": "Update the quiz generation logic to ensure questions are generated only from the specific material that was uploaded, not from all materials in the subject.",
+            "details": "",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 17
+          },
+          {
+            "id": 3,
+            "title": "Test and Validate Material-Specific Quiz Generation",
+            "description": "Create comprehensive tests to verify that quiz questions are generated from the correct material and not from other materials in the same subject.",
+            "details": "",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 17
+          }
+        ]
       }
     ],
     "metadata": {
       "created": "2025-07-08T16:07:30.354Z",
-      "updated": "2025-07-09T00:03:50.464Z",
+      "updated": "2025-07-31T14:47:13.440Z",
       "description": "Tasks for xp-chatbot context"
     }
   },
@@ -1614,6 +1653,14 @@
       "created": "2025-07-08T16:14:16.947Z",
       "updated": "2025-07-08T16:14:16.947Z",
       "description": "MVP: Chat scoped to subject data only - Security and data isolation"
+    }
+  },
+  "aws-s3-integration": {
+    "tasks": [],
+    "metadata": {
+      "created": "2025-07-30T16:19:27.391Z",
+      "updated": "2025-07-30T16:19:27.391Z",
+      "description": "AWS S3 integration tasks for ExcelPoint file storage"
     }
   }
 }

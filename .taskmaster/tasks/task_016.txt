@@ -1,0 +1,104 @@
+# Task ID: 16
+# Title: Implement Chat Session Persistence and History Management
+# Status: pending
+# Dependencies: 4, 7, 9
+# Priority: medium
+# Description: Build comprehensive session management with 5-minute timeout logic, chat history display, and seamless conversation continuity across page refreshes and navigation.
+# Details:
+1. **Session Timeout Logic Implementation:**
+   - Extend existing ChatSession model with `last_activity` timestamp field that updates on every message
+   - Create SessionManager service class with methods: `get_or_create_session()`, `is_session_active()`, `extend_session()`
+   - Implement 5-minute inactivity threshold: if `last_activity` > 5 minutes ago, create new session
+   - Add session status tracking: 'active', 'expired', 'archived'
+
+2. **Session Persistence Across Navigation:**
+   - Modify ChatContext to store active session_id in localStorage
+   - Update useChatSession hook to check for existing active session on component mount
+   - Implement session validation endpoint: GET /api/subjects/{subject_id}/chat/sessions/{session_id}/validate/
+   - Add session restoration logic that loads last 10 messages when returning within timeout
+
+3. **Chat History Sidebar Implementation:**
+   - Create ChatHistoryPanel component with collapsible sidebar design
+   - Add GET /api/subjects/{subject_id}/chat/sessions/ endpoint returning last 30 sessions with metadata
+   - Display sessions with: creation date, message count, first message preview (50 chars)
+   - Implement session switching with proper state management and message loading
+
+4. **Backend Session Management:**
+   - Update ChatViewSet with session management endpoints
+   - Modify send_message endpoint to handle session timeout logic automatically
+   - Create background Celery task for session cleanup (remove sessions > 30 days old)
+   - Add session metadata tracking: duration, message_count, last_activity
+
+5. **Frontend State Management:**
+   - Extend ChatContext with session history state and current session tracking
+   - Implement useSessionHistory hook for history management
+   - Add session switching functionality with optimistic updates
+   - Create session status indicators in UI (active/expired/new)
+
+6. **Database Optimization:**
+   - Add database indexes on ChatSession.last_activity and ChatSession.created_at
+   - Implement efficient pagination for session history
+   - Add session cleanup scheduled task using Celery Beat
+
+# Test Strategy:
+1. **Session Timeout Tests:**
+   - Unit tests for SessionManager timeout logic with mocked timestamps
+   - Integration tests verifying new session creation after 5-minute inactivity
+   - Test session extension on message activity
+
+2. **Persistence Tests:**
+   - Test session restoration across page refreshes using localStorage
+   - Verify conversation continuity when returning within timeout window
+   - Test session validation endpoint with various session states
+
+3. **History Management Tests:**
+   - Test chat history API endpoint with pagination and filtering
+   - Verify last 30 sessions display with proper metadata
+   - Test session switching functionality and state management
+
+4. **Cleanup and Performance Tests:**
+   - Test Celery cleanup task with mock old sessions
+   - Performance tests for session queries with large datasets
+   - Test concurrent session access and race conditions
+
+5. **User Experience Tests:**
+   - End-to-end tests for seamless conversation flow
+   - Test session status indicators and visual feedback
+   - Mobile responsiveness tests for history sidebar
+
+6. **Error Handling Tests:**
+   - Test invalid session ID handling
+   - Test network failures during session operations
+   - Test localStorage corruption scenarios
+
+# Subtasks:
+## 1. Implement Session Timeout Logic [pending]
+### Dependencies: None
+### Description: Extend ChatSession model and create SessionManager service with timeout functionality
+### Details:
+Add last_activity timestamp to ChatSession model. Create SessionManager with get_or_create_session(), is_session_active(), and extend_session() methods. Implement 5-minute inactivity threshold and session status tracking.
+
+## 2. Develop Session Persistence Across Navigation [pending]
+### Dependencies: 16.1
+### Description: Modify ChatContext and implement session validation and restoration logic
+### Details:
+Update ChatContext to store session_id in localStorage. Modify useChatSession hook for existing session checks. Create session validation endpoint and implement restoration logic for last 10 messages.
+
+## 3. Create Chat History Sidebar [pending]
+### Dependencies: 16.1, 16.2
+### Description: Implement ChatHistoryPanel component and related backend endpoints
+### Details:
+Design collapsible sidebar for ChatHistoryPanel. Add endpoint for retrieving last 30 sessions with metadata. Implement session switching functionality with proper state management.
+
+## 4. Enhance Backend Session Management [pending]
+### Dependencies: 16.1
+### Description: Update ChatViewSet and implement session cleanup task
+### Details:
+Modify ChatViewSet with session management endpoints. Update send_message to handle session timeout. Create Celery task for removing old sessions. Add session metadata tracking.
+
+## 5. Optimize Frontend State Management and Database [pending]
+### Dependencies: 16.2, 16.3, 16.4
+### Description: Extend ChatContext, implement hooks, and optimize database operations
+### Details:
+Update ChatContext with session history state. Create useSessionHistory hook. Implement session switching with optimistic updates. Add database indexes and efficient pagination. Create session cleanup scheduled task.
+

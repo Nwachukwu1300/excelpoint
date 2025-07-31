@@ -746,7 +746,8 @@ class RAGServiceTest(TestCase):
         
         result = rag_service.generate_response(
             query="What is quantum physics?",
-            subject_id=self.subject.id
+            subject_id=self.subject.id,
+            user_id=self.user.id
         )
         
         # Should return standard fallback response
@@ -760,11 +761,11 @@ class RAGServiceTest(TestCase):
         
         # Empty query
         with self.assertRaises(ValueError):
-            rag_service.generate_response("", self.subject.id)
+            rag_service.generate_response("", self.subject.id, user_id=self.user.id)
         
         # Non-existent subject
         with self.assertRaises(ValueError):
-            rag_service.generate_response("What is Python?", 99999)
+            rag_service.generate_response("What is Python?", 99999, user_id=self.user.id)
 
     @patch('subjects.services.rag_service.VectorSearchService')
     def test_prepare_context(self, mock_vector_service):
@@ -1003,7 +1004,8 @@ class RAGServiceIntegrationTest(TestCase):
         result = rag_service.generate_response(
             query="Tell me more about supervised learning",
             subject_id=self.subject.id,
-            chat_history=chat_history
+            chat_history=chat_history,
+            user_id=self.user.id
         )
         
         # Verify OpenAI was called with history in the prompt
@@ -1040,7 +1042,8 @@ class RAGServiceIntegrationTest(TestCase):
         # Query about something not in the materials
         result = rag_service.generate_response(
             query="What is quantum computing?",
-            subject_id=self.subject.id
+            subject_id=self.subject.id,
+            user_id=self.user.id
         )
         
         # Should return fallback response

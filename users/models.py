@@ -1,6 +1,28 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.db import models #gives us access to Django's database field types (like CharField, URLField, etc.).
+from django.conf import settings
+
+class FileStorageMixin:
+    """Mixin to handle file storage operations"""
+    
+    def save_file(self, file_obj, path):
+        """Save file using the configured storage service"""
+        from subjects.services.storage_factory import StorageFactory
+        storage_service = StorageFactory.get_storage_service()
+        return storage_service.save_file(file_obj, path)
+    
+    def get_file_url(self, path):
+        """Get file URL using the configured storage service"""
+        from subjects.services.storage_factory import StorageFactory
+        storage_service = StorageFactory.get_storage_service()
+        return storage_service.get_file_url(path)
+    
+    def delete_file(self, path):
+        """Delete file using the configured storage service"""
+        from subjects.services.storage_factory import StorageFactory
+        storage_service = StorageFactory.get_storage_service()
+        storage_service.delete_file(path)
 
 class User(AbstractUser):
     """
@@ -51,6 +73,15 @@ class User(AbstractUser):
     def __str__(self):
         return self.username
 
+def get_storage_backend():
+    """Get the appropriate storage backend based on settings"""
+    if getattr(settings, 'STORAGE_BACKEND', 'local') == 's3':
+        from storages.backends.s3boto3 import S3Boto3Storage
+        return S3Boto3Storage()
+    else:
+        from django.core.files.storage import FileSystemStorage
+        return FileSystemStorage()
+
 class UserProfile(models.Model):
     """
     User profile model for storing additional user information.
@@ -63,6 +94,7 @@ class UserProfile(models.Model):
     
     avatar = models.ImageField(
         upload_to='avatars/',
+        storage=get_storage_backend(),
         null=True,
         blank=True,
         help_text="User's profile picture"
@@ -85,6 +117,10 @@ class UserProfile(models.Model):
     
     def __str__(self):
         return f"{self.user.username}'s profile"
+    
+
+    
+
 
 class UserEducation(models.Model):
     """

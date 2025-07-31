@@ -42,6 +42,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    # Third-party apps
+    'storages',  # Required for S3 storage
     # our apps
     'users',
     'learning',
@@ -141,8 +143,9 @@ STATICFILES_DIRS = [
     BASE_DIR / 'static'
 ]
 
+# Media files configuration
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # Only used for local storage
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
@@ -198,3 +201,39 @@ GOOGLE_OAUTH_SCOPES = [
     'https://www.googleapis.com/auth/userinfo.email',
     'https://www.googleapis.com/auth/userinfo.profile',
 ]
+
+# AI Chatbot Response Caching Configuration
+CACHE_ENABLED = os.getenv('CACHE_ENABLED', 'True').lower() == 'true'
+CACHE_TTL_HOURS = int(os.getenv('CACHE_TTL_HOURS', '48'))  # Default 48 hours
+CACHE_MAX_SIZE = int(os.getenv('CACHE_MAX_SIZE', '10000'))  # Maximum cached entries
+CACHE_LOG_LEVEL = os.getenv('CACHE_LOG_LEVEL', 'INFO')  # Logging verbosity
+
+# Cache performance settings
+CACHE_MIN_HIT_COUNT = int(os.getenv('CACHE_MIN_HIT_COUNT', '1'))  # Minimum hits before considering popular
+CACHE_CLEANUP_INTERVAL_HOURS = int(os.getenv('CACHE_CLEANUP_INTERVAL_HOURS', '24'))  # Cleanup frequency
+
+# Storage Configuration
+STORAGE_BACKEND = os.getenv('STORAGE_BACKEND', 'local')  # 'local' or 's3'
+
+# S3 Configuration
+if STORAGE_BACKEND == 's3':
+    # S3 Settings
+    AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
+    AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+    AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
+    AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME', 'eu-north-1')
+    AWS_S3_CUSTOM_DOMAIN = os.getenv('AWS_S3_CUSTOM_DOMAIN')
+    
+    # S3 Storage Settings
+    AWS_S3_OBJECT_PARAMETERS = {
+        'CacheControl': 'max-age=86400',
+    }
+    AWS_DEFAULT_ACL = 'private'
+    AWS_QUERYSTRING_AUTH = False
+    
+    # Use S3 for media files
+    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    MEDIA_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com/'
+    
+    # Ensure MEDIA_ROOT is not used when S3 is enabled
+    MEDIA_ROOT = None

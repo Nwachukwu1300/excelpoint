@@ -2,8 +2,40 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from django.core.validators import FileExtensionValidator
 from django.utils import timezone
+from django.core.files.storage import default_storage
+from django.conf import settings
 
 User = get_user_model()
+
+class FileStorageMixin:
+    """Mixin to handle file storage operations"""
+    
+    def save_file(self, file_obj, path):
+        """Save file using the configured storage service"""
+        from .services.storage_factory import StorageFactory
+        storage_service = StorageFactory.get_storage_service()
+        return storage_service.save_file(file_obj, path)
+    
+    def get_file_url(self, path):
+        """Get file URL using the configured storage service"""
+        from .services.storage_factory import StorageFactory
+        storage_service = StorageFactory.get_storage_service()
+        return storage_service.get_file_url(path)
+    
+    def delete_file(self, path):
+        """Delete file using the configured storage service"""
+        from .services.storage_factory import StorageFactory
+        storage_service = StorageFactory.get_storage_service()
+        storage_service.delete_file(path)
+
+def get_storage_backend():
+    """Get the appropriate storage backend based on settings"""
+    if getattr(settings, 'STORAGE_BACKEND', 'local') == 's3':
+        from storages.backends.s3boto3 import S3Boto3Storage
+        return S3Boto3Storage()
+    else:
+        from django.core.files.storage import FileSystemStorage
+        return FileSystemStorage()
 
 class Subject(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='subjects')
@@ -36,6 +68,7 @@ class SubjectMaterial(models.Model):
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='materials')
     file = models.FileField(
         upload_to='subject_materials/',
+        storage=get_storage_backend(),
         validators=[FileExtensionValidator(allowed_extensions=['pdf', 'docx', 'doc', 'mp4', 'mov', 'avi', 'mp3', 'wav', 'm4a'])]
     )
     file_type = models.CharField(max_length=10, choices=FILE_TYPES)
@@ -45,6 +78,10 @@ class SubjectMaterial(models.Model):
 
     def __str__(self):
         return f"{self.file.name} - {self.subject.name}"
+    
+
+    
+
 
 class ContentChunk(models.Model):
     EMBEDDING_STATUS_CHOICES = (
@@ -107,6 +144,7 @@ class Flashcard(models.Model):
 # Enhanced Quiz Models
 class Quiz(models.Model):
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='quizzes')
+    material = models.ForeignKey(SubjectMaterial, on_delete=models.CASCADE, related_name='quizzes', null=True, blank=True, help_text="The material this quiz was generated from")
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -429,3 +467,84 @@ class QuizAttempt(models.Model):
 
     def __str__(self):
         return f"Legacy Attempt by {self.user.username} on {self.quiz_question.question[:30]}..."
+
+class CachedResponse(models.Model):
+    """
+    Model for caching AI chatbot responses to reduce OpenAI API costs and improve performance.
+    Stores responses with intelligent cache keys based on user, subject, and question.
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='cached_responses')
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='cached_responses')
+    question_hash = models.CharField(
+        max_length=64, 
+        help_text="MD5 hash of normalized question text"
+    )
+    question_text = models.TextField(
+        help_text="Original question text for debugging and analytics"
+    )
+    response_data = models.JSONField(
+        help_text="Complete RAG response data including response, metadata, and retrieved chunks"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(
+        help_text="When this cache entry expires and should be cleaned up"
+    )
+    hit_count = models.IntegerField(
+        default=0,
+        help_text="Number of times this cached response has been accessed"
+    )
+    last_accessed = models.DateTimeField(
+        auto_now=True,
+        help_text="Last time this cache entry was accessed"
+    )
+
+    class Meta:
+        ordering = ['-last_accessed']
+        unique_together = ['user', 'subject', 'question_hash']
+        indexes = [
+            models.Index(fields=['user', 'subject', 'question_hash']),
+            models.Index(fields=['expires_at']),
+            models.Index(fields=['hit_count']),
+            models.Index(fields=['last_accessed']),
+        ]
+        verbose_name = "Cached Response"
+        verbose_name_plural = "Cached Responses"
+
+    def __str__(self):
+        question_preview = self.question_text[:50] + "..." if len(self.question_text) > 50 else self.question_text
+        return f"Cache: {self.user.username} - {self.subject.name} - {question_preview}"
+
+    def is_expired(self):
+        """Check if this cache entry has expired"""
+        from django.utils import timezone
+        return timezone.now() > self.expires_at
+
+    def increment_hit_count(self):
+        """Increment the hit count and update last_accessed"""
+        self.hit_count += 1
+        self.save(update_fields=['hit_count', 'last_accessed'])
+
+    def get_response_content(self):
+        """Extract the main response content from response_data"""
+        return self.response_data.get('response', '')
+
+    def get_retrieved_chunks(self):
+        """Extract retrieved chunks from response_data"""
+        return self.response_data.get('retrieved_chunks', [])
+
+    def get_metadata(self):
+        """Extract metadata from response_data"""
+        return self.response_data.get('metadata', {})
+
+    @classmethod
+    def generate_question_hash(cls, question_text):
+        """Generate MD5 hash for normalized question text"""
+        import hashlib
+        normalized = question_text.lower().strip()
+        return hashlib.md5(normalized.encode('utf-8')).hexdigest()
+
+    @classmethod
+    def get_cache_key(cls, user_id, subject_id, question_text):
+        """Generate cache key for lookup"""
+        question_hash = cls.generate_question_hash(question_text)
+        return f"{user_id}:{subject_id}:{question_hash}"

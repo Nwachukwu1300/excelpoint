@@ -1,0 +1,37 @@
+# Task ID: 1
+# Title: Create Chat Data Models
+# Status: done
+# Dependencies: None
+# Priority: high
+# Description: Design and implement Django models for chat sessions and messages with proper user isolation and subject scoping
+# Details:
+Create ChatSession model linking User and Subject with fields: id, user (ForeignKey), subject (ForeignKey), created_at, updated_at, is_active. Create ChatMessage model with fields: id, session (ForeignKey to ChatSession), role (CharField with choices: 'user', 'assistant'), content (TextField), timestamp, metadata (JSONField for storing context info). Add proper indexes on user+subject for ChatSession and session+timestamp for ChatMessage. Use Django's migration system and ensure proper foreign key constraints.
+
+# Test Strategy:
+Unit tests for model creation, validation, and relationships. Test user isolation by ensuring users can only access their own chat sessions. Test subject scoping to verify sessions are properly linked to subjects.
+
+# Subtasks:
+## 1. Design ChatSession Model [done]
+### Dependencies: None
+### Description: Add ChatSession model to subjects/models.py with relationships to existing Subject and User models
+### Details:
+Create ChatSession model with fields: user (ForeignKey to User), subject (ForeignKey to Subject), created_at, updated_at, is_active (BooleanField), title (CharField, optional). Add unique_together constraint on user+subject to ensure one active session per user-subject pair. Include proper __str__ method and Meta class.
+
+## 2. Design ChatMessage Model [done]
+### Dependencies: None
+### Description: Add ChatMessage model to subjects/models.py for storing individual chat messages
+### Details:
+Create ChatMessage model with fields: session (ForeignKey to ChatSession), role (CharField with choices: 'user', 'assistant'), content (TextField), timestamp (DateTimeField auto_now_add=True), metadata (JSONField for storing context info like retrieved chunks). Add index on session+timestamp for efficient queries. Include proper __str__ method and Meta ordering.
+
+## 3. Create Database Migration [done]
+### Dependencies: 1.1, 1.2
+### Description: Generate and apply Django migration for the new chat models
+### Details:
+Run 'python manage.py makemigrations subjects' to create migration file for ChatSession and ChatMessage models. Review generated migration for proper field types and constraints. Apply migration with 'python manage.py migrate'. Verify migration applies successfully and database schema is updated correctly.
+
+## 4. Test Chat Models [done]
+### Dependencies: 1.3
+### Description: Create unit tests for ChatSession and ChatMessage models to verify proper functionality
+### Details:
+Add test cases to subjects/tests.py for: ChatSession creation with user+subject relationships, ChatMessage creation with proper role validation, user isolation (users can only access their own sessions), subject scoping (sessions properly linked to subjects), model str methods, and database constraints. Run 'python manage.py test subjects.tests' to verify all tests pass.
+

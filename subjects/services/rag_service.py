@@ -5,6 +5,7 @@ from openai import OpenAI
 from django.conf import settings
 
 from .vector_search import VectorSearchService
+from .cache_service import ChatbotCacheService
 from ..models import Subject
 
 logger = logging.getLogger(__name__)
@@ -22,6 +23,7 @@ class RAGService:
         self.vector_service = VectorSearchService()
         self.openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
         self.model = getattr(settings, 'OPENAI_MODEL', 'gpt-3.5-turbo')
+        self.cache_service = ChatbotCacheService()
         
         # Configuration parameters
         self.max_context_length = 3000  # Maximum characters for context
@@ -37,13 +39,13 @@ class RAGService:
         user_id: Optional[int] = None
     ) -> Dict[str, Any]:
         """
-        Generate a response to a user query using RAG pipeline.
+        Generate a response to a user query using RAG pipeline with caching.
         
         Args:
             query: The user's question/query
             subject_id: ID of the subject to search within  
             chat_history: Previous conversation history (optional)
-            user_id: ID of the user making the request (for logging)
+            user_id: ID of the user making the request (for caching and logging)
             
         Returns:
             Dictionary containing response, metadata, and retrieved chunks
@@ -65,18 +67,30 @@ class RAGService:
             query = query.strip()
             chat_history = chat_history or []
             
-            logger.info(f"Generating response for query: '{query[:50]}...' (subject: {subject_id})")
+            logger.info(f"Generating response for query: '{query[:50]}...' (subject: {subject_id}, user: {user_id})")
             
-            # Step 1: Perform vector search to retrieve relevant chunks
+            # Step 1: Check cache for existing response (only for non-followup queries)
+            if user_id and not self._is_followup_request(query, chat_history):
+                cached_response = self.cache_service.get_cached_response(
+                    user_id=user_id,
+                    subject_id=subject_id,
+                    question_text=query
+                )
+                
+                if cached_response:
+                    logger.info(f"Returning cached response for user {user_id}, subject {subject_id}")
+                    return cached_response
+            
+            # Step 2: Perform vector search to retrieve relevant chunks
             search_results = self._retrieve_relevant_chunks(query, subject_id)
             
-            # Step 2: Prepare context from retrieved chunks
+            # Step 3: Prepare context from retrieved chunks
             context = self._prepare_context(search_results)
             
-            # Step 3: Format chat history for context
+            # Step 4: Format chat history for context
             formatted_history = self._format_chat_history(chat_history)
             
-            # Step 4: Generate response using OpenAI
+            # Step 5: Generate response using OpenAI
             response_data = self._generate_llm_response(
                 query=query,
                 context=context,
@@ -84,10 +98,10 @@ class RAGService:
                 subject_id=subject_id
             )
             
-            # Step 5: Get subject information for fallback messages
+            # Step 6: Get subject information for fallback messages
             subject_name = self._get_subject_name(subject_id)
             
-            # Step 6: Validate and post-process response
+            # Step 7: Validate and post-process response
             validated_response = self._validate_response(response_data['content'], context, subject_name, query, chat_history)
             
             end_time = time.time()
@@ -111,6 +125,22 @@ class RAGService:
             
             logger.info(f"Successfully generated response in {response_time:.2f}s "
                        f"(chunks: {len(search_results)}, subject: {subject_id})")
+            
+            # Step 8: Cache the response for future use (only for non-followup queries)
+            if user_id and not self._is_followup_request(query, chat_history):
+                try:
+                    cache_success = self.cache_service.store_cached_response(
+                        user_id=user_id,
+                        subject_id=subject_id,
+                        question_text=query,
+                        response_data=result
+                    )
+                    if cache_success:
+                        logger.debug(f"Cached response for user {user_id}, subject {subject_id}")
+                    else:
+                        logger.warning(f"Failed to cache response for user {user_id}, subject {subject_id}")
+                except Exception as e:
+                    logger.error(f"Error caching response: {str(e)}")
             
             return result
             

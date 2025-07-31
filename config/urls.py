@@ -39,4 +39,8 @@ urlpatterns = [
     path('subjects/create/', create_subject, name='create_subject'),
     path('subjects/<int:pk>/upload/', upload_material, name='upload_material'),
     path('subjects/<int:pk>/', SubjectDetailView.as_view(), name='subject_detail'),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+]
+
+# Only serve media files locally when not using S3
+if getattr(settings, 'STORAGE_BACKEND', 'local') == 'local':
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
