@@ -732,11 +732,22 @@
             "parentTaskId": 17
           }
         ]
+      },
+      {
+        "id": 18,
+        "title": "Remove COMPLETED and View Buttons from Material Cards",
+        "description": "Remove the \"COMPLETED\" status button and \"View\" button from the material cards in the subject detail page, keeping only the \"Select\" and \"Delete\" buttons.",
+        "details": "The user wants to simplify the material card interface by removing the COMPLETED status button and View button, leaving only the Select and Delete action buttons. This will clean up the UI and remove unnecessary functionality.",
+        "testStrategy": "Test by navigating to a subject page with uploaded materials and verifying that only Select and Delete buttons are visible on material cards.",
+        "status": "done",
+        "dependencies": [],
+        "priority": "medium",
+        "subtasks": []
       }
     ],
     "metadata": {
       "created": "2025-07-08T16:07:30.354Z",
-      "updated": "2025-07-31T14:47:13.440Z",
+      "updated": "2025-08-03T18:27:23.996Z",
       "description": "Tasks for xp-chatbot context"
     }
   },
@@ -1661,6 +1672,14 @@
       "created": "2025-07-30T16:19:27.391Z",
       "updated": "2025-07-30T16:19:27.391Z",
       "description": "AWS S3 integration tasks for ExcelPoint file storage"
+    }
+  },
+  "homepage-modernization": {
+    "tasks": [],
+    "metadata": {
+      "created": "2025-08-03T18:35:12.111Z",
+      "updated": "2025-08-03T18:35:12.111Z",
+      "description": "Modernize the ExcelPoint home page with contemporary design and improved UX"
     }
   }
 }
