@@ -108,7 +108,7 @@
     </style>
     {% block extra_css %}{% endblock %}
 </head>
-<body class="{% if user.is_authenticated %}theme-{{ user.profile.theme|default:'light' }}{% else %}theme-{{ request.session.theme|default:'light' }}{% endif %}">
+<body>
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
             <a class="navbar-brand" href="/">

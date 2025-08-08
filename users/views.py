@@ -178,7 +178,7 @@ def calculate_profile_completion(user):
 
 @login_required
 def settings_view(request):
-    """Basic settings: edit first/last name, email, and theme."""
+    """Basic settings: edit first/last name, email, and education level."""
     user = request.user
     profile, _ = UserProfile.objects.get_or_create(user=user)
     if request.method == 'POST':
@@ -191,7 +191,6 @@ def settings_view(request):
             if email_val is not None:
                 user.email = email_val
             user.save()
-            request.session['theme'] = profile.theme
             messages.success(request, 'Settings saved.')
             return redirect('users:settings')
     else:
@@ -199,7 +198,7 @@ def settings_view(request):
             'first_name': user.first_name,
             'last_name': user.last_name,
             'email': user.email,
-            'theme': profile.theme,
+            'education_level': profile.education_level,
         }
         form = SettingsForm(instance=profile, initial=initial)
     return render(request, 'users/settings.html', {'form': form})

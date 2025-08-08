@@ -115,15 +115,19 @@ class UserProfile(models.Model):
         help_text="GitHub profile URL"
     )
     
-    THEME_CHOICES = [
-        ('light', 'Light'),
-        ('dark', 'Dark'),
+    EDUCATION_LEVEL_CHOICES = [
+        ('high_school', 'High school'),
+        ('undergraduate', 'Undergraduate'),
+        ('postgraduate', 'Postgraduate'),
+        ('working_professional', 'Working professional'),
+        ('other', 'Other'),
     ]
-    theme = models.CharField(
-        max_length=10,
-        choices=THEME_CHOICES,
-        default='light',
-        help_text="UI theme preference"
+    education_level = models.CharField(
+        max_length=32,
+        choices=EDUCATION_LEVEL_CHOICES,
+        null=True,
+        blank=True,
+        help_text="Highest level of education (nullable)"
     )
     
     def __str__(self):
