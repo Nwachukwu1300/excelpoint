@@ -1,17 +1,18 @@
-/* Career Nexus - Modern CSS Framework */
+/* ExcelPoint - Academic Creative Design System */
 
 /* CSS Variables for consistent theming */
 :root {
-    --primary-color: #2563eb;
-    --primary-dark: #1d4ed8;
-    --primary-light: #3b82f6;
-    --secondary-color: #64748b;
-    --accent-color: #06d6a0;
-    --accent-dark: #059669;
+    /* Academic palette */
+    --primary-color: #1e40af;   /* indigo-800 */
+    --primary-dark: #1e3a8a;    /* indigo-900 */
+    --primary-light: #3b82f6;   /* blue-500 */
+    --secondary-color: #475569;  /* slate-600 */
+    --accent-color: #0ea5e9;     /* sky-500 */
+    --accent-dark: #0284c7;      /* sky-600 */
     --text-dark: #1e293b;
     --text-light: #64748b;
     --text-muted: #94a3b8;
-    --bg-light: #f8fafc;
+    --bg-light: #f8fafc;         /* slate-50 */
     --bg-white: #ffffff;
     --border-light: #e2e8f0;
     --border-medium: #cbd5e1;
@@ -21,10 +22,10 @@
     --info-color: #3b82f6;
     
     /* Shadows */
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    --shadow-sm: 0 1px 2px 0 rgba(2, 6, 23, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(2, 6, 23, 0.08);
+    --shadow-lg: 0 10px 15px -3px rgba(2, 6, 23, 0.10);
+    --shadow-xl: 0 20px 25px -5px rgba(2, 6, 23, 0.12);
     
     /* Border radius */
     --radius-sm: 0.375rem;
@@ -73,11 +74,7 @@ h1, h2, h3, h4, h5, h6 {
     text-decoration: none;
 }
 
-.btn-primary {
-    background: var(--primary-color);
-    color: white;
-    box-shadow: var(--shadow-md);
-}
+.btn-primary { background: var(--primary-color); color: white; box-shadow: var(--shadow-md); }
 
 .btn-primary:hover {
     background: var(--primary-dark);
@@ -133,10 +130,7 @@ h1, h2, h3, h4, h5, h6 {
     background: var(--bg-white);
 }
 
-.card:hover {
-    box-shadow: var(--shadow-lg);
-    transform: translateY(-2px);
-}
+.card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
 
 .card-header {
     background: var(--bg-light);
@@ -369,6 +363,34 @@ h1, h2, h3, h4, h5, h6 {
 
 .bg-light-custom { background: var(--bg-light) !important; }
 .bg-white-custom { background: var(--bg-white) !important; }
+
+/* Components */
+.btn-accent {
+    background: var(--accent-color);
+    color: white;
+}
+.btn-accent:hover {
+    background: var(--accent-dark);
+    color: white;
+}
+
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    background: #e2e8f0;
+    color: #334155;
+}
+
+.card-quiet {
+    border: 1px solid var(--border-light);
+    box-shadow: none;
+}
+
+.container-narrow { max-width: 960px; margin: 0 auto; }
 
 /* Animation Utilities */
 .transition-all {
