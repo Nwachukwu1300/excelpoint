@@ -2,7 +2,7 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Courses Dashboard{% endblock %}
+{% block title %}Study Dashboard{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -392,7 +392,7 @@
 <div class="dashboard-container py-4 px-3">
     <!-- Dashboard Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="section-title mb-0">Courses Dashboard</h1>
+        <h1 class="section-title mb-0">Study Dashboard</h1>
     </div>
     
     <!-- Stats Cards Row -->
@@ -426,10 +426,10 @@
         </div>
     </div>
 
-    <!-- My Courses Section -->
+    <!-- My Subjects Section (courses area kept but retitled for study) -->
     <div class="mb-5">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="section-title">My Courses</h2>
+            <h2 class="section-title">My Study Topics</h2>
             <div class="d-flex align-items-center">
                 <a href="{% url 'learning:all_courses' %}" class="see-all-link">See All <i class="fas fa-arrow-right"></i></a>
             </div>

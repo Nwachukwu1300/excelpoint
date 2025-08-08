@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Subject Materials{% endblock %}
+{% block title %}Subjects & Materials{% endblock %}
 
 {% block content %}
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h2 mb-0" style="color: #764ba2;">Subject Materials</h1>
+        <h1 class="h2 mb-0" style="color: #764ba2;">Subjects & Materials</h1>
         <div class="d-flex gap-2">
             <a href="{% url 'quiz_history' %}" class="btn btn-outline-purple">
                 <i class="fas fa-chart-line"></i> Quiz History
@@ -41,7 +41,7 @@
             <i class="fas fa-book fa-3x text-muted"></i>
         </div>
         <h3 class="h4 mb-3">No Subjects Yet</h3>
-        <p class="text-muted mb-4">Create your first subject to start organizing your study materials.</p>
+        <p class="text-muted mb-4">Create your first subject to organize notes, slides, and readings.</p>
         <button type="button" class="btn btn-purple" data-bs-toggle="modal" data-bs-target="#createSubjectModal">
             <i class="fas fa-plus"></i> Create Subject
         </button>

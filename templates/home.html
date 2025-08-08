@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}ExcelPoint - Your Path to Professional Excellence{% endblock %}
+{% block title %}ExcelPoint - Learn Faster with Your Own Materials{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -967,7 +967,7 @@
                 <div class="row">
                     <div class="col-lg-8">
                         <h1 class="welcome-title">Welcome back, {{ user.first_name|default:user.username }}! 👋</h1>
-                        <p class="welcome-subtitle">Ready to continue your learning journey? Here's what's happening with your progress.</p>
+                        <p class="welcome-subtitle">Ready to study smarter? Here’s a snapshot of your learning progress.</p>
                     </div>
                 </div>
                 
@@ -997,32 +997,32 @@
                 <div class="action-icon">
                     <i class="fas fa-folder-open"></i>
                 </div>
-                <h3 class="action-title">My Subjects</h3>
-                <p class="action-description">Manage your learning materials and create new subjects</p>
+                <h3 class="action-title">Subjects & Materials</h3>
+                <p class="action-description">Organize subjects and upload notes, slides, and readings</p>
             </a>
             
             <a href="/learning/dashboard/" class="action-card hover-lift">
                 <div class="action-icon">
                     <i class="fas fa-chart-line"></i>
                 </div>
-                <h3 class="action-title">Learning Dashboard</h3>
-                <p class="action-description">Track your progress and view detailed analytics</p>
+                <h3 class="action-title">Study Dashboard</h3>
+                <p class="action-description">Track your study progress and quiz activity</p>
             </a>
             
             <a href="/learning/dream-path/" class="action-card hover-lift">
                 <div class="action-icon">
                     <i class="fas fa-route"></i>
                 </div>
-                <h3 class="action-title">Career Path</h3>
-                <p class="action-description">Explore and plan your professional development</p>
+                <h3 class="action-title">Study Plan</h3>
+                <p class="action-description">Plan what to learn next across your subjects</p>
             </a>
             
             <a href="/subjects/1/" class="action-card hover-lift">
                 <div class="action-icon">
                     <i class="fas fa-robot"></i>
                 </div>
-                <h3 class="action-title">AI Assistant</h3>
-                <p class="action-description">Chat with our AI to get help with your studies</p>
+                <h3 class="action-title">Study Assistant</h3>
+                <p class="action-description">Ask questions about your materials and get quick help</p>
             </a>
         </div>
 
@@ -1054,7 +1054,7 @@
                                 <i class="fas fa-lightbulb"></i>
                             </div>
                             <h4 class="text-secondary-600 mb-2">No recent activity</h4>
-                            <p class="text-secondary-500">Start learning to see your progress here!</p>
+                            <p class="text-secondary-500">Upload materials or take a quiz to see progress here.</p>
                         </div>
                     {% endif %}
                 </div>
@@ -1127,15 +1127,14 @@
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-lg-7 hero-content">
-                    <h1 class="hero-title">Accelerate Your Career Journey</h1>
+                    <h1 class="hero-title">Learn Faster with Your Own Materials</h1>
                     <p class="hero-subtitle">
-                        Transform your professional future with personalized learning paths, AI-powered insights, 
-                        and comprehensive skill development tailored to your career goals.
+                        Upload your notes, slides, and readings to generate quizzes, flashcards, and a study assistant focused on your subjects.
                     </p>
                     <div class="d-flex flex-column flex-sm-row gap-4">
                         <a href="/users/register/" class="btn btn-hero btn-hero-primary">
                             <i class="fas fa-rocket"></i>
-                            Start Your Journey
+                            Start Learning
                         </a>
                         <a href="/users/login/" class="btn btn-hero btn-hero-secondary">
                             <i class="fas fa-sign-in-alt"></i>
@@ -1147,7 +1146,7 @@
                     <div class="text-center">
                         <div class="glass-effect" style="border-radius: 2rem; padding: 3rem; animation: float 6s ease-in-out infinite;">
                             <i class="fas fa-chart-line" style="font-size: 8rem; color: rgba(255,255,255,0.9);"></i>
-                            <h3 style="color: white; margin-top: 1rem; font-weight: 700;">Professional Growth</h3>
+                            <h3 style="color: white; margin-top: 1rem; font-weight: 700;">Better Learning</h3>
                         </div>
                     </div>
                 </div>
@@ -1158,9 +1157,9 @@
     <!-- Features Section -->
     <section class="features-section">
         <div class="container">
-            <h2 class="section-title">Everything You Need to Succeed</h2>
+            <h2 class="section-title">Everything You Need to Study Smarter</h2>
             <p class="section-subtitle">
-                Comprehensive tools and resources designed to accelerate your professional development
+                Tools that turn your materials into quizzes, flashcards, and answers so you can master subjects quickly.
             </p>
             
             <div class="row g-4">
@@ -1169,9 +1168,9 @@
                         <div class="feature-icon">
                             <i class="fas fa-brain"></i>
                         </div>
-                        <h3 class="feature-title">AI-Powered Learning</h3>
+                        <h3 class="feature-title">Materials to Insights</h3>
                         <p class="feature-description">
-                            Get personalized course recommendations and adaptive learning paths powered by advanced AI.
+                            Turn PDFs and docs into structured notes and questions you can practice with.
                         </p>
                     </div>
                 </div>
@@ -1181,9 +1180,9 @@
                         <div class="feature-icon">
                             <i class="fas fa-route"></i>
                         </div>
-                        <h3 class="feature-title">Strategic Career Planning</h3>
+                        <h3 class="feature-title">Quizzes & Flashcards</h3>
                         <p class="feature-description">
-                            Map out your dream career path with data-driven insights and personalized roadmaps.
+                            Practice with auto-generated quizzes and flashcards from your uploaded materials.
                         </p>
                     </div>
                 </div>
@@ -1193,9 +1192,9 @@
                         <div class="feature-icon">
                             <i class="fas fa-robot"></i>
                         </div>
-                        <h3 class="feature-title">AI Learning Assistant</h3>
+                        <h3 class="feature-title">Study Assistant</h3>
                         <p class="feature-description">
-                            Get instant answers and guidance from our AI assistant, available 24/7.
+                            Ask questions about your materials and get clear explanations.
                         </p>
                     </div>
                 </div>
