@@ -8,7 +8,14 @@ from django.contrib.auth import login, logout, authenticate, update_session_auth
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
-from .forms import RegistrationForm, UserProfileForm, UserAchievementForm, UserCertificationForm, UserEducationForm
+from .forms import (
+    RegistrationForm,
+    UserProfileForm,
+    UserAchievementForm,
+    UserCertificationForm,
+    UserEducationForm,
+    SettingsForm,
+)
 from .models import User, UserProfile, UserAchievement, UserCertification, UserEducation
 from django.db.models import Count, Sum
 from django.utils import timezone
@@ -168,6 +175,34 @@ def calculate_profile_completion(user):
     # Calculate percentage
     return round((filled_fields / len(fields)) * 100, 2)
 
+
+@login_required
+def settings_view(request):
+    """Basic settings: edit first/last name, email, and theme."""
+    user = request.user
+    profile, _ = UserProfile.objects.get_or_create(user=user)
+    if request.method == 'POST':
+        form = SettingsForm(request.POST, instance=profile)
+        if form.is_valid():
+            form.save()
+            user.first_name = form.cleaned_data.get('first_name', user.first_name)
+            user.last_name = form.cleaned_data.get('last_name', user.last_name)
+            email_val = form.cleaned_data.get('email')
+            if email_val is not None:
+                user.email = email_val
+            user.save()
+            request.session['theme'] = profile.theme
+            messages.success(request, 'Settings saved.')
+            return redirect('users:settings')
+    else:
+        initial = {
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'email': user.email,
+            'theme': profile.theme,
+        }
+        form = SettingsForm(instance=profile, initial=initial)
+    return render(request, 'users/settings.html', {'form': form})
 
 @login_required
 def logout_user(request):

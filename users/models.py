@@ -115,6 +115,17 @@ class UserProfile(models.Model):
         help_text="GitHub profile URL"
     )
     
+    THEME_CHOICES = [
+        ('light', 'Light'),
+        ('dark', 'Dark'),
+    ]
+    theme = models.CharField(
+        max_length=10,
+        choices=THEME_CHOICES,
+        default='light',
+        help_text="UI theme preference"
+    )
+    
     def __str__(self):
         return f"{self.user.username}'s profile"
     

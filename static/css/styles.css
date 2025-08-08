@@ -35,6 +35,22 @@
     --radius-2xl: 1.5rem;
 }
 
+/* Light/Dark theme variable sets (basic) */
+:root.theme-light {
+    --bg-light: #f8fafc;
+    --bg-white: #ffffff;
+    --text-dark: #0f172a;
+    --text-light: #475569;
+}
+
+:root.theme-dark {
+    --bg-light: #0b1220;
+    --bg-white: #0f172a;
+    --text-dark: #e2e8f0;
+    --text-light: #94a3b8;
+    --border-light: #1f2937;
+}
+
 /* Typography Improvements */
 .h1, .h2, .h3, .h4, .h5, .h6,
 h1, h2, h3, h4, h5, h6 {
