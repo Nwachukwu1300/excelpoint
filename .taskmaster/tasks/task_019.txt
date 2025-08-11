@@ -1,0 +1,37 @@
+# Task ID: 19
+# Title: Refocus wording around education; elevate Subjects & Materials
+# Status: pending
+# Dependencies: None
+# Priority: high
+# Description: Rewrite all user-facing copy to emphasize education and learning outcomes instead of career development. Make 'Subjects & Materials' the primary entry point across navigation and pages.
+# Details:
+Scope: templates/base.html, templates/home.html, templates/subjects/*.html, templates/learning/*.html, templates/users/*.html, static/js/chat-widget.js, static/css/styles.css (only textual content). Objectives: 1) Rename nav items and CTAs to learning-first language. 2) Rework home hero messaging to highlight uploading/using materials for learning. 3) Update empty states, success messages, and headings to education terms. 4) Ensure no regressions in routing or auth flows.
+
+# Test Strategy:
+Manual QA: Navigate all pages logged-in and logged-out, verify new copy appears correctly; run integration checks for subject upload flow and quiz pages. Grep repo for removed phrases like 'career'/'professional' to ensure eliminated.
+
+# Subtasks:
+## 1. Rewrite navigation labels and structure for learning-first focus [pending]
+### Dependencies: None
+### Description: Make 'Subjects' and 'Materials' the primary nav. Remove career-oriented wording.
+### Details:
+Edit templates/base.html nav; update links to subjects list, add 'Materials' under subjects; ensure login/register links remain.
+
+## 2. Update home page hero and CTAs for education emphasis [pending]
+### Dependencies: None
+### Description: Reword hero headline, subcopy, and buttons to focus on learning with materials.
+### Details:
+Edit templates/home.html; headline: “Learn faster with your own materials.” Buttons: “Upload materials”, “Browse subjects”. Replace any career references.
+
+## 3. Rewrite headings/empty states/success messages across subject & learning templates [pending]
+### Dependencies: None
+### Description: Education-first copy for subjects list/detail, materials upload, quiz pages, and progress.
+### Details:
+Edit templates/subjects/*.html and templates/learning/*.html; ensure messages mention study, learning, materials, quizzes.
+
+## 4. Replace career language in users pages (auth/profile) with learning phrasing [pending]
+### Dependencies: None
+### Description: Adjust login/register/profile copy to mention study progress and learning preferences where applicable.
+### Details:
+Edit templates/users/*.html; ensure no career/roles language unless needed; keep functional behavior unchanged.
+

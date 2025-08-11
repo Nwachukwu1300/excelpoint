@@ -743,11 +743,164 @@
         "dependencies": [],
         "priority": "medium",
         "subtasks": []
+      },
+      {
+        "id": 19,
+        "title": "Refocus wording around education; elevate Subjects & Materials",
+        "description": "Rewrite all user-facing copy to emphasize education and learning outcomes instead of career development. Make 'Subjects & Materials' the primary entry point across navigation and pages.",
+        "details": "Scope: templates/base.html, templates/home.html, templates/subjects/*.html, templates/learning/*.html, templates/users/*.html, static/js/chat-widget.js, static/css/styles.css (only textual content). Objectives: 1) Rename nav items and CTAs to learning-first language. 2) Rework home hero messaging to highlight uploading/using materials for learning. 3) Update empty states, success messages, and headings to education terms. 4) Ensure no regressions in routing or auth flows.",
+        "testStrategy": "Manual QA: Navigate all pages logged-in and logged-out, verify new copy appears correctly; run integration checks for subject upload flow and quiz pages. Grep repo for removed phrases like 'career'/'professional' to ensure eliminated.",
+        "status": "pending",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Rewrite navigation labels and structure for learning-first focus",
+            "description": "Make 'Subjects' and 'Materials' the primary nav. Remove career-oriented wording.",
+            "details": "Edit templates/base.html nav; update links to subjects list, add 'Materials' under subjects; ensure login/register links remain.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 19
+          },
+          {
+            "id": 2,
+            "title": "Update home page hero and CTAs for education emphasis",
+            "description": "Reword hero headline, subcopy, and buttons to focus on learning with materials.",
+            "details": "Edit templates/home.html; headline: “Learn faster with your own materials.” Buttons: “Upload materials”, “Browse subjects”. Replace any career references.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 19
+          },
+          {
+            "id": 3,
+            "title": "Rewrite headings/empty states/success messages across subject & learning templates",
+            "description": "Education-first copy for subjects list/detail, materials upload, quiz pages, and progress.",
+            "details": "Edit templates/subjects/*.html and templates/learning/*.html; ensure messages mention study, learning, materials, quizzes.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 19
+          },
+          {
+            "id": 4,
+            "title": "Replace career language in users pages (auth/profile) with learning phrasing",
+            "description": "Adjust login/register/profile copy to mention study progress and learning preferences where applicable.",
+            "details": "Edit templates/users/*.html; ensure no career/roles language unless needed; keep functional behavior unchanged.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 19
+          }
+        ]
+      },
+      {
+        "id": 20,
+        "title": "Redesign UI to creative academic style (less AI-demo)",
+        "description": "Introduce a tasteful academic-creative design system and apply it across all pages.",
+        "details": "Create a small design system: colors, typography, spacing, radius, shadows; implement CSS variables and utility classes. Update base layout, home, subjects/materials pages, learning pages, and user/account pages to use the new system. Favor clarity and creativity with subtle accents; minimize neon gradients.",
+        "testStrategy": "Responsive checks at 360/768/1024/1440 widths. Lighthouse accessibility pass (>=90). Visual spot-check of all template sections.",
+        "status": "pending",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Define design system: CSS variables for colors/typography/spacing",
+            "description": "Create :root variables and utility classes; a clean academic palette and type scale.",
+            "details": "Edit static/css/styles.css; add variables (--color-bg, --color-surface, --color-accent, --font-sans, --radius, --shadow) and utilities (btn, card, grid, container).",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 20
+          },
+          {
+            "id": 2,
+            "title": "Apply new styles to base layout and home",
+            "description": "Update templates/base.html and templates/home.html to use new classes/components.",
+            "details": "Replace hero, header, footer with cleaner layout; ensure responsive grid and typography applied.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 20
+          },
+          {
+            "id": 3,
+            "title": "Restyle subjects/materials pages",
+            "description": "Update templates/subjects/*.html to emphasize materials browsing/upload and study actions.",
+            "details": "Use cards, simple accents, and improved spacing; ensure upload buttons and status chips match system.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 20
+          },
+          {
+            "id": 4,
+            "title": "Restyle learning and users pages",
+            "description": "Apply design system to templates/learning/*.html and templates/users/*.html.",
+            "details": "Ensure forms, tables, and actions are consistent; improve spacing and headings.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 20
+          }
+        ]
+      },
+      {
+        "id": 21,
+        "title": "Add basic Settings page for user profile + theme preferences",
+        "description": "Create a simple settings page where a user can edit their name and choose a theme (light/dark). Theme is stored in user profile or session.",
+        "details": "Backend: add route/view/form to edit first_name, last_name and select theme. Frontend: create templates/users/settings.html; add basic UI with save. Integrate theme into base template via a body class and CSS variables. Provide sensible defaults and persistence.",
+        "testStrategy": "Manual QA: update name; toggle theme and verify persistence across pages; ensure logout/login keeps the saved theme.",
+        "status": "pending",
+        "dependencies": [],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Add theme field to user profile (or session fallback)",
+            "description": "Add a simple string field 'theme' with values ['light','dark'] to User or UserProfile; default 'light'. Provide migration.",
+            "details": "Prefer extending existing profile model if present; else add to User model. Fallback to session if not modifying DB.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 21
+          },
+          {
+            "id": 2,
+            "title": "Create settings page route, view, and form",
+            "description": "Add URL `/users/settings/`, a view to render/update settings, and a simple Django form (name, theme).",
+            "details": "Update users/urls.py; add SettingsView (LoginRequired). Use POST for updates; show success message.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 21
+          },
+          {
+            "id": 3,
+            "title": "Apply theme to UI via base template",
+            "description": "Add body class based on user theme and load CSS variables for light/dark.",
+            "details": "Update templates/base.html to set body class like `theme-dark` or `theme-light`. Extend styles.css with two variable blocks for each theme.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 21
+          },
+          {
+            "id": 4,
+            "title": "Basic theme toggle UI",
+            "description": "Add a small toggle/switch in navbar dropdown and on settings page to change theme.",
+            "details": "Use a form POST or AJAX; update session immediately for instant feedback; persist to DB for logged-in users.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 21
+          },
+          {
+            "id": 5,
+            "title": "Add light and dark CSS variable sets",
+            "description": "Extend styles.css with :root.theme-light and :root.theme-dark vars for background, surface, text, and accent colors.",
+            "details": "Keep it minimal and accessible (contrast AA+). Only variables, not full re-theme.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 21
+          }
+        ]
       }
     ],
     "metadata": {
       "created": "2025-07-08T16:07:30.354Z",
-      "updated": "2025-08-03T18:27:23.996Z",
+      "updated": "2025-08-08T14:17:56.337Z",
       "description": "Tasks for xp-chatbot context"
     }
   },
