@@ -1,10 +1,12 @@
-"""
-ASGI config for config project.
+"""ASGI entrypoint for the Excelpoint Django project.
 
-It exposes the ASGI callable as a module-level variable named ``application``.
+This module exposes the ``application`` callable used by ASGI servers
+such as Daphne, Uvicorn, or Hypercorn. It is the gateway for any
+asynchronous protocol support (HTTP, WebSocket, etc.).
 
-For more information on this file, see
-https://docs.djangoproject.com/en/4.2/howto/deployment/asgi/
+Most deployments of this project use WSGI for synchronous HTTP; this
+ASGI configuration is included to make it easy to add real-time or
+async features in the future without changing the server bootstrap.
 """
 
 import os

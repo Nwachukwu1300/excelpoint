@@ -1,3 +1,22 @@
+"""Vector search service for semantic content retrieval.
+
+This module provides vector-based search capabilities for the Excelpoint
+chatbot using sentence transformers. It enables semantic search across
+uploaded educational materials by converting text queries and content
+chunks into high-dimensional vectors and computing similarity scores.
+
+Key features:
+- Sentence transformer model for text encoding
+- Cosine similarity calculations for semantic matching
+- Subject-scoped search with caching
+- Batch processing for multiple queries
+- Fallback mechanisms for search failures
+
+The service integrates with the ContentProcessor infrastructure and
+provides the foundation for RAG (Retrieval Augmented Generation)
+functionality in the chatbot.
+"""
+
 import numpy as np
 import logging
 from typing import List, Dict, Any, Optional, Tuple
@@ -11,20 +30,33 @@ logger = logging.getLogger(__name__)
 
 
 class VectorSearchService:
-    """
-    Enhanced vector search service for XP chatbot.
-    Builds on existing ContentProcessor infrastructure with improved
-    subject scoping, caching, and error handling.
+    """Enhanced vector search service for semantic content retrieval.
+    
+    This service provides the core functionality for finding relevant
+    content chunks based on semantic similarity to user queries. It
+    uses the 'all-MiniLM-L6-v2' sentence transformer model to convert
+    text into 384-dimensional vectors and performs cosine similarity
+    calculations for ranking results.
+    
+    The service includes caching for query embeddings, subject-scoped
+    search capabilities, and robust error handling for production use.
     """
     
     def __init__(self):
-        """Initialize the vector search service."""
+        """Initialize the vector search service with lazy model loading."""
         self.model = None
         self._model_loaded = False
         self.content_processor = ContentProcessor()
         
     def _ensure_model_loaded(self):
-        """Lazy load the sentence transformer model."""
+        """Lazy load the sentence transformer model.
+        
+        Loads the model only when first needed to reduce memory usage
+        and startup time. The model is cached for subsequent operations.
+        
+        Raises:
+            Exception: If model loading fails
+        """
         if not self._model_loaded:
             try:
                 self.model = SentenceTransformer('all-MiniLM-L6-v2')
@@ -35,16 +67,20 @@ class VectorSearchService:
                 raise Exception(f"Vector search service initialization failed: {str(e)}")
     
     def encode_query(self, text: str) -> np.ndarray:
-        """
-        Encode a text query into a vector embedding.
+        """Encode a text query into a vector embedding.
+        
+        Converts user queries into high-dimensional vectors for semantic
+        comparison with content chunks. Results are cached to improve
+        performance for repeated queries.
         
         Args:
             text: The query text to encode
             
         Returns:
-            numpy array of the embedding vector
+            numpy array of the embedding vector (384 dimensions)
             
         Raises:
+            ValueError: If query text is empty
             Exception: If encoding fails
         """
         if not text or not text.strip():
@@ -72,18 +108,21 @@ class VectorSearchService:
             raise Exception(f"Failed to encode query: {str(e)}")
     
     def cosine_similarity(self, vec1: np.ndarray, vec2: np.ndarray) -> float:
-        """
-        Calculate cosine similarity between two vectors.
+        """Calculate cosine similarity between two vectors.
+        
+        Computes the cosine similarity score between two vectors, which
+        measures the cosine of the angle between them. This provides a
+        normalized similarity score between 0 (orthogonal) and 1 (identical).
         
         Args:
-            vec1: First vector
-            vec2: Second vector
+            vec1: First vector (numpy array)
+            vec2: Second vector (numpy array)
             
         Returns:
-            Cosine similarity score between 0 and 1
+            Cosine similarity score between 0.0 and 1.0
             
         Raises:
-            ValueError: If vectors are invalid
+            ValueError: If vectors are invalid or empty
         """
         try:
             # Handle edge cases

@@ -1,11 +1,16 @@
 #!/usr/bin/env python
-"""Django's command-line utility for administrative tasks."""
+"""Django's command-line utility for administrative tasks.
+
+This script is the single entrypoint used for development tasks such as
+running the server, applying migrations, creating superusers, and
+executing custom management commands.
+"""
 import os
 import sys
 
 
 def main():
-    """Run administrative tasks."""
+    """Run administrative tasks via Django's management framework."""
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
     try:
         from django.core.management import execute_from_command_line

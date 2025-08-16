@@ -1,10 +1,8 @@
-"""
-WSGI config for config project.
+"""WSGI entrypoint for the Excelpoint Django project.
 
-It exposes the WSGI callable as a module-level variable named ``application``.
-
-For more information on this file, see
-https://docs.djangoproject.com/en/4.2/howto/deployment/wsgi/
+This module exposes the ``application`` object that WSGI-compliant web
+servers (e.g., Gunicorn, uWSGI) import to serve HTTP traffic. In this
+project, WSGI is the default deployment target for synchronous views.
 """
 
 import os

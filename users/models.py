@@ -1,33 +1,77 @@
+"""User management models for the Excelpoint application.
+
+This module extends Django's built-in user system with career-focused
+features including OAuth integration, profile management, and education
+tracking. It provides a foundation for personalized learning experiences
+and career development tracking.
+
+Key features:
+- Extended User model with career-specific fields
+- OAuth integration via Google
+- Profile management with avatar support
+- Education and experience tracking
+- File storage abstraction for profile assets
+"""
+
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.db import models #gives us access to Django's database field types (like CharField, URLField, etc.).
 from django.conf import settings
 
 class FileStorageMixin:
-    """Mixin to handle file storage operations"""
+    """Mixin providing file storage abstraction across storage backends.
+    
+    This mixin allows models to work with both local filesystem and S3
+    storage without changing their implementation. It delegates storage
+    operations to the appropriate service based on Django settings.
+    """
     
     def save_file(self, file_obj, path):
-        """Save file using the configured storage service"""
+        """Save a file using the currently configured storage backend.
+        
+        Args:
+            file_obj: File object to save
+            path: Destination path within the storage
+        """
         from subjects.services.storage_factory import StorageFactory
         storage_service = StorageFactory.get_storage_service()
         return storage_service.save_file(file_obj, path)
     
     def get_file_url(self, path):
-        """Get file URL using the configured storage service"""
+        """Get the public URL for a stored file.
+        
+        Args:
+            path: Path to the file in storage
+        Returns:
+            Public URL for accessing the file
+        """
         from subjects.services.storage_factory import StorageFactory
         storage_service = StorageFactory.get_storage_service()
         return storage_service.get_file_url(path)
     
     def delete_file(self, path):
-        """Delete file using the configured storage service"""
+        """Delete a file from the configured storage backend.
+        
+        Args:
+            path: Path to the file to delete
+        """
         from subjects.services.storage_factory import StorageFactory
         storage_service = StorageFactory.get_storage_service()
         storage_service.delete_file(path)
 
 class User(AbstractUser):
-    """
-    Extended user model.
-    Stores additional career-related information about users.
+    """Extended user model with career-focused features.
+    
+    This model extends Django's AbstractUser with additional fields
+    for career development, OAuth integration, and personalized
+    learning experiences. It serves as the central identity for
+    all user interactions within the application.
+    
+    Key additions:
+    - Google OAuth integration
+    - Career role and experience tracking
+    - Professional profile links
+    - Bio and background information
     """
     EXPERIENCE_LEVELS = [
         ('entry', 'Entry Level'),
@@ -74,7 +118,11 @@ class User(AbstractUser):
         return self.username
 
 def get_storage_backend():
-    """Get the appropriate storage backend based on settings"""
+    """Get the appropriate storage backend based on Django settings.
+    
+    Returns:
+        Storage backend instance (S3Boto3Storage or FileSystemStorage)
+    """
     if getattr(settings, 'STORAGE_BACKEND', 'local') == 's3':
         from storages.backends.s3boto3 import S3Boto3Storage
         return S3Boto3Storage()
@@ -83,8 +131,12 @@ def get_storage_backend():
         return FileSystemStorage()
 
 class UserProfile(models.Model):
-    """
-    User profile model for storing additional user information.
+    """Extended user profile for additional personal information.
+    
+    This model stores supplementary user data that doesn't fit in the
+    core User model, such as avatars, detailed education history,
+    and extended career information. It maintains a one-to-one
+    relationship with the User model.
     """
     user = models.OneToOneField(
         User,

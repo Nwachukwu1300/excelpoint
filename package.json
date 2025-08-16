@@ -1,7 +1,7 @@
 {
   "name": "career-nexus-frontend",
   "version": "1.0.0",
-  "description": "React frontend components for Career Nexus",
+  "description": "React frontend components for Career Nexus - AI-powered learning platform with chat widgets and interactive components",
   "type": "module",
   "scripts": {
     "dev": "vite",

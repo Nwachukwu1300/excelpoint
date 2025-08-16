@@ -1,32 +1,58 @@
+"""Celery application bootstrap for the Excelpoint backend.
+
+This module exposes a configured Celery app used by background workers and
+scheduled jobs. It reads configuration from Django settings (``CELERY_*``
+namespace), auto-discovers tasks across installed Django apps, and applies a
+couple of runtime safeguards for local macOS development where some ML
+libraries can attempt to use unsupported GPU backends.
+
+Key responsibilities:
+- Set the default Django settings module for Celery processes
+- Configure the Celery app from ``django.conf.settings``
+- Auto-discover ``tasks.py`` modules in installed apps
+- Ensure stable CPU-only execution on macOS/Apple Silicon when needed
+"""
+
 import os
 from celery import Celery
+from celery.signals import worker_process_init
 
-# Set the default Django settings module for the 'celery' program.
+# Point Celery at the Django settings so it can read broker/result/backend config
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 
-# Fix for macOS + Apple Silicon + sentence transformers issues
+# Ensure deterministic CPU execution for local macOS development
 os.environ.setdefault('TOKENIZERS_PARALLELISM', 'false')
 os.environ.setdefault('PYTORCH_ENABLE_MPS_FALLBACK', '1')
 
+# Create the Celery application instance
 app = Celery('career_nexus')
 
-# Using a string here means the worker doesn't have to serialize
-# the configuration object to child processes.
+# Load ``CELERY_*`` configuration values directly from Django settings
 app.config_from_object('django.conf:settings', namespace='CELERY')
 
-# Load task modules from all registered Django app configs.
+# Discover task modules across installed Django apps
 app.autodiscover_tasks()
 
-# Worker initialization to prevent MPS issues
-from celery.signals import worker_process_init
 
 @worker_process_init.connect
 def configure_worker_for_cpu(**kwargs):
-    """Configure worker to use CPU instead of MPS to prevent crashes on macOS."""
-    import os
+    """Harden worker subprocesses for CPU-only execution on macOS.
+
+    Some tokenizer/torch combinations can crash when attempting to use the
+    Metal Performance Shaders (MPS) backend on Apple Silicon. We explicitly
+    set environment flags for every worker process to prefer CPU execution and
+    disable parallel tokenizers to reduce contention.
+    """
     os.environ['TOKENIZERS_PARALLELISM'] = 'false'
     os.environ['PYTORCH_ENABLE_MPS_FALLBACK'] = '1'
 
+
 @app.task(bind=True, ignore_result=True)
 def debug_task(self):
-    print(f'Request: {self.request!r}') 
+    """Minimal task used to verify worker connectivity and routing.
+
+    Invoking this task should produce a log line with request metadata,
+    confirming that the worker is running and can receive tasks from the
+    broker.
+    """
+    print(f'Request: {self.request!r}')

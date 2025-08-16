@@ -1,5 +1,27 @@
 #!/bin/bash
 
+# Excelpoint Development Environment Cleanup Script
+# ===============================================
+#
+# This script performs a comprehensive cleanup of the development environment,
+# removing temporary files, cache directories, and virtual environments to
+# ensure a clean state for development or deployment.
+#
+# What it cleans up:
+# - Virtual environment directories (venv, venv-py312, etc.)
+# - SQLite database files
+# - Python cache files (__pycache__, *.pyc)
+# - OS-specific files (.DS_Store, Thumbs.db)
+# - Temporary cache directories
+#
+# What it sets up:
+# - Creates a comprehensive .gitignore file if missing
+# - Initializes git repository if not present
+# - Provides instructions for GitHub setup
+#
+# Usage: ./cleanup.sh
+# Requirements: bash shell, git (optional)
+
 # Remove virtual environment directories
 echo "Removing virtual environment directories..."
 rm -rf venv/

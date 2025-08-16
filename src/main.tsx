@@ -1,3 +1,22 @@
+/**
+ * Main entry point for the Excelpoint chat widget.
+ * 
+ * This module initializes and renders a React-based chat widget that integrates
+ * with Django templates. The widget provides AI-powered chat functionality
+ * for educational content using RAG (Retrieval Augmented Generation).
+ * 
+ * Key features:
+ * - React 18 with React Query for state management
+ * - Automatic DOM detection and initialization
+ * - Retry logic for container discovery
+ * - Subject-specific chat context
+ * - Error handling and logging
+ * 
+ * Usage:
+ * Include a div with id="chat-widget-root" and data-subject-id attribute
+ * in your Django template to automatically initialize the chat widget.
+ */
+
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -5,7 +24,7 @@ import { ChatWidget } from '@/components/chat/ChatWidget'
 
 console.log('Chat widget: Script loaded!')
 
-// Create a client
+// Create a React Query client for data fetching and caching
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -15,7 +34,15 @@ const queryClient = new QueryClient({
   },
 })
 
-// Initialize chat widget with retry logic
+/**
+ * Initialize the chat widget by finding the container and rendering the React component.
+ * 
+ * This function looks for a DOM element with id="chat-widget-root" and extracts
+ * the subject ID from data attributes. It then creates a React root and renders
+ * the ChatWidget component with proper context providers.
+ * 
+ * @returns {boolean} True if initialization was successful, false otherwise
+ */
 function initializeChatWidget() {
   console.log('Chat widget: Looking for container...')
   
@@ -60,7 +87,7 @@ function initializeChatWidget() {
   }
 }
 
-// Try to initialize immediately
+// Initialize the chat widget based on DOM readiness
 if (document.readyState === 'loading') {
   // DOM is still loading, wait for it
   document.addEventListener('DOMContentLoaded', () => {

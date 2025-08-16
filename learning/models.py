@@ -1,3 +1,18 @@
+"""Learning management models for the Excelpoint application.
+
+This module provides data structures for tracking user learning progress,
+course management, and external resource integration. It enables users
+to track their educational journey across various platforms and maintain
+progress notes for continuous improvement.
+
+Key features:
+- Course tracking with progress monitoring
+- External learning resource management
+- Progress notes and activity history
+- Learning path recommendations
+- Time tracking and completion metrics
+"""
+
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
@@ -7,8 +22,11 @@ User = get_user_model()
 
 # Import Course model from learning app itself
 class Course(models.Model):
-    """
-    Model for courses in the learning platform.
+    """Model for courses in the learning platform.
+    
+    This model represents external courses that users can track and
+    progress through. It stores metadata about courses including
+    difficulty levels, duration, and external URLs for access.
     """
     title = models.CharField(max_length=200)
     description = models.TextField()
@@ -35,7 +53,12 @@ class Course(models.Model):
         return self.title
 
 class CourseProgressNote(models.Model):
-    """Model to store the history of notes and updates for course progress"""
+    """Model to store the history of notes and updates for course progress.
+    
+    This model maintains a chronological record of user notes, insights,
+    and progress updates for each course. It enables users to track their
+    learning journey and maintain context across learning sessions.
+    """
     progress = models.ForeignKey('CourseProgress', on_delete=models.CASCADE, related_name='notes_history')
     note = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
@@ -47,6 +70,12 @@ class CourseProgressNote(models.Model):
         return f"Note for {self.progress.course.title} - {self.created_at.strftime('%Y-%m-%d')}"
 
 class CourseProgress(models.Model):
+    """Tracks user progress through individual courses.
+    
+    This model maintains the state of a user's progress through a specific
+    course, including status tracking, time estimates, and activity dates.
+    It automatically manages start and completion dates based on status changes.
+    """
     STATUS_CHOICES = (
         ('not_started', 'Not Started'),
         ('in_progress', 'In Progress'),
@@ -67,6 +96,11 @@ class CourseProgress(models.Model):
         ordering = ['-last_activity_date']
     
     def save(self, *args, **kwargs):
+        """Override save to automatically manage start and completion dates.
+        
+        Automatically sets date_started when status changes to 'in_progress'
+        and date_completed when status changes to 'completed'.
+        """
         # Set date_started when status changes to in_progress
         if self.status == 'in_progress' and not self.date_started:
             self.date_started = timezone.now()
@@ -78,8 +112,11 @@ class CourseProgress(models.Model):
         super().save(*args, **kwargs)
 
 class LearningResource(models.Model):
-    """
-    Model for tracking and redirecting to external learning resources.
+    """Model for tracking and redirecting to external learning resources.
+    
+    This model provides a curated collection of external learning materials
+    across various platforms. It enables users to discover new resources
+    and track their usage patterns for personalized recommendations.
     """
     PLATFORM_CHOICES = [
         ('coursera', 'Coursera'),

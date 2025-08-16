@@ -1,9 +1,28 @@
+# Excelpoint Python Dependencies
+# 
+# This file contains all Python packages required for the Excelpoint
+# learning platform. The dependencies are organized by functionality
+# to make maintenance and troubleshooting easier.
+#
+# Key dependency categories:
+# - Core Django and REST framework
+# - Database connectivity (PostgreSQL)
+# - Content processing and AI integration
+# - Background task processing
+# - Authentication and storage
+# - Development and monitoring tools
+
+# Core Django Framework
 Django==5.2.1
 djangorestframework==3.16.0
 djangorestframework-simplejwt==5.5.0
+
+# Database and Data Processing
 psycopg2-binary==2.9.10
 pandas==2.2.3
 python-dotenv==1.0.0
+
+# HTTP and Networking
 requests==2.32.3
 python-dateutil==2.9.0.post0
 pytz==2025.2
@@ -13,15 +32,19 @@ urllib3==2.4.0
 idna==3.10
 charset-normalizer==3.4.2
 certifi==2025.4.26
+
+# Security and Cryptography
 cryptography==45.0.2
 lxml==5.4.0
 typing-extensions==4.13.2
 cffi==1.17.1
 pycparser==2.22
+
+# Image and Document Processing
 Pillow==11.2.1
 pypdf>=3.0.0
 
-# Content Processing
+# Content Processing and AI
 langchain>=0.3.25
 langchain-community>=0.3.25
 PyPDF2>=3.0.1
@@ -41,20 +64,20 @@ ffmpeg-python>=0.2.0
 # AI Integration
 openai>=1.12.0
 
-# Background Tasks
+# Background Tasks and Message Queuing
 celery>=5.5.3
 redis>=6.2.0
 
-# System Monitoring
+# System Monitoring and Utilities
 psutil>=6.1.0
 
-# OAuth Authentication
+# OAuth Authentication (Google)
 google-auth>=2.23.0
 google-auth-oauthlib>=1.1.0
 google-auth-httplib2>=0.1.1
 
-# AWS S3 Storage
+# Cloud Storage Integration
 django-storages>=1.14.0
 
-# Optional - uncomment if needed
+# Optional - uncomment if needed for CORS support
 # django-cors-headers==4.3.1

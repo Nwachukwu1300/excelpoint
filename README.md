@@ -1,7 +1,9 @@
 # ExcelPoint - Learning Enhancement Platform
 
+## 🎥 [Watch Demo Video](https://drive.google.com/file/d/1yBZ8Cexa4Lhrnot7D3OiEqdqtsfgFxn5/view)
+
 ## Project Overview
-ExcelPoint is an innovative learning enhancement platform designed to elevate the educational experience for both professionals and students. Our platform combines advanced AI-powered content processing, interactive learning tools, and personalized study assistance to transform how people learn and retain knowledge.
+ExcelPoint is an innovative learning enhancement platform designed to elevate the educational experience for both professionals and students. Our platform combines advanced content processing, interactive learning tools, and personalized study assistance to transform how people learn and retain knowledge.
 
 ## Mission
 To bridge the gap between traditional learning methods and modern educational needs by providing intelligent, adaptive learning experiences that cater to diverse learning styles and professional requirements.
@@ -25,7 +27,7 @@ To bridge the gap between traditional learning methods and modern educational ne
 ### ✅ **Completed Features**
 
 #### **Advanced Content Processing**
-- AI-powered document analysis and processing
+- Smart document analysis and processing
 - Support for multiple file formats (PDF, DOCX, Word documents)
 - Intelligent content chunking and embedding generation
 - Real-time content processing with background tasks
@@ -37,7 +39,7 @@ To bridge the gap between traditional learning methods and modern educational ne
 - Progress tracking with detailed analytics
 
 #### **Smart Chat Assistant**
-- AI-powered learning companion
+- Intelligent learning companion
 - Context-aware responses based on uploaded materials
 - Real-time study assistance and clarification
 - Session persistence for continuous learning conversations
@@ -55,17 +57,17 @@ To bridge the gap between traditional learning methods and modern educational ne
 - Achievement and milestone tracking
 
 ### 🚧 **In Development**
-- Advanced AI model integrations
 - Enhanced content recommendation engine
 - Collaborative learning features
 - Mobile application development
+- Advanced learning algorithms
 
 ## Technical Architecture
 
 ### **Backend Stack**
 - **Framework**: Django 5.2.1 with Python 3.13
 - **Database**: PostgreSQL with advanced querying
-- **AI/ML**: LangChain, Sentence Transformers, OpenAI integration
+- **Content Processing**: LangChain, Sentence Transformers, OpenAI integration
 - **Task Processing**: Celery with Redis for background tasks
 - **Content Processing**: Unstructured.io for document analysis
 
@@ -75,10 +77,10 @@ To bridge the gap between traditional learning methods and modern educational ne
 - **Real-time Features**: WebSocket integration for live chat
 - **User Experience**: Intuitive, accessible interface design
 
-### **AI & Machine Learning**
+### **Smart Features & Machine Learning**
 - **Content Analysis**: Advanced NLP for document processing
 - **Vector Search**: Semantic search capabilities
-- **Chat Intelligence**: Context-aware AI responses
+- **Chat Intelligence**: Context-aware responses
 - **Learning Optimization**: Adaptive algorithms for personalized experience
 
 ## Key Features
@@ -89,7 +91,7 @@ To bridge the gap between traditional learning methods and modern educational ne
 - Smart content organization and categorization
 - Multi-format support (PDF, DOCX, Word documents)
 
-### 💬 **AI Learning Assistant**
+### 💬 **Smart Learning Assistant**
 - 24/7 study companion with context awareness
 - Real-time answers to questions about your materials
 - Personalized learning recommendations
@@ -98,100 +100,91 @@ To bridge the gap between traditional learning methods and modern educational ne
 ### 📊 **Advanced Analytics**
 - Detailed learning progress tracking
 - Performance insights and recommendations
-- Learning pattern analysis
-- Achievement and milestone celebration
+- Learning pattern recognition
+- Achievement and milestone tracking
 
-### 🎯 **Personalized Learning**
-- Adaptive learning paths
-- Custom quiz generation
-- Personalized study schedules
-- Progress-based content recommendations
+### 🔐 **Secure & Scalable**
+- Enterprise-grade security with OAuth integration
+- Scalable architecture for growing user bases
+- Cloud-ready with S3 storage support
+- Comprehensive error handling and logging
 
 ## Getting Started
 
 ### Prerequisites
 - Python 3.13+
-- Redis server
-- PostgreSQL (recommended for production)
-- Virtual environment
+- Node.js 18+
+- PostgreSQL 12+
+- Redis 6+
 
 ### Installation
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
-   cd excelpoint
+   git clone <your-repo-url>
+   cd excelpoint-1
    ```
 
-2. **Set up virtual environment**
+2. **Set up Python environment**
    ```bash
-   python3 -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
-
-3. **Install dependencies**
-   ```bash
+   python -m venv .venv
+   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
    pip install -r requirements.txt
    ```
 
-4. **Configure environment variables**
+3. **Set up frontend**
    ```bash
-   cp .env.example .env
-   # Edit .env with your configuration
+   npm install
+   npm run build
    ```
 
-5. **Run database migrations**
+4. **Configure environment**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your database and API credentials
+   ```
+
+5. **Run migrations**
    ```bash
    python manage.py migrate
    ```
 
-6. **Create superuser**
+6. **Start services**
    ```bash
-   python manage.py createsuperuser
-   ```
-
-7. **Start the services**
-   ```bash
-   # Start Redis (if not already running)
-   redis-server
-   
-   # Start Celery worker (in new terminal)
-   celery -A config worker --loglevel=info
-   
-   # Start Django development server
+   # Terminal 1: Django server
    python manage.py runserver
+   
+   # Terminal 2: Celery worker
+   celery -A config.celery.app worker --loglevel=INFO
+   
+   # Terminal 3: Redis
+   redis-server
    ```
 
-## Usage Guide
+## Demo & Screenshots
 
-### **For Students**
-1. **Upload Study Materials**: Upload your course materials, textbooks, or research papers
-2. **Generate Learning Tools**: Let AI create quizzes and flashcards from your content
-3. **Chat with AI Assistant**: Ask questions about your materials for instant clarification
-4. **Track Progress**: Monitor your learning journey with detailed analytics
-
-### **For Professionals**
-1. **Process Work Documents**: Upload industry reports, training materials, or technical documents
-2. **Create Training Content**: Generate interactive learning materials for teams
-3. **Stay Updated**: Use AI assistant to understand complex topics quickly
-4. **Continuous Learning**: Track professional development and skill acquisition
+🎥 **[Watch the full demo video](https://drive.google.com/file/d/1yBZ8Cexa4Lhrnot7D3OiEqdqtsfgFxn5/view)** to see ExcelPoint in action!
 
 ## Contributing
 
-We welcome contributions from the community! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details on how to submit pull requests, report issues, and contribute to the project.
+We welcome contributions! Please see our contributing guidelines for details on:
+- Code style and standards
+- Testing requirements
+- Pull request process
+- Development setup
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## Support
 
-- **Documentation**: [Wiki](wiki-link)
-- **Issues**: [GitHub Issues](issues-link)
-- **Discussions**: [GitHub Discussions](discussions-link)
-- **Email**: support@excelpoint.com
+For support and questions:
+- Create an issue in this repository
+- Check our documentation
+- Contact the development team
 
 ---
 
-**ExcelPoint** - Transforming Learning Through Intelligence 🚀
+**Built with ❤️ by the ExcelPoint Team**
 

@@ -1,3 +1,19 @@
+"""Data models for the subjects app.
+
+This module defines the core data structures for managing educational content,
+including subjects, materials, content chunks, quizzes, and AI-powered chat
+sessions. The models support both traditional file-based learning materials
+and modern AI-enhanced features like RAG-powered chatbots and dynamic quiz
+generation.
+
+Key features:
+- File storage abstraction via FileStorageMixin
+- Content chunking with vector embeddings for AI search
+- Comprehensive quiz system with multiple question types
+- AI chatbot session management with caching
+- Legacy model support for backward compatibility
+"""
+
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.core.validators import FileExtensionValidator
@@ -8,28 +24,52 @@ from django.conf import settings
 User = get_user_model()
 
 class FileStorageMixin:
-    """Mixin to handle file storage operations"""
+    """Mixin providing file storage abstraction across storage backends.
+    
+    This mixin allows models to work with both local filesystem and S3
+    storage without changing their implementation. It delegates storage
+    operations to the appropriate service based on Django settings.
+    """
     
     def save_file(self, file_obj, path):
-        """Save file using the configured storage service"""
+        """Save a file using the currently configured storage backend.
+        
+        Args:
+            file_obj: File object to save
+            path: Destination path within the storage
+        """
         from .services.storage_factory import StorageFactory
         storage_service = StorageFactory.get_storage_service()
         return storage_service.save_file(file_obj, path)
     
     def get_file_url(self, path):
-        """Get file URL using the configured storage service"""
+        """Get the public URL for a stored file.
+        
+        Args:
+            path: Path to the file in storage
+        Returns:
+            Public URL for accessing the file
+        """
         from .services.storage_factory import StorageFactory
         storage_service = StorageFactory.get_storage_service()
         return storage_service.get_file_url(path)
     
     def delete_file(self, path):
-        """Delete file using the configured storage service"""
+        """Delete a file from the configured storage backend.
+        
+        Args:
+            path: Path to the file to delete
+        """
         from .services.storage_factory import StorageFactory
         storage_service = StorageFactory.get_storage_service()
         storage_service.delete_file(path)
 
 def get_storage_backend():
-    """Get the appropriate storage backend based on settings"""
+    """Get the appropriate storage backend based on Django settings.
+    
+    Returns:
+        Storage backend instance (S3Boto3Storage or FileSystemStorage)
+    """
     if getattr(settings, 'STORAGE_BACKEND', 'local') == 's3':
         from storages.backends.s3boto3 import S3Boto3Storage
         return S3Boto3Storage()
@@ -38,6 +78,11 @@ def get_storage_backend():
         return FileSystemStorage()
 
 class Subject(models.Model):
+    """Core model representing a user's learning subject or course.
+    
+    Each subject contains materials, flashcards, quizzes, and chat sessions.
+    Users can have multiple subjects, and subjects are isolated per user.
+    """
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='subjects')
     name = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -51,6 +96,12 @@ class Subject(models.Model):
         return f"{self.name} ({self.user.username})"
 
 class SubjectMaterial(models.Model):
+    """Model for uploaded learning materials (PDFs, documents, videos, audio).
+    
+    Materials are processed into content chunks for AI-powered search and
+    can be used to generate quizzes and flashcards. The model tracks
+    processing status and supports multiple file types.
+    """
     FILE_TYPES = (
         ('PDF', 'PDF Document'),
         ('DOCX', 'Word Document'),
@@ -84,6 +135,12 @@ class SubjectMaterial(models.Model):
 
 
 class ContentChunk(models.Model):
+    """Represents a processed chunk of content from uploaded materials.
+    
+    Content is split into manageable chunks for vector search and AI
+    processing. Each chunk can have an embedding vector for semantic
+    search via the RAG system.
+    """
     EMBEDDING_STATUS_CHOICES = (
         ('pending', 'Pending'),
         ('completed', 'Completed'),
@@ -115,20 +172,29 @@ class ContentChunk(models.Model):
         return f"Chunk {self.chunk_index} - {self.material.file.name} ({self.embedding_status})"
     
     def has_embedding(self):
-        """Check if chunk has a valid embedding vector"""
+        """Check if this chunk has a valid embedding vector for search.
+        
+        Returns:
+            True if embedding exists and is non-empty
+        """
         return self.embedding_vector is not None and len(self.embedding_vector) > 0
     
     def mark_embedding_completed(self):
-        """Mark embedding as completed and update timestamp"""
+        """Mark embedding generation as completed and update timestamp."""
         self.embedding_status = 'completed'
         self.save(update_fields=['embedding_status', 'updated_at'])
     
     def mark_embedding_failed(self):
-        """Mark embedding as failed and update timestamp"""
+        """Mark embedding generation as failed and update timestamp."""
         self.embedding_status = 'failed'
         self.save(update_fields=['embedding_status', 'updated_at'])
 
 class Flashcard(models.Model):
+    """Simple flashcard for memorization and review.
+    
+    Flashcards can be tied to specific materials or created independently.
+    They support basic question-answer format for quick learning.
+    """
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='flashcards')
     material = models.ForeignKey(SubjectMaterial, on_delete=models.CASCADE, related_name='flashcards', null=True, blank=True)
     question = models.TextField()
@@ -143,7 +209,13 @@ class Flashcard(models.Model):
 
 # Enhanced Quiz Models
 class Quiz(models.Model):
-    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='quizzes')
+    """Quiz model supporting both static and dynamic question generation.
+    
+    Quizzes can contain predefined questions or dynamically generate them
+    from uploaded materials using AI. They support time limits, passing
+    scores, and multiple question types.
+    """
+    subject = models.ForeignKey(User, on_delete=models.CASCADE, related_name='quizzes')
     material = models.ForeignKey(SubjectMaterial, on_delete=models.CASCADE, related_name='quizzes', null=True, blank=True, help_text="The material this quiz was generated from")
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
@@ -160,9 +232,19 @@ class Quiz(models.Model):
         return f"{self.title} - {self.subject.name}"
 
     def get_total_points(self):
+        """Calculate the total possible points for this quiz.
+        
+        Returns:
+            Sum of all question point values
+        """
         return sum(question.points for question in self.questions.all())
 
 class Question(models.Model):
+    """Individual question within a quiz.
+    
+    Supports multiple question types (multiple choice, short answer,
+    true/false) with point values and explanations.
+    """
     QUESTION_TYPES = (
         ('multiple_choice', 'Multiple Choice'),
         ('short_answer', 'Short Answer'),
@@ -185,6 +267,11 @@ class Question(models.Model):
         return f"{self.quiz.title} - Question {self.order}: {self.text[:50]}..."
 
 class Choice(models.Model):
+    """Multiple choice option for quiz questions.
+    
+    Each choice has text and an is_correct flag. The order field
+    allows for consistent presentation across attempts.
+    """
     question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='choices')
     text = models.CharField(max_length=500)
     is_correct = models.BooleanField(default=False)
@@ -197,7 +284,11 @@ class Choice(models.Model):
         return f"{self.text} ({'Correct' if self.is_correct else 'Incorrect'})"
 
 class Answer(models.Model):
-    """Model for storing correct answers for short answer and true/false questions"""
+    """Model for storing correct answers for short answer and true/false questions.
+    
+    Multiple correct answers can be defined for a single question to handle
+    variations in acceptable responses.
+    """
     question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='answers')
     text = models.TextField()
     is_correct = models.BooleanField(default=True)
@@ -206,6 +297,12 @@ class Answer(models.Model):
         return f"Answer for {self.question.text[:30]}..."
 
 class UserQuizAttempt(models.Model):
+    """Tracks a user's attempt at completing a quiz.
+    
+    This model handles both static quizzes (with predefined questions) and
+    dynamic quizzes (with AI-generated questions). It tracks timing,
+    scoring, and completion status.
+    """
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='quiz_attempts')
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name='attempts')
     start_time = models.DateTimeField(auto_now_add=True)
@@ -235,7 +332,14 @@ class UserQuizAttempt(models.Model):
         return f"{self.user.username} - {self.quiz.title} ({self.start_time.strftime('%Y-%m-%d %H:%M')})"
 
     def calculate_score(self):
-        """Calculate the score for this quiz attempt"""
+        """Calculate and store the score for this quiz attempt.
+        
+        Handles both static and dynamic question scoring. For dynamic
+        questions, points are calculated from the stored question data.
+        
+        Returns:
+            Calculated percentage score
+        """
         if self.uses_dynamic_questions and self.dynamic_questions:
             # Calculate score for dynamic questions
             self.total_points = sum(q.get('points', 1) for q in self.dynamic_questions)
@@ -268,18 +372,29 @@ class UserQuizAttempt(models.Model):
         return self.score
 
     def is_passed(self):
-        """Check if the user passed the quiz"""
+        """Check if the user achieved a passing score.
+        
+        Returns:
+            True if score meets or exceeds the quiz's pass threshold
+        """
         return self.score >= self.quiz.pass_score if self.score is not None else False
 
     def complete_attempt(self):
-        """Mark the attempt as completed and calculate final score"""
+        """Mark the attempt as completed and calculate final score.
+        
+        Sets end_time, marks as completed, and triggers score calculation.
+        """
         self.end_time = timezone.now()
         self.is_completed = True
         self.calculate_score()
         self.save()
         
     def get_questions(self):
-        """Get questions for this attempt - either dynamic or static"""
+        """Get questions for this attempt - either dynamic or static.
+        
+        Returns:
+            List of question dictionaries with choices and metadata
+        """
         if self.uses_dynamic_questions and self.dynamic_questions:
             return self.dynamic_questions
         else:
@@ -304,6 +419,11 @@ class UserQuizAttempt(models.Model):
             ]
 
 class UserAnswer(models.Model):
+    """Stores a user's answer to a specific quiz question.
+    
+    Supports multiple question types and can handle both static questions
+    (linked to Question model) and dynamic questions (stored in JSON).
+    """
     attempt = models.ForeignKey(UserQuizAttempt, on_delete=models.CASCADE, related_name='user_answers')
     question = models.ForeignKey(Question, on_delete=models.CASCADE, null=True, blank=True)  # Allow null for dynamic questions
     answer_text = models.TextField(blank=True, null=True)
@@ -318,7 +438,14 @@ class UserAnswer(models.Model):
         return f"Answer by {self.attempt.user.username} for {self.question.text[:30]}..."
 
     def check_answer(self):
-        """Check if the user's answer is correct based on question type"""
+        """Check if the user's answer is correct based on question type.
+        
+        Handles multiple choice, short answer, and true/false questions.
+        Updates the is_correct field and saves the model.
+        
+        Returns:
+            True if the answer is correct
+        """
         if self.question.question_type == 'multiple_choice':
             if self.selected_choice:
                 self.is_correct = self.selected_choice.is_correct
@@ -341,7 +468,12 @@ class UserAnswer(models.Model):
 # Legacy models (keeping for backwards compatibility)
 # XP Chatbot Models
 class ChatSession(models.Model):
-    """Model for managing XP chat sessions per user per subject"""
+    """Model for managing AI-powered chat sessions per user per subject.
+    
+    Chat sessions provide context-aware AI assistance using RAG (Retrieval
+    Augmented Generation) on uploaded materials. Sessions can expire and
+    be archived for performance.
+    """
     STATUS_CHOICES = (
         ('active', 'Active'),
         ('expired', 'Expired'),
@@ -370,15 +502,29 @@ class ChatSession(models.Model):
         return f"Chat: {self.user.username} - {self.subject.name}"
 
     def get_message_count(self):
-        """Get total number of messages in this session"""
+        """Get total number of messages in this session.
+        
+        Returns:
+            Count of all messages in the session
+        """
         return self.messages.count()
 
     def get_last_message(self):
-        """Get the most recent message in this session"""
+        """Get the most recent message in this session.
+        
+        Returns:
+            Most recent ChatMessage or None if empty
+        """
         return self.messages.first()
     
     def is_expired(self, timeout_minutes=5):
-        """Check if session has expired based on last_activity"""
+        """Check if session has expired based on last_activity.
+        
+        Args:
+            timeout_minutes: Minutes of inactivity before expiration
+        Returns:
+            True if session has expired
+        """
         from django.utils import timezone
         from datetime import timedelta
         
@@ -389,19 +535,23 @@ class ChatSession(models.Model):
         return self.last_activity < timeout_threshold
     
     def extend_session(self):
-        """Update last_activity to current time to extend session"""
+        """Update last_activity to current time to extend session."""
         from django.utils import timezone
         self.last_activity = timezone.now()
         self.save(update_fields=['last_activity'])
     
     def expire_session(self):
-        """Mark session as expired and inactive"""
+        """Mark session as expired and inactive."""
         self.status = 'expired'
         self.is_active = False
         self.save(update_fields=['status', 'is_active'])
 
 class ChatMessage(models.Model):
-    """Model for storing individual chat messages in XP sessions"""
+    """Model for storing individual chat messages in AI chat sessions.
+    
+    Messages include role (user/assistant/system), content, and metadata
+    such as retrieved chunks and response timing for analytics.
+    """
     ROLE_CHOICES = (
         ('user', 'User'),
         ('assistant', 'Assistant'),
@@ -430,15 +580,28 @@ class ChatMessage(models.Model):
         return f"{self.role}: {content_preview}"
 
     def get_retrieved_chunks(self):
-        """Extract retrieved chunk information from metadata"""
+        """Extract retrieved chunk information from metadata.
+        
+        Returns:
+            List of retrieved content chunks used in response generation
+        """
         return self.metadata.get('retrieved_chunks', [])
 
     def get_response_time(self):
-        """Get response generation time from metadata"""
+        """Get response generation time from metadata.
+        
+        Returns:
+            Response time in seconds, or None if not recorded
+        """
         return self.metadata.get('response_time', None)
 
 class QuizQuestion(models.Model):
-    """Legacy model - keeping for backwards compatibility"""
+    """Legacy quiz question model maintained for backward compatibility.
+    
+    This model predates the current Quiz/Question system and is kept
+    to avoid breaking existing data. New implementations should use
+    the Quiz and Question models instead.
+    """
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='legacy_quiz_questions')
     material = models.ForeignKey(SubjectMaterial, on_delete=models.CASCADE, related_name='legacy_quiz_questions', null=True, blank=True)
     question = models.TextField()
@@ -454,7 +617,12 @@ class QuizQuestion(models.Model):
         return f"Legacy Quiz: {self.question[:50]}..."
 
 class QuizAttempt(models.Model):
-    """Legacy model - keeping for backwards compatibility"""
+    """Legacy quiz attempt model maintained for backward compatibility.
+    
+    This model predates the current UserQuizAttempt system and is kept
+    to avoid breaking existing data. New implementations should use
+    the UserQuizAttempt model instead.
+    """
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='legacy_quiz_attempts')
     quiz_question = models.ForeignKey(QuizQuestion, on_delete=models.CASCADE, related_name='attempts')
     selected_answer = models.CharField(max_length=255)
@@ -469,9 +637,17 @@ class QuizAttempt(models.Model):
         return f"Legacy Attempt by {self.user.username} on {self.quiz_question.question[:30]}..."
 
 class CachedResponse(models.Model):
-    """
-    Model for caching AI chatbot responses to reduce OpenAI API costs and improve performance.
-    Stores responses with intelligent cache keys based on user, subject, and question.
+    """Model for caching AI chatbot responses to reduce costs and improve performance.
+    
+    This model implements intelligent caching for RAG responses based on
+    user, subject, and question content. It helps reduce OpenAI API calls
+    while maintaining response quality and speed.
+    
+    Key features:
+    - Question hashing for efficient lookups
+    - TTL-based expiration for cache freshness
+    - Hit tracking for cache optimization
+    - Metadata storage for debugging and analytics
     """
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='cached_responses')
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='cached_responses')
@@ -515,36 +691,66 @@ class CachedResponse(models.Model):
         return f"Cache: {self.user.username} - {self.subject.name} - {question_preview}"
 
     def is_expired(self):
-        """Check if this cache entry has expired"""
+        """Check if this cache entry has expired.
+        
+        Returns:
+            True if current time exceeds expires_at
+        """
         from django.utils import timezone
         return timezone.now() > self.expires_at
 
     def increment_hit_count(self):
-        """Increment the hit count and update last_accessed"""
+        """Increment the hit count and update last_accessed timestamp."""
         self.hit_count += 1
         self.save(update_fields=['hit_count', 'last_accessed'])
 
     def get_response_content(self):
-        """Extract the main response content from response_data"""
+        """Extract the main response content from response_data.
+        
+        Returns:
+            The AI-generated response text
+        """
         return self.response_data.get('response', '')
 
     def get_retrieved_chunks(self):
-        """Extract retrieved chunks from response_data"""
+        """Extract retrieved chunks from response_data.
+        
+        Returns:
+            List of content chunks used in response generation
+        """
         return self.response_data.get('retrieved_chunks', [])
 
     def get_metadata(self):
-        """Extract metadata from response_data"""
+        """Extract metadata from response_data.
+        
+        Returns:
+            Dictionary of response metadata (timing, model used, etc.)
+        """
         return self.response_data.get('metadata', {})
 
     @classmethod
     def generate_question_hash(cls, question_text):
-        """Generate MD5 hash for normalized question text"""
+        """Generate MD5 hash for normalized question text.
+        
+        Args:
+            question_text: Raw question text
+        Returns:
+            MD5 hash of normalized (lowercase, stripped) text
+        """
         import hashlib
         normalized = question_text.lower().strip()
         return hashlib.md5(normalized.encode('utf-8')).hexdigest()
 
     @classmethod
     def get_cache_key(cls, user_id, subject_id, question_text):
-        """Generate cache key for lookup"""
+        """Generate cache key for efficient lookups.
+        
+        Args:
+            user_id: ID of the user making the request
+            subject_id: ID of the subject context
+            question_text: The question being asked
+        Returns:
+            Cache key string for database lookups
+        """
         question_hash = cls.generate_question_hash(question_text)
         return f"{user_id}:{subject_id}:{question_hash}"

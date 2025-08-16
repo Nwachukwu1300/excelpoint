@@ -40,27 +40,27 @@ def test_storage_service():
         file_obj = BytesIO(test_content.encode('utf-8'))
         
         # Save file
-        print(f"📤 Saving test file: {test_path}")
+        print(f" Saving test file: {test_path}")
         saved_path = storage_service.save_file(file_obj, test_path)
-        print(f"✅ File saved: {saved_path}")
+        print(f"File saved: {saved_path}")
         
         # Check if file exists
         exists = storage_service.file_exists(test_path)
-        print(f"✅ File exists: {exists}")
+        print(f"File exists: {exists}")
         
         # Get file URL
         url = storage_service.get_file_url(test_path)
-        print(f"✅ File URL: {url}")
+        print(f"File URL: {url}")
         
         # Clean up
         print(f"🗑️ Cleaning up test file: {test_path}")
         storage_service.delete_file(test_path)
-        print("✅ Test file deleted successfully!")
+        print("Test file deleted successfully!")
         
         return True
         
     except Exception as e:
-        print(f"❌ Storage service test failed: {e}")
+        print(f" Storage service test failed: {e}")
         return False
 
 def test_django_model_integration():
@@ -159,12 +159,12 @@ def test_content_processor():
         
         # Test ContentProcessor
         processor = ContentProcessor()
-        print("✅ ContentProcessor initialized")
+        print(" ContentProcessor initialized")
         
         # Process the file
-        print("🔄 Processing file with ContentProcessor...")
+        print(" Processing file with ContentProcessor...")
         chunks = processor.process_file(temp_file_path)
-        print(f"✅ File processed successfully! Generated {len(chunks)} chunks")
+        print(f" File processed successfully! Generated {len(chunks)} chunks")
         
         # Display chunk information
         for i, chunk in enumerate(chunks[:3]):  # Show first 3 chunks
@@ -172,12 +172,12 @@ def test_content_processor():
         
         # Clean up
         os.unlink(temp_file_path)
-        print(f"✅ Cleaned up test file: {temp_file_path}")
+        print(f" Cleaned up test file: {temp_file_path}")
         
         return True
         
     except Exception as e:
-        print(f"❌ ContentProcessor test failed: {e}")
+        print(f" ContentProcessor test failed: {e}")
         return False
 
 def test_settings_configuration():
@@ -187,7 +187,7 @@ def test_settings_configuration():
     try:
         # Check storage backend setting
         storage_backend = getattr(settings, 'STORAGE_BACKEND', 'local')
-        print(f"✅ Storage backend: {storage_backend}")
+        print(f" Storage backend: {storage_backend}")
         
         # Check S3 settings if using S3
         if storage_backend == 's3':
@@ -201,23 +201,23 @@ def test_settings_configuration():
             for setting in required_settings:
                 value = getattr(settings, setting, None)
                 if value:
-                    print(f"✅ {setting}: {'*' * len(str(value))} (hidden)")
+                    print(f"{setting}: {'*' * len(str(value))} (hidden)")
                 else:
-                    print(f"❌ {setting}: Not configured")
+                    print(f" {setting}: Not configured")
                     return False
         else:
             print("ℹ️ Using local storage backend")
         
         # Check installed apps
         if 'storages' in settings.INSTALLED_APPS:
-            print("✅ django-storages is installed")
+            print("django-storages is installed")
         else:
-            print("ℹ️ django-storages not in INSTALLED_APPS (only needed for S3)")
+            print("django-storages not in INSTALLED_APPS (only needed for S3)")
         
         return True
         
     except Exception as e:
-        print(f"❌ Settings configuration test failed: {e}")
+        print(f" Settings configuration test failed: {e}")
         return False
 
 def main():
@@ -242,7 +242,7 @@ def main():
     total = len(test_results)
     
     for test_name, result in test_results:
-        status = "✅ PASS" if result else "❌ FAIL"
+        status = "PASS" if result else "FAIL"
         print(f"{status} {test_name}")
         if result:
             passed += 1
@@ -251,13 +251,13 @@ def main():
     print(f"Overall: {passed}/{total} tests passed")
     
     if passed == total:
-        print("\n🎉 All tests passed! Your AWS S3 integration is working correctly.")
+        print("\nAll tests passed! Your AWS S3 integration is working correctly.")
         print("\nNext steps:")
         print("1. Set STORAGE_BACKEND=s3 in your .env file to enable S3")
         print("2. Test with real file uploads through the web interface")
         print("3. Monitor S3 usage and costs")
     else:
-        print(f"\n⚠️ {total - passed} test(s) failed. Please check the configuration.")
+        print(f"\n{total - passed} test(s) failed. Please check the configuration.")
     
     return passed == total
 
