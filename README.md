@@ -3,7 +3,7 @@
 ## 🎥 [Watch Demo Video](https://drive.google.com/file/d/1yBZ8Cexa4Lhrnot7D3OiEqdqtsfgFxn5/view)
 
 ## Project Overview
-ExcelPoint is an innovative learning enhancement platform designed to elevate the educational experience for everyone. Our platform combines advanced content processing, interactive learning tools, and personalized study assistance to transform how people learn and retain knowledge.
+ExcelPoint is a learning enhancement platform designed to elevate the educational experience for everyone. My platform combines advanced content processing, interactive learning tools, and personalized study assistance to transform how people learn and retain knowledge.
 
 ## Mission
 To bridge the gap between traditional learning methods and modern educational needs by providing intelligent, adaptive learning experiences that cater to diverse learning styles and professional requirements.
