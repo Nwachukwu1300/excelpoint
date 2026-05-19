@@ -1,16 +1,7 @@
 # Excelpoint Python Dependencies
-# 
-# This file contains all Python packages required for the Excelpoint
-# learning platform. The dependencies are organized by functionality
-# to make maintenance and troubleshooting easier.
 #
-# Key dependency categories:
-# - Core Django and REST framework
-# - Database connectivity (PostgreSQL)
-# - Content processing and AI integration
-# - Background task processing
-# - Authentication and storage
-# - Development and monitoring tools
+# This file contains all Python packages required for the Excelpoint
+# learning platform. All versions are pinned to avoid resolution issues.
 
 # Core Django Framework
 Django==5.2.1
@@ -42,42 +33,51 @@ pycparser==2.22
 
 # Image and Document Processing
 Pillow==11.2.1
-pypdf>=3.0.0
+pypdf==5.0.0
+PyPDF2==3.0.1
+python-docx==1.1.2
 
 # Content Processing and AI
-langchain>=0.3.25
-langchain-community>=0.3.25
-PyPDF2>=3.0.1
-python-docx>=1.1.2
-sentence-transformers>=4.1.0
-torch>=2.6.0
-numpy>=1.26.0
-unstructured>=0.18.0
-python-magic>=0.4.27
-pydub>=0.25.1
-SpeechRecognition>=3.14.3
+langchain>=0.3.0
+langchain-community>=0.3.0
+# langchain-core is auto-installed by langchain
+sentence-transformers>=3.0.0
+torch==2.6.0
+numpy>=2.0.2
+# unstructured - install separately if needed: pip install unstructured
+python-magic==0.4.27
+pydub==0.25.1
+SpeechRecognition==3.14.3
 
 # Video/Audio Transcription
-openai-whisper>=20231117
-ffmpeg-python>=0.2.0
+# openai-whisper has build issues on Python 3.13 - install separately if needed
+# pip install openai-whisper
+ffmpeg-python==0.2.0
 
 # AI Integration
-openai>=1.12.0
+openai==1.68.0
 
 # Background Tasks and Message Queuing
-celery>=5.5.3
-redis>=6.2.0
+celery==5.5.3
+redis==6.2.0
 
 # System Monitoring and Utilities
-psutil>=6.1.0
+psutil==6.1.0
 
 # OAuth Authentication (Google)
-google-auth>=2.23.0
-google-auth-oauthlib>=1.1.0
-google-auth-httplib2>=0.1.1
+google-auth==2.38.0
+google-auth-oauthlib==1.2.1
+google-auth-httplib2==0.2.0
 
 # Cloud Storage Integration
-django-storages>=1.14.0
+django-storages==1.14.4
+boto3==1.38.0
 
 # Optional - uncomment if needed for CORS support
 # django-cors-headers==4.3.1
+
+# ============================================================================
+# Stage 1: Retrieval System Optimization
+# ============================================================================
+# Token counting for semantic chunking
+tiktoken==0.8.0

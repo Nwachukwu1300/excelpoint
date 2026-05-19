@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'users',
     'learning',
     'subjects',
+    'retrieval',  # Stage 1: Retrieval System Optimization
     'rest_framework',
     'rest_framework_simplejwt',
     'requests',
