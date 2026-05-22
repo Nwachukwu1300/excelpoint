@@ -81,3 +81,9 @@ boto3==1.38.0
 # ============================================================================
 # Token counting for semantic chunking
 tiktoken==0.8.0
+
+# ============================================================================
+# Stage 2: Agentic Reasoning Pipeline
+# ============================================================================
+# No additional dependencies required - uses existing openai, Django, and DRF packages
+# The reasoning pipeline leverages the Stage 1 retrieval system

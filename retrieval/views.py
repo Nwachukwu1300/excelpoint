@@ -16,7 +16,7 @@ Endpoints:
 
 from rest_framework import status, generics
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -615,7 +615,7 @@ class StrategiesView(APIView):
     GET: List all available chunking strategies, embedding models, and rerankers.
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]  # Public endpoint for discovery
 
     def get(self, request):
         """

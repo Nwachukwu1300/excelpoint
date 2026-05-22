@@ -36,6 +36,7 @@ urlpatterns = [
     path('learning/', include('learning.urls')),
     path('api/', include('subjects.urls')),
     path('api/retrieval/', include('retrieval.urls')),  # Stage 1: Retrieval System Optimization
+    path('api/reasoning/', include('reasoning.urls')),  # Stage 2: Agentic Reasoning Pipeline
     path('subjects/', SubjectListView.as_view(), name='subjects'),
     path('subjects/create/', create_subject, name='create_subject'),
     path('subjects/<int:pk>/upload/', upload_material, name='upload_material'),

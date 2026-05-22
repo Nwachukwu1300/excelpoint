@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'learning',
     'subjects',
     'retrieval',  # Stage 1: Retrieval System Optimization
+    'reasoning',  # Stage 2: Agentic Reasoning Pipeline
     'rest_framework',
     'rest_framework_simplejwt',
     'requests',
@@ -237,3 +238,28 @@ if STORAGE_BACKEND == 's3':
     
     # Ensure MEDIA_ROOT is not used when S3 is enabled
     MEDIA_ROOT = None
+
+
+# ============================================================================
+# Stage 2: Agentic Reasoning Pipeline Configuration
+# ============================================================================
+
+# Reasoning Pipeline Settings
+REASONING_DEFAULT_PIPELINE = os.getenv('REASONING_DEFAULT_PIPELINE', 'default')
+REASONING_FAITHFULNESS_THRESHOLD = float(os.getenv('REASONING_FAITHFULNESS_THRESHOLD', '0.7'))
+REASONING_MAX_RETRIES = int(os.getenv('REASONING_MAX_RETRIES', '2'))
+
+# Confidence Scoring Weights (must sum to 1.0 for base weights, excluding penalties)
+REASONING_CONFIDENCE_FAITHFULNESS_WEIGHT = float(os.getenv('REASONING_CONFIDENCE_FAITHFULNESS_WEIGHT', '0.40'))
+REASONING_CONFIDENCE_MEAN_SIMILARITY_WEIGHT = float(os.getenv('REASONING_CONFIDENCE_MEAN_SIMILARITY_WEIGHT', '0.25'))
+REASONING_CONFIDENCE_TOP_SIMILARITY_WEIGHT = float(os.getenv('REASONING_CONFIDENCE_TOP_SIMILARITY_WEIGHT', '0.15'))
+REASONING_CONFIDENCE_FIRST_ATTEMPT_BONUS = float(os.getenv('REASONING_CONFIDENCE_FIRST_ATTEMPT_BONUS', '0.10'))
+REASONING_CONFIDENCE_UNSUPPORTED_PENALTY = float(os.getenv('REASONING_CONFIDENCE_UNSUPPORTED_PENALTY', '0.05'))
+REASONING_CONFIDENCE_MAX_UNSUPPORTED_PENALTY = float(os.getenv('REASONING_CONFIDENCE_MAX_UNSUPPORTED_PENALTY', '0.20'))
+
+# LLM Settings for Reasoning (can override global OPENAI_MODEL)
+REASONING_LLM_MODEL = os.getenv('REASONING_LLM_MODEL', OPENAI_MODEL)
+REASONING_CLASSIFIER_TEMPERATURE = float(os.getenv('REASONING_CLASSIFIER_TEMPERATURE', '0.2'))
+REASONING_REWRITER_TEMPERATURE = float(os.getenv('REASONING_REWRITER_TEMPERATURE', '0.3'))
+REASONING_GENERATOR_TEMPERATURE = float(os.getenv('REASONING_GENERATOR_TEMPERATURE', '0.4'))
+REASONING_VERIFIER_TEMPERATURE = float(os.getenv('REASONING_VERIFIER_TEMPERATURE', '0.1'))
