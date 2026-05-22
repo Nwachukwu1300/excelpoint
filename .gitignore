@@ -97,3 +97,10 @@ node_modules/
 .env*
 *.backup
 secrets/
+
+# Redis and Celery artifacts
+dump.rdb
+celerybeat-schedule
+celerybeat-schedule.db
+celerybeat.pid
+*.celerybeat
