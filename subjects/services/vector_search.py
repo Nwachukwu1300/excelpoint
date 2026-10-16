@@ -17,15 +17,40 @@ provides the foundation for RAG (Retrieval Augmented Generation)
 functionality in the chatbot.
 """
 
+import hashlib
 import numpy as np
 import logging
 from typing import List, Dict, Any, Optional, Tuple
 from django.core.cache import cache
+from django.db import transaction
 from django.db.models import Q
-from ..models import ContentChunk, Subject
+from pgvector.django import CosineDistance
+from ..models import EMBEDDING_DIMENSIONS, ContentChunk, Subject
 from ..utils import load_embedding_model
 
 logger = logging.getLogger(__name__)
+
+
+def nearest_chunks(query_embedding, subject_id: int, top_k: int):
+    """Return the subject's top_k chunks closest to query_embedding, each annotated with
+    `distance` (cosine distance; similarity = 1 - distance). Search runs in Postgres via pgvector."""
+    query_embedding = [float(x) for x in query_embedding]
+    if len(query_embedding) != EMBEDDING_DIMENSIONS:
+        raise ValueError(
+            f"Query embedding has {len(query_embedding)} dimensions but stored chunks use "
+            f"{EMBEDDING_DIMENSIONS} (all-MiniLM-L6-v2); re-embed the chunks to compare other models"
+        )
+    with transaction.atomic():
+        # HNSW scans a fixed candidate list; iterative scan keeps going until the subject filter yields top_k
+        with transaction.get_connection().cursor() as cursor:
+            cursor.execute("SET LOCAL hnsw.iterative_scan = 'relaxed_order'")
+        return list(
+            ContentChunk.objects
+            .filter(material__subject_id=subject_id, embedding_vector__isnull=False)
+            .select_related('material')
+            .annotate(distance=CosineDistance('embedding_vector', query_embedding))
+            .order_by('distance')[:top_k]
+        )
 
 
 class VectorSearchService:
@@ -88,7 +113,8 @@ class VectorSearchService:
             self._ensure_model_loaded()
             
             # Check cache first
-            cache_key = f"query_embedding:{hash(text.strip())}"
+            # hash() is randomised per process, so it never hit across workers
+            cache_key = f"query_embedding:{hashlib.md5(text.strip().encode()).hexdigest()}"
             cached_embedding = cache.get(cache_key)
             if cached_embedding is not None:
                 return np.array(cached_embedding)
@@ -256,36 +282,12 @@ class VectorSearchService:
             if not 0.0 <= threshold <= 1.0:
                 raise ValueError("threshold must be between 0.0 and 1.0")
             
-            # Get chunks for the subject
-            chunks = self.get_subject_chunks(subject_id)
-            
-            if not chunks:
-                logger.warning(f"No chunks found for subject {subject_id}")
-                return []
-            
-            # Extract embeddings and calculate similarities
-            chunk_embeddings = []
-            valid_chunks = []
-            
-            for chunk in chunks:
-                try:
-                    if chunk.embedding_vector:
-                        chunk_embeddings.append(np.array(chunk.embedding_vector))
-                        valid_chunks.append(chunk)
-                except (TypeError, ValueError) as e:
-                    logger.warning(f"Invalid embedding for chunk {chunk.id}: {str(e)}")
-                    continue
-            
-            if not valid_chunks:
-                logger.warning(f"No valid embeddings found for subject {subject_id}")
-                return []
-            
-            # Calculate similarities efficiently
-            similarities = self.cosine_similarity_batch(query_embedding, chunk_embeddings)
-            
-            # Create results with metadata
+            if not Subject.objects.filter(id=subject_id).exists():
+                raise ValueError(f"Subject with ID {subject_id} does not exist")
+
             results = []
-            for chunk, similarity in zip(valid_chunks, similarities):
+            for chunk in nearest_chunks(query_embedding, subject_id, top_k):
+                similarity = 1.0 - chunk.distance
                 if similarity >= threshold:
                     results.append({
                         'chunk_id': chunk.id,
@@ -299,7 +301,7 @@ class VectorSearchService:
                             'created_at': chunk.created_at.isoformat(),
                         }
                     })
-            
+
             # Sort by similarity score (descending) and limit to top_k
             results.sort(key=lambda x: x['similarity_score'], reverse=True)
             final_results = results[:top_k]

@@ -10,6 +10,7 @@ djangorestframework-simplejwt==5.5.0
 
 # Database and Data Processing
 psycopg2-binary==2.9.10
+pgvector==0.4.1
 pandas==2.2.3
 python-dotenv==1.0.0
 

@@ -17,6 +17,7 @@ Key features:
 from django.db import models
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
+from pgvector.django import HnswIndex, VectorField
 from django.contrib.auth import get_user_model
 from django.core.validators import FileExtensionValidator
 from django.utils import timezone
@@ -136,6 +137,10 @@ class SubjectMaterial(models.Model):
     
 
 
+# all-MiniLM-L6-v2, the model every stored chunk is embedded with
+EMBEDDING_DIMENSIONS = 384
+
+
 class ContentChunk(models.Model):
     """Represents a processed chunk of content from uploaded materials.
     
@@ -152,7 +157,7 @@ class ContentChunk(models.Model):
     material = models.ForeignKey(SubjectMaterial, on_delete=models.CASCADE, related_name='chunks')
     content = models.TextField()
     chunk_index = models.IntegerField()
-    embedding_vector = models.JSONField(null=True, blank=True)  # Store vector embeddings for AI search
+    embedding_vector = VectorField(dimensions=EMBEDDING_DIMENSIONS, null=True, blank=True)
     embedding_status = models.CharField(
         max_length=10, 
         choices=EMBEDDING_STATUS_CHOICES, 
@@ -168,6 +173,7 @@ class ContentChunk(models.Model):
         indexes = [
             models.Index(fields=['embedding_status']),
             models.Index(fields=['material', 'embedding_status']),
+            HnswIndex(name='chunk_embedding_hnsw', fields=['embedding_vector'], opclasses=['vector_cosine_ops']),
         ]
 
     def __str__(self):

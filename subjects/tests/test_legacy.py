@@ -6,6 +6,7 @@ from django.urls import reverse
 from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
 from unittest.mock import Mock, patch, MagicMock
+from subjects.tests import vec
 import numpy as np
 import json
 from subjects.models import Subject, ChatSession, ChatMessage, SubjectMaterial, ContentChunk
@@ -305,21 +306,21 @@ class VectorSearchServiceTest(TestCase):
             material=self.material,
             content='Python is a programming language',
             chunk_index=0,
-            embedding_vector=[0.1, 0.2, 0.3, 0.4, 0.5]  # Mock embedding
+            embedding_vector=vec(0.1, 0.2, 0.3, 0.4, 0.5)  # Mock embedding
         )
         
         self.chunk2 = ContentChunk.objects.create(
             material=self.material,
             content='Variables store data in Python',
             chunk_index=1,
-            embedding_vector=[0.2, 0.1, 0.4, 0.3, 0.6]  # Mock embedding
+            embedding_vector=vec(0.2, 0.1, 0.4, 0.3, 0.6)  # Mock embedding
         )
         
         self.chunk3 = ContentChunk.objects.create(
             material=self.material,
             content='Functions define reusable code blocks',
             chunk_index=2,
-            embedding_vector=[0.3, 0.4, 0.1, 0.2, 0.7]  # Mock embedding
+            embedding_vector=vec(0.3, 0.4, 0.1, 0.2, 0.7)  # Mock embedding
         )
         
         # Create chunk without embedding for testing edge cases
@@ -428,7 +429,7 @@ class VectorSearchServiceTest(TestCase):
         service = VectorSearchService()
         
         # Test query embedding that's similar to chunk1
-        query_embedding = np.array([0.1, 0.2, 0.3, 0.4, 0.5])
+        query_embedding = np.array(vec(0.1, 0.2, 0.3, 0.4, 0.5))
         
         results = service.search_similar_chunks(
             query_embedding, 
@@ -453,7 +454,7 @@ class VectorSearchServiceTest(TestCase):
 
     def test_search_similar_chunks_invalid_params(self):
         """Test search with invalid parameters"""
-        query_embedding = np.array([0.1, 0.2, 0.3])
+        query_embedding = np.array(vec(0.1, 0.2, 0.3))
         
         # Invalid top_k
         with self.assertRaises(ValueError):
@@ -468,7 +469,7 @@ class VectorSearchServiceTest(TestCase):
         """Test searching by text query"""
         # Mock the sentence transformer
         mock_model = Mock()
-        mock_model.encode.return_value = np.array([0.1, 0.2, 0.3, 0.4, 0.5])
+        mock_model.encode.return_value = np.array(vec(0.1, 0.2, 0.3, 0.4, 0.5))
         mock_transformer.return_value = mock_model
         
         # Create a new service
@@ -536,14 +537,14 @@ class VectorSearchIntegrationTest(TestCase):
             material=self.material1,
             content='Machine learning is a subset of artificial intelligence',
             chunk_index=0,
-            embedding_vector=[0.8, 0.1, 0.2, 0.3, 0.1]
+            embedding_vector=vec(0.8, 0.1, 0.2, 0.3, 0.1)
         )
         
         ContentChunk.objects.create(
             material=self.material1,
             content='Neural networks are computational models inspired by biological neurons',
             chunk_index=1,
-            embedding_vector=[0.7, 0.2, 0.1, 0.4, 0.2]
+            embedding_vector=vec(0.7, 0.2, 0.1, 0.4, 0.2)
         )
         
         # Create chunks for subject2 (Web Dev)
@@ -551,14 +552,14 @@ class VectorSearchIntegrationTest(TestCase):
             material=self.material2,
             content='HTML is the markup language for creating web pages',
             chunk_index=0,
-            embedding_vector=[0.1, 0.8, 0.3, 0.2, 0.1]
+            embedding_vector=vec(0.1, 0.8, 0.3, 0.2, 0.1)
         )
         
         ContentChunk.objects.create(
             material=self.material2,
             content='CSS is used for styling web pages and layouts',
             chunk_index=1,
-            embedding_vector=[0.2, 0.7, 0.4, 0.1, 0.2]
+            embedding_vector=vec(0.2, 0.7, 0.4, 0.1, 0.2)
         )
         
         self.vector_service = VectorSearchService()
@@ -588,7 +589,7 @@ class VectorSearchIntegrationTest(TestCase):
     def test_subject_scoping_in_search(self):
         """Test that search properly scopes to specific subjects"""
         # Create a query embedding similar to ML content
-        ml_query = np.array([0.8, 0.1, 0.2, 0.3, 0.1])
+        ml_query = np.array(vec(0.8, 0.1, 0.2, 0.3, 0.1))
         
         # Search in ML subject should return relevant results
         ml_results = self.vector_service.search_similar_chunks(
@@ -615,11 +616,11 @@ class VectorSearchIntegrationTest(TestCase):
                 material=self.material1,
                 content=f'Additional ML content chunk {i}',
                 chunk_index=i + 10,
-                embedding_vector=[0.1 * i, 0.2, 0.3, 0.4, 0.5]
+                embedding_vector=vec(0.1 * i, 0.2, 0.3, 0.4, 0.5)
             )
         
         # Perform search and measure basic functionality
-        query_embedding = np.array([0.5, 0.5, 0.5, 0.5, 0.5])
+        query_embedding = np.array(vec(0.5, 0.5, 0.5, 0.5, 0.5))
         
         import time
         start_time = time.time()
@@ -654,14 +655,14 @@ class RAGServiceTest(TestCase):
             material=self.material,
             content='Python is a programming language used for web development',
             chunk_index=0,
-            embedding_vector=[0.1, 0.2, 0.3, 0.4, 0.5]
+            embedding_vector=vec(0.1, 0.2, 0.3, 0.4, 0.5)
         )
         
         self.chunk2 = ContentChunk.objects.create(
             material=self.material,
             content='Variables in Python store data values',
             chunk_index=1,
-            embedding_vector=[0.2, 0.1, 0.4, 0.3, 0.6]
+            embedding_vector=vec(0.2, 0.1, 0.4, 0.3, 0.6)
         )
 
     @patch('subjects.services.rag_service.OpenAI')
@@ -909,14 +910,14 @@ class RAGServiceIntegrationTest(TestCase):
             material=self.material,
             content='Machine learning is a method of data analysis that automates analytical model building',
             chunk_index=0,
-            embedding_vector=[0.8, 0.1, 0.2, 0.3, 0.1]
+            embedding_vector=vec(0.8, 0.1, 0.2, 0.3, 0.1)
         )
         
         ContentChunk.objects.create(
             material=self.material,
             content='Supervised learning uses labeled training data to learn a mapping function',
             chunk_index=1,
-            embedding_vector=[0.7, 0.2, 0.1, 0.4, 0.2]
+            embedding_vector=vec(0.7, 0.2, 0.1, 0.4, 0.2)
         )
 
     @patch('subjects.services.rag_service.OpenAI')
@@ -925,7 +926,7 @@ class RAGServiceIntegrationTest(TestCase):
         """Test complete end-to-end response generation"""
         # Mock sentence transformer
         mock_model = Mock()
-        mock_model.encode.return_value = np.array([0.8, 0.1, 0.2, 0.3, 0.1])
+        mock_model.encode.return_value = np.array(vec(0.8, 0.1, 0.2, 0.3, 0.1))
         mock_transformer.return_value = mock_model
         
         # Mock OpenAI response
@@ -975,7 +976,7 @@ class RAGServiceIntegrationTest(TestCase):
         """Test that chat history is properly included in context"""
         # Mock transformer and OpenAI as before
         mock_model = Mock()
-        mock_model.encode.return_value = np.array([0.7, 0.2, 0.1, 0.4, 0.2])
+        mock_model.encode.return_value = np.array(vec(0.7, 0.2, 0.1, 0.4, 0.2))
         mock_transformer.return_value = mock_model
         
         mock_openai_response = Mock()
@@ -1020,7 +1021,7 @@ class RAGServiceIntegrationTest(TestCase):
         # Mock transformer to return embedding that won't match well
         # Use a completely orthogonal embedding to ensure low similarity
         mock_model = Mock()
-        mock_model.encode.return_value = np.array([-1.0, -1.0, -1.0, -1.0, -1.0])
+        mock_model.encode.return_value = np.array(vec(-1.0, -1.0, -1.0, -1.0, -1.0))
         mock_transformer.return_value = mock_model
         
         # Mock OpenAI to return fallback message
@@ -1400,7 +1401,7 @@ class ChatStatsAPITest(APITestCase):
             material=material,
             content='Test content chunk',
             chunk_index=0,
-            embedding_vector=[0.1, 0.2, 0.3]
+            embedding_vector=vec(0.1, 0.2, 0.3)
         )
         
         url = reverse('chat-stats', kwargs={'subject_id': self.subject.id})
@@ -1608,21 +1609,12 @@ class ContentChunkModelTest(TestCase):
         )
         self.assertFalse(chunk_no_embedding.has_embedding())
         
-        # Chunk with empty embedding
-        chunk_empty_embedding = ContentChunk.objects.create(
-            material=self.material,
-            content='Empty embedding',
-            chunk_index=1,
-            embedding_vector=[]
-        )
-        self.assertFalse(chunk_empty_embedding.has_embedding())
-        
         # Chunk with valid embedding
         chunk_with_embedding = ContentChunk.objects.create(
             material=self.material,
             content='With embedding',
             chunk_index=2,
-            embedding_vector=[0.1, 0.2, 0.3]
+            embedding_vector=vec(0.1, 0.2, 0.3)
         )
         self.assertTrue(chunk_with_embedding.has_embedding())
     
@@ -1898,7 +1890,7 @@ class EnhancedEmbeddingTasksTest(TestCase):
         
         # Mock ContentProcessor
         mock_processor = MagicMock()
-        mock_processor.model.encode.return_value = np.array([0.1, 0.2, 0.3])
+        mock_processor.model.encode.return_value = np.array(vec(0.1, 0.2, 0.3))
         mock_processor_class.return_value = mock_processor
         
         # Execute the task
@@ -1907,12 +1899,12 @@ class EnhancedEmbeddingTasksTest(TestCase):
         # Verify result
         self.assertEqual(result['status'], 'success')
         self.assertEqual(result['chunk_id'], self.chunk.id)
-        self.assertEqual(result['embedding_length'], 3)
+        self.assertEqual(result['embedding_length'], 384)
         
         # Verify chunk was updated
         self.chunk.refresh_from_db()
         self.assertEqual(self.chunk.embedding_status, 'completed')
-        self.assertEqual(self.chunk.embedding_vector, [0.1, 0.2, 0.3])
+        np.testing.assert_allclose(self.chunk.embedding_vector, vec(0.1, 0.2, 0.3), rtol=1e-6)  # stored as float32
     
     def test_generate_chunk_embedding_nonexistent_chunk(self):
         """Test generate_chunk_embedding with nonexistent chunk"""
@@ -1993,7 +1985,7 @@ class ManagementCommandTest(TestCase):
             content='Completed chunk',
             chunk_index=0,
             embedding_status='completed',
-            embedding_vector=[0.1, 0.2, 0.3]
+            embedding_vector=vec(0.1, 0.2, 0.3)
         )
         ContentChunk.objects.create(
             material=self.material,
@@ -2209,12 +2201,12 @@ class EmbeddingPipelineIntegrationTest(TestCase):
             {
                 'content': 'Test content 1',
                 'chunk_index': 0,
-                'embedding_vector': [0.1, 0.2, 0.3]
+                'embedding_vector': vec(0.1, 0.2, 0.3)
             },
             {
                 'content': 'Test content 2', 
                 'chunk_index': 1,
-                'embedding_vector': [0.4, 0.5, 0.6]
+                'embedding_vector': vec(0.4, 0.5, 0.6)
             }
         ]
         
@@ -2252,7 +2244,7 @@ class EmbeddingPipelineIntegrationTest(TestCase):
             {
                 'content': content,
                 'chunk_index': i,
-                'embedding_vector': [0.1 * i, 0.2 * i, 0.3 * i]
+                'embedding_vector': vec(0.1 * i, 0.2 * i, 0.3 * i)
             }
             for i, content in enumerate(large_chunks)
         ]
@@ -2277,7 +2269,7 @@ class EmbeddingPipelineIntegrationTest(TestCase):
         )
         
         # Simulate successful embedding generation
-        chunk.embedding_vector = [0.1, 0.2, 0.3]
+        chunk.embedding_vector = vec(0.1, 0.2, 0.3)
         chunk.mark_embedding_completed()
         
         # Verify status was updated

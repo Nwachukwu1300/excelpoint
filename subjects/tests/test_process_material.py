@@ -6,13 +6,14 @@ from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from django.test import TestCase, override_settings
 
+from subjects.tests import vec
 from subjects.models import ContentChunk, Subject, SubjectMaterial
 from subjects.tasks import process_material
 
 MEDIA = tempfile.mkdtemp()
 CHUNKS = [
-    {'content': 'one', 'chunk_index': 0, 'embedding_vector': [0.1]},
-    {'content': 'two', 'chunk_index': 1, 'embedding_vector': [0.2]},
+    {'content': 'one', 'chunk_index': 0, 'embedding_vector': vec(0.1)},
+    {'content': 'two', 'chunk_index': 1, 'embedding_vector': vec(0.2)},
 ]
 
 

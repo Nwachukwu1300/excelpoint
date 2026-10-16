@@ -279,29 +279,6 @@ class RetrievalPipeline:
         latency_ms = (time.perf_counter() - start_time) * 1000
         return embedding, latency_ms
 
-    def _cosine_similarity(self, vec1: List[float], vec2: List[float]) -> float:
-        """
-        Calculate cosine similarity between two vectors.
-
-        Args:
-            vec1: First vector.
-            vec2: Second vector.
-
-        Returns:
-            Cosine similarity score between -1 and 1.
-        """
-        a = np.array(vec1)
-        b = np.array(vec2)
-
-        dot_product = np.dot(a, b)
-        norm_a = np.linalg.norm(a)
-        norm_b = np.linalg.norm(b)
-
-        if norm_a == 0 or norm_b == 0:
-            return 0.0
-
-        return float(dot_product / (norm_a * norm_b))
-
     def _search_chunks(
         self,
         query_embedding: List[float],
@@ -320,22 +297,11 @@ class RetrievalPipeline:
         start_time = time.perf_counter()
 
         # Import here to avoid circular imports
-        from subjects.models import ContentChunk
-
-        # Get all chunks with embeddings for this subject
-        chunks = ContentChunk.objects.filter(
-            material__subject_id=subject_id,
-            embedding_status='completed',
-            embedding_vector__isnull=False
-        ).select_related('material').order_by('material_id', 'chunk_index')
+        from subjects.services.vector_search import nearest_chunks
 
         results = []
-        for chunk in chunks:
-            if not chunk.embedding_vector:
-                continue
-
-            # Calculate similarity
-            similarity = self._cosine_similarity(query_embedding, chunk.embedding_vector)
+        for chunk in nearest_chunks(query_embedding, subject_id, self._config.top_k):
+            similarity = 1.0 - chunk.distance
 
             # Apply threshold
             if similarity >= self._config.similarity_threshold:

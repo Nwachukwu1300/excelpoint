@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from django.test import TestCase
 
+from subjects.tests import vec
 from subjects.models import ContentChunk, Subject, SubjectMaterial
 
 from .pipeline import PipelineConfig, RetrievalPipeline
@@ -16,11 +17,11 @@ class SearchChunksTest(TestCase):
         self.addCleanup(material.file.delete, save=False)
         ContentChunk.objects.create(
             material=material, content='hello', chunk_index=0,
-            embedding_vector=[1.0, 0.0], embedding_status='completed',
+            embedding_vector=vec(1.0, 0.0), embedding_status='completed',
         )
 
         pipeline = RetrievalPipeline(PipelineConfig(name='t', similarity_threshold=0.0))
-        results, _ = pipeline._search_chunks([1.0, 0.0], subject.id)
+        results, _ = pipeline._search_chunks(vec(1.0, 0.0), subject.id)
 
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0].material_name, material.file.name)
