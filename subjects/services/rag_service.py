@@ -29,7 +29,7 @@ class RAGService:
         self.max_context_length = 3000  # Maximum characters for context
         self.max_chat_history = 10      # Maximum chat exchanges to include
         self.search_top_k = 5           # Number of chunks to retrieve
-        self.search_threshold = 0.15    # Minimum similarity threshold (optimized for recall)
+        self.search_threshold = 0.3     # Below this MiniLM matches are mostly noise, so treat as "not in materials"
         
     def generate_response(
         self, 
@@ -86,6 +86,24 @@ class RAGService:
             
             # Step 3: Prepare context from retrieved chunks
             context = self._prepare_context(search_results)
+            subject_name = self._get_subject_name(subject_id)
+
+            # Strict RAG: nothing relevant retrieved means nothing to answer from, so skip the LLM
+            if not context.strip() and not self._is_conversational_query(query):
+                return {
+                    'response': self._get_subject_specific_fallback(subject_name),
+                    'retrieved_chunks': [],
+                    'context_used': False,
+                    'response_time': time.time() - start_time,
+                    'metadata': {
+                        'subject_id': subject_id,
+                        'user_id': user_id,
+                        'chunks_found': 0,
+                        'model_used': None,
+                        'tokens_used': {},
+                        'timestamp': time.time(),
+                    },
+                }
             
             # Step 4: Format chat history for context
             formatted_history = self._format_chat_history(chat_history)
@@ -97,9 +115,6 @@ class RAGService:
                 chat_history=formatted_history,
                 subject_id=subject_id
             )
-            
-            # Step 6: Get subject information for fallback messages
-            subject_name = self._get_subject_name(subject_id)
             
             # Step 7: Validate and post-process response
             validated_response = self._validate_response(response_data['content'], context, subject_name, query, chat_history)
@@ -126,8 +141,8 @@ class RAGService:
             logger.info(f"Successfully generated response in {response_time:.2f}s "
                        f"(chunks: {len(search_results)}, subject: {subject_id})")
             
-            # Step 8: Cache the response for future use (only for non-followup queries)
-            if user_id and not self._is_followup_request(query, chat_history):
+            # Step 8: Cache material-backed answers only (non-followup)
+            if user_id and context.strip() and not self._is_followup_request(query, chat_history):
                 try:
                     cache_success = self.cache_service.store_cached_response(
                         user_id=user_id,
@@ -162,10 +177,6 @@ class RAGService:
             List of relevant chunks with metadata
         """
         try:
-            # Check if this is a university/course source question
-            university_keywords = ['university', 'college', 'institution', 'course', 'where', 'from', 'source']
-            is_university_query = any(keyword in query.lower() for keyword in university_keywords)
-            
             # Get primary search results
             chunks = self.vector_service.search_by_query(
                 query_text=query,
@@ -173,26 +184,6 @@ class RAGService:
                 top_k=self.search_top_k,
                 threshold=self.search_threshold
             )
-            
-            # For university-related queries, also search for course codes and headers
-            if is_university_query:
-                logger.debug("University query detected, searching for course codes and headers")
-                
-                # Search for course codes and headers
-                course_chunks = self.vector_service.search_by_query(
-                    query_text="4005CEM Database Systems course code header",
-                    subject_id=subject_id,
-                    top_k=2,
-                    threshold=0.1
-                )
-                
-                # Combine results, avoiding duplicates
-                existing_chunk_ids = {chunk['chunk_id'] for chunk in chunks}
-                for course_chunk in course_chunks:
-                    if course_chunk['chunk_id'] not in existing_chunk_ids:
-                        chunks.append(course_chunk)
-                        if len(chunks) >= self.search_top_k + 2:  # Allow 2 extra chunks for course info
-                            break
             
             logger.debug(f"Retrieved {len(chunks)} relevant chunks for query")
             return chunks
@@ -348,46 +339,17 @@ class RAGService:
         Returns:
             System prompt string
         """
-        return f"""You are XP, a knowledgeable and helpful {subject_name} assistant. You help users learn and understand {subject_name} concepts effectively.
+        fallback = self._get_subject_specific_fallback(subject_name)
+        return f"""You are XP, a study assistant for {subject_name}. You answer ONLY from the excerpts of the user's uploaded materials given in each message.
 
-CORE APPROACH:
-- Be helpful, accurate, and educational in all responses
-- When relevant materials are provided in the context, prioritize and reference them
-- Provide clear, well-structured explanations that help users understand concepts
-- Use your knowledge to fill gaps and provide comprehensive answers
-- Avoid hallucinations - if you're uncertain about specific details, acknowledge it
-
-USING MATERIALS:
-- When uploaded materials contain relevant information, incorporate and cite them
-- Use materials as primary sources when available and relevant
-- Supplement material information with clear explanations when helpful
-- Reference specific sources when quoting or summarizing from materials
-- IMPORTANT: Look for course codes (like "4005CEM") and university information in the materials
-- When asked about university/course source, check for course codes and institutional identifiers
-
-CONVERSATION HANDLING:
-- Pay attention to conversation history and context
-- Handle follow-up requests appropriately (shorter, longer, clarify, more detail)
-- When asked to modify responses: adjust length, style, or detail level as requested
-- Maintain conversation continuity and remember what was discussed
-
-RESPONSE STYLE:
-- Be conversational and approachable
-- Provide practical examples when helpful
-- Break down complex concepts into understandable parts
-- Encourage learning and curiosity
-- If materials don't cover a topic fully, supplement with accurate general knowledge
-
-COURSE INFORMATION:
-- When materials contain course codes (e.g., "4005CEM Database Systems"), mention them
-- Course codes often indicate the university or institution offering the course
-- Look for headers, titles, and institutional branding in the materials
-- Common course code patterns:
-  * "4005CEM" format typically indicates Coventry University courses
-  * Course codes often follow university-specific patterns
-  * Check for university names, logos, or institutional identifiers in headers
-
-REMEMBER: Your goal is to be a helpful, accurate, and educational assistant that enhances learning using available materials while providing comprehensive support."""
+RULES:
+- Use only facts stated in the provided materials. Do not add outside or general knowledge, even if you know it.
+- If the materials do not contain the answer, reply with exactly: "{fallback}"
+- If the materials only partly answer the question, answer that part and say what the materials don't cover.
+- Cite the source file for what you use, e.g. (Source: notes.pdf).
+- Greetings and small talk are fine: reply briefly and offer to help with the {subject_name} materials.
+- Use the conversation history to understand follow-ups like "shorter" or "give an example", but examples must still come from the materials.
+- Be clear and concise, and break complex ideas into steps."""
     
     def _build_user_prompt(self, query: str, context: str, chat_history: str) -> str:
         """
@@ -409,10 +371,10 @@ REMEMBER: Your goal is to be a helpful, accurate, and educational assistant that
         
         # Add context if available
         if context:
-            prompt_parts.append(f"Relevant uploaded materials:\n{context}\n")
+            prompt_parts.append(f"Relevant materials:\n{context}\n")
         
         # Add current query
-        prompt_parts.append(f"User question: {query}")
+        prompt_parts.append(f"Current question: {query}")
         
         return "\n".join(prompt_parts)
     
@@ -444,7 +406,11 @@ REMEMBER: Your goal is to be a helpful, accurate, and educational assistant that
         Returns:
             Encouraging fallback message
         """
-        return f"I'd be happy to help you with {subject_name}! Could you please provide more details about what you'd like to learn or understand better?"
+        return (
+            f"I couldn't find information about that in your {subject_name} materials. "
+            f"I can only help with the materials uploaded under this subject, so try uploading "
+            f"documents that cover this topic or ask about something they include."
+        )
     
     def _is_conversational_query(self, query: str) -> bool:
         """
@@ -567,9 +533,11 @@ REMEMBER: Your goal is to be a helpful, accurate, and educational assistant that
         Returns:
             Validated response
         """
-        # Simple fallback for empty responses
+        # Empty output, or an answer with no materials behind it, falls back (small talk excepted)
         if not response or not response.strip():
-            return f"I'd be happy to help with {subject_name}! Could you please clarify your question or provide more details?"
+            return self._get_subject_specific_fallback(subject_name)
+        if not context.strip() and not self._is_conversational_query(query):
+            return self._get_subject_specific_fallback(subject_name)
         
         response = response.strip()
         

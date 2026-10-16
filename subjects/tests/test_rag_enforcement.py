@@ -245,72 +245,73 @@ class RAGEnforcementTestCase(TestCase):
                 self.assertIn('documents', fallback)
                 self.assertIn('uploading', fallback)
     
+    def _mock_openai(self, content):
+        """Replace the OpenAI client so tests never hit the network."""
+        client = MagicMock()
+        client.chat.completions.create.return_value.choices = [MagicMock(message=MagicMock(content=content))]
+        client.chat.completions.create.return_value.usage = None
+        return patch.object(self.rag_service, 'openai_client', client)
+
     def test_edge_cases_with_minimal_context(self):
-        """Test behavior with minimal or poor quality context"""
+        """Weak context goes to the LLM under the strict prompt; empty context never does"""
         edge_cases = [
             "",  # Empty context
             "   ",  # Whitespace only
             "a b c",  # Minimal content
             "The document contains information."  # Vague content
         ]
-        
+        fallback = self.rag_service._get_subject_specific_fallback('Computer Science')
+
         for context in edge_cases:
             with self.subTest(context=repr(context)):
-                # Mock minimal context
                 minimal_chunks = [{'content': context, 'material_name': 'test.pdf', 'similarity_score': 0.4}] if context.strip() else []
-                
-                with patch.object(self.rag_service, '_retrieve_relevant_chunks', return_value=minimal_chunks):
+
+                # The strict prompt tells the model to answer with the fallback when materials don't cover it
+                with patch.object(self.rag_service, '_retrieve_relevant_chunks', return_value=minimal_chunks), \
+                        self._mock_openai(fallback) as client:
                     result = self.rag_service.generate_response(
                         query="What is database normalization?",
                         subject_id=self.comp_sci_subject.id,
                         chat_history=[],
-                        user_id=self.user.id
+                        user_id=None  # no cache: each subtest must hit retrieval
                     )
-                    
-                    # Should return fallback for insufficient context
-                    self.assertIn('Computer Science', result['response'])
-    
+
+                self.assertIn('Computer Science', result['response'])
+                create = client.chat.completions.create
+                if context.strip():
+                    messages = create.call_args.kwargs['messages']
+                    self.assertIn('Do not add outside', messages[0]['content'])
+                    self.assertIn(context, messages[1]['content'])
+                else:
+                    create.assert_not_called()
+
     def test_various_similarity_thresholds(self):
         """Test system behavior with different similarity thresholds"""
-        # Create chunks with different similarity scores
         test_chunks = [
             {'content': 'SQL creates database tables', 'material_name': 'test.pdf', 'similarity_score': 0.8},
             {'content': 'Database management systems', 'material_name': 'test.pdf', 'similarity_score': 0.4},
             {'content': 'Data storage concepts', 'material_name': 'test.pdf', 'similarity_score': 0.3}
         ]
-        
-        # Test with different threshold configurations
-        thresholds = [0.3, 0.45, 0.7]
-        
-        for threshold in thresholds:
+
+        for threshold in [0.3, 0.45, 0.7, 0.9]:
             with self.subTest(threshold=threshold):
-                # Temporarily modify threshold
-                original_threshold = self.rag_service.search_threshold
-                self.rag_service.search_threshold = threshold
-                
-                try:
-                    # Filter chunks based on threshold
-                    filtered_chunks = [chunk for chunk in test_chunks if chunk['similarity_score'] >= threshold]
-                    
-                    with patch.object(self.rag_service, '_retrieve_relevant_chunks', return_value=filtered_chunks):
-                        result = self.rag_service.generate_response(
-                            query="What is SQL?",
-                            subject_id=self.comp_sci_subject.id,
-                            chat_history=[],
-                            user_id=self.user.id
-                        )
-                        
-                        # Verify appropriate response based on available chunks
-                        if filtered_chunks:
-                            # Should have context when chunks pass threshold
-                            self.assertTrue(result['context_used'] or 'Computer Science' in result['response'])
-                        else:
-                            # Should return fallback when no chunks pass threshold
-                            self.assertIn('Computer Science', result['response'])
-                            
-                finally:
-                    # Restore original threshold
-                    self.rag_service.search_threshold = original_threshold
+                filtered_chunks = [chunk for chunk in test_chunks if chunk['similarity_score'] >= threshold]
+
+                with patch.object(self.rag_service, '_retrieve_relevant_chunks', return_value=filtered_chunks), \
+                        self._mock_openai('SQL creates database tables (Source: test.pdf)') as client:
+                    result = self.rag_service.generate_response(
+                        query="What is SQL?",
+                        subject_id=self.comp_sci_subject.id,
+                        chat_history=[],
+                        user_id=None  # no cache: each subtest must hit retrieval
+                    )
+
+                if filtered_chunks:
+                    self.assertTrue(result['context_used'])
+                    self.assertIn('Source: test.pdf', result['response'])
+                else:
+                    self.assertIn('Computer Science', result['response'])
+                    client.chat.completions.create.assert_not_called()
     
     def test_conversational_interactions_allowed(self):
         """Test that conversational interactions are properly allowed"""
