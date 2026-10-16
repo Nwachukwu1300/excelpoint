@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from datetime import timedelta
@@ -87,7 +88,7 @@ def get_recent_activity(user):
             'title': f"Updated progress on {progress.course.title}",
             'description': f"Status: {progress.get_status_display()}",
             'timestamp': progress.last_activity_date,
-            'url': f"/learning/course/{progress.course.id}/"
+            'url': reverse('learning:course_detail', args=[progress.course.id])
         })
     
     # Recent quiz attempts (using new UserQuizAttempt model)
