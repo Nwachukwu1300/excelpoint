@@ -146,7 +146,7 @@ class UserProfile(models.Model):
     
     avatar = models.ImageField(
         upload_to='avatars/',
-        storage=get_storage_backend(),
+        storage=get_storage_backend,
         null=True,
         blank=True,
         help_text="User's profile picture"

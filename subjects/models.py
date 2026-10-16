@@ -119,7 +119,7 @@ class SubjectMaterial(models.Model):
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='materials')
     file = models.FileField(
         upload_to='subject_materials/',
-        storage=get_storage_backend(),
+        storage=get_storage_backend,
         validators=[FileExtensionValidator(allowed_extensions=['pdf', 'docx', 'doc', 'mp4', 'mov', 'avi', 'mp3', 'wav', 'm4a'])]
     )
     file_type = models.CharField(max_length=10, choices=FILE_TYPES)
