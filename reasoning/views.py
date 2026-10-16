@@ -18,6 +18,7 @@ from rest_framework.views import APIView
 from django.db.models import Avg, Count, Q, Min, Max
 from django.utils import timezone
 
+from subjects.models import Subject
 from .models import ReasoningSession, ReasoningSessionChunk
 from .serializers import (
     QueryInputSerializer,
@@ -33,6 +34,13 @@ from .serializers import (
 from .pipeline import ReasoningPipeline, ReasoningResult, ReasoningError
 
 logger = logging.getLogger(__name__)
+
+
+def user_sessions(user):
+    # Sessions have no user FK; ownership comes from the subject
+    return ReasoningSession.objects.filter(
+        subject_id__in=Subject.objects.filter(user=user).values('id')
+    )
 
 
 class QueryView(APIView):
@@ -68,6 +76,9 @@ class QueryView(APIView):
         subject_id = validated_data['subject_id']
         conversation_history = validated_data.get('conversation_history', [])
         pipeline_name = validated_data.get('pipeline_name') or None
+
+        if not Subject.objects.filter(pk=subject_id, user=request.user).exists():
+            return Response({'error': 'Subject not found'}, status=status.HTTP_404_NOT_FOUND)
 
         logger.info(
             f"Reasoning query from user {request.user.id}: "
@@ -180,7 +191,7 @@ class SessionListView(APIView):
         filters = filter_serializer.validated_data
 
         # Build queryset
-        queryset = ReasoningSession.objects.all()
+        queryset = user_sessions(request.user)
 
         # Apply filters
         if filters.get('pipeline_name'):
@@ -258,7 +269,7 @@ class SessionDetailView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            session = ReasoningSession.objects.prefetch_related('chunks').get(
+            session = user_sessions(request.user).prefetch_related('chunks').get(
                 session_id=session_uuid
             )
             serializer = ReasoningSessionDetailSerializer(session)
@@ -298,7 +309,7 @@ class SessionChunksView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            session = ReasoningSession.objects.get(session_id=session_uuid)
+            session = user_sessions(request.user).get(session_id=session_uuid)
             chunks = session.chunks.all()
 
             # Separate initial and retry chunks
@@ -341,7 +352,7 @@ class StatsView(APIView):
 
     def get(self, request):
         """Get aggregate stats."""
-        queryset = ReasoningSession.objects.all()
+        queryset = user_sessions(request.user)
 
         # Apply optional filters
         pipeline_name = request.query_params.get('pipeline_name')

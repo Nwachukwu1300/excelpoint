@@ -16,7 +16,7 @@ Endpoints:
 
 from rest_framework import status, generics
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -24,6 +24,7 @@ from django.utils import timezone
 from datetime import datetime
 import logging
 
+from subjects.models import Subject
 from .models import (
     RetrievalPipelineConfig,
     RetrievalMetric,
@@ -70,7 +71,7 @@ class PipelineListCreateView(APIView):
     POST: Create a new pipeline configuration.
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminUser]
 
     def get(self, request):
         """
@@ -148,7 +149,7 @@ class PipelineDetailView(APIView):
     DELETE: Delete a pipeline configuration.
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminUser]
 
     def get(self, request, name):
         """
@@ -221,6 +222,9 @@ class QueryView(APIView):
             )
 
         data = serializer.validated_data
+
+        if not Subject.objects.filter(pk=data['subject_id'], user=request.user).exists():
+            return Response({'error': 'Subject not found'}, status=status.HTTP_404_NOT_FOUND)
 
         try:
             # Get the pipeline
@@ -297,7 +301,7 @@ class ExperimentListCreateView(APIView):
     POST: Create a new experiment.
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminUser]
 
     def get(self, request):
         """
@@ -365,7 +369,7 @@ class ExperimentDetailView(APIView):
     DELETE: Delete an experiment.
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminUser]
 
     def get(self, request, name):
         """
@@ -422,7 +426,7 @@ class ExperimentRunView(APIView):
     POST: Run an experiment with a query.
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminUser]
 
     def post(self, request):
         """
@@ -468,7 +472,7 @@ class ExperimentCompareView(APIView):
     GET: Compare two experiments by name.
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminUser]
 
     def get(self, request):
         """
@@ -515,7 +519,7 @@ class MetricsListView(APIView):
     GET: List metrics with optional filtering.
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminUser]
 
     def get(self, request):
         """
@@ -558,7 +562,7 @@ class MetricsStatsView(APIView):
     GET: Get aggregated statistics for a pipeline.
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminUser]
 
     def get(self, request, pipeline_name):
         """
@@ -581,7 +585,7 @@ class MetricsLatencyBreakdownView(APIView):
     GET: Get latency breakdown for a pipeline or overall.
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminUser]
 
     def get(self, request):
         """
