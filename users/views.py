@@ -455,31 +455,16 @@ def edit_profile(request):
     """
     View for editing user profile information.
     """
-    user = request.user
-    
-    # Initialize both forms
     if request.method == 'POST':
-        profile_form = UserProfileForm(request.POST, request.FILES, instance=request.user.profile)
-        
-        # Populate User model fields
-        profile_form.fields['first_name'].initial = user.first_name
-        profile_form.fields['last_name'].initial = user.last_name
-        profile_form.fields['email'].initial = user.email
-        profile_form.fields['current_role'].initial = user.current_role
-        
+        # The form edits User fields, so it must be bound to the User, not the profile
+        profile_form = UserProfileForm(request.POST, request.FILES, instance=request.user)
         if profile_form.is_valid():
             profile_form.save()
             messages.success(request, 'Your profile has been updated successfully!')
-            return redirect('profile')
+            return redirect('users:profile')
     else:
-        profile_form = UserProfileForm(instance=request.user.profile)
-        
-        # Populate User model fields
-        profile_form.fields['first_name'].initial = user.first_name
-        profile_form.fields['last_name'].initial = user.last_name
-        profile_form.fields['email'].initial = user.email
-        profile_form.fields['current_role'].initial = user.current_role
-    
+        profile_form = UserProfileForm(instance=request.user)
+
     return render(request, 'users/edit_profile.html', {
         'profile_form': profile_form
     })

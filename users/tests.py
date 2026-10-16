@@ -58,3 +58,20 @@ class GoogleEmailVerificationTest(TestCase):
             {'email': 'a@x.com', 'sub': '1', 'email_verified': True, 'given_name': 'A'}
         )
         self.assertEqual(user.email, 'a@x.com')
+
+
+class EditProfileTest(TestCase):
+    def test_edit_saves_user_fields_and_redirects_to_profile(self):
+        from users.models import User
+        user = User.objects.create_user('p', 'old@x.com', 'pw')
+        self.client.force_login(user)
+
+        response = self.client.post(reverse('users:edit_profile'), {
+            'first_name': 'New', 'last_name': 'Name', 'email': 'new@x.com',
+            'current_role': 'Dev', 'experience_level': 'entry', 'bio': '',
+            'linkedin_profile': '', 'github_profile': '',
+        })
+
+        self.assertRedirects(response, reverse('users:profile'), fetch_redirect_response=False)
+        user.refresh_from_db()
+        self.assertEqual((user.first_name, user.email), ('New', 'new@x.com'))
