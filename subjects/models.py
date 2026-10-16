@@ -215,7 +215,7 @@ class Quiz(models.Model):
     from uploaded materials using AI. They support time limits, passing
     scores, and multiple question types.
     """
-    subject = models.ForeignKey(User, on_delete=models.CASCADE, related_name='quizzes')
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='quizzes')
     material = models.ForeignKey(SubjectMaterial, on_delete=models.CASCADE, related_name='quizzes', null=True, blank=True, help_text="The material this quiz was generated from")
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
