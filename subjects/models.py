@@ -184,12 +184,13 @@ class ContentChunk(models.Model):
     def mark_embedding_completed(self):
         """Mark embedding generation as completed and update timestamp."""
         self.embedding_status = 'completed'
-        self.save(update_fields=['embedding_status', 'updated_at'])
+        # Include the vector: callers set it just before marking complete
+        self.save(update_fields=['embedding_vector', 'embedding_status', 'updated_at'])
     
     def mark_embedding_failed(self):
         """Mark embedding generation as failed and update timestamp."""
         self.embedding_status = 'failed'
-        self.save(update_fields=['embedding_status', 'updated_at'])
+        self.save(update_fields=['embedding_vector', 'embedding_status', 'updated_at'])
 
 class Flashcard(models.Model):
     """Simple flashcard for memorization and review.
