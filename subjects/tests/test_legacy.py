@@ -8,9 +8,9 @@ from rest_framework import status
 from unittest.mock import Mock, patch, MagicMock
 import numpy as np
 import json
-from .models import Subject, ChatSession, ChatMessage, SubjectMaterial, ContentChunk
-from .services.vector_search import VectorSearchService
-from .services.rag_service import RAGService
+from subjects.models import Subject, ChatSession, ChatMessage, SubjectMaterial, ContentChunk
+from subjects.services.vector_search import VectorSearchService
+from subjects.services.rag_service import RAGService
 
 User = get_user_model()
 
