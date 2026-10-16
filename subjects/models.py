@@ -454,13 +454,9 @@ class UserAnswer(models.Model):
                 self.is_correct = self.selected_choice.is_correct
         elif self.question.question_type == 'short_answer':
             if self.answer_text:
+                from .utils import short_answer_matches  # local: utils loads torch/langchain
                 correct_answers = self.question.answers.values_list('text', flat=True)
-                # Case-insensitive comparison and strip whitespace
-                user_answer = self.answer_text.lower().strip()
-                self.is_correct = any(
-                    user_answer == correct_answer.lower().strip() 
-                    for correct_answer in correct_answers
-                )
+                self.is_correct = short_answer_matches(self.answer_text, correct_answers)
         elif self.question.question_type == 'true_false':
             if self.selected_choice:
                 self.is_correct = self.selected_choice.is_correct

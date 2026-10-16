@@ -31,7 +31,7 @@ from .permissions import IsSubjectOwner, ChatAPIPermission, IsChatSessionOwner
 from .services.rag_service import RAGService
 from .services.session_manager import SessionManager
 from .tasks import process_material, generate_dynamic_quiz_questions
-from .utils import material_file_type
+from .utils import material_file_type, short_answer_matches
 import json
 import os
 from django.utils import timezone
@@ -389,11 +389,7 @@ def submit_quiz(request, quiz_id):
             
             elif question_data['type'] == 'short_answer':
                 # Check against correct answers
-                correct_answers = question_data.get('correct_answers', [])
-                for correct_answer in correct_answers:
-                    if user_answer_text.lower().strip() in correct_answer.lower().strip():
-                        is_correct = True
-                        break
+                is_correct = short_answer_matches(user_answer_text, question_data.get('correct_answers', []))
             
             # Award points if correct
             if is_correct:
@@ -441,11 +437,8 @@ def submit_quiz(request, quiz_id):
             
             elif question.question_type == 'short_answer':
                 # Check against all possible correct answers
-                correct_answers = question.answers.filter(is_correct=True)
-                for answer in correct_answers:
-                    if user_answer_text.lower().strip() in answer.text.lower().strip():
-                        is_correct = True
-                        break
+                correct_answers = question.answers.filter(is_correct=True).values_list('text', flat=True)
+                is_correct = short_answer_matches(user_answer_text, correct_answers)
             
             # Award points if correct
             if is_correct:
@@ -856,11 +849,8 @@ class QuizViewSet(viewsets.ModelViewSet):
             elif question.question_type == 'short_answer':
                 answer_text = str(user_answer)
                 # Check against all possible correct answers
-                correct_answers = question.answers.filter(is_correct=True)
-                for answer in correct_answers:
-                    if answer_text.lower().strip() in answer.text.lower().strip():
-                        is_correct = True
-                        break
+                correct_answers = question.answers.filter(is_correct=True).values_list('text', flat=True)
+                is_correct = short_answer_matches(answer_text, correct_answers)
             
             # Award points if correct
             if is_correct:

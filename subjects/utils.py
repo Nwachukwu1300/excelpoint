@@ -44,6 +44,13 @@ def load_embedding_model(name: str = 'all-MiniLM-L6-v2') -> SentenceTransformer:
     # One copy per process; loading MiniLM takes seconds and hundreds of MB
     return SentenceTransformer(name)
 
+def short_answer_matches(user_answer, correct_answers):
+    """Case/whitespace/trailing-punctuation-insensitive exact match. Blank answers never match."""
+    def norm(text):
+        return ' '.join(str(text).lower().split()).rstrip('.!?')
+    given = norm(user_answer or '')
+    return bool(given) and any(given == norm(c) for c in correct_answers)
+
 UPLOAD_FILE_TYPES = {
     'PDF': 'PDF', 'DOCX': 'DOCX', 'DOC': 'DOC',
     'MP4': 'VIDEO', 'MOV': 'VIDEO', 'AVI': 'VIDEO',
