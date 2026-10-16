@@ -14,7 +14,7 @@ class SubjectMaterialSerializer(serializers.ModelSerializer):
     class Meta:
         model = SubjectMaterial
         fields = ['id', 'file', 'file_type', 'status', 'created_at', 'updated_at']
-        read_only_fields = ['status', 'created_at', 'updated_at']
+        read_only_fields = ['file_type', 'status', 'created_at', 'updated_at']
 
 class ContentChunkSerializer(serializers.ModelSerializer):
     class Meta:

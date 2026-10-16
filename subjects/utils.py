@@ -44,6 +44,16 @@ def load_embedding_model(name: str = 'all-MiniLM-L6-v2') -> SentenceTransformer:
     # One copy per process; loading MiniLM takes seconds and hundreds of MB
     return SentenceTransformer(name)
 
+UPLOAD_FILE_TYPES = {
+    'PDF': 'PDF', 'DOCX': 'DOCX', 'DOC': 'DOC',
+    'MP4': 'VIDEO', 'MOV': 'VIDEO', 'AVI': 'VIDEO',
+    'MP3': 'AUDIO', 'WAV': 'AUDIO', 'M4A': 'AUDIO',
+}
+
+def material_file_type(filename):
+    """Map an uploaded file's extension to a SubjectMaterial.file_type, or None if unsupported."""
+    return UPLOAD_FILE_TYPES.get(os.path.splitext(filename)[1][1:].upper())
+
 @contextmanager
 def local_file_path(field_file):
     """Yield a filesystem path for a FileField, downloading it first if storage is remote (S3)."""

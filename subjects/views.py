@@ -30,7 +30,8 @@ from .serializers import (
 from .permissions import IsSubjectOwner, ChatAPIPermission, IsChatSessionOwner
 from .services.rag_service import RAGService
 from .services.session_manager import SessionManager
-from .tasks import process_material, generate_quiz_from_material, generate_dynamic_quiz_questions
+from .tasks import process_material, generate_dynamic_quiz_questions
+from .utils import material_file_type
 import json
 import os
 from django.utils import timezone
@@ -99,19 +100,8 @@ def upload_material(request, pk):
             try:
                 print(f"Processing file: {uploaded_file.name}")
                 
-                # Determine file type
-                file_extension = uploaded_file.name.split('.')[-1].upper()
-                if file_extension == 'PDF':
-                    file_type = 'PDF'
-                elif file_extension in ['DOCX']:
-                    file_type = 'DOCX'
-                elif file_extension in ['DOC']:
-                    file_type = 'DOC'
-                elif file_extension in ['MP4', 'MOV', 'AVI']:
-                    file_type = 'VIDEO'
-                elif file_extension in ['MP3', 'WAV', 'M4A']:
-                    file_type = 'AUDIO'
-                else:
+                file_type = material_file_type(uploaded_file.name)
+                if not file_type:
                     messages.error(request, 'Unsupported file type. Please upload PDF, Word (DOC/DOCX), video (MP4/MOV/AVI), or audio (MP3/WAV/M4A) files.')
                     return redirect('subject_detail', pk=pk)
                 
@@ -584,12 +574,15 @@ class SubjectViewSet(viewsets.ModelViewSet):
     def upload_material(self, request, pk=None):
         subject = self.get_object()
         serializer = SubjectMaterialSerializer(data=request.data)
-        
+        uploaded_file = request.FILES.get('file')
+        file_type = material_file_type(uploaded_file.name) if uploaded_file else None
+        if uploaded_file and not file_type:
+            return Response({'file': ['Unsupported file type.']}, status=status.HTTP_400_BAD_REQUEST)
+
         if serializer.is_valid():
-            material = serializer.save(subject=subject)
-            # Trigger background processing and quiz generation
+            material = serializer.save(subject=subject, file_type=file_type)
+            # process_material queues flashcard and quiz generation itself
             process_material.delay(material.id)
-            generate_quiz_from_material.delay(material.id, num_questions=10)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -732,14 +725,11 @@ class SubjectMaterialViewSet(viewsets.ModelViewSet):
     serializer_class = SubjectMaterialSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    # Uploads go through SubjectViewSet.upload_material so they get a subject and processing
+    http_method_names = ['get', 'delete', 'head', 'options']
+
     def get_queryset(self):
         return SubjectMaterial.objects.filter(subject__user=self.request.user)
-
-    def perform_create(self, serializer):
-        material = serializer.save()
-        process_material.delay(material.id)
-        # Also generate quiz from the uploaded material
-        generate_quiz_from_material.delay(material.id, num_questions=10)
 
     @action(detail=True, methods=['get'])
     def flashcards(self, request, pk=None):
