@@ -11,6 +11,7 @@ from langchain_community.document_loaders import (
 from langchain.schema import Document
 import PyPDF2
 import os
+from functools import cached_property
 from typing import List, Dict, Any
 import numpy as np
 from sentence_transformers import SentenceTransformer
@@ -91,13 +92,6 @@ class ContentProcessor:
         # Initialize speech recognizer (legacy)
         self.recognizer = sr.Recognizer()
         
-        # Initialize transcription service
-        if TRANSCRIPTION_AVAILABLE:
-            self.transcription_service = TranscriptionService()
-        else:
-            self.transcription_service = None
-            logger.warning("Transcription service not available. Video/audio processing will not work.")
-        
         # Initialize storage service for S3 file handling
         try:
             from .services.storage_factory import StorageFactory
@@ -111,6 +105,11 @@ class ContentProcessor:
         self.memory_threshold = memory_threshold  # Memory usage threshold before triggering batch processing
         
         logger.info(f"ContentProcessor initialized with batch_size={self.batch_size}, memory_threshold={self.memory_threshold}")
+
+    @cached_property
+    def transcription_service(self):
+        # Loaded on first audio/video file so text-only work never needs Whisper
+        return TranscriptionService() if TRANSCRIPTION_AVAILABLE else None
     
     def _calculate_optimal_batch_size(self) -> int:
         """Calculate optimal batch size based on available memory and model requirements."""
