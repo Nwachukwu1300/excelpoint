@@ -395,7 +395,7 @@ class VectorSearchServiceTest(TestCase):
         with self.assertRaises(ValueError):
             self.vector_service.get_subject_chunks(99999)
 
-    @patch('subjects.services.vector_search.SentenceTransformer')
+    @patch('subjects.services.vector_search.load_embedding_model')
     def test_encode_query(self, mock_transformer):
         """Test query encoding with mocked transformer"""
         # Mock the sentence transformer
@@ -420,7 +420,7 @@ class VectorSearchServiceTest(TestCase):
         with self.assertRaises(ValueError):
             self.vector_service.encode_query("   ")
 
-    @patch('subjects.services.vector_search.SentenceTransformer')
+    @patch('subjects.services.vector_search.load_embedding_model')
     def test_search_similar_chunks(self, mock_transformer):
         """Test searching for similar chunks"""
         # Mock the sentence transformer
@@ -466,7 +466,7 @@ class VectorSearchServiceTest(TestCase):
         with self.assertRaises(ValueError):
             self.vector_service.search_similar_chunks(query_embedding, self.subject.id, threshold=1.5)
 
-    @patch('subjects.services.vector_search.SentenceTransformer')
+    @patch('subjects.services.vector_search.load_embedding_model')
     def test_search_by_query(self, mock_transformer):
         """Test searching by text query"""
         # Mock the sentence transformer
@@ -923,7 +923,7 @@ class RAGServiceIntegrationTest(TestCase):
         )
 
     @patch('subjects.services.rag_service.OpenAI')
-    @patch('subjects.services.vector_search.SentenceTransformer')
+    @patch('subjects.services.vector_search.load_embedding_model')
     def test_end_to_end_response_generation(self, mock_transformer, mock_openai):
         """Test complete end-to-end response generation"""
         # Mock sentence transformer
@@ -973,7 +973,7 @@ class RAGServiceIntegrationTest(TestCase):
         self.assertIn('tokens_used', metadata)
 
     @patch('subjects.services.rag_service.OpenAI')
-    @patch('subjects.services.vector_search.SentenceTransformer')
+    @patch('subjects.services.vector_search.load_embedding_model')
     def test_chat_history_continuity(self, mock_transformer, mock_openai):
         """Test that chat history is properly included in context"""
         # Mock transformer and OpenAI as before
@@ -1017,7 +1017,7 @@ class RAGServiceIntegrationTest(TestCase):
         self.assertIn('What is machine learning?', user_message)
 
     @patch('subjects.services.rag_service.OpenAI')
-    @patch('subjects.services.vector_search.SentenceTransformer') 
+    @patch('subjects.services.vector_search.load_embedding_model') 
     def test_out_of_scope_query_handling(self, mock_transformer, mock_openai):
         """Test handling of queries outside subject scope"""
         # Mock transformer to return embedding that won't match well

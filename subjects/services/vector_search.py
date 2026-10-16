@@ -22,9 +22,8 @@ import logging
 from typing import List, Dict, Any, Optional, Tuple
 from django.core.cache import cache
 from django.db.models import Q
-from sentence_transformers import SentenceTransformer
 from ..models import ContentChunk, Subject
-from ..utils import ContentProcessor
+from ..utils import load_embedding_model
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +45,6 @@ class VectorSearchService:
         """Initialize the vector search service with lazy model loading."""
         self.model = None
         self._model_loaded = False
-        self.content_processor = ContentProcessor()
         
     def _ensure_model_loaded(self):
         """Lazy load the sentence transformer model.
@@ -59,7 +57,7 @@ class VectorSearchService:
         """
         if not self._model_loaded:
             try:
-                self.model = SentenceTransformer('all-MiniLM-L6-v2')
+                self.model = load_embedding_model()
                 self._model_loaded = True
                 logger.info("Successfully loaded SentenceTransformer model: all-MiniLM-L6-v2")
             except Exception as e:

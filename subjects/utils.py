@@ -11,7 +11,7 @@ from langchain_community.document_loaders import (
 from langchain.schema import Document
 import PyPDF2
 import os
-from functools import cached_property
+from functools import cached_property, lru_cache
 from typing import List, Dict, Any
 import numpy as np
 from sentence_transformers import SentenceTransformer
@@ -36,6 +36,11 @@ except ImportError:
     TRANSCRIPTION_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
+
+@lru_cache(maxsize=None)
+def load_embedding_model(name: str = 'all-MiniLM-L6-v2') -> SentenceTransformer:
+    # One copy per process; loading MiniLM takes seconds and hundreds of MB
+    return SentenceTransformer(name)
 
 def clean_text(text: str) -> str:
     """Clean text by removing null characters and other problematic characters."""
@@ -87,7 +92,7 @@ class ContentProcessor:
         )
         
         # Initialize the sentence transformer for embeddings
-        self.model = SentenceTransformer('all-MiniLM-L6-v2')
+        self.model = load_embedding_model()
         
         # Initialize speech recognizer (legacy)
         self.recognizer = sr.Recognizer()
