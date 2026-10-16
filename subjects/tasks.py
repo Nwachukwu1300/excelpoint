@@ -24,7 +24,7 @@ import re
 from django.conf import settings
 from .utils import extract_text_from_pdf, chunk_text, local_file_path
 from django.utils import timezone
-from django.db import models
+from django.db import models, transaction
 
 logger = logging.getLogger(__name__)
 
@@ -45,16 +45,19 @@ def process_material(material_id: int):
         with local_file_path(material.file) as file_path:
             chunks_data = processor.process_file(file_path)
         
-        # Create ContentChunk objects with embedding status tracking
-        for chunk_data in chunks_data:
-            chunk = ContentChunk.objects.create(
-                material=material,
-                content=chunk_data['content'],
-                chunk_index=chunk_data['chunk_index'],
-                embedding_vector=chunk_data['embedding_vector'],
-                embedding_status='completed'  # Mark as completed since we just generated it
-            )
-            logger.debug(f"Created chunk {chunk.chunk_index} with embedding for material {material.file.name}")
+        # Replace any chunks from an earlier run so reprocessing doesn't hit unique(material, chunk_index)
+        with transaction.atomic():
+            ContentChunk.objects.filter(material=material).delete()
+            ContentChunk.objects.bulk_create([
+                ContentChunk(
+                    material=material,
+                    content=chunk_data['content'],
+                    chunk_index=chunk_data['chunk_index'],
+                    embedding_vector=chunk_data['embedding_vector'],
+                    embedding_status='completed'  # Mark as completed since we just generated it
+                )
+                for chunk_data in chunks_data
+            ])
         
         # Update material status to completed before queuing additional tasks
         material.status = 'COMPLETED'
