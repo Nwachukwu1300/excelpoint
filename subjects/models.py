@@ -15,6 +15,8 @@ Key features:
 """
 
 from django.db import models
+from django.db.models.signals import post_delete, post_save
+from django.dispatch import receiver
 from django.contrib.auth import get_user_model
 from django.core.validators import FileExtensionValidator
 from django.utils import timezone
@@ -754,3 +756,9 @@ class CachedResponse(models.Model):
         """
         question_hash = cls.generate_question_hash(question_text)
         return f"{user_id}:{subject_id}:{question_hash}"
+
+
+@receiver([post_save, post_delete], sender=SubjectMaterial)
+def clear_subject_answer_cache(sender, instance, **kwargs):
+    # Cached answers were built from the old materials, so any change invalidates them
+    CachedResponse.objects.filter(subject_id=instance.subject_id).delete()
