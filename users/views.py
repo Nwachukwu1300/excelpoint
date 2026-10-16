@@ -19,6 +19,7 @@ from .forms import (
 from .models import User, UserProfile, UserAchievement, UserCertification, UserEducation
 from django.db.models import Count, Sum
 from django.utils import timezone
+from django.utils.crypto import constant_time_compare
 from datetime import timedelta
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -74,7 +75,8 @@ def google_oauth_initiate(request):
     
     try:
         oauth_service = GoogleOAuthService()
-        authorization_url = oauth_service.get_authorization_url()
+        authorization_url, state = oauth_service.get_authorization_url()
+        request.session['google_oauth_state'] = state
         return redirect(authorization_url)
     except Exception as e:
         logger.error(f"Error initiating Google OAuth: {e}")
@@ -89,6 +91,12 @@ def google_oauth_callback(request):
         messages.error(request, "Google OAuth is not configured. Please contact the administrator.")
         return redirect('users:login')
     
+    # Reject callbacks we didn't start (login CSRF)
+    expected_state = request.session.pop('google_oauth_state', None)
+    if not expected_state or not constant_time_compare(expected_state, request.GET.get('state', '')):
+        messages.error(request, "Invalid login attempt. Please try again.")
+        return redirect('users:login')
+
     try:
         # Get authorization code from request
         authorization_code = request.GET.get('code')
@@ -111,9 +119,7 @@ def google_oauth_callback(request):
             login(request, user)
             messages.success(request, f"Welcome back, {user.first_name or user.username}!")
             
-            # Redirect to dashboard or next page
-            next_url = request.GET.get('next', 'learning:dashboard')
-            return redirect(next_url)
+            return redirect('learning:dashboard')
         else:
             messages.error(request, "Unable to authenticate with Google. Please try again.")
             return redirect('users:login')

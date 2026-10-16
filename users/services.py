@@ -65,7 +65,7 @@ class GoogleOAuthService:
             include_granted_scopes='true',
             prompt='consent'
         )
-        return authorization_url
+        return authorization_url, state
     
     def exchange_code_for_token(self, authorization_code):
         """
@@ -145,6 +145,9 @@ class GoogleOAuthService:
         
         if not email:
             raise ValueError("Email is required from Google OAuth")
+        # ID tokens use email_verified, the userinfo endpoint uses verified_email
+        if not (user_info.get('email_verified') or user_info.get('verified_email')):
+            raise ValueError("Google account email is not verified")
         
         try:
             with transaction.atomic():
