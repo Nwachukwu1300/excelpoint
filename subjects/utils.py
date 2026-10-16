@@ -20,6 +20,8 @@ import mimetypes
 from pydub import AudioSegment
 import speech_recognition as sr
 import tempfile
+import shutil
+from contextlib import contextmanager
 import psutil
 import gc
 import logging
@@ -41,6 +43,24 @@ logger = logging.getLogger(__name__)
 def load_embedding_model(name: str = 'all-MiniLM-L6-v2') -> SentenceTransformer:
     # One copy per process; loading MiniLM takes seconds and hundreds of MB
     return SentenceTransformer(name)
+
+@contextmanager
+def local_file_path(field_file):
+    """Yield a filesystem path for a FileField, downloading it first if storage is remote (S3)."""
+    try:
+        path = field_file.path
+    except NotImplementedError:
+        path = None
+    if path:
+        yield path
+        return
+    with tempfile.NamedTemporaryFile(suffix=os.path.splitext(field_file.name)[1], delete=False) as tmp:
+        with field_file.open('rb') as src:
+            shutil.copyfileobj(src, tmp)
+    try:
+        yield tmp.name
+    finally:
+        os.remove(tmp.name)
 
 def clean_text(text: str) -> str:
     """Clean text by removing null characters and other problematic characters."""

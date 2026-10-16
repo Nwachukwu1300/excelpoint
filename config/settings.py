@@ -234,10 +234,14 @@ if STORAGE_BACKEND == 's3':
         'CacheControl': 'max-age=86400',
     }
     AWS_DEFAULT_ACL = 'private'
-    AWS_QUERYSTRING_AUTH = False
+    AWS_QUERYSTRING_AUTH = True  # objects are private, so URLs must be signed
     
     # Use S3 for media files
-    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    # DEFAULT_FILE_STORAGE was removed in Django 5.1
+    STORAGES = {
+        'default': {'BACKEND': 'storages.backends.s3boto3.S3Boto3Storage'},
+        'staticfiles': {'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'},
+    }
     MEDIA_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com/'
     
     # Ensure MEDIA_ROOT is not used when S3 is enabled

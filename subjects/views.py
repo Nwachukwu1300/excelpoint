@@ -167,12 +167,9 @@ def delete_material(request, pk, material_id):
         # Store filename for success message
         filename = os.path.basename(material.file.name) if material.file else 'Unknown file'
         
-        # Delete associated file from filesystem
-        if material.file and os.path.exists(material.file.path):
-            try:
-                os.remove(material.file.path)
-            except OSError:
-                pass  # File might already be deleted
+        # Delete the stored file through its storage backend (local or S3)
+        if material.file:
+            material.file.delete(save=False)
         
         # Delete the material (this will cascade delete related objects)
         material.delete()

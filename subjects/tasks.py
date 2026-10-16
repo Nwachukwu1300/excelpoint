@@ -22,7 +22,7 @@ import logging
 import json
 import re
 from django.conf import settings
-from .utils import extract_text_from_pdf, chunk_text
+from .utils import extract_text_from_pdf, chunk_text, local_file_path
 from django.utils import timezone
 from django.db import models
 
@@ -41,16 +41,9 @@ def process_material(material_id: int):
         # Initialize ContentProcessor with batch processing for large files
         processor = ContentProcessor(memory_threshold=0.7)  # Use batch processing if memory > 70%
         
-        # Handle both local and S3 files
-        if hasattr(material.file, 'url') and 's3.amazonaws.com' in material.file.url:
-            # S3 file - use the URL
-            file_path = material.file.url
-        else:
-            # Local file - use the path
-            file_path = material.file.path
-        
         # Process the file using the unified processor with automatic batch processing
-        chunks_data = processor.process_file(file_path)
+        with local_file_path(material.file) as file_path:
+            chunks_data = processor.process_file(file_path)
         
         # Create ContentChunk objects with embedding status tracking
         for chunk_data in chunks_data:
@@ -218,16 +211,9 @@ def generate_quiz_from_material(self, material_id, num_questions=10):
         # Use ContentProcessor to handle both local and S3 files
         processor = ContentProcessor()
         
-        # Determine file path for processing
-        if hasattr(material.file, 'url') and 's3.amazonaws.com' in material.file.url:
-            # S3 file - use the URL
-            file_path = material.file.url
-        else:
-            # Local file - use the path
-            file_path = material.file.path
-        
         # Process the file to get text content
-        chunks_data = processor.process_file(file_path)
+        with local_file_path(material.file) as file_path:
+            chunks_data = processor.process_file(file_path)
         text_content = '\n'.join([chunk['content'] for chunk in chunks_data])
         
         if not text_content.strip():
@@ -552,26 +538,21 @@ def generate_dynamic_quiz_questions(self, attempt_id, num_questions=10):
         if not content_chunks.exists():
             logger.warning(f"No content chunks found for material {material.id}, falling back to file processing")
             # Fallback: Extract text content from the material file
-            if material.file_type == 'PDF':
-                text_content = extract_text_from_pdf(material.file.path)
-            elif material.file_type in ['DOCX', 'DOC']:
-                # Use ContentProcessor for Word documents
-                processor = ContentProcessor()
-                chunks_data = processor.process_file(material.file.path)
-                text_content = '\n'.join([chunk['content'] for chunk in chunks_data])
-            elif material.file_type in ['VIDEO', 'AUDIO']:
-                # Use ContentProcessor for video/audio files (handles transcription)
-                processor = ContentProcessor()
-                chunks_data = processor.process_file(material.file.path)
-                text_content = '\n'.join([chunk['content'] for chunk in chunks_data])
-            else:
-                # For other file types, try to read as text
-                try:
-                    with open(material.file.path, 'r', encoding='utf-8') as f:
-                        text_content = f.read()
-                except UnicodeDecodeError:
-                    logger.error(f"Cannot read file {material.file.name} as text")
-                    return {'status': 'error', 'message': 'Cannot read file as text'}
+            with local_file_path(material.file) as file_path:
+                if material.file_type == 'PDF':
+                    text_content = extract_text_from_pdf(file_path)
+                elif material.file_type in ['DOCX', 'DOC', 'VIDEO', 'AUDIO']:
+                    # ContentProcessor handles Word documents and transcription
+                    chunks_data = ContentProcessor().process_file(file_path)
+                    text_content = '\n'.join([chunk['content'] for chunk in chunks_data])
+                else:
+                    # For other file types, try to read as text
+                    try:
+                        with open(file_path, 'r', encoding='utf-8') as f:
+                            text_content = f.read()
+                    except UnicodeDecodeError:
+                        logger.error(f"Cannot read file {material.file.name} as text")
+                        return {'status': 'error', 'message': 'Cannot read file as text'}
         else:
             # Use processed content chunks
             logger.info(f"Using {content_chunks.count()} processed content chunks for material {material.id}")
