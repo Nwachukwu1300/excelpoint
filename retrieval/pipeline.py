@@ -344,7 +344,7 @@ class RetrievalPipeline:
                     content=chunk.content,
                     chunk_index=chunk.chunk_index,
                     material_id=chunk.material_id,
-                    material_name=chunk.material.name if chunk.material else '',
+                    material_name=chunk.material.file.name if chunk.material else '',
                     initial_score=similarity,
                     reranked_score=None,
                     metadata={
