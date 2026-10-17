@@ -640,6 +640,10 @@ class RAGServiceTest(TestCase):
     
     def setUp(self):
         """Set up test data"""
+        # These tests cover the single-call path; the reasoning path has its own tests
+        patcher = patch('subjects.services.rag_service.RAGService._reasoning_response', return_value=None)
+        patcher.start()
+        self.addCleanup(patcher.stop)
         self.user = User.objects.create_user(username='testuser', email='test@example.com')
         self.subject = Subject.objects.create(user=self.user, name='Python Programming')
         
@@ -895,6 +899,10 @@ class RAGServiceIntegrationTest(TestCase):
     
     def setUp(self):
         """Set up integration test data"""
+        # These tests cover the single-call path; the reasoning path has its own tests
+        patcher = patch('subjects.services.rag_service.RAGService._reasoning_response', return_value=None)
+        patcher.start()
+        self.addCleanup(patcher.stop)
         self.user = User.objects.create_user(username='testuser', email='test@example.com')
         self.subject = Subject.objects.create(user=self.user, name='Machine Learning')
         

@@ -88,8 +88,12 @@ class RAGService:
             context = self._prepare_context(search_results)
             subject_name = self._get_subject_name(subject_id)
 
-            # Strict RAG: nothing relevant retrieved means nothing to answer from, so skip the LLM
-            if not context.strip() and not self._is_conversational_query(query):
+            is_small_talk = self._is_conversational_query(query)
+            is_followup = self._is_followup_request(query, chat_history)
+
+            # Strict RAG: nothing relevant retrieved means nothing to answer from, so skip the LLM.
+            # Follow-ups ("tell me more") pass through: the reasoning rewriter resolves them from history.
+            if not context.strip() and not is_small_talk and not is_followup:
                 return {
                     'response': self._get_subject_specific_fallback(subject_name),
                     'retrieved_chunks': [],
@@ -105,44 +109,42 @@ class RAGService:
                     },
                 }
             
-            # Step 4: Format chat history for context
-            formatted_history = self._format_chat_history(chat_history)
-            
-            # Step 5: Generate response using OpenAI
-            response_data = self._generate_llm_response(
-                query=query,
-                context=context,
-                chat_history=formatted_history,
-                subject_id=subject_id
-            )
-            
-            # Step 7: Validate and post-process response
-            validated_response = self._validate_response(response_data['content'], context, subject_name, query, chat_history)
-            
-            end_time = time.time()
-            response_time = end_time - start_time
-            
-            # Compile final response with metadata
-            result = {
-                'response': validated_response,
-                'retrieved_chunks': search_results,
-                'context_used': bool(context.strip()),
-                'response_time': response_time,
-                'metadata': {
-                    'subject_id': subject_id,
-                    'user_id': user_id,
-                    'chunks_found': len(search_results),
-                    'model_used': self.model,
-                    'tokens_used': response_data.get('usage', {}),
-                    'timestamp': time.time()
+            # Step 4: Questions go through the reasoning pipeline (rewrite, retrieve, generate,
+            # verify, retry); small talk, or a pipeline failure, uses a single grounded LLM call
+            result = None
+            if not is_small_talk:
+                result = self._reasoning_response(query, subject_id, chat_history, user_id, subject_name, start_time)
+
+            if result is None:
+                formatted_history = self._format_chat_history(chat_history)
+                response_data = self._generate_llm_response(
+                    query=query,
+                    context=context,
+                    chat_history=formatted_history,
+                    subject_id=subject_id
+                )
+                validated_response = self._validate_response(response_data['content'], context, subject_name, query, chat_history)
+                result = {
+                    'response': validated_response,
+                    'retrieved_chunks': search_results,
+                    'context_used': bool(context.strip()),
+                    'response_time': time.time() - start_time,
+                    'metadata': {
+                        'subject_id': subject_id,
+                        'user_id': user_id,
+                        'chunks_found': len(search_results),
+                        'model_used': self.model,
+                        'tokens_used': response_data.get('usage', {}),
+                        'pipeline': 'single_call',
+                        'timestamp': time.time()
+                    }
                 }
-            }
-            
-            logger.info(f"Successfully generated response in {response_time:.2f}s "
-                       f"(chunks: {len(search_results)}, subject: {subject_id})")
-            
-            # Step 8: Cache material-backed answers only (non-followup)
-            if user_id and context.strip() and not self._is_followup_request(query, chat_history):
+
+            logger.info(f"Successfully generated response in {result['response_time']:.2f}s "
+                       f"(chunks: {len(result['retrieved_chunks'])}, subject: {subject_id})")
+
+            # Step 5: Cache material-backed answers only (non-followup)
+            if user_id and result['context_used'] and not is_followup:
                 try:
                     cache_success = self.cache_service.store_cached_response(
                         user_id=user_id,
@@ -165,6 +167,70 @@ class RAGService:
             logger.error(f"Error generating response for subject {subject_id}: {str(e)}")
             raise Exception(f"Failed to generate response: {str(e)}")
     
+    def _reasoning_response(self, query, subject_id, chat_history, user_id, subject_name, start_time):
+        """Answer via the Stage 2 reasoning pipeline; returns None if the pipeline fails."""
+        from reasoning.models import ReasoningSession
+        from reasoning.pipeline import ReasoningError, ReasoningPipeline
+
+        history = []  # the pipeline expects role/content turns
+        for exchange in chat_history[-self.max_chat_history:]:
+            history.append({'role': 'user', 'content': exchange.get('user', '')})
+            history.append({'role': 'assistant', 'content': exchange.get('assistant', '')})
+
+        try:
+            reasoning = ReasoningPipeline().run(query=query, subject_id=subject_id, conversation_history=history)
+        except ReasoningError as e:
+            logger.warning(f"Reasoning pipeline failed, using single-call RAG instead: {e}")
+            return None
+
+        session_id = None
+        try:
+            session_id = str(ReasoningSession.create_from_result(reasoning).session_id)  # trace for debugging/eval
+        except Exception as e:
+            logger.error(f"Could not save reasoning trace: {e}")
+
+        chunks = reasoning.retrieved_chunks
+        if not chunks and not reasoning.final_answer:
+            answer = self._get_subject_specific_fallback(subject_name)
+        else:
+            answer = reasoning.final_answer or self._get_subject_specific_fallback(subject_name)
+            if chunks and reasoning.unverified_flag:
+                answer += "\n\n_Note: parts of this answer could not be fully verified against your materials._"
+
+        return {
+            'response': answer,
+            'retrieved_chunks': [
+                {
+                    'chunk_id': c.chunk_id,
+                    'content': c.content,
+                    'chunk_index': c.chunk_index,
+                    'material_id': c.material_id,
+                    'material_name': c.material_name,
+                    'similarity_score': float(c.initial_score),
+                }
+                for c in chunks
+            ],
+            'context_used': bool(chunks),
+            'response_time': time.time() - start_time,
+            'metadata': {
+                'subject_id': subject_id,
+                'user_id': user_id,
+                'chunks_found': len(chunks),
+                'model_used': self.model,
+                'pipeline': 'reasoning',
+                'reasoning_session_id': session_id,
+                'classification': (
+                    reasoning.classification_result.category.value if reasoning.classification_result else None
+                ),
+                'rewritten_query': reasoning.rewritten_query,
+                'verified': not reasoning.unverified_flag,
+                'confidence': reasoning.confidence_score.final_score if reasoning.confidence_score else None,
+                'retries': len(reasoning.retry_results),
+                'latency_breakdown': reasoning.latency_breakdown,
+                'timestamp': time.time(),
+            },
+        }
+
     def _retrieve_relevant_chunks(self, query: str, subject_id: int) -> List[Dict[str, Any]]:
         """
         Retrieve relevant content chunks using vector search.

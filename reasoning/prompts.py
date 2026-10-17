@@ -142,15 +142,6 @@ CURRENT QUESTION: {query}
 Provide a clear, educational answer based solely on the provided context. If the context doesn't fully address the question, clearly state what information is missing."""
 
 
-GENERATOR_DIRECT_RESPONSE_PROMPT = """You are XP, an educational assistant for the ExcelPoint learning platform.
-
-The following question does not require looking up educational materials. Provide a helpful, friendly response.
-
-Question: {query}
-
-Respond naturally and helpfully. If the question is a greeting, respond warmly. If it's about your capabilities, explain that you help students learn by answering questions about their uploaded study materials."""
-
-
 GENERATOR_CLARIFICATION_PROMPT = """You are XP, an educational assistant for the ExcelPoint learning platform.
 
 The following query is unclear or too vague to process. Ask for clarification in a friendly, helpful way.

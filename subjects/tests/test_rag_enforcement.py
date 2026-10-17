@@ -21,6 +21,10 @@ class RAGEnforcementTestCase(TestCase):
     
     def setUp(self):
         """Set up test data"""
+        # These tests cover the single-call path; the reasoning path has its own tests
+        patcher = patch('subjects.services.rag_service.RAGService._reasoning_response', return_value=None)
+        patcher.start()
+        self.addCleanup(patcher.stop)
         # Create test user
         self.user = User.objects.create_user(
             username='testuser',

@@ -30,7 +30,6 @@ from .prompts import (
     GENERATOR_SYSTEM_PROMPT,
     GENERATOR_USER_PROMPT_TEMPLATE,
     GENERATOR_WITH_HISTORY_TEMPLATE,
-    GENERATOR_DIRECT_RESPONSE_PROMPT,
     GENERATOR_CLARIFICATION_PROMPT,
 )
 
@@ -146,9 +145,8 @@ class ReasoningPipeline:
 
     Orchestrates the full reasoning flow:
     1. Classify query
-    2. If DIRECT_RESPONSE: generate directly, skip retrieval
-    3. If CLARIFICATION_REQUIRED: return clarification request
-    4. If RETRIEVAL_REQUIRED: continue
+    2. If CLARIFICATION_REQUIRED: return clarification request
+    3. Otherwise (DIRECT_RESPONSE included, strict RAG): continue
     5. Rewrite query for better retrieval
     6. Retrieve relevant chunks using Stage 1 pipeline
     7. Generate answer from chunks
@@ -288,31 +286,8 @@ class ReasoningPipeline:
             result.classification_result = classification_result
             latency_breakdown['classification_ms'] = classification_time
 
-            # Handle non-retrieval cases
-            if classification_result.category == QueryClassificationCategory.DIRECT_RESPONSE:
-                logger.info("Query classified as DIRECT_RESPONSE, skipping retrieval")
-                answer, gen_time = self._handle_direct_response(query)
-                result.generated_answer = answer
-                result.final_answer = answer
-                latency_breakdown['generation_ms'] = gen_time
-
-                # Create simple verification for direct responses
-                result.verification_result = VerificationResult(
-                    grounded=True,
-                    supported_claims=[],
-                    unsupported_claims=[],
-                    faithfulness_score=1.0,
-                    reasoning="Direct response, no source verification needed",
-                )
-                result.confidence_score = ConfidenceScore(
-                    final_score=0.9,
-                    score_breakdown={'direct_response': 0.9},
-                    interpretation="HIGH_CONFIDENCE",
-                )
-                result.total_latency_ms = (time.perf_counter() - total_start) * 1000
-                result.latency_breakdown = latency_breakdown
-                return result
-
+            # Strict RAG: there is no "answer from general knowledge" path, so DIRECT_RESPONSE
+            # queries go through retrieval like everything else (small talk is handled by the caller)
             if classification_result.category == QueryClassificationCategory.CLARIFICATION_REQUIRED:
                 logger.info("Query classified as CLARIFICATION_REQUIRED")
                 answer, gen_time = self._handle_clarification(query)
@@ -352,6 +327,14 @@ class ReasoningPipeline:
             )
             result.retrieved_chunks = chunks
             latency_breakdown['retrieval_ms'] = retrieval_time
+
+            if not chunks:
+                # Empty final_answer + no chunks tells the caller to use its "not in your materials" reply
+                logger.info("No chunks retrieved; skipping generation")
+                result.unverified_flag = True
+                result.total_latency_ms = (time.perf_counter() - total_start) * 1000
+                result.latency_breakdown = latency_breakdown
+                return result
 
             # Step 4: Answer Generation
             answer, gen_time = self._generate_answer(
@@ -538,8 +521,8 @@ class ReasoningPipeline:
             config = PipelineConfig(
                 name=pipeline_name,
                 description="Auto-created default pipeline",
-                top_k=10,
-                similarity_threshold=0.15,
+                top_k=5,
+                similarity_threshold=0.3,  # same cut-off as the chat's strict RAG gate
             )
             pipeline = RetrievalPipeline(config)
             retrieval_result = pipeline.search(query=query, subject_id=subject_id)
@@ -610,32 +593,6 @@ class ReasoningPipeline:
         result = verifier.verify(answer, chunks)
         latency = (time.perf_counter() - start) * 1000
         return result, latency
-
-    def _handle_direct_response(self, query: str) -> tuple[str, float]:
-        """
-        Handle queries that don't need retrieval.
-
-        Returns:
-            Tuple of (answer, latency_ms).
-        """
-        start = time.perf_counter()
-        client = self._get_openai_client()
-
-        user_prompt = GENERATOR_DIRECT_RESPONSE_PROMPT.format(query=query)
-
-        response = client.chat.completions.create(
-            model=self._model,
-            messages=[
-                {"role": "user", "content": user_prompt},
-            ],
-            temperature=0.7,
-            max_tokens=500,
-        )
-
-        answer = response.choices[0].message.content or ""
-        latency = (time.perf_counter() - start) * 1000
-
-        return answer.strip(), latency
 
     def _handle_clarification(self, query: str) -> tuple[str, float]:
         """
