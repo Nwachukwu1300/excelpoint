@@ -53,3 +53,13 @@ class RecommendationTest(TestCase):
         Flashcard.objects.create(subject=self.db, question='q', answer='a')
         self.client.force_login(self.user)
         self.assertContains(self.client.get(reverse('learning:dashboard')), 'Review 1 flashcard in Databases')
+
+    def test_due_cards_are_counted_per_subject_not_per_card(self):
+        from subjects.services.spaced_repetition import record_review
+        from django.utils import timezone as tz
+        from subjects.models import FlashcardReview
+        cards = [Flashcard.objects.create(subject=self.db, question=f'q{i}', answer='a') for i in range(3)]
+        record_review(self.user, cards[0], 4)
+        FlashcardReview.objects.update(due_at=tz.now() - tz.timedelta(hours=1))  # one overdue, two new
+        reviews = [r for r in recommend(self.user) if r['kind'] == 'review']
+        self.assertEqual([r['title'] for r in reviews], ['Review 3 flashcards in Databases'])

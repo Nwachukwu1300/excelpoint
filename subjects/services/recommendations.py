@@ -25,7 +25,8 @@ def recommend(user, limit=6):
     recs = []
 
     # 1. Flashcards due (spaced repetition)
-    for row in due_cards(user).values('subject_id', 'subject__name').annotate(n=Count('id', distinct=True)):
+    # order_by() clears due_cards' ordering, which Django would otherwise add to GROUP BY
+    for row in due_cards(user).order_by().values('subject_id', 'subject__name').annotate(n=Count('id', distinct=True)):
         recs.append({
             'kind': 'review', 'priority': 50 + min(row['n'], 40),
             'title': f"Review {row['n']} flashcard{'s' if row['n'] != 1 else ''} in {row['subject__name']}",

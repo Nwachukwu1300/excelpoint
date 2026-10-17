@@ -151,7 +151,7 @@
                 <ul class="navbar-nav">
                     {% if user.is_authenticated %}
                     <li class="nav-item">
-                        <a class="nav-link position-relative" href="{% url 'users:notifications' %}" aria-label="Notifications{% if unread_notifications %}, {{ unread_notifications }} unread{% endif %}">
+                        <a class="nav-link d-flex align-items-center gap-1" href="{% url 'users:notifications' %}" aria-label="Notifications{% if unread_notifications %}, {{ unread_notifications }} unread{% endif %}">
                             <i class="fas fa-bell" aria-hidden="true"></i>
                             {% if unread_notifications %}<span class="badge rounded-pill text-bg-danger" style="font-size: .65rem">{{ unread_notifications }}</span>{% endif %}
                         </a>
