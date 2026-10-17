@@ -101,3 +101,37 @@ class StrictPipelineTest(TestCase):
         verify.assert_not_called()
         self.assertEqual(result.final_answer, '')
         self.assertTrue(result.unverified_flag)
+
+
+from reasoning.models import AnswerEvaluation
+from reasoning.pipeline import ReasoningResult
+from reasoning.verifier import VerificationResult
+from retrieval.reranking import RankedChunk
+
+
+class HeuristicEvaluationTest(TestCase):
+    def result(self, chunks, verification):
+        return ReasoningResult(
+            original_query='q', subject_id=1, pipeline_name='default',
+            retrieved_chunks=chunks, final_answer='a', verification_result=verification,
+        )
+
+    def test_metrics_recorded_for_every_saved_session(self):
+        chunks = [RankedChunk(1, 'x', 0, 1, 'a.pdf', 0.8), RankedChunk(2, 'y', 1, 1, 'a.pdf', 0.4)]
+        verification = VerificationResult(grounded=False, supported_claims=['a', 'b', 'c'],
+                                           unsupported_claims=['d'], faithfulness_score=0.75)
+        session = ReasoningSession.create_from_result(self.result(chunks, verification))
+
+        e = AnswerEvaluation.objects.get(session=session)
+        self.assertEqual(e.evaluator, 'heuristic')
+        self.assertEqual(e.faithfulness, 0.75)
+        self.assertEqual(e.hallucination_rate, 0.25)
+        self.assertAlmostEqual(e.retrieval_mean_similarity, 0.6)
+        self.assertEqual(e.retrieval_top_similarity, 0.8)
+
+    def test_no_context_answers_have_no_quality_scores(self):
+        session = ReasoningSession.create_from_result(self.result([], None))
+        e = AnswerEvaluation.objects.get(session=session)
+        self.assertIsNone(e.faithfulness)
+        self.assertIsNone(e.hallucination_rate)
+        self.assertIsNone(e.retrieval_mean_similarity)

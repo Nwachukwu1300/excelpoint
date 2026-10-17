@@ -8,7 +8,7 @@ with the Django admin interface for easy management and debugging.
 from django.contrib import admin
 from django.utils.html import format_html
 
-from .models import ReasoningSession, ReasoningSessionChunk
+from .models import AnswerEvaluation, ReasoningSession, ReasoningSessionChunk
 
 
 class ReasoningSessionChunkInline(admin.TabularInline):
@@ -241,3 +241,10 @@ class ReasoningSessionChunkAdmin(admin.ModelAdmin):
     def has_change_permission(self, request, obj=None):
         """Disable editing chunks through admin."""
         return False
+
+
+@admin.register(AnswerEvaluation)
+class AnswerEvaluationAdmin(admin.ModelAdmin):
+    list_display = ['session', 'evaluator', 'faithfulness', 'hallucination_rate', 'answer_relevance', 'created_at']
+    list_filter = ['evaluator']
+    readonly_fields = [f.name for f in AnswerEvaluation._meta.fields]

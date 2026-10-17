@@ -228,6 +228,9 @@ class ReasoningSession(models.Model):
                     used_in_retry=True,
                 )
 
+        from .evaluation import record_heuristic_evaluation  # evaluation imports models
+        record_heuristic_evaluation(session, result)
+
         return session
 
 
@@ -293,3 +296,32 @@ class ReasoningSessionChunk(models.Model):
     def __str__(self) -> str:
         """Return string representation."""
         return f"Chunk {self.chunk_id} for session {self.session.session_id}"
+
+
+class AnswerEvaluation(models.Model):
+    """
+    One quality evaluation of a reasoning session. Sessions can be evaluated
+    more than once (heuristics on save, an LLM judge later), so rows form a history.
+    """
+
+    EVALUATORS = (
+        ('heuristic', 'Heuristic'),
+        ('llm_judge', 'LLM judge'),
+    )
+
+    session = models.ForeignKey(ReasoningSession, on_delete=models.CASCADE, related_name='evaluations')
+    evaluator = models.CharField(max_length=20, choices=EVALUATORS)
+    faithfulness = models.FloatField(null=True, blank=True, help_text="Verifier score, 0-1")
+    hallucination_rate = models.FloatField(null=True, blank=True, help_text="Unsupported claims / all claims")
+    retrieval_mean_similarity = models.FloatField(null=True, blank=True)
+    retrieval_top_similarity = models.FloatField(null=True, blank=True)
+    answer_relevance = models.FloatField(null=True, blank=True, help_text="Judge score, 0-1")
+    reasoning = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [models.Index(fields=['evaluator', 'created_at'])]
+
+    def __str__(self) -> str:
+        return f"{self.evaluator} evaluation of {self.session.session_id}"
