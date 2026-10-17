@@ -2198,9 +2198,8 @@ class EmbeddingPipelineIntegrationTest(TestCase):
         )
     
     @patch('subjects.utils.ContentProcessor.process_file')
-    @patch('subjects.tasks.generate_flashcards.apply_async')
-    @patch('subjects.tasks.generate_quiz_from_material.apply_async')
-    def test_complete_material_processing_pipeline(self, mock_quiz, mock_flashcards, mock_process_file):
+    @patch('subjects.tasks.chord')
+    def test_complete_material_processing_pipeline(self, mock_chord, mock_process_file):
         """Test complete material processing with enhanced embedding pipeline"""
         from subjects.tasks import process_material
         
@@ -2234,8 +2233,8 @@ class EmbeddingPipelineIntegrationTest(TestCase):
             self.assertIsNotNone(chunk.embedding_vector)
         
         # Verify downstream tasks were triggered
-        mock_flashcards.assert_called_once_with(args=[self.material.id], countdown=2)
-        mock_quiz.assert_called_once_with(args=[self.material.id, 10], countdown=2)
+        mock_chord.assert_called_once()
+        mock_chord.return_value.assert_called_once()
     
     @patch('subjects.utils.ContentProcessor')
     def test_batch_processing_large_material(self, mock_processor_class):

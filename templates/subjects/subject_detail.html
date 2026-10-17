@@ -133,6 +133,12 @@
                                     </span>
                                 </small>
                             </p>
+                            {% if material.summary %}
+                            <details class="mb-3">
+                                <summary class="small fw-semibold">Summary</summary>
+                                <div class="small mt-2" style="white-space: pre-wrap">{{ material.summary }}</div>
+                            </details>
+                            {% endif %}
                             <div class="d-flex justify-content-between align-items-center">
                                 {% if material.status == 'PROCESSING' or material.status == 'PENDING' %}
                                 <div class="material-status-container" data-material-id="{{ material.id }}">

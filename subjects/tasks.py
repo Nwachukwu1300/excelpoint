@@ -14,7 +14,7 @@ try:
 except ImportError:
     pass
 
-from celery import shared_task
+from celery import chord, group, shared_task
 from .models import SubjectMaterial, ContentChunk, Flashcard, QuizQuestion, Quiz, Question, Choice, Answer, UserQuizAttempt
 from .utils import ContentProcessor
 from openai import OpenAI
@@ -65,10 +65,13 @@ def process_material(material_id: int):
         
         logger.info(f"Successfully processed material {material.file.name} with {len(chunks_data)} chunks")
         
-        # Queue additional tasks only after material is successfully processed
-        # Use apply_async with countdown to ensure material is fully saved
-        generate_flashcards.apply_async(args=[material_id], countdown=2)
-        generate_quiz_from_material.apply_async(args=[material_id, 10], countdown=2)  # Use new quiz system with 10 questions
+        # Study-material workflow: flashcards, quiz and summary run in parallel,
+        # then material_ready fires once with all three results
+        chord(group(
+            generate_flashcards.si(material_id),
+            generate_quiz_from_material.si(material_id, 10),
+            generate_summary.si(material_id),
+        ))(material_ready.s(material_id))
         
     except Exception as e:
         logger.exception(f"Error processing material {material_id}: {str(e)}")
@@ -120,7 +123,8 @@ def generate_flashcards(material_id: int):
         
         flashcards = processor.generate_flashcards(chunks_data)
         
-        # Create Flashcard objects
+        # Replace cards from an earlier run so reprocessing doesn't duplicate them
+        Flashcard.objects.filter(material=material).delete()
         flashcard_count = 0
         for flashcard in flashcards:
             Flashcard.objects.create(
@@ -138,6 +142,68 @@ def generate_flashcards(material_id: int):
         logger.error(f"Error generating flashcards for material {material_id}: {str(e)}")
         logger.exception("Full traceback:")
         return {'status': 'error', 'message': str(e)}
+
+SUMMARY_CONTEXT_CHARS = 12000  # keeps the prompt well inside the model's context window
+
+
+@shared_task
+def generate_summary(material_id: int):
+    """Summarise a material strictly from its own chunks and store it on the material."""
+    try:
+        material = SubjectMaterial.objects.get(id=material_id)
+        text = '\n'.join(ContentChunk.objects.filter(material=material).order_by('chunk_index').values_list('content', flat=True))
+        if not text.strip():
+            return {'status': 'error', 'step': 'summary', 'message': 'No content to summarise'}
+        client = OpenAI(api_key=settings.OPENAI_API_KEY)
+        response = client.chat.completions.create(
+            model=settings.OPENAI_MODEL,
+            messages=[
+                {"role": "system", "content": "You summarise study material. Use ONLY the text provided; never add outside facts."},
+                {"role": "user", "content": (
+                    "Summarise this study material for revision: 5-8 bullet points of the key ideas, "
+                    "then one short paragraph tying them together.\n\nMATERIAL:\n" + text[:SUMMARY_CONTEXT_CHARS]
+                )},
+            ],
+            temperature=0.2,
+            max_tokens=600,
+        )
+        material.summary = (response.choices[0].message.content or '').strip()
+        material.save(update_fields=['summary', 'updated_at'])
+        return {'status': 'success', 'step': 'summary'}
+    except Exception as e:
+        logger.exception(f"Error summarising material {material_id}: {e}")
+        return {'status': 'error', 'step': 'summary', 'message': str(e)}
+
+
+@shared_task
+def material_ready(results, material_id: int):
+    """Chord callback: tell the user their material is ready, and what was generated."""
+    from users.models import Notification
+
+    try:
+        material = SubjectMaterial.objects.select_related('subject__user').get(id=material_id)
+    except SubjectMaterial.DoesNotExist:
+        return
+    flashcards, quiz, summary = (results + [{}, {}, {}])[:3]
+    made, failed = [], []
+    if (flashcards or {}).get('status') == 'success':
+        made.append(f"{flashcards.get('flashcards_created', 0)} flashcards")
+    else:
+        failed.append('flashcards')
+    (made if (quiz or {}).get('status') == 'success' else failed).append('a quiz')
+    (made if (summary or {}).get('status') == 'success' else failed).append('a summary')
+
+    body = f"Generated {', '.join(made)}." if made else "Nothing could be generated."
+    if failed:
+        body += f" Couldn't create {', '.join(failed)}."
+    name = os.path.basename(material.file.name)
+    Notification.notify(
+        material.subject.user, 'material_ready',
+        f"{name} is ready to study" if made else f"Couldn't prepare study aids for {name}",
+        body=body, url=f"/subjects/{material.subject_id}/",
+    )
+    return {'made': made, 'failed': failed}
+
 
 @shared_task
 def generate_quiz_questions(material_id: int):
@@ -211,13 +277,10 @@ def generate_quiz_from_material(self, material_id, num_questions=10):
         
         # Don't change material status - it should already be COMPLETED from process_material
         
-        # Use ContentProcessor to handle both local and S3 files
-        processor = ContentProcessor()
-        
-        # Process the file to get text content
-        with local_file_path(material.file) as file_path:
-            chunks_data = processor.process_file(file_path)
-        text_content = '\n'.join([chunk['content'] for chunk in chunks_data])
+        # process_material already extracted the text into chunks; re-parsing would re-embed the whole file
+        text_content = '\n'.join(
+            ContentChunk.objects.filter(material=material).order_by('chunk_index').values_list('content', flat=True)
+        )
         
         if not text_content.strip():
             logger.warning(f"No text content found in material {material_id}")

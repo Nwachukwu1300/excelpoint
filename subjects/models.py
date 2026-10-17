@@ -127,6 +127,7 @@ class SubjectMaterial(models.Model):
     )
     file_type = models.CharField(max_length=10, choices=FILE_TYPES)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PENDING')
+    summary = models.TextField(blank=True, default='', help_text="AI summary built only from this material")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
