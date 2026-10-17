@@ -115,6 +115,27 @@ To bridge the gap between traditional learning methods and modern educational ne
 - **Chat Intelligence**: Context-aware responses
 - **Learning Optimization**: Adaptive algorithms for personalized experience
 
+## How XP answers (RAG pipeline)
+
+XP answers **only from your uploaded materials**:
+
+1. Your question is embedded (all-MiniLM-L6-v2) and matched against your chunks in Postgres (pgvector, HNSW index).
+2. If nothing scores above the similarity threshold, XP says it isn't in your materials and no LLM is called.
+3. Otherwise the reasoning pipeline runs: classify → rewrite query → retrieve → generate (strict, cited) → verify claims → retry if unfaithful.
+4. Every answer is saved as a trace and scored (faithfulness, unsupported-claim rate, retrieval similarity).
+
+### Evaluation and debugging
+
+| What | Where |
+|---|---|
+| Quality dashboard (trends, failures, retrieval stats) | `/insights/` |
+| Per-answer trace (chunks, prompts, claims, stage timings) | `/insights/<session-id>/`, or "How was this answered?" in the chat |
+| Quality data as JSON | `GET /api/reasoning/quality/?days=30` |
+| Retrieval benchmark (hit@k, MRR) | `python manage.py benchmark_retrieval docs/retrieval_benchmark.example.json` |
+| LLM-judge scoring (optional, costs one call per answer) | set `EVAL_LLM_JUDGE=True`, or run `python manage.py judge_answers` |
+
+Each answer also logs one JSON line (`"event": "chat_answer"`) with its path, chunk count, verification and per-stage timings.
+
 ## Getting Started
 
 ### Prerequisites
