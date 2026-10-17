@@ -75,3 +75,42 @@ class EditProfileTest(TestCase):
         self.assertRedirects(response, reverse('users:profile'), fetch_redirect_response=False)
         user.refresh_from_db()
         self.assertEqual((user.first_name, user.email), ('New', 'new@x.com'))
+
+
+class NotificationTest(TestCase):
+    def setUp(self):
+        from users.models import User
+        self.user = User.objects.create_user('n', password='pw')
+        self.client.force_login(self.user)
+
+    def note(self, url='/subjects/', user=None):
+        from users.models import Notification
+        return Notification.notify(user or self.user, 'material_ready', 'Notes ready', url=url)
+
+    def test_bell_shows_unread_count(self):
+        self.note(); self.note()
+        html = self.client.get(reverse('users:notifications')).content.decode()
+        self.assertIn('2 unread', html)
+
+    def test_opening_marks_read_and_follows_internal_link(self):
+        n = self.note('/subjects/3/')
+        response = self.client.post(reverse('users:open_notification', args=[n.id]))
+        self.assertRedirects(response, '/subjects/3/', fetch_redirect_response=False)
+        n.refresh_from_db()
+        self.assertIsNotNone(n.read_at)
+
+    def test_external_links_are_not_followed(self):
+        for url in ['https://evil.example', '//evil.example']:
+            n = self.note(url)
+            response = self.client.post(reverse('users:open_notification', args=[n.id]))
+            self.assertRedirects(response, reverse('users:notifications'), fetch_redirect_response=False)
+
+    def test_cannot_open_someone_elses(self):
+        from users.models import User
+        other = self.note(user=User.objects.create_user('o2', password='pw'))
+        self.assertEqual(self.client.post(reverse('users:open_notification', args=[other.id])).status_code, 404)
+
+    def test_mark_all_read(self):
+        self.note(); self.note()
+        self.client.post(reverse('users:notifications'))
+        self.assertFalse(self.user.notifications.filter(read_at__isnull=True).exists())

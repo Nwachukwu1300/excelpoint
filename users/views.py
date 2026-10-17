@@ -16,7 +16,7 @@ from .forms import (
     UserEducationForm,
     SettingsForm,
 )
-from .models import User, UserProfile, UserAchievement, UserCertification, UserEducation
+from .models import Notification, User, UserProfile, UserAchievement, UserCertification, UserEducation
 from django.db.models import Count, Sum
 from django.utils import timezone
 from django.utils.crypto import constant_time_compare
@@ -652,3 +652,26 @@ def delete_education(request, education_id):
     return render(request, 'users/delete_education.html', {
         'education': education
     })
+
+
+@login_required
+def notifications(request):
+    if request.method == 'POST':
+        request.user.notifications.filter(read_at__isnull=True).update(read_at=timezone.now())
+        return redirect('users:notifications')
+    return render(request, 'users/notifications.html', {
+        'notifications': request.user.notifications.all()[:50],
+    })
+
+
+@login_required
+@require_http_methods(['POST'])
+def open_notification(request, notification_id):
+    note = get_object_or_404(Notification, id=notification_id, user=request.user)
+    if note.read_at is None:
+        note.read_at = timezone.now()
+        note.save(update_fields=['read_at'])
+    # Only follow site-relative links ('/x', not '//evil.com') so a stored URL can't redirect off-site
+    if note.url.startswith('/') and not note.url.startswith('//'):
+        return redirect(note.url)
+    return redirect('users:notifications')

@@ -18,6 +18,10 @@ urlpatterns = [
     path('profile/edit/', views.edit_profile, name='edit_profile'),
     path('change-password/', views.change_password, name='change_password'),
     path('settings/', views.settings_view, name='settings'),
+
+    # Notifications
+    path('notifications/', views.notifications, name='notifications'),
+    path('notifications/<int:notification_id>/open/', views.open_notification, name='open_notification'),
     
     # Achievement management endpoints
     path('achievements/', views.manage_achievements, name='manage_achievements'),

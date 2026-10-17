@@ -358,3 +358,25 @@ class UserAchievement(models.Model):
     
     def __str__(self):
         return f"{self.title} ({self.get_type_display()})"
+
+class Notification(models.Model):
+    """In-app notification: workflow results, review reminders, suggestions."""
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notifications')
+    kind = models.CharField(max_length=30)
+    title = models.CharField(max_length=200)
+    body = models.TextField(blank=True)
+    url = models.CharField(max_length=500, blank=True, help_text="Site-relative link, e.g. /subjects/3/")
+    read_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [models.Index(fields=['user', 'read_at'])]
+
+    def __str__(self):
+        return f"{self.kind}: {self.title}"
+
+    @classmethod
+    def notify(cls, user, kind, title, body='', url=''):
+        return cls.objects.create(user=user, kind=kind, title=title, body=body, url=url)
