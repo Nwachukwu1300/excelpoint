@@ -95,6 +95,9 @@ class ReasoningResult:
     total_latency_ms: float = 0.0
     latency_breakdown: Dict[str, float] = field(default_factory=dict)
 
+    # Exact LLM inputs, for the debug panel
+    prompts: Dict[str, Any] = field(default_factory=dict)
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
@@ -130,6 +133,7 @@ class ReasoningResult:
             'unverified_flag': self.unverified_flag,
             'total_latency_ms': self.total_latency_ms,
             'latency_breakdown': self.latency_breakdown,
+            'prompts': self.prompts,
         }
 
 
@@ -320,13 +324,14 @@ class ReasoningPipeline:
             latency_breakdown['rewrite_ms'] = rewrite_time
 
             # Step 3: Retrieval
-            chunks, retrieval_time = self._retrieve_chunks(
+            chunks, retrieval_time, retrieval_timings = self._retrieve_chunks(
                 rewrite_result.rewritten_query,
                 subject_id,
                 pipeline_name,
             )
             result.retrieved_chunks = chunks
             latency_breakdown['retrieval_ms'] = retrieval_time
+            latency_breakdown.update(retrieval_timings)
 
             if not chunks:
                 # Empty final_answer + no chunks tells the caller to use its "not in your materials" reply
@@ -337,11 +342,12 @@ class ReasoningPipeline:
                 return result
 
             # Step 4: Answer Generation
-            answer, gen_time = self._generate_answer(
+            answer, gen_time, messages = self._generate_answer(
                 rewrite_result.rewritten_query,
                 chunks,
                 conversation_history,
             )
+            result.prompts['generation'] = messages
             result.generated_answer = answer
             latency_breakdown['generation_ms'] = gen_time
 
@@ -374,7 +380,7 @@ class ReasoningPipeline:
                 )
 
                 # Re-retrieve with rewritten query
-                retry_chunks, _ = self._retrieve_chunks(
+                retry_chunks, _, _ = self._retrieve_chunks(
                     retry_partial.rewritten_query,
                     subject_id,
                     pipeline_name,
@@ -382,11 +388,12 @@ class ReasoningPipeline:
                 retry_partial.retrieved_chunks = retry_chunks
 
                 # Re-generate answer
-                retry_answer, _ = self._generate_answer(
+                retry_answer, _, retry_messages = self._generate_answer(
                     retry_partial.rewritten_query,
                     retry_chunks,
                     conversation_history,
                 )
+                result.prompts[f'generation_retry_{attempt - 1}'] = retry_messages
                 retry_partial.generated_answer = retry_answer
 
                 # Re-verify
@@ -491,56 +498,50 @@ class ReasoningPipeline:
         query: str,
         subject_id: int,
         pipeline_name: str,
-    ) -> tuple[List[RankedChunk], float]:
+    ) -> tuple[List[RankedChunk], float, Dict[str, float]]:
         """
         Retrieve relevant chunks using Stage 1 pipeline.
 
         Returns:
-            Tuple of (chunks, latency_ms).
+            Tuple of (chunks, latency_ms, per-stage timings).
         """
         start = time.perf_counter()
 
         try:
-            # Get configured pipeline from Stage 1
             pipeline = PipelineManager.get_pipeline(pipeline_name)
-            retrieval_result = pipeline.search(query=query, subject_id=subject_id)
-            latency = (time.perf_counter() - start) * 1000
-
-            logger.info(
-                f"Retrieved {retrieval_result.chunk_count} chunks, "
-                f"top_score={retrieval_result.top_score:.3f}"
-            )
-
-            return retrieval_result.chunks, latency
-
-        except ValueError as e:
-            # Pipeline not found - try to create a default one
-            logger.warning(
-                f"Pipeline '{pipeline_name}' not found, using default config"
-            )
-            config = PipelineConfig(
+        except ValueError:
+            # Only "pipeline not configured" falls back; real search errors must surface
+            logger.warning(f"Pipeline '{pipeline_name}' not found, using default config")
+            pipeline = RetrievalPipeline(PipelineConfig(
                 name=pipeline_name,
                 description="Auto-created default pipeline",
                 top_k=5,
                 similarity_threshold=0.3,  # same cut-off as the chat's strict RAG gate
-            )
-            pipeline = RetrievalPipeline(config)
-            retrieval_result = pipeline.search(query=query, subject_id=subject_id)
-            latency = (time.perf_counter() - start) * 1000
+            ))
 
-            return retrieval_result.chunks, latency
+        retrieval_result = pipeline.search(query=query, subject_id=subject_id)
+        latency = (time.perf_counter() - start) * 1000
+        logger.info(f"Retrieved {retrieval_result.chunk_count} chunks, top_score={retrieval_result.top_score:.3f}")
+
+        timings = {
+            'embedding_ms': retrieval_result.embedding_latency_ms,
+            'search_ms': retrieval_result.search_latency_ms,
+        }
+        if retrieval_result.reranking_latency_ms is not None:
+            timings['reranking_ms'] = retrieval_result.reranking_latency_ms
+        return retrieval_result.chunks, latency, timings
 
     def _generate_answer(
         self,
         query: str,
         chunks: List[RankedChunk],
         conversation_history: Optional[List[Dict[str, str]]],
-    ) -> tuple[str, float]:
+    ) -> tuple[str, float, List[Dict[str, str]]]:
         """
         Generate answer from retrieved chunks.
 
         Returns:
-            Tuple of (answer, latency_ms).
+            Tuple of (answer, latency_ms, the messages sent to the model).
         """
         start = time.perf_counter()
         client = self._get_openai_client()
@@ -562,12 +563,13 @@ class ReasoningPipeline:
                 query=query,
             )
 
+        messages = [
+            {"role": "system", "content": GENERATOR_SYSTEM_PROMPT},
+            {"role": "user", "content": user_prompt},
+        ]
         response = client.chat.completions.create(
             model=self._model,
-            messages=[
-                {"role": "system", "content": GENERATOR_SYSTEM_PROMPT},
-                {"role": "user", "content": user_prompt},
-            ],
+            messages=messages,
             temperature=self._generator_temperature,
             max_tokens=1000,
         )
@@ -575,7 +577,7 @@ class ReasoningPipeline:
         answer = response.choices[0].message.content or ""
         latency = (time.perf_counter() - start) * 1000
 
-        return answer.strip(), latency
+        return answer.strip(), latency, messages
 
     def _verify_answer(
         self,

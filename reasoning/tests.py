@@ -83,7 +83,7 @@ class StrictPipelineTest(TestCase):
         p = ReasoningPipeline()
         p._classify_query = lambda q: (classified(category), 0.0)
         p._rewrite_query = lambda q, h: (RewriteResult('q', 'rewritten q', [], 0, ''), 0.0)
-        p._retrieve_chunks = lambda q, s, n: (chunks, 0.0)
+        p._retrieve_chunks = lambda q, s, n: (chunks, 0.0, {})
         return p
 
     def test_direct_response_goes_through_retrieval(self):
@@ -232,3 +232,39 @@ class QualityDashboardTest(TestCase):
 
     def test_bad_days_param(self):
         self.assertEqual(self.client.get(reverse('reasoning:quality'), {'days': 'x'}).status_code, 400)
+
+
+from reasoning.pipeline import ReasoningError
+
+
+class TraceCaptureTest(TestCase):
+    def test_prompt_and_stage_timings_are_recorded(self):
+        p = ReasoningPipeline()
+        p._classify_query = lambda q: (classified(QueryClassificationCategory.RETRIEVAL_REQUIRED), 1.0)
+        p._rewrite_query = lambda q, h: (RewriteResult('q', 'DDL meaning', [], 0, ''), 2.0)
+        chunk = RankedChunk(1, 'DDL is Data Definition Language.', 0, 1, 'db.pdf', 0.8)
+        p._retrieve_chunks = lambda q, s, n: ([chunk], 5.0, {'embedding_ms': 3.0, 'search_ms': 2.0})
+        p._verify_answer = lambda a, c: (VerificationResult(True, ['x'], [], 1.0), 4.0)
+        client = MagicMock()
+        client.chat.completions.create.return_value.choices = [MagicMock(message=MagicMock(content='Data Definition Language.'))]
+        p._openai_client = client
+
+        result = p.run('What is DDL?', subject_id=1)
+
+        user_prompt = result.prompts['generation'][1]['content']
+        self.assertIn('DDL is Data Definition Language.', user_prompt)
+        self.assertIn('DDL meaning', user_prompt)
+        self.assertEqual(result.latency_breakdown['embedding_ms'], 3.0)
+        self.assertEqual(result.to_dict()['prompts'], result.prompts)
+
+    @patch('reasoning.pipeline.RetrievalPipeline')
+    @patch('reasoning.pipeline.PipelineManager.get_pipeline', side_effect=ValueError('not configured'))
+    def test_only_missing_pipeline_falls_back(self, get_pipeline, fallback_cls):
+        fallback_cls.return_value.search.side_effect = ValueError('384 vs 768 dimensions')
+        p = ReasoningPipeline()
+        p._classify_query = lambda q: (classified(QueryClassificationCategory.RETRIEVAL_REQUIRED), 0.0)
+        p._rewrite_query = lambda q, h: (RewriteResult('q', 'q', [], 0, ''), 0.0)
+
+        with self.assertRaisesMessage(ReasoningError, 'dimensions'):
+            p.run('What is DDL?', subject_id=1)
+        fallback_cls.return_value.search.assert_called_once()
