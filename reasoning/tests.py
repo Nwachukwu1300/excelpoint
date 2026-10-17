@@ -190,3 +190,45 @@ class LLMJudgeTest(TestCase):
         call_command('judge_answers', stdout=StringIO())
 
         judge.assert_called_once_with(pending)
+
+
+class QualityDashboardTest(TestCase):
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user('q', password='p')
+        mine = Subject.objects.create(user=self.user, name='Mine')
+        theirs = Subject.objects.create(user=User.objects.create_user('o', password='p'), name='Theirs')
+        chunk = RankedChunk(1, 'x', 0, 1, 'a.pdf', 0.8)
+
+        def save(subject, chunks, verification=None, unverified=False):
+            r = ReasoningResult(original_query=f'q{subject.id}', subject_id=subject.id, pipeline_name='default',
+                                retrieved_chunks=chunks, final_answer='a', verification_result=verification,
+                                unverified_flag=unverified, latency_breakdown={'retrieval_ms': 10.0})
+            return ReasoningSession.create_from_result(r)
+
+        self.good = save(mine, [chunk], VerificationResult(True, ['a', 'b', 'c'], ['d'], 0.75))
+        self.good.evaluations.create(evaluator='llm_judge', answer_relevance=0.3)
+        self.empty = save(mine, [], unverified=True)
+        save(theirs, [chunk], VerificationResult(True, ['a'], [], 1.0))
+
+        self.client = APIClient()
+        self.client.force_authenticate(self.user)
+
+    def test_summary_covers_only_own_sessions(self):
+        data = self.client.get(reverse('reasoning:quality')).json()
+
+        totals = data['totals']
+        self.assertEqual((totals['sessions'], totals['no_context']), (2, 1))
+        self.assertEqual(totals['faithfulness'], 0.75)
+        self.assertEqual(totals['hallucination_rate'], 0.25)
+        self.assertEqual(totals['judge_relevance'], 0.3)
+        self.assertEqual(data['retrieval']['no_context_rate'], 0.5)
+        self.assertEqual(data['retrieval']['avg_retrieval_ms'], 10.0)
+        self.assertEqual(len(data['trends']), 1)
+
+        reasons = {f['session_id']: f['reasons'] for f in data['failures']}
+        self.assertEqual(reasons[str(self.empty.session_id)], ['nothing retrieved'])
+        self.assertEqual(reasons[str(self.good.session_id)], ['25% unsupported claims', 'low relevance (0.30)'])
+
+    def test_bad_days_param(self):
+        self.assertEqual(self.client.get(reverse('reasoning:quality'), {'days': 'x'}).status_code, 400)

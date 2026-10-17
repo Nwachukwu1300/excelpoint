@@ -17,6 +17,7 @@ from .views import (
     SessionDetailView,
     SessionChunksView,
     StatsView,
+    QualityView,
 )
 
 app_name = 'reasoning'
@@ -51,5 +52,12 @@ urlpatterns = [
         'stats/',
         StatsView.as_view(),
         name='stats'
+    ),
+
+    # Stage 3 evaluation dashboard data
+    path(
+        'quality/',
+        QualityView.as_view(),
+        name='quality'
     ),
 ]

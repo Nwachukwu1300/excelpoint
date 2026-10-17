@@ -31,6 +31,7 @@ from .serializers import (
     StatsResponseSerializer,
     ChunkResponseSerializer,
 )
+from .evaluation import quality_summary
 from .pipeline import ReasoningPipeline, ReasoningResult, ReasoningError
 
 logger = logging.getLogger(__name__)
@@ -441,3 +442,21 @@ class StatsView(APIView):
         }
 
         return Response(response_data, status=status.HTTP_200_OK)
+
+
+class QualityView(APIView):
+    """
+    GET /api/reasoning/quality/?days=30
+
+    Stage 3 dashboard data for the user's own subjects: totals, daily trends,
+    retrieval performance and recent failures.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            days = max(1, min(365, int(request.query_params.get('days', 30))))
+        except ValueError:
+            return Response({'error': 'days must be an integer'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(quality_summary(user_sessions(request.user), days=days))

@@ -6,7 +6,13 @@ retrieval scores), so every session gets them. The LLM judge is optional and run
 """
 
 import json
+from datetime import timedelta
 from statistics import mean
+
+from django.db.models import Avg, Count, FloatField, Q
+from django.db.models.fields.json import KT
+from django.db.models.functions import Cast, TruncDate
+from django.utils import timezone
 
 from .models import AnswerEvaluation
 
@@ -84,3 +90,62 @@ def judge_session(session, client=None):
         faithfulness=_clamp(data.get("faithfulness")),
         reasoning=str(data.get("reasoning", ""))[:2000] + (f"\nUnsupported: {claims}" if claims else ""),
     )
+
+
+def _avg(field, evaluator):
+    return Avg(f'evaluations__{field}', filter=Q(evaluations__evaluator=evaluator))
+
+
+def quality_summary(sessions, days=30, failure_limit=20):
+    """Dashboard data for a queryset of ReasoningSessions: totals, daily trends, failures, retrieval."""
+    sessions = sessions.filter(created_at__gte=timezone.now() - timedelta(days=days))
+    answered = Q(retrieved_chunk_count__gt=0)
+    metrics = dict(
+        sessions=Count('id', distinct=True),
+        no_context=Count('id', filter=~answered, distinct=True),
+        unverified=Count('id', filter=answered & Q(unverified=True), distinct=True),
+        faithfulness=_avg('faithfulness', 'heuristic'),
+        hallucination_rate=_avg('hallucination_rate', 'heuristic'),
+        retrieval_top_similarity=_avg('retrieval_top_similarity', 'heuristic'),
+        judge_relevance=_avg('answer_relevance', 'llm_judge'),
+        judge_faithfulness=_avg('faithfulness', 'llm_judge'),
+    )
+
+    totals = sessions.aggregate(**metrics)
+    trends = list(
+        sessions.annotate(day=TruncDate('created_at')).values('day').annotate(**metrics).order_by('day')
+    )
+
+    retrieval = sessions.aggregate(
+        avg_chunks=Avg('retrieved_chunk_count'),
+        avg_retrieval_ms=Avg(Cast(KT('latency_breakdown__retrieval_ms'), FloatField())),
+        avg_total_ms=Avg('total_latency'),
+    )
+    retrieval['no_context_rate'] = totals['no_context'] / totals['sessions'] if totals['sessions'] else None
+    retrieval['avg_top_similarity'] = totals['retrieval_top_similarity']
+
+    failures = []
+    for s in sessions.prefetch_related('evaluations').order_by('-created_at')[:200]:
+        evals = {e.evaluator: e for e in s.evaluations.all()}
+        reasons = []
+        if not s.retrieved_chunk_count:
+            reasons.append('nothing retrieved')
+        elif s.unverified:
+            reasons.append('not verified')
+        h = evals.get('heuristic')
+        if h and h.hallucination_rate:
+            reasons.append(f'{h.hallucination_rate:.0%} unsupported claims')
+        j = evals.get('llm_judge')
+        if j and j.answer_relevance is not None and j.answer_relevance < 0.5:
+            reasons.append(f'low relevance ({j.answer_relevance:.2f})')
+        if reasons:
+            failures.append({
+                'session_id': str(s.session_id),
+                'query': s.original_query,
+                'reasons': reasons,
+                'created_at': s.created_at.isoformat(),
+            })
+            if len(failures) >= failure_limit:
+                break
+
+    return {'days': days, 'totals': totals, 'trends': trends, 'retrieval': retrieval, 'failures': failures}
