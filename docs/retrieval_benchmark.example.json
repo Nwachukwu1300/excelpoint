@@ -1,0 +1,4 @@
+[
+  {"subject_id": 1, "question": "What does DDL stand for?", "expected": "Data Definition Language"},
+  {"subject_id": 1, "question": "What does third normal form require?", "expected": ["transitive dependencies", "3NF"]}
+]

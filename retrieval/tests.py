@@ -25,3 +25,46 @@ class SearchChunksTest(TestCase):
 
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0].material_name, material.file.name)
+
+
+import json
+import tempfile
+from io import StringIO
+
+from django.core.management import call_command
+
+from retrieval.benchmark import first_relevant_rank
+from retrieval.models import RetrievalExperiment
+from retrieval.reranking import RankedChunk
+from subjects.utils import load_embedding_model
+
+
+class BenchmarkTest(TestCase):
+    def test_rank_is_first_chunk_containing_an_expected_snippet(self):
+        chunks = [RankedChunk(i, text, i, 1, 'a', 0.5) for i, text in enumerate(['intro', 'DDL is Data Definition Language'])]
+        self.assertEqual(first_relevant_rank(chunks, 'data definition'), 2)
+        self.assertEqual(first_relevant_rank(chunks, ['nope', 'INTRO']), 1)
+        self.assertIsNone(first_relevant_rank(chunks, 'missing'))
+
+    def test_command_scores_and_stores_a_run(self):
+        user = get_user_model().objects.create_user('b', password='p')
+        subject = Subject.objects.create(user=user, name='DB')
+        material = SubjectMaterial.objects.create(subject=subject, file='a.pdf', file_type='PDF')
+        model = load_embedding_model()
+        for i, text in enumerate(['DDL stands for Data Definition Language.', 'Third normal form removes transitive dependencies.']):
+            ContentChunk.objects.create(material=material, content=text, chunk_index=i,
+                                        embedding_vector=model.encode(text).tolist(), embedding_status='completed')
+        cases = [
+            {'subject_id': subject.id, 'question': 'What does DDL stand for?', 'expected': 'Data Definition Language'},
+            {'subject_id': subject.id, 'question': 'What is a B-tree index?', 'expected': 'B-tree'},
+        ]
+        with tempfile.NamedTemporaryFile('w', suffix='.json', delete=False) as f:
+            json.dump(cases, f)
+
+        call_command('benchmark_retrieval', f.name, '--name', 'bench', stdout=StringIO())
+
+        run = RetrievalExperiment.objects.get(name='bench')
+        summary = json.loads(run.notes)
+        self.assertEqual((summary['cases'], summary['hit_at_5'], summary['mrr']), (2, 0.5, 0.5))
+        self.assertEqual(run.results.get(query='What does DDL stand for?').metrics['rank'], 1)
+        self.assertFalse(run.results.get(query='What is a B-tree index?').metrics['hit'])
