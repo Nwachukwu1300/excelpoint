@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Review · {{ subject.name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width: 680px">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h1 class="h4 mb-0">Review flashcards</h1>
+            <div class="text-muted small">{{ subject.name }} · {{ due_count }} card{{ due_count|pluralize }} due</div>
+        </div>
+        <a href="{% url 'subject_detail' subject.id %}" class="btn btn-sm btn-outline-secondary">Back to subject</a>
+    </div>
+
+    {% if card %}
+    <div class="card shadow-sm">
+        <div class="card-body p-4">
+            <div class="text-muted small mb-2">{% if card.material %}{{ card.material.file.name|slice:"18:" }}{% endif %}</div>
+            <p class="fs-5 fw-semibold mb-3">{{ card.question }}</p>
+            <details>
+                <summary class="btn btn-outline-primary btn-sm">Show answer</summary>
+                <div class="mt-3" style="white-space: pre-wrap">{{ card.answer }}</div>
+                <hr>
+                <p class="small text-muted mb-2">How well did you remember it?</p>
+                <form method="post" class="d-flex flex-wrap gap-2">
+                    {% csrf_token %}
+                    <input type="hidden" name="flashcard_id" value="{{ card.id }}">
+                    {% for value, label in grades %}
+                    <button type="submit" name="grade" value="{{ value }}" class="btn {% if value == 1 %}btn-outline-danger{% elif value == 5 %}btn-outline-success{% else %}btn-outline-secondary{% endif %}">{{ label }}</button>
+                    {% endfor %}
+                </form>
+            </details>
+        </div>
+    </div>
+    {% else %}
+    <div class="card"><div class="card-body text-center py-5">
+        <i class="fas fa-circle-check text-success fs-2 mb-2" aria-hidden="true"></i>
+        <p class="mb-0">Nothing due. Cards come back on a schedule that stretches each time you remember them.</p>
+    </div></div>
+    {% endif %}
+</div>
+{% endblock %}

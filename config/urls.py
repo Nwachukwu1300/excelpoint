@@ -19,7 +19,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import TemplateView  
-from subjects.views import SubjectListView, SubjectDetailView, create_subject, upload_material
+from subjects.views import SubjectListView, SubjectDetailView, create_subject, upload_material, review_flashcards
 from django.http import JsonResponse
 from .views import home
 
@@ -42,6 +42,7 @@ urlpatterns = [
     path('subjects/create/', create_subject, name='create_subject'),
     path('subjects/<int:pk>/upload/', upload_material, name='upload_material'),
     path('subjects/<int:pk>/', SubjectDetailView.as_view(), name='subject_detail'),
+    path('subjects/<int:pk>/review/', review_flashcards, name='review_flashcards'),
 ]
 
 # Only serve media files locally when not using S3

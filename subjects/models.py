@@ -762,6 +762,47 @@ class CachedResponse(models.Model):
         return f"{user_id}:{subject_id}:{question_hash}"
 
 
+
+class FlashcardReview(models.Model):
+    """Spaced-repetition state for one user's flashcard, scheduled with SM-2.
+
+    A card with no review row is "new" and due immediately, so cards generated
+    after an upload are scheduled without any extra work.
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='flashcard_reviews')
+    flashcard = models.ForeignKey('Flashcard', on_delete=models.CASCADE, related_name='reviews')
+    repetitions = models.PositiveIntegerField(default=0)
+    interval_days = models.PositiveIntegerField(default=0)
+    ease = models.FloatField(default=2.5)
+    due_at = models.DateTimeField(default=timezone.now)
+    last_grade = models.PositiveSmallIntegerField(null=True, blank=True)
+    last_reviewed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        unique_together = ['user', 'flashcard']
+        indexes = [models.Index(fields=['user', 'due_at'])]
+
+    def apply_grade(self, grade: int):
+        """SM-2: grade 0-5 (below 3 = forgotten). Updates the schedule; caller saves."""
+        if not 0 <= grade <= 5:
+            raise ValueError("grade must be 0-5")
+        if grade >= 3:
+            if self.repetitions == 0:
+                self.interval_days = 1
+            elif self.repetitions == 1:
+                self.interval_days = 6
+            else:
+                self.interval_days = round(self.interval_days * self.ease)
+            self.repetitions += 1
+        else:
+            self.repetitions = 0
+            self.interval_days = 1
+        self.ease = max(1.3, self.ease + 0.1 - (5 - grade) * (0.08 + (5 - grade) * 0.02))
+        now = timezone.now()
+        self.due_at = now + timezone.timedelta(days=self.interval_days)
+        self.last_grade = grade
+        self.last_reviewed_at = now
+
 @receiver([post_save, post_delete], sender=SubjectMaterial)
 def clear_subject_answer_cache(sender, instance, **kwargs):
     # Cached answers were built from the old materials, so any change invalidates them

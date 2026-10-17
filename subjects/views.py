@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic import ListView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
+from django.http import HttpResponseBadRequest, JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
@@ -32,6 +32,7 @@ from .services.rag_service import RAGService
 from .services.session_manager import SessionManager
 from .tasks import process_material, generate_dynamic_quiz_questions
 from .utils import material_file_type, short_answer_matches
+from .services.spaced_repetition import due_cards, record_review
 import json
 import os
 from django.utils import timezone
@@ -64,6 +65,7 @@ class SubjectDetailView(LoginRequiredMixin, DetailView):
         context['materials'] = self.object.materials.all()
         # Include quizzes for this subject
         context['quizzes'] = Quiz.objects.filter(subject=self.object)
+        context['due_card_count'] = due_cards(self.request.user, self.object).count()
         return context
 
 @login_required
@@ -1354,3 +1356,32 @@ class ChatStatsAPIView(APIView):
                 'error': 'Failed to get chat statistics',
                 'details': str(e) if settings.DEBUG else None
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+# Grades shown on the review page, mapped to SM-2's 0-5 scale
+REVIEW_GRADES = [(1, 'Again'), (3, 'Hard'), (4, 'Good'), (5, 'Easy')]
+
+
+@login_required
+def review_flashcards(request, pk):
+    """Spaced-repetition review: one due card at a time, graded with SM-2."""
+    subject = get_object_or_404(Subject, id=pk, user=request.user)
+    if request.method == 'POST':
+        card = get_object_or_404(Flashcard, id=request.POST.get('flashcard_id'), subject=subject)
+        try:
+            grade = int(request.POST.get('grade', ''))
+            if grade not in dict(REVIEW_GRADES):
+                raise ValueError
+        except ValueError:
+            return HttpResponseBadRequest('Invalid grade')
+        record_review(request.user, card, grade)
+        return redirect('review_flashcards', pk=pk)
+
+    due = due_cards(request.user, subject)
+    return render(request, 'subjects/review_flashcards.html', {
+        'subject': subject,
+        'card': due.first(),
+        'due_count': due.count(),
+        'grades': REVIEW_GRADES,
+    })
