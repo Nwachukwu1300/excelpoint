@@ -1,5 +1,6 @@
 # learning/views.py
 from django.shortcuts import render, redirect, get_object_or_404
+from subjects.services.recommendations import recommend
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
@@ -189,6 +190,7 @@ def learning_dashboard(request):
         'achievements': achievements_data,
         'earned_achievements_count': earned_achievements_count,
         'analytics_data': analytics_data,
+        'recommendations': recommend(request.user),
     })
 
 @login_required
