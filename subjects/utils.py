@@ -40,9 +40,13 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 @lru_cache(maxsize=None)
-def load_embedding_model(name: str = 'all-MiniLM-L6-v2') -> SentenceTransformer:
-    # One copy per process; loading MiniLM takes seconds and hundreds of MB
+def _cached_model(name: str) -> SentenceTransformer:
     return SentenceTransformer(name)
+
+def load_embedding_model(name: str = 'all-MiniLM-L6-v2') -> SentenceTransformer:
+    # One copy per process; loading MiniLM takes seconds and hundreds of MB.
+    # Goes through _cached_model so f() and f('all-MiniLM-L6-v2') share one cache key.
+    return _cached_model(name)
 
 def short_answer_matches(user_answer, correct_answers):
     """Case/whitespace/trailing-punctuation-insensitive exact match. Blank answers never match."""

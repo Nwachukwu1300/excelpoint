@@ -279,9 +279,9 @@ class SentenceTransformerEmbedding(BaseEmbedding):
         """
         if self._model is None:
             try:
-                from sentence_transformers import SentenceTransformer
-                logger.info(f"Loading SentenceTransformer model: {self._model_name}")
-                self._model = SentenceTransformer(self._model_name)
+                # Shared per-process cache: pipelines are built per request and loading takes seconds
+                from subjects.utils import load_embedding_model
+                self._model = load_embedding_model(self._model_name)
                 # Get actual dimensions from the model
                 self._dimensions = self._model.get_sentence_embedding_dimension()
                 logger.info(
