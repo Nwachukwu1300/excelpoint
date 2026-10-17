@@ -135,3 +135,58 @@ class HeuristicEvaluationTest(TestCase):
         self.assertIsNone(e.faithfulness)
         self.assertIsNone(e.hallucination_rate)
         self.assertIsNone(e.retrieval_mean_similarity)
+
+
+from io import StringIO
+from unittest.mock import MagicMock
+
+from django.core.management import call_command
+from django.test import override_settings
+
+from reasoning.evaluation import judge_session
+
+
+class LLMJudgeTest(TestCase):
+    def session(self, chunks=True):
+        chunk_list = [RankedChunk(1, 'DDL is Data Definition Language.', 0, 1, 'db.pdf', 0.8)] if chunks else []
+        return ReasoningSession.create_from_result(ReasoningResult(
+            original_query='What is DDL?', subject_id=1, pipeline_name='default',
+            retrieved_chunks=chunk_list, final_answer='DDL is Data Definition Language.',
+        ))
+
+    def test_judge_scores_are_parsed_clamped_and_stored(self):
+        session = self.session()
+        client = MagicMock()
+        client.chat.completions.create.return_value.choices = [MagicMock(message=MagicMock(
+            content='{"answer_relevance": 1.4, "faithfulness": 0.9, "unsupported_claims": [], "reasoning": "Direct."}'))]
+
+        e = judge_session(session, client=client)
+
+        self.assertEqual((e.evaluator, e.answer_relevance, e.faithfulness), ('llm_judge', 1.0, 0.9))
+        prompt = client.chat.completions.create.call_args.kwargs['messages'][0]['content']
+        self.assertIn('DDL is Data Definition Language.', prompt)
+        self.assertEqual(session.evaluations.count(), 2)  # heuristic + judge history
+
+    @patch('reasoning.tasks.judge_answer.delay')
+    def test_judge_only_queued_when_enabled_and_answer_had_materials(self, delay):
+        with self.captureOnCommitCallbacks(execute=True):
+            self.session()
+        delay.assert_not_called()
+
+        with override_settings(EVAL_LLM_JUDGE=True):
+            with self.captureOnCommitCallbacks(execute=True):
+                self.session(chunks=False)
+            delay.assert_not_called()
+            with self.captureOnCommitCallbacks(execute=True):
+                session = self.session()
+        delay.assert_called_once_with(session.pk)
+
+    @patch('reasoning.management.commands.judge_answers.judge_session')
+    def test_backlog_command_skips_already_judged(self, judge):
+        judged, pending = self.session(), self.session()
+        judged.evaluations.create(evaluator='llm_judge', answer_relevance=1.0)
+        judge.return_value = MagicMock(answer_relevance=0.8, faithfulness=0.9)
+
+        call_command('judge_answers', stdout=StringIO())
+
+        judge.assert_called_once_with(pending)

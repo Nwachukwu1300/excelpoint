@@ -7,7 +7,8 @@ analytics, debugging, and historical analysis.
 
 import uuid
 
-from django.db import models
+from django.conf import settings
+from django.db import models, transaction
 from django.utils import timezone
 
 
@@ -230,6 +231,10 @@ class ReasoningSession(models.Model):
 
         from .evaluation import record_heuristic_evaluation  # evaluation imports models
         record_heuristic_evaluation(session, result)
+
+        if settings.EVAL_LLM_JUDGE and session.retrieved_chunk_count:
+            from .tasks import judge_answer
+            transaction.on_commit(lambda: judge_answer.delay(session.pk))
 
         return session
 
