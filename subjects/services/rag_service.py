@@ -1,3 +1,4 @@
+import json
 import logging
 import time
 from typing import List, Dict, Any, Optional, Tuple
@@ -79,6 +80,7 @@ class RAGService:
                 
                 if cached_response:
                     logger.info(f"Returning cached response for user {user_id}, subject {subject_id}")
+                    self._log_answer(cached_response, 'cache', subject_id, user_id)
                     return cached_response
             
             # Step 2: Perform vector search to retrieve relevant chunks
@@ -94,7 +96,7 @@ class RAGService:
             # Strict RAG: nothing relevant retrieved means nothing to answer from, so skip the LLM.
             # Follow-ups ("tell me more") pass through: the reasoning rewriter resolves them from history.
             if not context.strip() and not is_small_talk and not is_followup:
-                return {
+                result = {
                     'response': self._get_subject_specific_fallback(subject_name),
                     'retrieved_chunks': [],
                     'context_used': False,
@@ -105,9 +107,12 @@ class RAGService:
                         'chunks_found': 0,
                         'model_used': None,
                         'tokens_used': {},
+                        'pipeline': 'fallback',
                         'timestamp': time.time(),
                     },
                 }
+                self._log_answer(result, 'fallback', subject_id, user_id)
+                return result
             
             # Step 4: Questions go through the reasoning pipeline (rewrite, retrieve, generate,
             # verify, retry); small talk, or a pipeline failure, uses a single grounded LLM call
@@ -158,7 +163,8 @@ class RAGService:
                         logger.warning(f"Failed to cache response for user {user_id}, subject {subject_id}")
                 except Exception as e:
                     logger.error(f"Error caching response: {str(e)}")
-            
+
+            self._log_answer(result, result['metadata'].get('pipeline'), subject_id, user_id)
             return result
             
         except ValueError:
@@ -167,6 +173,25 @@ class RAGService:
             logger.error(f"Error generating response for subject {subject_id}: {str(e)}")
             raise Exception(f"Failed to generate response: {str(e)}")
     
+    def _log_answer(self, result, path, subject_id, user_id):
+        """One JSON line per answer so logs can be filtered and aggregated (Stage 4 observability)."""
+        meta = result.get('metadata') or {}
+        logger.info(json.dumps({
+            'event': 'chat_answer',
+            'path': path,
+            'subject_id': subject_id,
+            'user_id': user_id,
+            'chunks': len(result.get('retrieved_chunks') or []),
+            'context_used': result.get('context_used'),
+            'response_s': round(result.get('response_time') or 0, 3),
+            'reasoning_session_id': meta.get('reasoning_session_id'),
+            'classification': meta.get('classification'),
+            'verified': meta.get('verified'),
+            'confidence': meta.get('confidence'),
+            'retries': meta.get('retries'),
+            'stage_ms': meta.get('latency_breakdown'),
+        }, default=str))
+
     def _reasoning_response(self, query, subject_id, chat_history, user_id, subject_name, start_time):
         """Answer via the Stage 2 reasoning pipeline; returns None if the pipeline fails."""
         from reasoning.models import ReasoningSession

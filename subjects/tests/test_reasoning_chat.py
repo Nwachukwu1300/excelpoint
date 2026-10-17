@@ -94,3 +94,37 @@ class TraceUrlTest(TestCase):
 
         self.assertEqual(ChatMessageSerializer(traced).data['trace_url'], '/insights/7d1c2f3e-0000-4000-8000-000000000001/')
         self.assertIsNone(ChatMessageSerializer(plain).data['trace_url'])
+
+
+class AnswerLogTest(TestCase):
+    def test_every_answer_path_logs_one_json_line(self):
+        import json as _json
+        user = get_user_model().objects.create_user('l', password='p')
+        subject = Subject.objects.create(user=user, name='Databases')
+        rag = RAGService()
+
+        with self.assertLogs('subjects.services.rag_service', level='INFO') as logs, \
+                patch.object(rag, '_retrieve_relevant_chunks', return_value=[]):
+            rag.generate_response('Who painted the Mona Lisa?', subject.id)
+
+        lines = [_json.loads(m.split(':', 2)[2]) for m in logs.output if '"event": "chat_answer"' in m]
+        self.assertEqual(len(lines), 1)
+        self.assertEqual((lines[0]['path'], lines[0]['chunks'], lines[0]['subject_id']), ('fallback', 0, subject.id))
+
+    @patch('reasoning.pipeline.ReasoningPipeline.run')
+    def test_reasoning_answer_log_includes_trace_fields(self, run):
+        import json as _json
+        user = get_user_model().objects.create_user('l2', password='p')
+        subject = Subject.objects.create(user=user, name='Databases')
+        run.return_value = reasoning_result(subject.id)
+        run.return_value.latency_breakdown = {'generation_ms': 900.0}
+        rag = RAGService()
+
+        with self.assertLogs('subjects.services.rag_service', level='INFO') as logs, \
+                patch.object(rag, '_retrieve_relevant_chunks', return_value=[CHUNK]):
+            rag.generate_response('What is DDL?', subject.id)
+
+        line = next(_json.loads(m.split(':', 2)[2]) for m in logs.output if '"event": "chat_answer"' in m)
+        self.assertEqual(line['path'], 'reasoning')
+        self.assertTrue(line['reasoning_session_id'])
+        self.assertEqual(line['stage_ms'], {'generation_ms': 900.0})

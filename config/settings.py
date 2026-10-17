@@ -275,3 +275,22 @@ REASONING_VERIFIER_TEMPERATURE = float(os.getenv('REASONING_VERIFIER_TEMPERATURE
 # Stage 3 evaluation: the LLM judge adds one call per answer, so it's opt-in
 EVAL_LLM_JUDGE = os.getenv('EVAL_LLM_JUDGE', 'False').lower() in ('1', 'true', 'yes')
 EVAL_JUDGE_MODEL = os.getenv('EVAL_JUDGE_MODEL', REASONING_LLM_MODEL)
+
+
+# Logging: app loggers to the console (Celery and runserver both capture stdout)
+LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'standard': {'format': '%(asctime)s %(levelname)s %(name)s %(message)s'},
+    },
+    'handlers': {
+        'console': {'class': 'logging.StreamHandler', 'formatter': 'standard'},
+    },
+    'root': {'handlers': ['console'], 'level': 'WARNING'},
+    'loggers': {
+        app: {'handlers': ['console'], 'level': LOG_LEVEL, 'propagate': False}
+        for app in ('subjects', 'retrieval', 'reasoning', 'users', 'learning')
+    },
+}
