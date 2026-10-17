@@ -1,3 +1,4 @@
+from django.urls import reverse
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from .models import Subject, SubjectMaterial, ContentChunk, Flashcard, QuizQuestion, QuizAttempt, ChatSession, ChatMessage
@@ -90,17 +91,18 @@ class ChatMessageSerializer(serializers.ModelSerializer):
     retrieved_chunks_count = serializers.SerializerMethodField()
     response_time_seconds = serializers.SerializerMethodField()
     has_metadata = serializers.SerializerMethodField()
+    trace_url = serializers.SerializerMethodField()
     
     class Meta:
         model = ChatMessage
         fields = [
             'id', 'session', 'session_id', 'user_username', 'subject_name',
             'role', 'content', 'timestamp', 'metadata',
-            'retrieved_chunks_count', 'response_time_seconds', 'has_metadata'
+            'retrieved_chunks_count', 'response_time_seconds', 'has_metadata', 'trace_url'
         ]
         read_only_fields = [
             'id', 'timestamp', 'session_id', 'user_username', 'subject_name',
-            'retrieved_chunks_count', 'response_time_seconds', 'has_metadata'
+            'retrieved_chunks_count', 'response_time_seconds', 'has_metadata', 'trace_url'
         ]
     
     def get_retrieved_chunks_count(self, obj):
@@ -114,6 +116,11 @@ class ChatMessageSerializer(serializers.ModelSerializer):
     def get_has_metadata(self, obj):
         """Check if message has metadata"""
         return bool(obj.metadata)
+
+    def get_trace_url(self, obj):
+        """Debug panel link for answers produced by the reasoning pipeline"""
+        session_id = ((obj.metadata or {}).get('model_info') or {}).get('reasoning_session_id')
+        return reverse('insights:session', args=[session_id]) if session_id else None
     
     def validate_role(self, value):
         """Validate the message role"""

@@ -127,6 +127,16 @@ const MessageMeta = styled.div<{ isUser: boolean }>`
   ${props => props.isUser ? 'justify-content: flex-end;' : ''}
 `
 
+const TraceLink = styled.a`
+  color: #64748b;
+  text-decoration: underline;
+
+  &:hover,
+  &:focus-visible {
+    color: #0f172a;
+  }
+`
+
 const EmptyState = styled.div`
   display: flex;
   flex-direction: column;
@@ -242,6 +252,14 @@ export const MessageList: MessageListComponent = ({
               </MessageBubble>
               <MessageMeta isUser={isUser}>
                 <span>{formatMessageTime(message.timestamp)}</span>
+                {!isUser && message.trace_url && (
+                  <>
+                    <span aria-hidden="true">·</span>
+                    <TraceLink href={message.trace_url} target="_blank" rel="noopener noreferrer">
+                      How was this answered?
+                    </TraceLink>
+                  </>
+                )}
               </MessageMeta>
             </div>
           </MessageGroup>

@@ -79,3 +79,18 @@ class ReasoningChatTest(TestCase):
         self.ask('tell me more about that', chunks=(), history=[{'user': 'What is DDL?', 'assistant': 'DDL is...'}])
         run.assert_called_once()
         self.assertEqual(run.call_args.kwargs['conversation_history'][0], {'role': 'user', 'content': 'What is DDL?'})
+
+
+class TraceUrlTest(TestCase):
+    def test_assistant_message_links_to_its_trace(self):
+        from subjects.models import ChatMessage, ChatSession
+        from subjects.serializers import ChatMessageSerializer
+
+        user = get_user_model().objects.create_user('t', password='p')
+        session = ChatSession.objects.create(user=user, subject=Subject.objects.create(user=user, name='S'))
+        traced = ChatMessage.objects.create(session=session, role='assistant', content='a',
+                                            metadata={'model_info': {'reasoning_session_id': '7d1c2f3e-0000-4000-8000-000000000001'}})
+        plain = ChatMessage.objects.create(session=session, role='assistant', content='b', metadata={})
+
+        self.assertEqual(ChatMessageSerializer(traced).data['trace_url'], '/insights/7d1c2f3e-0000-4000-8000-000000000001/')
+        self.assertIsNone(ChatMessageSerializer(plain).data['trace_url'])

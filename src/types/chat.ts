@@ -5,6 +5,7 @@ export interface ChatMessage {
   role: 'user' | 'assistant'
   timestamp: string
   session: number
+  trace_url?: string | null
 }
 
 // Chat session types
