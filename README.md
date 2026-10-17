@@ -120,7 +120,7 @@ To bridge the gap between traditional learning methods and modern educational ne
 ### Prerequisites
 - Python 3.13+
 - Node.js 18+
-- PostgreSQL 12+
+- PostgreSQL 13+ with the [pgvector](https://github.com/pgvector/pgvector) extension (0.8+)
 - Redis 6+
 
 ### Installation
@@ -150,9 +150,14 @@ To bridge the gap between traditional learning methods and modern educational ne
    # Edit .env with your database and API credentials
    ```
 
-5. **Run migrations**
+5. **Install pgvector, then run migrations**
    ```bash
-   python manage.py migrate
+   # Postgres 17/18 via Homebrew: brew install pgvector
+   # Other versions: build it against your server's pg_config
+   git clone --branch v0.8.0 https://github.com/pgvector/pgvector.git
+   cd pgvector && make PG_CONFIG=$(which pg_config) && make install PG_CONFIG=$(which pg_config)
+
+   python manage.py migrate   # enables the extension and converts embeddings
    ```
 
 6. **Start services**
