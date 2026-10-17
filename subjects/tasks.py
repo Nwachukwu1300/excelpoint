@@ -1149,3 +1149,29 @@ def update_existing_material_embeddings(material_id: int):
     except Exception as e:
         logger.exception(f"Error updating material embeddings for {material_id}: {str(e)}")
         return {'status': 'error', 'message': str(e)} 
+
+@shared_task
+def send_review_reminders():
+    """Daily (Celery beat): one notification per user with flashcards due, pointing at the busiest subject."""
+    from django.contrib.auth import get_user_model
+    from django.db.models import Count
+
+    from users.models import Notification
+    from .services.spaced_repetition import due_cards
+
+    today = timezone.now().date()
+    sent = 0
+    for user in get_user_model().objects.filter(subjects__flashcards__isnull=False).distinct():
+        if user.notifications.filter(kind='review_due', created_at__date=today).exists():
+            continue  # at most one reminder a day
+        per_subject = list(due_cards(user).values('subject_id').annotate(n=Count('id', distinct=True)).order_by('-n'))
+        total = sum(row['n'] for row in per_subject)
+        if not total:
+            continue
+        Notification.notify(
+            user, 'review_due', f"{total} flashcard{'s' if total != 1 else ''} due for review",
+            body="A few minutes of review now keeps them in long-term memory.",
+            url=f"/subjects/{per_subject[0]['subject_id']}/review/",
+        )
+        sent += 1
+    return {'reminders_sent': sent}

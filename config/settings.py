@@ -11,6 +11,7 @@ it as the project evolves.
 
 import os
 from pathlib import Path
+from celery.schedules import crontab
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -191,6 +192,14 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
+
+# Scheduled jobs: run `celery -A config beat` alongside the worker
+CELERY_BEAT_SCHEDULE = {
+    'flashcard-review-reminders': {
+        'task': 'subjects.tasks.send_review_reminders',
+        'schedule': crontab(hour=8, minute=0),
+    },
+}
 
 # OpenAI Configuration
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '').replace('\n', '').strip()

@@ -69,3 +69,30 @@ class ReviewPageTest(TestCase):
 
     def test_subject_page_shows_due_count(self):
         self.assertContains(self.client.get(reverse('subject_detail', args=[self.subject.id])), '1 due')
+
+
+class ReviewReminderTest(TestCase):
+    def test_one_reminder_per_day_pointing_at_busiest_subject(self):
+        from subjects.tasks import send_review_reminders
+        from users.models import Notification
+
+        user = get_user_model().objects.create_user('rr', password='p')
+        light, heavy = Subject.objects.create(user=user, name='A'), Subject.objects.create(user=user, name='B')
+        Flashcard.objects.create(subject=light, question='q', answer='a')
+        for i in range(2):
+            Flashcard.objects.create(subject=heavy, question=f'q{i}', answer='a')
+        idle = get_user_model().objects.create_user('idle', password='p')
+        done = Flashcard.objects.create(subject=Subject.objects.create(user=idle, name='C'), question='q', answer='a')
+        record_review(idle, done, 5)  # nothing due for this user
+
+        self.assertEqual(send_review_reminders(), {'reminders_sent': 1})
+        note = Notification.objects.get()
+        self.assertEqual((note.user, note.title, note.url), (user, '3 flashcards due for review', f'/subjects/{heavy.id}/review/'))
+        self.assertEqual(send_review_reminders(), {'reminders_sent': 0})  # already reminded today
+
+    def test_beat_schedule_points_at_real_task(self):
+        from django.conf import settings
+        from config.celery import app
+        task = settings.CELERY_BEAT_SCHEDULE['flashcard-review-reminders']['task']
+        app.loader.import_default_modules()
+        self.assertIn(task, app.tasks)
