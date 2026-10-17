@@ -134,6 +134,10 @@ XP answers **only from your uploaded materials**:
 | Retrieval benchmark (hit@k, MRR) | `python manage.py benchmark_retrieval docs/retrieval_benchmark.example.json` |
 | LLM-judge scoring (optional, costs one call per answer) | set `EVAL_LLM_JUDGE=True`, or run `python manage.py judge_answers` |
 
+### Study workflows
+
+After an upload is processed, a Celery chord generates flashcards, a quiz and a summary in parallel, then sends a notification (bell icon). Flashcards are scheduled with SM-2 spaced repetition (`/subjects/<id>/review/`), a daily beat job reminds you when cards are due, and the Study Dashboard suggests next steps from your quiz scores, due cards and questions your notes couldn't answer.
+
 Each answer also logs one JSON line (`"event": "chat_answer"`) with its path, chunk count, verification and per-stage timings.
 
 ## Getting Started
@@ -191,6 +195,9 @@ Each answer also logs one JSON line (`"event": "chat_answer"`) with its path, ch
    
    # Terminal 3: Redis
    redis-server
+
+   # Terminal 4: Celery beat (daily flashcard review reminders)
+   celery -A config.celery.app beat --loglevel=INFO
    ```
 
 ## Demo & Screenshots
