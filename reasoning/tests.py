@@ -268,3 +268,40 @@ class TraceCaptureTest(TestCase):
         with self.assertRaisesMessage(ReasoningError, 'dimensions'):
             p.run('What is DDL?', subject_id=1)
         fallback_cls.return_value.search.assert_called_once()
+
+
+class InsightPagesTest(TestCase):
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user('ip', password='p')
+        subject = Subject.objects.create(user=self.user, name='DB')
+        r = ReasoningResult(
+            original_query='What is DDL?', subject_id=subject.id, pipeline_name='default',
+            classification_result=classified(QueryClassificationCategory.RETRIEVAL_REQUIRED),
+            rewritten_query='DDL definition',
+            retrieved_chunks=[RankedChunk(1, 'DDL is Data Definition Language.', 0, 1, 'db.pdf', 0.81)],
+            generated_answer='DDL is Data Definition Language.', final_answer='DDL is Data Definition Language.',
+            verification_result=VerificationResult(True, ['DDL is Data Definition Language'], ['It was invented in 1970'], 0.5),
+            total_latency_ms=100.0,
+            latency_breakdown={'classification_ms': 10.0, 'retrieval_ms': 30.0, 'embedding_ms': 20.0, 'search_ms': 10.0, 'generation_ms': 60.0},
+            prompts={'generation': [{'role': 'system', 'content': 'SYSTEM-PROMPT-TEXT'}, {'role': 'user', 'content': 'USER-PROMPT-TEXT'}]},
+        )
+        self.session = ReasoningSession.create_from_result(r)
+        self.client.force_login(self.user)
+
+    def test_dashboard_lists_answers_and_failures(self):
+        html = self.client.get(reverse('insights:dashboard')).content.decode()
+        self.assertIn('What is DDL?', html)
+        self.assertIn('50% unsupported claims', html)
+        self.assertIn(reverse('insights:session', args=[self.session.session_id]), html)
+
+    def test_debug_page_shows_every_stage(self):
+        html = self.client.get(reverse('insights:session', args=[self.session.session_id])).content.decode()
+        for expected in ['DDL definition', 'db.pdf', '0.810', 'USER-PROMPT-TEXT', 'It was invented in 1970', 'embedding', '60 ms']:
+            self.assertIn(expected, html)
+
+    def test_other_users_and_anonymous_are_blocked(self):
+        self.client.force_login(get_user_model().objects.create_user('x', password='p'))
+        self.assertEqual(self.client.get(reverse('insights:session', args=[self.session.session_id])).status_code, 404)
+        self.client.logout()
+        self.assertEqual(self.client.get(reverse('insights:dashboard')).status_code, 302)

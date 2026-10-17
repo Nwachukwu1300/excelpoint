@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block title %}Answer trace{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* line table cells up with the card header padding */
+    .card > .table-responsive > .table > :not(caption) > * > *:first-child { padding-left: 1rem; }
+    .card > .table-responsive > .table > :not(caption) > * > *:last-child { padding-right: 1rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+{% with v=trace.verification_result c=trace.confidence_score %}
+<div class="container py-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+        <div>
+            <h1 class="h4 mb-1">{{ session.original_query }}</h1>
+            <div class="text-muted small">{{ session.created_at|date:"M j, Y H:i" }} · {{ session.pipeline_name }} pipeline · {{ session.total_latency|floatformat:0 }} ms</div>
+        </div>
+        <a href="{% url 'insights:dashboard' %}" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left me-1" aria-hidden="true"></i>AI Insights</a>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-6 col-md-3"><div class="card h-100"><div class="card-body py-2">
+            <div class="text-muted small">Type</div><div class="fw-semibold">{{ session.classification_category }}</div>
+        </div></div></div>
+        <div class="col-6 col-md-3"><div class="card h-100"><div class="card-body py-2">
+            <div class="text-muted small">Confidence</div><div class="fw-semibold">{{ session.confidence_score|floatformat:2|default:"—" }} <span class="small text-muted">{{ session.confidence_interpretation }}</span></div>
+        </div></div></div>
+        <div class="col-6 col-md-3"><div class="card h-100"><div class="card-body py-2">
+            <div class="text-muted small">Faithfulness</div><div class="fw-semibold">{{ session.faithfulness_score|floatformat:2|default:"—" }}</div>
+        </div></div></div>
+        <div class="col-6 col-md-3"><div class="card h-100"><div class="card-body py-2">
+            <div class="text-muted small">Verified</div>
+            <div class="fw-semibold">{% if not session.retrieved_chunk_count %}fallback{% elif session.unverified %}<i class="fas fa-triangle-exclamation text-warning" aria-hidden="true"></i> no{% else %}<i class="fas fa-check text-success" aria-hidden="true"></i> yes{% endif %} · {{ session.retry_count }} retr{{ session.retry_count|pluralize:"y,ies" }}</div>
+        </div></div></div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header bg-white fw-semibold">Latency by stage</div>
+        <div class="card-body">
+            {% for st in stages %}
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <div class="small text-capitalize" style="width: 110px">{{ st.name }}</div>
+                <div class="progress flex-grow-1" role="progressbar" aria-label="{{ st.name }} latency" aria-valuenow="{{ st.pct }}" aria-valuemin="0" aria-valuemax="100" style="height: 12px">
+                    <div class="progress-bar" style="width: {{ st.pct }}%"></div>
+                </div>
+                <div class="small text-end" style="width: 80px">{{ st.ms|floatformat:0 }} ms</div>
+            </div>
+            {% empty %}<span class="text-muted">No timings recorded.</span>{% endfor %}
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header bg-white fw-semibold">1 · Classify and rewrite</div>
+        <div class="card-body">
+            <p class="mb-1"><strong>Category:</strong> {{ trace.classification_result.category|default:session.classification_category }}</p>
+            {% if trace.classification_result.reasoning %}<p class="text-muted small">{{ trace.classification_result.reasoning }}</p>{% endif %}
+            <p class="mb-1"><strong>Rewritten query:</strong> {{ session.rewritten_query|default:"(not rewritten)" }}</p>
+            {% if trace.rewrite_result.changes_made %}<ul class="small text-muted mb-0">{% for ch in trace.rewrite_result.changes_made %}<li>{{ ch }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header bg-white fw-semibold">2 · Retrieved chunks ({{ chunks|length }})</div>
+        <ul class="list-group list-group-flush">
+            {% for ch in chunks %}
+            <li class="list-group-item">
+                <div class="d-flex justify-content-between small mb-1">
+                    <span><i class="fas fa-file-lines me-1" aria-hidden="true"></i>{{ ch.material_name }} · chunk {{ ch.chunk_index }}</span>
+                    <span>similarity <strong>{{ ch.similarity_score|floatformat:3 }}</strong>{% if ch.reranking_score is not None %} · rerank {{ ch.reranking_score|floatformat:3 }}{% endif %}</span>
+                </div>
+                <div class="small" style="white-space: pre-wrap">{{ ch.chunk_text|truncatechars:600 }}</div>
+            </li>
+            {% empty %}
+            <li class="list-group-item text-muted">Nothing passed the similarity threshold, so XP replied that this isn't in the materials and the LLM wasn't called.</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    {% if prompts %}
+    <div class="card mb-3">
+        <div class="card-header bg-white fw-semibold">3 · Prompts sent to the model</div>
+        <div class="card-body">
+            {% for name, messages in prompts.items %}
+            <details class="mb-2">
+                <summary class="small fw-semibold">{{ name }}</summary>
+                {% for m in messages %}
+                <div class="small text-muted mt-2">{{ m.role }}</div>
+                <pre class="bg-light p-2 small mb-0" style="white-space: pre-wrap">{{ m.content }}</pre>
+                {% endfor %}
+            </details>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="card mb-3">
+        <div class="card-header bg-white fw-semibold">4 · Answer</div>
+        <div class="card-body">
+            <div style="white-space: pre-wrap">{{ session.final_answer|default:"(fallback: not in materials)" }}</div>
+            {% if session.generated_answer and session.generated_answer != session.final_answer %}
+            <details class="mt-2"><summary class="small">First attempt</summary><div class="small text-muted mt-1" style="white-space: pre-wrap">{{ session.generated_answer }}</div></details>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if v %}
+    <div class="card mb-3">
+        <div class="card-header bg-white fw-semibold">5 · Verification</div>
+        <div class="card-body">
+            <p class="mb-2">{% if v.grounded %}<span class="badge text-bg-success">grounded</span>{% else %}<span class="badge text-bg-warning">not grounded</span>{% endif %} faithfulness {{ v.faithfulness_score|floatformat:2 }}</p>
+            {% if v.reasoning %}<p class="small text-muted">{{ v.reasoning }}</p>{% endif %}
+            <div class="row">
+                <div class="col-md-6"><div class="small fw-semibold text-success">Supported claims</div><ul class="small">{% for cl in v.supported_claims %}<li>{{ cl }}</li>{% empty %}<li class="text-muted">none</li>{% endfor %}</ul></div>
+                <div class="col-md-6"><div class="small fw-semibold text-danger">Unsupported claims</div><ul class="small">{% for cl in v.unsupported_claims %}<li>{{ cl }}</li>{% empty %}<li class="text-muted">none</li>{% endfor %}</ul></div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if trace.retry_results %}
+    <div class="card mb-3">
+        <div class="card-header bg-white fw-semibold">6 · Retries</div>
+        <ul class="list-group list-group-flush">
+            {% for r in trace.retry_results %}
+            <li class="list-group-item small">
+                <strong>Attempt {{ r.attempt_number }}</strong> ({{ r.rewrite_strategy }}) · query “{{ r.rewritten_query }}” · {{ r.retrieved_chunk_count }} chunks ·
+                faithfulness {{ r.verification_result.faithfulness_score|floatformat:2|default:"—" }}
+                {% if r.success %}<span class="badge text-bg-success">passed</span>{% else %}<span class="badge text-bg-secondary">failed</span>{% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <div class="card mb-3">
+        <div class="card-header bg-white fw-semibold">Evaluations</div>
+        <div class="table-responsive">
+            <table class="table table-sm mb-0">
+                <thead><tr><th>Evaluator</th><th class="text-end">Faithfulness</th><th class="text-end">Unsupported</th><th class="text-end">Relevance</th><th class="text-end">Top similarity</th><th>Notes</th></tr></thead>
+                <tbody>
+                {% for e in evaluations %}
+                <tr>
+                    <td>{{ e.get_evaluator_display }}</td>
+                    <td class="text-end">{{ e.faithfulness|floatformat:2|default:"—" }}</td>
+                    <td class="text-end">{% if e.hallucination_rate is not None %}{% widthratio e.hallucination_rate 1 100 %}%{% else %}—{% endif %}</td>
+                    <td class="text-end">{{ e.answer_relevance|floatformat:2|default:"—" }}</td>
+                    <td class="text-end">{{ e.retrieval_top_similarity|floatformat:3|default:"—" }}</td>
+                    <td class="small text-muted">{{ e.reasoning|truncatechars:160 }}</td>
+                </tr>
+                {% empty %}<tr><td colspan="6" class="text-muted">Not evaluated.</td></tr>{% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% if c.score_breakdown %}
+    <div class="card">
+        <div class="card-header bg-white fw-semibold">Confidence breakdown</div>
+        <ul class="list-group list-group-flush">
+            {% for k, val in c.score_breakdown.items %}<li class="list-group-item d-flex justify-content-between small"><span>{{ k }}</span><span>{{ val|floatformat:3 }}</span></li>{% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+</div>
+{% endwith %}
+{% endblock %}

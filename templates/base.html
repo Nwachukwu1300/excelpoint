@@ -139,6 +139,13 @@
                             <i class="fas fa-route"></i> Study Plan
                         </a>
                     </li>
+                    {% if user.is_authenticated %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.namespace == 'insights' %}active{% endif %}" href="{% url 'insights:dashboard' %}">
+                            <i class="fas fa-chart-line"></i> AI Insights
+                        </a>
+                    </li>
+                    {% endif %}
                 </ul>
                 
                 <ul class="navbar-nav">
