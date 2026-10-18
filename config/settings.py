@@ -10,6 +10,7 @@ it as the project evolves.
 """
 
 import os
+import sys
 from pathlib import Path
 from celery.schedules import crontab
 from dotenv import load_dotenv
@@ -203,7 +204,10 @@ CELERY_BEAT_SCHEDULE = {
 
 # OpenAI Configuration
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '').replace('\n', '').strip()
-OPENAI_MODEL = 'gpt-3.5-turbo'  # Cost-effective for development
+if sys.argv[1:2] == ['test']:
+    OPENAI_API_KEY = ''  # tests must mock LLM calls; never spend real tokens from the test suite
+# Newer models need max_completion_tokens (not max_tokens); every call uses that name
+OPENAI_MODEL = os.getenv('OPENAI_MODEL', 'gpt-5.4-mini')
 
 # Google OAuth Configuration
 GOOGLE_OAUTH_CLIENT_ID = os.getenv('GOOGLE_OAUTH_CLIENT_ID')

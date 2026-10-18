@@ -39,7 +39,7 @@ def generate_flashcards(chunks: List[Dict[str, Any]], num_cards: int = 5) -> Lis
                 {"role": "user", "content": prompt}
             ],
             temperature=0.7,
-            max_tokens=1000
+            max_completion_tokens=1000
         )
         
         # Parse the response
@@ -104,7 +104,7 @@ def generate_quiz_questions(chunks: List[Dict[str, Any]], num_questions: int = 5
                 {"role": "user", "content": prompt}
             ],
             temperature=0.7,
-            max_tokens=1500
+            max_completion_tokens=1500
         )
         
         # Parse the response
@@ -165,7 +165,7 @@ def answer_question(question: str, chunks: List[Dict[str, Any]]) -> str:
                 {"role": "user", "content": prompt}
             ],
             temperature=0.7,
-            max_tokens=500
+            max_completion_tokens=500
         )
         
         return response.choices[0].message.content

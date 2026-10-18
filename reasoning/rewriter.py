@@ -90,7 +90,7 @@ class QueryRewriter:
         """
         self._model = model or getattr(
             settings, 'REASONING_LLM_MODEL',
-            getattr(settings, 'OPENAI_MODEL', 'gpt-3.5-turbo')
+            settings.OPENAI_MODEL
         )
         self._temperature = temperature if temperature is not None else getattr(
             settings, 'REASONING_REWRITER_TEMPERATURE', 0.3
@@ -156,7 +156,7 @@ class QueryRewriter:
                     {"role": "user", "content": user_prompt},
                 ],
                 temperature=self._temperature,
-                max_tokens=500,
+                max_completion_tokens=500,
             )
 
             raw_response = response.choices[0].message.content or ""
@@ -306,7 +306,7 @@ class QueryRewriter:
                     {"role": "user", "content": user_prompt},
                 ],
                 temperature=self._temperature,
-                max_tokens=300,
+                max_completion_tokens=300,
             )
 
             raw_response = response.choices[0].message.content or ""

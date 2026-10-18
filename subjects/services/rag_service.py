@@ -23,7 +23,7 @@ class RAGService:
         """Initialize the RAG service with required components."""
         self.vector_service = VectorSearchService()
         self.openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
-        self.model = getattr(settings, 'OPENAI_MODEL', 'gpt-3.5-turbo')
+        self.model = settings.OPENAI_MODEL
         self.cache_service = ChatbotCacheService()
         
         # Configuration parameters
@@ -398,7 +398,7 @@ class RAGService:
                     {"role": "user", "content": user_prompt}
                 ],
                 temperature=0.2,  # Lower temperature to reduce creativity and general knowledge responses
-                max_tokens=500,
+                max_completion_tokens=500,
                 top_p=1.0,
                 frequency_penalty=0.0,
                 presence_penalty=0.0

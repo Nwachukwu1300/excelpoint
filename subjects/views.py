@@ -1199,7 +1199,7 @@ Title:"""
             response = client.chat.completions.create(
                 model=settings.OPENAI_MODEL,
                 messages=[{"role": "user", "content": prompt}],
-                max_tokens=50,
+                max_completion_tokens=50,
                 temperature=0.7
             )
             

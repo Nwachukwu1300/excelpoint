@@ -201,7 +201,7 @@ class ReasoningPipeline:
         # Model settings
         self._model = getattr(
             settings, 'REASONING_LLM_MODEL',
-            getattr(settings, 'OPENAI_MODEL', 'gpt-3.5-turbo')
+            settings.OPENAI_MODEL
         )
         self._generator_temperature = getattr(
             settings, 'REASONING_GENERATOR_TEMPERATURE', 0.4
@@ -571,7 +571,7 @@ class ReasoningPipeline:
             model=self._model,
             messages=messages,
             temperature=self._generator_temperature,
-            max_tokens=1000,
+            max_completion_tokens=1000,
         )
 
         answer = response.choices[0].message.content or ""
@@ -614,7 +614,7 @@ class ReasoningPipeline:
                 {"role": "user", "content": user_prompt},
             ],
             temperature=0.7,
-            max_tokens=300,
+            max_completion_tokens=300,
         )
 
         answer = response.choices[0].message.content or ""

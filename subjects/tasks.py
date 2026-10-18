@@ -165,7 +165,7 @@ def generate_summary(material_id: int):
                 )},
             ],
             temperature=0.2,
-            max_tokens=600,
+            max_completion_tokens=600,
         )
         material.summary = (response.choices[0].message.content or '').strip()
         material.save(update_fields=['summary', 'updated_at'])
@@ -494,13 +494,13 @@ def _call_openai_api(prompt, temperature=0.3, max_retries=3):
             dynamic_client = OpenAI(api_key=settings.OPENAI_API_KEY)
             
             response = dynamic_client.chat.completions.create(
-                model="gpt-3.5-turbo",
+                model=settings.OPENAI_MODEL,
                 messages=[
                     {"role": "system", "content": "You are a quiz generation assistant. Generate high-quality educational questions based on the provided text. Always respond with valid JSON format."},
                     {"role": "user", "content": prompt}
                 ],
                 temperature=temperature,
-                max_tokens=2000,
+                max_completion_tokens=2000,
                 timeout=30  # 30 second timeout
             )
             

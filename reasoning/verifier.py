@@ -90,7 +90,7 @@ class AnswerVerifier:
         """
         self._model = model or getattr(
             settings, 'REASONING_LLM_MODEL',
-            getattr(settings, 'OPENAI_MODEL', 'gpt-3.5-turbo')
+            settings.OPENAI_MODEL
         )
         self._temperature = temperature if temperature is not None else getattr(
             settings, 'REASONING_VERIFIER_TEMPERATURE', 0.1
@@ -169,7 +169,7 @@ class AnswerVerifier:
                     {"role": "user", "content": user_prompt},
                 ],
                 temperature=self._temperature,
-                max_tokens=1000,
+                max_completion_tokens=1000,
             )
 
             raw_response = response.choices[0].message.content or ""
