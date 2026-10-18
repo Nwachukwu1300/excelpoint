@@ -121,7 +121,7 @@ XP answers **only from your uploaded materials**:
 
 1. Your question is embedded (all-MiniLM-L6-v2) and matched against your chunks in Postgres (pgvector, HNSW index).
 2. If nothing scores above the similarity threshold, XP says it isn't in your materials and no LLM is called.
-3. Otherwise the reasoning pipeline runs: classify → rewrite query → retrieve → generate (strict, cited) → verify claims → retry if unfaithful.
+3. Otherwise the reasoning pipeline runs: retrieve → generate (strict, cited) → verify claims → retry if unfaithful. Follow-ups ("give an example of that") are first rewritten using the chat history. That's 2 LLM calls for a normal question, 3 for a follow-up.
 4. Every answer is saved as a trace and scored (faithfulness, unsupported-claim rate, retrieval similarity).
 
 ### Evaluation and debugging
