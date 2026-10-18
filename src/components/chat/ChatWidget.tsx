@@ -11,25 +11,16 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
   subjectId, 
   initialState = 'collapsed' 
 }) => {
-  console.log('ChatWidget: Component rendering with subjectId:', subjectId)
-  console.log('ChatWidget: initialState:', initialState)
   
   const [isExpanded, setIsExpanded] = useState(initialState === 'expanded')
   const [hasNewMessages, setHasNewMessages] = useState(false)
 
-  useEffect(() => {
-    console.log('ChatWidget: Component mounted, isExpanded:', isExpanded)
-    console.log('ChatWidget: Will render ChatBubble:', !isExpanded)
-  }, [isExpanded])
-
   const openChat = () => {
-    console.log('ChatWidget: Opening chat')
     setIsExpanded(true)
     setHasNewMessages(false)
   }
 
   const closeChat = () => {
-    console.log('ChatWidget: Closing chat')
     setIsExpanded(false)
   }
 
@@ -78,7 +69,6 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
     }
   }, [isExpanded])
 
-  console.log('ChatWidget: Rendering, isExpanded:', isExpanded)
 
   return (
     <>
