@@ -39,8 +39,23 @@ class RAGService:
         chat_history: Optional[List[Dict[str, str]]] = None,
         user_id: Optional[int] = None
     ) -> Dict[str, Any]:
+        """Answer a query and return the result dict (see respond_events for the streaming form)."""
+        for kind, value in self.respond_events(query, subject_id, chat_history, user_id):
+            if kind == 'result':
+                return value
+
+    def respond_events(
+        self,
+        query: str,
+        subject_id: int,
+        chat_history: Optional[List[Dict[str, str]]] = None,
+        user_id: Optional[int] = None,
+        stream: bool = False,
+    ):
         """
-        Generate a response to a user query using RAG pipeline with caching.
+        Generate a response to a user query using RAG pipeline with caching, as a generator:
+        ('token', text) events (the reasoning answer streams when stream=True; instant replies
+        arrive as one token), then exactly one ('result', dict).
         
         Args:
             query: The user's question/query
@@ -81,7 +96,9 @@ class RAGService:
                 if cached_response:
                     logger.info(f"Returning cached response for user {user_id}, subject {subject_id}")
                     self._log_answer(cached_response, 'cache', subject_id, user_id)
-                    return cached_response
+                    yield ('token', cached_response['response'])
+                    yield ('result', cached_response)
+                    return
             
             # Step 2: Perform vector search to retrieve relevant chunks
             search_results = self._retrieve_relevant_chunks(query, subject_id)
@@ -112,13 +129,16 @@ class RAGService:
                     },
                 }
                 self._log_answer(result, 'fallback', subject_id, user_id)
-                return result
+                yield ('token', result['response'])
+                yield ('result', result)
+                return
             
             # Step 4: Questions go through the reasoning pipeline (rewrite, retrieve, generate,
             # verify, retry); small talk, or a pipeline failure, uses a single grounded LLM call
             result = None
             if not is_small_talk:
-                result = self._reasoning_response(query, subject_id, chat_history, user_id, subject_name, start_time)
+                result = yield from self._reasoning_events(
+                    query, subject_id, chat_history, user_id, subject_name, start_time, stream)
 
             if result is None:
                 formatted_history = self._format_chat_history(chat_history)
@@ -144,6 +164,7 @@ class RAGService:
                         'timestamp': time.time()
                     }
                 }
+                yield ('token', result['response'])
 
             logger.info(f"Successfully generated response in {result['response_time']:.2f}s "
                        f"(chunks: {len(result['retrieved_chunks'])}, subject: {subject_id})")
@@ -165,7 +186,7 @@ class RAGService:
                     logger.error(f"Error caching response: {str(e)}")
 
             self._log_answer(result, result['metadata'].get('pipeline'), subject_id, user_id)
-            return result
+            yield ('result', result)
             
         except ValueError:
             raise
@@ -192,8 +213,9 @@ class RAGService:
             'stage_ms': meta.get('latency_breakdown'),
         }, default=str))
 
-    def _reasoning_response(self, query, subject_id, chat_history, user_id, subject_name, start_time):
-        """Answer via the Stage 2 reasoning pipeline; returns None if the pipeline fails."""
+    def _reasoning_events(self, query, subject_id, chat_history, user_id, subject_name, start_time, stream=False):
+        """Answer via the Stage 2 reasoning pipeline, forwarding streamed tokens.
+        Returns (via StopIteration) the result dict, or None if the pipeline fails."""
         from reasoning.models import ReasoningSession
         from reasoning.pipeline import ReasoningError, ReasoningPipeline
 
@@ -202,12 +224,21 @@ class RAGService:
             history.append({'role': 'user', 'content': exchange.get('user', '')})
             history.append({'role': 'assistant', 'content': exchange.get('assistant', '')})
 
+        # Only follow-ups get the (extra LLM call) rewrite; standalone questions search as typed
+        options = dict(query=query, subject_id=subject_id, conversation_history=history,
+                       rewrite=self._is_followup_request(query, chat_history))
+        streamed = False
         try:
-            # Only follow-ups get the (extra LLM call) rewrite; standalone questions search as typed
-            reasoning = ReasoningPipeline().run(
-                query=query, subject_id=subject_id, conversation_history=history,
-                rewrite=self._is_followup_request(query, chat_history),
-            )
+            if stream:
+                reasoning = None
+                for kind, value in ReasoningPipeline().run_events(stream=True, **options):
+                    if kind == 'token':
+                        streamed = True
+                        yield ('token', value)
+                    else:
+                        reasoning = value
+            else:
+                reasoning = ReasoningPipeline().run(**options)
         except ReasoningError as e:
             logger.warning(f"Reasoning pipeline failed, using single-call RAG instead: {e}")
             return None
@@ -225,6 +256,8 @@ class RAGService:
             answer = reasoning.final_answer or self._get_subject_specific_fallback(subject_name)
             if chunks and reasoning.unverified_flag:
                 answer += "\n\n_Note: parts of this answer could not be fully verified against your materials._"
+        if stream and not streamed:
+            yield ('token', answer)  # e.g. the "not in your materials" reply when the search found nothing
 
         return {
             'response': answer,

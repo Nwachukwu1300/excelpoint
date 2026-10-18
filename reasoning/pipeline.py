@@ -229,8 +229,25 @@ class ReasoningPipeline:
         pipeline_name: Optional[str] = None,
         rewrite: Optional[bool] = None,
     ) -> ReasoningResult:
+        """Run the full pipeline and return the result (see run_events for the streaming form)."""
+        for kind, value in self.run_events(query, subject_id, conversation_history, pipeline_name, rewrite):
+            if kind == 'result':
+                return value
+
+    def run_events(
+        self,
+        query: str,
+        subject_id: int,
+        conversation_history: Optional[List[Dict[str, str]]] = None,
+        pipeline_name: Optional[str] = None,
+        rewrite: Optional[bool] = None,
+        stream: bool = False,
+    ):
         """
-        Run the full reasoning pipeline.
+        Run the full reasoning pipeline as a generator of events:
+        ('token', text) while the first answer is written (only when stream=True),
+        then exactly one ('result', ReasoningResult). Retries are not streamed; if one
+        wins, the result's final_answer replaces the streamed text.
 
         Args:
             query: User's query.
@@ -239,9 +256,10 @@ class ReasoningPipeline:
             pipeline_name: Retrieval pipeline to use.
             rewrite: Rewrite the query with the history before searching.
                 Defaults to "only when there is history"; the chat passes its follow-up check.
+            stream: Stream the first answer from the model as ('token', text) events.
 
-        Returns:
-            ReasoningResult with all outputs and metrics.
+        Yields:
+            Events as described above.
 
         Raises:
             ReasoningError: If the pipeline fails critically.
@@ -292,14 +310,14 @@ class ReasoningPipeline:
                 result.unverified_flag = True
                 result.total_latency_ms = (time.perf_counter() - total_start) * 1000
                 result.latency_breakdown = latency_breakdown
-                return result
+                yield ('result', result)
+                return
 
             # Step 3: Answer Generation
-            answer, gen_time, messages = self._generate_answer(
-                search_query,
-                chunks,
-                conversation_history,
-            )
+            if stream:
+                answer, gen_time, messages = yield from self._stream_answer(search_query, chunks, conversation_history)
+            else:
+                answer, gen_time, messages = self._generate_answer(search_query, chunks, conversation_history)
             result.prompts['generation'] = messages
             result.generated_answer = answer
             latency_breakdown['generation_ms'] = gen_time
@@ -403,7 +421,7 @@ class ReasoningPipeline:
                 f"latency={result.total_latency_ms:.0f}ms"
             )
 
-            return result
+            yield ('result', result)
 
         except Exception as e:
             logger.error(f"Reasoning pipeline error: {str(e)}")
@@ -480,28 +498,7 @@ class ReasoningPipeline:
         """
         start = time.perf_counter()
         client = self._get_openai_client()
-
-        # Format context from chunks
-        context = self._format_chunks_for_generation(chunks)
-
-        # Build prompt
-        if conversation_history and len(conversation_history) > 0:
-            history_str = self._format_conversation_history(conversation_history)
-            user_prompt = GENERATOR_WITH_HISTORY_TEMPLATE.format(
-                conversation_history=history_str,
-                context=context,
-                query=query,
-            )
-        else:
-            user_prompt = GENERATOR_USER_PROMPT_TEMPLATE.format(
-                context=context,
-                query=query,
-            )
-
-        messages = [
-            {"role": "system", "content": GENERATOR_SYSTEM_PROMPT},
-            {"role": "user", "content": user_prompt},
-        ]
+        messages = self._generation_messages(query, chunks, conversation_history)
         response = client.chat.completions.create(
             model=self._model,
             messages=messages,
@@ -513,6 +510,41 @@ class ReasoningPipeline:
         latency = (time.perf_counter() - start) * 1000
 
         return answer.strip(), latency, messages
+
+    def _stream_answer(self, query, chunks, conversation_history):
+        """Like _generate_answer, but yields ('token', text) as the model writes; returns the same tuple."""
+        start = time.perf_counter()
+        messages = self._generation_messages(query, chunks, conversation_history)
+        response = self._get_openai_client().chat.completions.create(
+            model=self._model,
+            messages=messages,
+            temperature=self._generator_temperature,
+            max_completion_tokens=1000,
+            stream=True,
+        )
+        parts = []
+        for chunk in response:
+            delta = chunk.choices[0].delta.content if chunk.choices else None
+            if delta:
+                parts.append(delta)
+                yield ('token', delta)
+        return ''.join(parts).strip(), (time.perf_counter() - start) * 1000, messages
+
+    def _generation_messages(self, query, chunks, conversation_history):
+        """System + user messages for answer generation (shared by streamed and plain calls)."""
+        context = self._format_chunks_for_generation(chunks)
+        if conversation_history:
+            user_prompt = GENERATOR_WITH_HISTORY_TEMPLATE.format(
+                conversation_history=self._format_conversation_history(conversation_history),
+                context=context,
+                query=query,
+            )
+        else:
+            user_prompt = GENERATOR_USER_PROMPT_TEMPLATE.format(context=context, query=query)
+        return [
+            {"role": "system", "content": GENERATOR_SYSTEM_PROMPT},
+            {"role": "user", "content": user_prompt},
+        ]
 
     def _verify_answer(
         self,

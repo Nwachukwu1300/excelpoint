@@ -343,3 +343,25 @@ class InsightPagesTest(TestCase):
         self.assertEqual(self.client.get(reverse('insights:session', args=[self.session.session_id])).status_code, 404)
         self.client.logout()
         self.assertEqual(self.client.get(reverse('insights:dashboard')).status_code, 302)
+
+
+class StreamingPipelineTest(TestCase):
+    def test_first_answer_streams_token_by_token(self):
+        chunk = RankedChunk(1, 'DML includes INSERT.', 0, 1, 'db.pdf', 0.8)
+        pieces = ['INSERT ', 'is ', 'DML.']
+        client = MagicMock()
+        client.chat.completions.create.return_value = iter(
+            [MagicMock(choices=[MagicMock(delta=MagicMock(content=t))]) for t in pieces]
+            + [MagicMock(choices=[MagicMock(delta=MagicMock(content=None))])]  # final chunk carries no text
+        )
+        p = ReasoningPipeline()
+        p._openai_client = client
+        p._retrieve_chunks = MagicMock(return_value=([chunk], 0.0, {}))
+        p._verify_answer = MagicMock(return_value=(VerificationResult(True, ['x'], [], 1.0), 0.0))
+
+        events = list(p.run_events('What is INSERT?', subject_id=1, stream=True))
+
+        self.assertEqual([v for k, v in events if k == 'token'], pieces)
+        self.assertEqual(events[-1][0], 'result')
+        self.assertEqual(events[-1][1].final_answer, 'INSERT is DML.')
+        self.assertTrue(client.chat.completions.create.call_args.kwargs['stream'])

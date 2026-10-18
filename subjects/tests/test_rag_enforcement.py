@@ -22,7 +22,7 @@ class RAGEnforcementTestCase(TestCase):
     def setUp(self):
         """Set up test data"""
         # These tests cover the single-call path; the reasoning path has its own tests
-        patcher = patch('subjects.services.rag_service.RAGService._reasoning_response', return_value=None)
+        patcher = patch('subjects.services.rag_service.RAGService._reasoning_events', side_effect=lambda *a, **k: iter(()))
         patcher.start()
         self.addCleanup(patcher.stop)
         # Create test user

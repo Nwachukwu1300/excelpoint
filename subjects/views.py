@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic import ListView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponseBadRequest, JsonResponse
+from django.http import HttpResponseBadRequest, JsonResponse, StreamingHttpResponse
 from django.views.decorators.http import require_http_methods
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
@@ -1072,100 +1072,23 @@ class ChatMessageListCreateAPIView(generics.ListCreateAPIView):
         user_message_content = serializer.validated_data['message']
         
         try:
-            # Use SessionManager for intelligent session management with timeout logic
-            session_manager = SessionManager()
-            session, created = session_manager.get_or_create_session(
-                user=self.request.user,
-                subject=subject,
-                content=user_message_content  # Used for title generation
-            )
-            
-            if created:
-                logger.info(f"Created new chat session {session.id} for user {request.user.id} and subject {subject_id}")
-            else:
-                logger.info(f"Using existing session {session.id} for user {request.user.id} and subject {subject_id}")
-            
-            # Save user message
-            user_message = ChatMessage.objects.create(
-                session=session,
-                role='user',
-                content=user_message_content,
-                metadata={}
-            )
-            
-            # Get chat history for context (last 10 exchanges)
-            previous_messages = ChatMessage.objects.filter(
-                session=session
-            ).exclude(
-                id=user_message.id
-            ).order_by('-timestamp')[:20]  # Get last 20 messages (10 exchanges)
-            
-            # Format chat history for RAG service
-            chat_history = []
-            messages_list = list(reversed(previous_messages))  # Reverse to chronological order
-            
-            for i in range(0, len(messages_list), 2):
-                if i + 1 < len(messages_list):
-                    if (messages_list[i].role == 'user' and 
-                        messages_list[i + 1].role == 'assistant'):
-                        chat_history.append({
-                            'user': messages_list[i].content,
-                            'assistant': messages_list[i + 1].content
-                        })
-            
-            # Generate response using RAG service
-            rag_service = RAGService()
-            
+            session_manager, session, user_message, chat_history = self._start_exchange(subject, user_message_content)
+
             logger.info(f"Generating RAG response for user {request.user.id}, subject {subject_id}, query: {user_message_content[:100]}...")
-            
-            rag_response = rag_service.generate_response(
+            rag_response = RAGService().generate_response(
                 query=user_message_content,
                 subject_id=subject.id,
                 chat_history=chat_history,
                 user_id=request.user.id
             )
-            
-            # Save assistant message with metadata
-            assistant_message = ChatMessage.objects.create(
-                session=session,
-                role='assistant',
-                content=rag_response['response'],
-                metadata={
-                    'retrieved_chunks': rag_response['retrieved_chunks'],
-                    'response_time': rag_response['response_time'],
-                    'context_used': rag_response['context_used'],
-                    'model_info': rag_response['metadata']
-                }
-            )
-            
-            # Update session activity timestamp using SessionManager
-            session_manager.extend_session(session)
-            
-            # Generate session title if this is the first exchange (no title yet)
-            if not session.title or session.title == "New conversation":
-                try:
-                    title = self._generate_session_title(user_message_content, rag_response['response'], subject.name)
-                    session.title = title
-                    session.save(update_fields=['title'])
-                    logger.info(f"Generated title for session {session.id}: {title}")
-                except Exception as e:
-                    logger.warning(f"Failed to generate title for session {session.id}: {str(e)}")
-            
+            assistant_message = self._finish_exchange(session_manager, session, subject, user_message_content, rag_response)
+
             logger.info(f"Successfully generated chat response for user {request.user.id}, session {session.id}")
-            
-            # Prepare response
-            response_data = {
-                'user_message': ChatMessageSerializer(user_message).data,
-                'assistant_message': ChatMessageSerializer(assistant_message).data,
-                'session': ChatSessionSerializer(session).data,
-                'response_metadata': {
-                    'chunks_retrieved': len(rag_response['retrieved_chunks']),
-                    'response_time_seconds': rag_response['response_time'],
-                    'context_was_used': rag_response['context_used']
-                }
-            }
-            
-            return Response(response_data, status=status.HTTP_201_CREATED)
+
+            return Response(
+                self._exchange_payload(user_message, assistant_message, session, rag_response),
+                status=status.HTTP_201_CREATED,
+            )
             
         except Exception as e:
             logger.error(f"Error generating chat response for user {request.user.id}, subject {subject_id}: {str(e)}")
@@ -1177,6 +1100,64 @@ class ChatMessageListCreateAPIView(generics.ListCreateAPIView):
                 'details': str(e) if settings.DEBUG else None
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
+    def _start_exchange(self, subject, user_message_content):
+        """Get/extend the session, save the user's message, and build the chat history for RAG."""
+        session_manager = SessionManager()
+        session, created = session_manager.get_or_create_session(
+            user=self.request.user,
+            subject=subject,
+            content=user_message_content  # Used for title generation
+        )
+        if created:
+            logger.info(f"Created new chat session {session.id} for user {self.request.user.id} and subject {subject.id}")
+
+        user_message = ChatMessage.objects.create(session=session, role='user', content=user_message_content, metadata={})
+
+        # Last 20 messages (10 exchanges), paired as user/assistant in chronological order
+        previous = list(reversed(
+            ChatMessage.objects.filter(session=session).exclude(id=user_message.id).order_by('-timestamp')[:20]
+        ))
+        chat_history = [
+            {'user': previous[i].content, 'assistant': previous[i + 1].content}
+            for i in range(0, len(previous) - 1, 2)
+            if previous[i].role == 'user' and previous[i + 1].role == 'assistant'
+        ]
+        return session_manager, session, user_message, chat_history
+
+    def _finish_exchange(self, session_manager, session, subject, user_message_content, rag_response):
+        """Save the assistant's reply, extend the session, and title new conversations."""
+        assistant_message = ChatMessage.objects.create(
+            session=session,
+            role='assistant',
+            content=rag_response['response'],
+            metadata={
+                'retrieved_chunks': rag_response['retrieved_chunks'],
+                'response_time': rag_response['response_time'],
+                'context_used': rag_response['context_used'],
+                'model_info': rag_response['metadata']
+            }
+        )
+        session_manager.extend_session(session)
+        if not session.title or session.title == "New conversation":
+            try:
+                session.title = self._generate_session_title(user_message_content, rag_response['response'], subject.name)
+                session.save(update_fields=['title'])
+            except Exception as e:
+                logger.warning(f"Failed to generate title for session {session.id}: {str(e)}")
+        return assistant_message
+
+    def _exchange_payload(self, user_message, assistant_message, session, rag_response):
+        return {
+            'user_message': ChatMessageSerializer(user_message).data,
+            'assistant_message': ChatMessageSerializer(assistant_message).data,
+            'session': ChatSessionSerializer(session).data,
+            'response_metadata': {
+                'chunks_retrieved': len(rag_response['retrieved_chunks']),
+                'response_time_seconds': rag_response['response_time'],
+                'context_was_used': rag_response['context_used']
+            }
+        }
+
     def _generate_session_title(self, user_message, assistant_response, subject_name):
         """Generate a concise title for the chat session based on the first exchange."""
         try:
@@ -1215,6 +1196,48 @@ Title:"""
         except Exception as e:
             logger.warning(f"Failed to generate session title: {str(e)}")
             return "New conversation"
+
+
+class ChatMessageStreamAPIView(ChatMessageListCreateAPIView):
+    """
+    POST /api/subjects/{subject_id}/chat/stream/
+
+    Same as sending a message, but the answer arrives as Server-Sent Events while it is written:
+    `token` ({"text"}) events, then one `done` event with the same payload as the normal endpoint
+    (its assistant_message is authoritative: a verification retry may replace the streamed text),
+    or one `error` event.
+    """
+    http_method_names = ['post', 'options']
+
+    def create(self, request, *args, **kwargs):
+        subject = get_object_or_404(Subject, id=self.kwargs.get('subject_id'), user=request.user)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        content = serializer.validated_data['message']
+        session_manager, session, user_message, chat_history = self._start_exchange(subject, content)
+
+        def sse(event, data):
+            return f"event: {event}\ndata: {json.dumps(data, default=str)}\n\n"
+
+        def events():
+            try:
+                rag_response = None
+                for kind, value in RAGService().respond_events(
+                        content, subject.id, chat_history, request.user.id, stream=True):
+                    if kind == 'token':
+                        yield sse('token', {'text': value})
+                    else:
+                        rag_response = value
+                assistant_message = self._finish_exchange(session_manager, session, subject, content, rag_response)
+                yield sse('done', self._exchange_payload(user_message, assistant_message, session, rag_response))
+            except Exception as e:
+                logger.error(f"Error streaming chat response for user {request.user.id}, subject {subject.id}: {e}")
+                yield sse('error', {'message': 'XP is currently unavailable. Please try again later.'})
+
+        response = StreamingHttpResponse(events(), content_type='text/event-stream')
+        response['Cache-Control'] = 'no-cache'
+        response['X-Accel-Buffering'] = 'no'  # stop nginx buffering the stream
+        return response
 
 
 class ChatSessionValidateAPIView(APIView):

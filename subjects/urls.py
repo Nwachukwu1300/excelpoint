@@ -31,6 +31,7 @@ urlpatterns = [
     path('subjects/<int:subject_id>/chat/sessions/', views.ChatSessionListAPIView.as_view(), name='chat-session-list'),
     path('subjects/<int:subject_id>/chat/sessions/<int:session_id>/validate/', views.ChatSessionValidateAPIView.as_view(), name='chat-session-validate'),
     path('subjects/<int:subject_id>/chat/messages/', views.ChatMessageListCreateAPIView.as_view(), name='chat-messages'),
+    path('subjects/<int:subject_id>/chat/stream/', views.ChatMessageStreamAPIView.as_view(), name='chat-stream'),
     path('subjects/<int:subject_id>/chat/stats/', views.ChatStatsAPIView.as_view(), name='chat-stats'),
     
     # XP Chatbot API URLs - Session management
