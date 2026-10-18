@@ -103,10 +103,7 @@ class QueryView(APIView):
             response_data = {
                 'session_id': session.session_id,
                 'original_query': result.original_query,
-                'classification_category': (
-                    result.classification_result.category.value
-                    if result.classification_result else 'unknown'
-                ),
+                'classification_category': session.classification_category,
                 'rewritten_query': result.rewritten_query,
                 'pipeline_name': result.pipeline_name,
                 'final_answer': result.final_answer,

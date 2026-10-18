@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
@@ -67,40 +67,83 @@ class SubjectOwnershipTest(TestCase):
         self.assertEqual(self.client.get(reverse('retrieval:pipeline-list-create')).status_code, 403)
 
 
-from reasoning.classifier import ClassificationResult, QueryClassificationCategory
 from reasoning.pipeline import ReasoningPipeline
 from reasoning.rewriter import RewriteResult
 
 
-def classified(category):
-    return ClassificationResult(original_query='q', category=category, reasoning='', latency_ms=0, raw_response='')
 
 
 class StrictPipelineTest(TestCase):
-    """The pipeline must never answer without retrieved materials."""
+    """The pipeline must never answer without retrieved materials, and only rewrites follow-ups."""
 
-    def _pipeline(self, category, chunks):
+    def _pipeline(self, chunks):
         p = ReasoningPipeline()
-        p._classify_query = lambda q, h=None: (classified(category), 0.0)
-        p._rewrite_query = lambda q, h: (RewriteResult('q', 'rewritten q', [], 0, ''), 0.0)
-        p._retrieve_chunks = lambda q, s, n: (chunks, 0.0, {})
+        p._rewrite_query = MagicMock(return_value=(RewriteResult('q', 'rewritten q', [], 0, ''), 0.0))
+        p._retrieve_chunks = MagicMock(return_value=(chunks, 0.0, {}))
         return p
 
-    def test_direct_response_goes_through_retrieval(self):
-        p = self._pipeline(QueryClassificationCategory.DIRECT_RESPONSE, [])
-        with patch.object(p, '_generate_answer') as generate:
-            result = p.run('What is the capital of France?', subject_id=1)
-        generate.assert_not_called()
-        self.assertEqual(result.rewritten_query, 'rewritten q')
+    def test_standalone_question_is_searched_as_typed(self):
+        p = self._pipeline([])
+        result = p.run('What is DDL?', subject_id=1)
+        p._rewrite_query.assert_not_called()
+        self.assertEqual(p._retrieve_chunks.call_args.args[0], 'What is DDL?')
+        self.assertEqual(ReasoningSession.create_from_result(result).classification_category, 'standalone')
+
+    def test_follow_up_is_rewritten_with_history(self):
+        p = self._pipeline([])
+        history = [{'role': 'user', 'content': 'What is DML?'}]
+        result = p.run('Give an example of it', subject_id=1, conversation_history=history)
+        p._rewrite_query.assert_called_once_with('Give an example of it', history)
+        self.assertEqual(p._retrieve_chunks.call_args.args[0], 'rewritten q')
+        self.assertEqual(ReasoningSession.create_from_result(result).classification_category, 'follow_up')
+
+    def test_caller_can_skip_rewrite_even_with_history(self):
+        p = self._pipeline([])
+        p.run('What is 3NF?', subject_id=1, conversation_history=[{'role': 'user', 'content': 'hi'}], rewrite=False)
+        p._rewrite_query.assert_not_called()
 
     def test_no_chunks_means_no_generation(self):
-        p = self._pipeline(QueryClassificationCategory.RETRIEVAL_REQUIRED, [])
+        p = self._pipeline([])
         with patch.object(p, '_generate_answer') as generate, patch.object(p, '_verify_answer') as verify:
             result = p.run('What is DDL?', subject_id=1)
         generate.assert_not_called()
         verify.assert_not_called()
         self.assertEqual(result.final_answer, '')
         self.assertTrue(result.unverified_flag)
+
+
+class LLMCallBudgetTest(TestCase):
+    """A grounded standalone answer costs 2 LLM calls; a follow-up costs 3."""
+
+    def _run(self, history, rewrite):
+        chunk = RankedChunk(1, 'DML includes INSERT.', 0, 1, 'db.pdf', 0.8)
+        replies = iter([
+            '{"rewritten_query": "example of DML", "changes_made": ["resolved \'it\'"]}',
+            'INSERT is a DML statement (Source: db.pdf).',
+            '{"grounded": true, "supported_claims": ["INSERT is DML"], "unsupported_claims": [], "faithfulness_score": 1.0, "reasoning": "ok"}',
+        ] if rewrite else [
+            'INSERT is a DML statement (Source: db.pdf).',
+            '{"grounded": true, "supported_claims": ["INSERT is DML"], "unsupported_claims": [], "faithfulness_score": 1.0, "reasoning": "ok"}',
+        ])
+        client = MagicMock()
+        client.chat.completions.create.side_effect = lambda **kw: MagicMock(choices=[MagicMock(message=MagicMock(content=next(replies)))])
+        p = ReasoningPipeline()
+        p._retrieve_chunks = MagicMock(return_value=([chunk], 0.0, {}))
+        with patch('reasoning.pipeline.OpenAI', return_value=client), \
+                patch('reasoning.rewriter.OpenAI', return_value=client), \
+                patch('reasoning.verifier.OpenAI', return_value=client):
+            result = p.run('Give an example of it', subject_id=1, conversation_history=history, rewrite=rewrite)
+        return result, client.chat.completions.create.call_count
+
+    def test_standalone_answer_uses_two_calls(self):
+        result, calls = self._run(None, rewrite=False)
+        self.assertEqual(calls, 2)
+        self.assertFalse(result.unverified_flag)
+
+    def test_follow_up_answer_uses_three_calls(self):
+        result, calls = self._run([{'role': 'user', 'content': 'What is DML?'}], rewrite=True)
+        self.assertEqual(calls, 3)
+        self.assertEqual(result.rewritten_query, 'example of DML')
 
 
 from reasoning.models import AnswerEvaluation
@@ -138,8 +181,6 @@ class HeuristicEvaluationTest(TestCase):
 
 
 from io import StringIO
-from unittest.mock import MagicMock
-
 from django.core.management import call_command
 from django.test import override_settings
 
@@ -240,7 +281,6 @@ from reasoning.pipeline import ReasoningError
 class TraceCaptureTest(TestCase):
     def test_prompt_and_stage_timings_are_recorded(self):
         p = ReasoningPipeline()
-        p._classify_query = lambda q, h=None: (classified(QueryClassificationCategory.RETRIEVAL_REQUIRED), 1.0)
         p._rewrite_query = lambda q, h: (RewriteResult('q', 'DDL meaning', [], 0, ''), 2.0)
         chunk = RankedChunk(1, 'DDL is Data Definition Language.', 0, 1, 'db.pdf', 0.8)
         p._retrieve_chunks = lambda q, s, n: ([chunk], 5.0, {'embedding_ms': 3.0, 'search_ms': 2.0})
@@ -253,7 +293,7 @@ class TraceCaptureTest(TestCase):
 
         user_prompt = result.prompts['generation'][1]['content']
         self.assertIn('DDL is Data Definition Language.', user_prompt)
-        self.assertIn('DDL meaning', user_prompt)
+        self.assertIn('QUESTION: What is DDL?', user_prompt)  # standalone: searched and asked as typed
         self.assertEqual(result.latency_breakdown['embedding_ms'], 3.0)
         self.assertEqual(result.to_dict()['prompts'], result.prompts)
 
@@ -262,7 +302,6 @@ class TraceCaptureTest(TestCase):
     def test_only_missing_pipeline_falls_back(self, get_pipeline, fallback_cls):
         fallback_cls.return_value.search.side_effect = ValueError('384 vs 768 dimensions')
         p = ReasoningPipeline()
-        p._classify_query = lambda q, h=None: (classified(QueryClassificationCategory.RETRIEVAL_REQUIRED), 0.0)
         p._rewrite_query = lambda q, h: (RewriteResult('q', 'q', [], 0, ''), 0.0)
 
         with self.assertRaisesMessage(ReasoningError, 'dimensions'):
@@ -277,7 +316,6 @@ class InsightPagesTest(TestCase):
         subject = Subject.objects.create(user=self.user, name='DB')
         r = ReasoningResult(
             original_query='What is DDL?', subject_id=subject.id, pipeline_name='default',
-            classification_result=classified(QueryClassificationCategory.RETRIEVAL_REQUIRED),
             rewritten_query='DDL definition',
             retrieved_chunks=[RankedChunk(1, 'DDL is Data Definition Language.', 0, 1, 'db.pdf', 0.81)],
             generated_answer='DDL is Data Definition Language.', final_answer='DDL is Data Definition Language.',
@@ -305,25 +343,3 @@ class InsightPagesTest(TestCase):
         self.assertEqual(self.client.get(reverse('insights:session', args=[self.session.session_id])).status_code, 404)
         self.client.logout()
         self.assertEqual(self.client.get(reverse('insights:dashboard')).status_code, 302)
-
-
-
-class ClassifierHistoryTest(TestCase):
-    def test_follow_up_is_classified_with_the_conversation(self):
-        from reasoning.classifier import QueryClassifier
-        client = MagicMock()
-        client.chat.completions.create.return_value.choices = [MagicMock(message=MagicMock(
-            content='{"category": "RETRIEVAL_REQUIRED", "reasoning": "follow-up"}'))]
-        p = ReasoningPipeline()
-        p._classifier = QueryClassifier()
-        p._classifier._client = client
-
-        p._classify_query('Give an example of the second one', [
-            {'role': 'user', 'content': 'What is the difference between DDL and DML?'},
-            {'role': 'assistant', 'content': 'DDL defines schema; DML changes rows.'},
-        ])
-
-        messages = client.chat.completions.create.call_args.kwargs['messages']
-        self.assertIn('Recent conversation:', messages[1]['content'])
-        self.assertIn('DDL defines schema; DML changes rows.', messages[1]['content'])
-        self.assertIn('FOLLOW-UPS', messages[0]['content'])

@@ -9,7 +9,7 @@ class ReasoningConfig(AppConfig):
     """
     Configuration for the Stage 2 Agentic Reasoning Pipeline app.
 
-    This app provides intelligent query classification, query rewriting,
+    This app provides follow-up query rewriting,
     multi-step reasoning, answer verification, and confidence scoring.
     """
 

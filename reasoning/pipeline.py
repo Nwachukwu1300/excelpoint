@@ -1,7 +1,7 @@
 """
 Main reasoning pipeline orchestration.
 
-Coordinates the full reasoning flow: classify -> rewrite -> retrieve ->
+Coordinates the full reasoning flow: rewrite (follow-ups only) -> retrieve ->
 generate -> verify -> retry -> score -> assemble response.
 """
 
@@ -16,12 +16,6 @@ from django.conf import settings
 from retrieval.pipeline import PipelineManager, RetrievalPipeline, PipelineConfig
 from retrieval.reranking import RankedChunk
 
-from .classifier import (
-    QueryClassifier,
-    ClassificationResult,
-    QueryClassificationCategory,
-    ClassificationError,
-)
 from .rewriter import QueryRewriter, RewriteResult
 from .verifier import AnswerVerifier, VerificationResult
 from .confidence import ConfidenceScorer, ConfidenceScore
@@ -30,7 +24,6 @@ from .prompts import (
     GENERATOR_SYSTEM_PROMPT,
     GENERATOR_USER_PROMPT_TEMPLATE,
     GENERATOR_WITH_HISTORY_TEMPLATE,
-    GENERATOR_CLARIFICATION_PROMPT,
 )
 
 logger = logging.getLogger(__name__)
@@ -47,7 +40,6 @@ class ReasoningResult:
     Attributes:
         original_query: The user's original query.
         subject_id: The subject ID that was searched.
-        classification_result: Result of query classification.
         rewritten_query: The rewritten query (if applicable).
         rewrite_result: Full rewrite result object.
         pipeline_name: Name of the retrieval pipeline used.
@@ -65,9 +57,6 @@ class ReasoningResult:
     # Inputs
     original_query: str
     subject_id: int
-
-    # Classification
-    classification_result: Optional[ClassificationResult] = None
 
     # Rewriting
     rewritten_query: Optional[str] = None
@@ -103,10 +92,6 @@ class ReasoningResult:
         return {
             'original_query': self.original_query,
             'subject_id': self.subject_id,
-            'classification_result': (
-                self.classification_result.to_dict()
-                if self.classification_result else None
-            ),
             'rewritten_query': self.rewritten_query,
             'rewrite_result': (
                 self.rewrite_result.to_dict()
@@ -148,16 +133,13 @@ class ReasoningPipeline:
     Main reasoning pipeline.
 
     Orchestrates the full reasoning flow:
-    1. Classify query
-    2. If CLARIFICATION_REQUIRED: return clarification request
-    3. Otherwise (DIRECT_RESPONSE included, strict RAG): continue
-    5. Rewrite query for better retrieval
-    6. Retrieve relevant chunks using Stage 1 pipeline
-    7. Generate answer from chunks
-    8. Verify answer against chunks
-    9. Retry if verification fails (max 2 times)
-    10. Score confidence
-    11. Assemble and return ReasoningResult
+    1. Rewrite follow-up queries using the conversation (standalone ones skip this)
+    2. Retrieve relevant chunks using Stage 1 pipeline
+    3. Generate answer from chunks
+    4. Verify answer against chunks
+    5. Retry if verification fails (max 2 times)
+    6. Score confidence
+    7. Assemble and return ReasoningResult
 
     Attributes:
         default_pipeline_name: Default retrieval pipeline to use.
@@ -191,7 +173,6 @@ class ReasoningPipeline:
         )
 
         # Lazy-initialized components
-        self._classifier: Optional[QueryClassifier] = None
         self._rewriter: Optional[QueryRewriter] = None
         self._verifier: Optional[AnswerVerifier] = None
         self._confidence_scorer: Optional[ConfidenceScorer] = None
@@ -206,12 +187,6 @@ class ReasoningPipeline:
         self._generator_temperature = getattr(
             settings, 'REASONING_GENERATOR_TEMPERATURE', 0.4
         )
-
-    def _get_classifier(self) -> QueryClassifier:
-        """Get or create the query classifier."""
-        if self._classifier is None:
-            self._classifier = QueryClassifier()
-        return self._classifier
 
     def _get_rewriter(self) -> QueryRewriter:
         """Get or create the query rewriter."""
@@ -252,6 +227,7 @@ class ReasoningPipeline:
         subject_id: int,
         conversation_history: Optional[List[Dict[str, str]]] = None,
         pipeline_name: Optional[str] = None,
+        rewrite: Optional[bool] = None,
     ) -> ReasoningResult:
         """
         Run the full reasoning pipeline.
@@ -261,6 +237,8 @@ class ReasoningPipeline:
             subject_id: Subject to search within.
             conversation_history: Previous conversation exchanges.
             pipeline_name: Retrieval pipeline to use.
+            rewrite: Rewrite the query with the history before searching.
+                Defaults to "only when there is history"; the chat passes its follow-up check.
 
         Returns:
             ReasoningResult with all outputs and metrics.
@@ -284,48 +262,23 @@ class ReasoningPipeline:
         )
 
         try:
-            # Step 1: Classification
             logger.info(f"Starting reasoning pipeline for query: '{query[:50]}...'")
-            classification_result, classification_time = self._classify_query(query, conversation_history)
-            result.classification_result = classification_result
-            latency_breakdown['classification_ms'] = classification_time
 
-            # Strict RAG: there is no "answer from general knowledge" path, so DIRECT_RESPONSE
-            # queries go through retrieval like everything else (small talk is handled by the caller)
-            if classification_result.category == QueryClassificationCategory.CLARIFICATION_REQUIRED:
-                logger.info("Query classified as CLARIFICATION_REQUIRED")
-                answer, gen_time = self._handle_clarification(query)
-                result.generated_answer = answer
-                result.final_answer = answer
-                latency_breakdown['generation_ms'] = gen_time
+            # Step 1: Rewrite only follow-ups ("the second one"), which need the history to search well.
+            # Standalone questions search fine as typed, so they skip this LLM call.
+            if rewrite is None:
+                rewrite = bool(conversation_history)
+            search_query = query
+            if rewrite:
+                rewrite_result, rewrite_time = self._rewrite_query(query, conversation_history)
+                result.rewrite_result = rewrite_result
+                search_query = rewrite_result.rewritten_query
+                latency_breakdown['rewrite_ms'] = rewrite_time
+            result.rewritten_query = search_query
 
-                result.verification_result = VerificationResult(
-                    grounded=True,
-                    supported_claims=[],
-                    unsupported_claims=[],
-                    faithfulness_score=1.0,
-                    reasoning="Clarification request, no source verification needed",
-                )
-                result.confidence_score = ConfidenceScore(
-                    final_score=0.9,
-                    score_breakdown={'clarification_request': 0.9},
-                    interpretation="HIGH_CONFIDENCE",
-                )
-                result.total_latency_ms = (time.perf_counter() - total_start) * 1000
-                result.latency_breakdown = latency_breakdown
-                return result
-
-            # Step 2: Query Rewriting
-            rewrite_result, rewrite_time = self._rewrite_query(
-                query, conversation_history
-            )
-            result.rewrite_result = rewrite_result
-            result.rewritten_query = rewrite_result.rewritten_query
-            latency_breakdown['rewrite_ms'] = rewrite_time
-
-            # Step 3: Retrieval
+            # Step 2: Retrieval
             chunks, retrieval_time, retrieval_timings = self._retrieve_chunks(
-                rewrite_result.rewritten_query,
+                search_query,
                 subject_id,
                 pipeline_name,
             )
@@ -341,9 +294,9 @@ class ReasoningPipeline:
                 result.latency_breakdown = latency_breakdown
                 return result
 
-            # Step 4: Answer Generation
+            # Step 3: Answer Generation
             answer, gen_time, messages = self._generate_answer(
-                rewrite_result.rewritten_query,
+                search_query,
                 chunks,
                 conversation_history,
             )
@@ -351,12 +304,12 @@ class ReasoningPipeline:
             result.generated_answer = answer
             latency_breakdown['generation_ms'] = gen_time
 
-            # Step 5: Verification
+            # Step 4: Verification
             verification, verify_time = self._verify_answer(answer, chunks)
             result.verification_result = verification
             latency_breakdown['verification_ms'] = verify_time
 
-            # Step 6: Retry if needed
+            # Step 5: Retry if needed
             retry_results = []
             current_answer = answer
             current_verification = verification
@@ -420,7 +373,7 @@ class ReasoningPipeline:
 
             result.retry_results = retry_results
 
-            # Step 7: Select best result
+            # Step 6: Select best result
             final_answer, final_verification, is_verified = retry_handler.select_best_result(
                 initial_answer=answer,
                 initial_verification=verification,
@@ -430,7 +383,7 @@ class ReasoningPipeline:
             result.verification_result = final_verification
             result.unverified_flag = not is_verified
 
-            # Step 8: Confidence Scoring
+            # Step 7: Confidence Scoring
             scorer = self._get_confidence_scorer()
             confidence_score = scorer.score(
                 verification=final_verification,
@@ -452,30 +405,11 @@ class ReasoningPipeline:
 
             return result
 
-        except ClassificationError as e:
-            logger.error(f"Classification failed: {str(e)}")
-            result.total_latency_ms = (time.perf_counter() - total_start) * 1000
-            result.latency_breakdown = latency_breakdown
-            raise ReasoningError(f"Query classification failed: {str(e)}")
         except Exception as e:
             logger.error(f"Reasoning pipeline error: {str(e)}")
             result.total_latency_ms = (time.perf_counter() - total_start) * 1000
             result.latency_breakdown = latency_breakdown
             raise ReasoningError(f"Reasoning pipeline failed: {str(e)}")
-
-    def _classify_query(self, query: str, conversation_history=None) -> tuple[ClassificationResult, float]:
-        """
-        Classify the query.
-
-        Returns:
-            Tuple of (ClassificationResult, latency_ms).
-        """
-        start = time.perf_counter()
-        classifier = self._get_classifier()
-        history = self._format_conversation_history(conversation_history) if conversation_history else ""
-        result = classifier.classify(query, history)
-        latency = (time.perf_counter() - start) * 1000
-        return result, latency
 
     def _rewrite_query(
         self,
@@ -596,32 +530,6 @@ class ReasoningPipeline:
         result = verifier.verify(answer, chunks)
         latency = (time.perf_counter() - start) * 1000
         return result, latency
-
-    def _handle_clarification(self, query: str) -> tuple[str, float]:
-        """
-        Handle queries that need clarification.
-
-        Returns:
-            Tuple of (clarification_request, latency_ms).
-        """
-        start = time.perf_counter()
-        client = self._get_openai_client()
-
-        user_prompt = GENERATOR_CLARIFICATION_PROMPT.format(query=query)
-
-        response = client.chat.completions.create(
-            model=self._model,
-            messages=[
-                {"role": "user", "content": user_prompt},
-            ],
-            temperature=0.7,
-            max_completion_tokens=300,
-        )
-
-        answer = response.choices[0].message.content or ""
-        latency = (time.perf_counter() - start) * 1000
-
-        return answer.strip(), latency
 
     def _format_chunks_for_generation(self, chunks: List[RankedChunk]) -> str:
         """Format chunks into context string for generation."""

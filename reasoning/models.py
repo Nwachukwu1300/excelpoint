@@ -170,10 +170,8 @@ class ReasoningSession(models.Model):
         """
         session = cls(
             original_query=result.original_query,
-            classification_category=(
-                result.classification_result.category.value
-                if result.classification_result else 'unknown'
-            ),
+            # Classification was removed; record whether the query was rewritten as a follow-up
+            classification_category='follow_up' if result.rewrite_result else 'standalone',
             rewritten_query=result.rewritten_query,
             pipeline_name=result.pipeline_name,
             retrieved_chunk_count=len(result.retrieved_chunks),

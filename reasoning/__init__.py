@@ -1,12 +1,11 @@
 """
 Stage 2: Agentic Reasoning Pipeline
 
-This Django app provides intelligent query classification, query rewriting,
+This Django app provides follow-up query rewriting,
 multi-step retrieval and reasoning, answer verification, retry mechanisms,
 and confidence scoring for the ExcelPoint learning platform.
 
 Components:
-- QueryClassifier: Classifies queries to determine processing path
 - QueryRewriter: Rewrites queries for improved retrieval
 - AnswerVerifier: Verifies answers are grounded in retrieved content
 - ConfidenceScorer: Calculates confidence scores for responses

@@ -7,52 +7,6 @@ with the LLM.
 """
 
 # =============================================================================
-# Query Classification Prompts
-# =============================================================================
-
-CLASSIFIER_SYSTEM_PROMPT = """You are a query classification system for an educational learning platform called ExcelPoint. Your task is to classify user queries into one of three categories:
-
-1. DIRECT_RESPONSE: Questions that can be answered directly without looking up specific educational materials. This includes:
-   - Greetings and casual conversation (e.g., "Hello", "How are you?")
-   - Questions about the assistant itself (e.g., "What can you do?")
-   - Simple factual questions that don't require course-specific content
-   - Clarification requests about previous responses
-   - Out-of-scope questions unrelated to education
-
-2. RETRIEVAL_REQUIRED: Questions that require looking up information from uploaded educational materials. This includes:
-   - Questions about specific course topics, concepts, or theories
-   - Requests for explanations of subject matter
-   - Questions that reference uploaded materials or documents
-   - Any academic or learning-related questions
-   - Questions about definitions, formulas, or procedures from course content
-
-3. CLARIFICATION_REQUIRED: Queries that are too vague, ambiguous, or incomplete to process. This includes:
-   - Very short or unclear queries (e.g., "Tell me about it")
-   - Queries that could have multiple interpretations
-   - Queries missing essential context (e.g., "What's the answer?")
-   - Single words without context
-
-FOLLOW-UPS: if a recent conversation is shown and the query refers back to it ("the second one", "that",
-"give an example", "explain more"), it is NOT vague: classify it as RETRIEVAL_REQUIRED when the conversation
-is about course content.
-
-You must respond ONLY with valid JSON in this exact format:
-{
-    "category": "DIRECT_RESPONSE" | "RETRIEVAL_REQUIRED" | "CLARIFICATION_REQUIRED",
-    "reasoning": "Brief explanation for the classification decision"
-}
-
-Do not include any text outside the JSON object."""
-
-
-CLASSIFIER_USER_PROMPT_TEMPLATE = """Classify the following user query:
-{history}
-Query: {query}
-
-Respond with JSON only."""
-
-
-# =============================================================================
 # Query Rewriting Prompts
 # =============================================================================
 
@@ -144,18 +98,6 @@ CONTEXT FROM STUDY MATERIALS:
 CURRENT QUESTION: {query}
 
 Provide a clear, educational answer based solely on the provided context. If the context doesn't fully address the question, clearly state what information is missing."""
-
-
-GENERATOR_CLARIFICATION_PROMPT = """You are XP, an educational assistant for the ExcelPoint learning platform.
-
-The following query is unclear or too vague to process. Ask for clarification in a friendly, helpful way.
-
-Query: {query}
-
-Request clarification by:
-1. Acknowledging the query
-2. Explaining what additional information would help
-3. Providing examples of how they could rephrase their question"""
 
 
 # =============================================================================

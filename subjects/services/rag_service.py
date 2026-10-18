@@ -203,7 +203,11 @@ class RAGService:
             history.append({'role': 'assistant', 'content': exchange.get('assistant', '')})
 
         try:
-            reasoning = ReasoningPipeline().run(query=query, subject_id=subject_id, conversation_history=history)
+            # Only follow-ups get the (extra LLM call) rewrite; standalone questions search as typed
+            reasoning = ReasoningPipeline().run(
+                query=query, subject_id=subject_id, conversation_history=history,
+                rewrite=self._is_followup_request(query, chat_history),
+            )
         except ReasoningError as e:
             logger.warning(f"Reasoning pipeline failed, using single-call RAG instead: {e}")
             return None
@@ -244,9 +248,7 @@ class RAGService:
                 'model_used': self.model,
                 'pipeline': 'reasoning',
                 'reasoning_session_id': session_id,
-                'classification': (
-                    reasoning.classification_result.category.value if reasoning.classification_result else None
-                ),
+                'classification': 'follow_up' if reasoning.rewrite_result else 'standalone',
                 'rewritten_query': reasoning.rewritten_query,
                 'verified': not reasoning.unverified_flag,
                 'confidence': reasoning.confidence_score.final_score if reasoning.confidence_score else None,

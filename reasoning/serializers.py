@@ -283,15 +283,6 @@ class ChunkResponseSerializer(serializers.Serializer):
 # Nested Result Serializers (for full_result JSON)
 # =============================================================================
 
-class ClassificationResultSerializer(serializers.Serializer):
-    """Serializer for ClassificationResult within full_result."""
-
-    original_query = serializers.CharField()
-    category = serializers.CharField()
-    reasoning = serializers.CharField()
-    latency_ms = serializers.FloatField()
-
-
 class RewriteResultSerializer(serializers.Serializer):
     """Serializer for RewriteResult within full_result."""
 
@@ -340,7 +331,6 @@ class FullReasoningResultSerializer(serializers.Serializer):
 
     original_query = serializers.CharField()
     subject_id = serializers.IntegerField()
-    classification_result = ClassificationResultSerializer(allow_null=True)
     rewritten_query = serializers.CharField(allow_null=True)
     rewrite_result = RewriteResultSerializer(allow_null=True)
     pipeline_name = serializers.CharField()

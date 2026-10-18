@@ -53,11 +53,10 @@
     </div>
 
     <div class="card mb-3">
-        <div class="card-header bg-white fw-semibold">1 · Classify and rewrite</div>
+        <div class="card-header bg-white fw-semibold">1 · Query</div>
         <div class="card-body">
-            <p class="mb-1"><strong>Category:</strong> {{ trace.classification_result.category|default:session.classification_category }}</p>
-            {% if trace.classification_result.reasoning %}<p class="text-muted small">{{ trace.classification_result.reasoning }}</p>{% endif %}
-            <p class="mb-1"><strong>Rewritten query:</strong> {{ session.rewritten_query|default:"(not rewritten)" }}</p>
+            <p class="mb-1"><strong>Type:</strong> {% if session.classification_category == 'follow_up' %}follow-up (rewritten using the conversation){% elif session.classification_category == 'standalone' %}standalone (searched as typed){% else %}{{ session.classification_category }}{% endif %}</p>
+            <p class="mb-1"><strong>Searched for:</strong> {{ session.rewritten_query|default:session.original_query }}</p>
             {% if trace.rewrite_result.changes_made %}<ul class="small text-muted mb-0">{% for ch in trace.rewrite_result.changes_made %}<li>{{ ch }}</li>{% endfor %}</ul>{% endif %}
         </div>
     </div>
