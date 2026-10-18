@@ -233,16 +233,16 @@ export const MessageList: MessageListComponent = ({
   }
 
   return (
-    <MessagesContainer ref={containerRef}>
+    <MessagesContainer ref={containerRef} role="log" aria-label="Chat messages" aria-live="polite">
       {messages.map((message: ChatMessage) => {
         const isUser = message.role === 'user'
         return (
-          <MessageGroup key={message.id} isUser={isUser}>
-            <AvatarContainer isUser={isUser}>
+          <MessageGroup key={message.id} isUser={isUser} data-testid={`message-${message.id}`}>
+            <AvatarContainer isUser={isUser} role="img" aria-label={isUser ? 'You' : 'XP'}>
               {isUser ? (
-                <User size={18} />
+                <User size={18} aria-hidden="true" />
               ) : (
-                <Brain size={18} />
+                <Brain size={18} aria-hidden="true" />
               )}
             </AvatarContainer>
             

@@ -62,9 +62,11 @@ export interface MessageListProps {
 }
 
 export interface MessageInputProps {
-  onSendMessage: (content: string) => void
+  // May return a promise; if it rejects, the typed message is put back so it can be retried
+  onSendMessage: (content: string) => void | Promise<unknown>
   isLoading?: boolean
   disabled?: boolean
+  autoFocus?: boolean
 }
 
 export interface ChatBubbleProps {

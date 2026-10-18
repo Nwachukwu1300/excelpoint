@@ -14,24 +14,23 @@ describe('MessageInput', () => {
     it('renders textarea and send button', () => {
       render(<MessageInput onSendMessage={mockOnSendMessage} />)
       
-      const textarea = screen.getByPlaceholderText(/type your message/i)
+      const textarea = screen.getByRole('textbox', { name: /type your message/i })
       const sendButton = screen.getByRole('button', { name: /send message/i })
       
       expect(textarea).toBeInTheDocument()
       expect(sendButton).toBeInTheDocument()
     })
 
-    it('shows character count', () => {
+    it('hides the character count until the message is long', () => {
       render(<MessageInput onSendMessage={mockOnSendMessage} />)
-      
-      const charCount = screen.getByText('0 / 1000')
-      expect(charCount).toBeInTheDocument()
+
+      expect(screen.queryByText(/\/1000/)).not.toBeInTheDocument()
     })
 
     it('disables components when loading', () => {
       render(<MessageInput onSendMessage={mockOnSendMessage} isLoading />)
       
-      const textarea = screen.getByPlaceholderText(/type your message/i)
+      const textarea = screen.getByRole('textbox', { name: /type your message/i })
       const sendButton = screen.getByRole('button', { name: /send message/i })
       
       expect(textarea).toBeDisabled()
@@ -41,7 +40,7 @@ describe('MessageInput', () => {
     it('disables components when disabled prop is true', () => {
       render(<MessageInput onSendMessage={mockOnSendMessage} disabled />)
       
-      const textarea = screen.getByPlaceholderText(/type your message/i)
+      const textarea = screen.getByRole('textbox', { name: /type your message/i })
       const sendButton = screen.getByRole('button', { name: /send message/i })
       
       expect(textarea).toBeDisabled()
@@ -50,22 +49,25 @@ describe('MessageInput', () => {
   })
 
   describe('Text Input', () => {
-    it('updates character count when typing', async () => {
+    it('shows the character count past 70% of the limit', async () => {
       const user = userEvent.setup()
       render(<MessageInput onSendMessage={mockOnSendMessage} />)
-      
-      const textarea = screen.getByPlaceholderText(/type your message/i)
+
+      const textarea = screen.getByRole('textbox', { name: /type your message/i })
       await user.type(textarea, 'Hello world')
-      
-      expect(screen.getByText('11 / 1000')).toBeInTheDocument()
+      expect(screen.queryByText(/\/1000/)).not.toBeInTheDocument()
+
+      await user.click(textarea)
+      await user.paste('a'.repeat(740))
+      expect(screen.getByText('751/1000')).toBeInTheDocument()
     })
 
     it('allows multiline input', async () => {
       const user = userEvent.setup()
       render(<MessageInput onSendMessage={mockOnSendMessage} />)
       
-      const textarea = screen.getByPlaceholderText(/type your message/i)
-      await user.type(textarea, 'Line 1{shift}{enter}Line 2')
+      const textarea = screen.getByRole('textbox', { name: /type your message/i })
+      await user.type(textarea, 'Line 1{Shift>}{Enter}{/Shift}Line 2')
       
       expect(textarea).toHaveValue('Line 1\nLine 2')
     })
@@ -74,7 +76,7 @@ describe('MessageInput', () => {
       const user = userEvent.setup()
       render(<MessageInput onSendMessage={mockOnSendMessage} />)
       
-      const textarea = screen.getByPlaceholderText(/type your message/i)
+      const textarea = screen.getByRole('textbox', { name: /type your message/i })
       const sendButton = screen.getByRole('button', { name: /send message/i })
       
       await user.type(textarea, '  Hello world  ')
@@ -83,61 +85,58 @@ describe('MessageInput', () => {
       expect(mockOnSendMessage).toHaveBeenCalledWith('Hello world')
     })
 
-    it('auto-resizes textarea based on content', async () => {
+    it('grows with its content up to 120px', async () => {
       const user = userEvent.setup()
       render(<MessageInput onSendMessage={mockOnSendMessage} />)
-      
-      const textarea = screen.getByPlaceholderText(/type your message/i) as HTMLTextAreaElement
-      const initialHeight = textarea.style.height
-      
-      // Add multiple lines
-      await user.type(textarea, 'Line 1{shift}{enter}Line 2{shift}{enter}Line 3{shift}{enter}Line 4')
-      
-      // Textarea should have adjusted its height
-      expect(textarea.style.height).not.toBe(initialHeight)
+
+      const textarea = screen.getByRole('textbox', { name: /type your message/i }) as HTMLTextAreaElement
+      // jsdom does no layout, so stand in for the browser's measured content height
+      let contentHeight = 80
+      Object.defineProperty(textarea, 'scrollHeight', { configurable: true, get: () => contentHeight })
+
+      await user.type(textarea, 'Line 1')
+      expect(textarea.style.height).toBe('80px')
+
+      contentHeight = 300
+      await user.type(textarea, '{Shift>}{Enter}{/Shift}Line 2')
+      expect(textarea.style.height).toBe('120px')
     })
   })
 
   describe('Character Limit', () => {
-    it('prevents input beyond 1000 characters', async () => {
+    it('trims a paste that goes past 1000 characters', async () => {
       const user = userEvent.setup()
       render(<MessageInput onSendMessage={mockOnSendMessage} />)
-      
-      const textarea = screen.getByPlaceholderText(/type your message/i)
-      const longText = 'a'.repeat(1001)
-      
-      await user.type(textarea, longText)
-      
-      // Should be limited to 1000 characters
+
+      const textarea = screen.getByRole('textbox', { name: /type your message/i })
+      await user.click(textarea)
+      await user.paste('a'.repeat(1200))
+
       expect(textarea).toHaveValue('a'.repeat(1000))
-      expect(screen.getByText('1000 / 1000')).toBeInTheDocument()
+      expect(screen.getByText('1000/1000')).toBeInTheDocument()
     })
 
-    it('shows warning style when approaching limit', async () => {
+    it('stops accepting typed characters at the limit', async () => {
       const user = userEvent.setup()
       render(<MessageInput onSendMessage={mockOnSendMessage} />)
-      
-      const textarea = screen.getByPlaceholderText(/type your message/i)
-      const warningText = 'a'.repeat(950) // Close to limit
-      
-      await user.type(textarea, warningText)
-      
-      const charCount = screen.getByText('950 / 1000')
-      expect(charCount).toBeInTheDocument()
-      // Character count should have warning styling when > 900 characters
+
+      const textarea = screen.getByRole('textbox', { name: /type your message/i })
+      await user.click(textarea)
+      await user.paste('a'.repeat(1000))
+      await user.type(textarea, 'bc')
+
+      expect(textarea).toHaveValue('a'.repeat(1000))
     })
 
-    it('disables send button when at character limit', async () => {
+    it('still allows sending a message exactly at the limit', async () => {
       const user = userEvent.setup()
       render(<MessageInput onSendMessage={mockOnSendMessage} />)
-      
-      const textarea = screen.getByPlaceholderText(/type your message/i)
-      const sendButton = screen.getByRole('button', { name: /send message/i })
-      const maxText = 'a'.repeat(1000)
-      
-      await user.type(textarea, maxText)
-      
-      expect(sendButton).toBeDisabled()
+
+      const textarea = screen.getByRole('textbox', { name: /type your message/i })
+      await user.click(textarea)
+      await user.paste('a'.repeat(1000))
+
+      expect(screen.getByRole('button', { name: /send message/i })).toBeEnabled()
     })
   })
 
@@ -146,7 +145,7 @@ describe('MessageInput', () => {
       const user = userEvent.setup()
       render(<MessageInput onSendMessage={mockOnSendMessage} />)
       
-      const textarea = screen.getByPlaceholderText(/type your message/i)
+      const textarea = screen.getByRole('textbox', { name: /type your message/i })
       await user.type(textarea, 'Hello world')
       await user.keyboard('{Enter}')
       
@@ -157,8 +156,8 @@ describe('MessageInput', () => {
       const user = userEvent.setup()
       render(<MessageInput onSendMessage={mockOnSendMessage} />)
       
-      const textarea = screen.getByPlaceholderText(/type your message/i)
-      await user.type(textarea, 'Line 1{shift}{enter}Line 2')
+      const textarea = screen.getByRole('textbox', { name: /type your message/i })
+      await user.type(textarea, 'Line 1{Shift>}{Enter}{/Shift}Line 2')
       
       expect(textarea).toHaveValue('Line 1\nLine 2')
       expect(mockOnSendMessage).not.toHaveBeenCalled()
@@ -168,7 +167,7 @@ describe('MessageInput', () => {
       const user = userEvent.setup()
       render(<MessageInput onSendMessage={mockOnSendMessage} />)
       
-      const textarea = screen.getByPlaceholderText(/type your message/i)
+      const textarea = screen.getByRole('textbox', { name: /type your message/i })
       await user.keyboard('{Enter}')
       
       expect(mockOnSendMessage).not.toHaveBeenCalled()
@@ -178,7 +177,7 @@ describe('MessageInput', () => {
       const user = userEvent.setup()
       render(<MessageInput onSendMessage={mockOnSendMessage} />)
       
-      const textarea = screen.getByPlaceholderText(/type your message/i)
+      const textarea = screen.getByRole('textbox', { name: /type your message/i })
       await user.type(textarea, '   ')
       await user.keyboard('{Enter}')
       
@@ -191,7 +190,7 @@ describe('MessageInput', () => {
       const user = userEvent.setup()
       render(<MessageInput onSendMessage={mockOnSendMessage} />)
       
-      const textarea = screen.getByPlaceholderText(/type your message/i)
+      const textarea = screen.getByRole('textbox', { name: /type your message/i })
       const sendButton = screen.getByRole('button', { name: /send message/i })
       
       await user.type(textarea, 'Hello world')
@@ -204,14 +203,14 @@ describe('MessageInput', () => {
       const user = userEvent.setup()
       render(<MessageInput onSendMessage={mockOnSendMessage} />)
       
-      const textarea = screen.getByPlaceholderText(/type your message/i)
+      const textarea = screen.getByRole('textbox', { name: /type your message/i })
       const sendButton = screen.getByRole('button', { name: /send message/i })
       
       await user.type(textarea, 'Hello world')
       await user.click(sendButton)
       
       expect(textarea).toHaveValue('')
-      expect(screen.getByText('0 / 1000')).toBeInTheDocument()
+      expect(screen.queryByText(/\/1000/)).not.toBeInTheDocument()
     })
 
     it('is disabled when input is empty', () => {
@@ -225,7 +224,7 @@ describe('MessageInput', () => {
       const user = userEvent.setup()
       render(<MessageInput onSendMessage={mockOnSendMessage} />)
       
-      const textarea = screen.getByPlaceholderText(/type your message/i)
+      const textarea = screen.getByRole('textbox', { name: /type your message/i })
       const sendButton = screen.getByRole('button', { name: /send message/i })
       
       await user.type(textarea, 'Hello')
@@ -252,18 +251,23 @@ describe('MessageInput', () => {
       expect(sendButton).toHaveAccessibleName()
     })
 
-    it('associates character count with textarea', () => {
+    it('associates the character count with the textarea once shown', async () => {
+      const user = userEvent.setup()
       render(<MessageInput onSendMessage={mockOnSendMessage} />)
-      
-      const textarea = screen.getByPlaceholderText(/type your message/i)
-      expect(textarea).toHaveAttribute('aria-describedby')
+
+      const textarea = screen.getByRole('textbox', { name: /type your message/i })
+      expect(textarea).not.toHaveAttribute('aria-describedby')
+
+      await user.click(textarea)
+      await user.paste('a'.repeat(800))
+      expect(textarea).toHaveAccessibleDescription('800/1000')
     })
 
     it('maintains focus on textarea after sending', async () => {
       const user = userEvent.setup()
       render(<MessageInput onSendMessage={mockOnSendMessage} />)
       
-      const textarea = screen.getByPlaceholderText(/type your message/i)
+      const textarea = screen.getByRole('textbox', { name: /type your message/i })
       
       await user.type(textarea, 'Hello world')
       await user.keyboard('{Enter}')
@@ -277,7 +281,7 @@ describe('MessageInput', () => {
       const user = userEvent.setup()
       render(<MessageInput onSendMessage={mockOnSendMessage} />)
       
-      const textarea = screen.getByPlaceholderText(/type your message/i)
+      const textarea = screen.getByRole('textbox', { name: /type your message/i })
       
       // Rapid typing
       await user.type(textarea, 'Hello')
@@ -290,7 +294,7 @@ describe('MessageInput', () => {
       const user = userEvent.setup()
       render(<MessageInput onSendMessage={mockOnSendMessage} />)
       
-      const textarea = screen.getByPlaceholderText(/type your message/i)
+      const textarea = screen.getByRole('textbox', { name: /type your message/i })
       const sendButton = screen.getByRole('button', { name: /send message/i })
       
       await user.type(textarea, 'Hello world')

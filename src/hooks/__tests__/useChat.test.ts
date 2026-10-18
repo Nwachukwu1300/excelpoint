@@ -6,8 +6,8 @@ import { useChatMessages, useChatStats, useChatWidget } from '../useChat'
 import { mockChatApi, mockChatSession, mockMessages, mockStats } from '../../test/mocks/chatApi'
 
 // Mock the chatApi module
-vi.mock('../../services/chatApi', () => ({
-  chatApi: mockChatApi,
+vi.mock('../../services/chatApi', async () => ({
+  chatApi: (await import('../../test/mocks/chatApi')).mockChatApi,
 }))
 
 // Create a wrapper for React Query
@@ -67,17 +67,23 @@ describe('useChat hooks', () => {
     it('handles session creation error', async () => {
       const wrapper = createWrapper()
       const error = new Error('Failed to create session')
-      mockChatApi.getOrCreateSession.mockRejectedValueOnce(error)
+      // The hook retries session creation twice (1s apart), so the failure must persist
+      mockChatApi.getOrCreateSession.mockRejectedValue(error)
+      try {
+        const { result } = renderHook(() => useChatMessages(subjectId), { wrapper })
 
-      const { result } = renderHook(() => useChatMessages(subjectId), { wrapper })
+        await waitFor(() => {
+          expect(result.current.isLoading).toBe(false)
+        }, { timeout: 4000 })
 
-      await waitFor(() => {
-        expect(result.current.isLoading).toBe(false)
-      })
+        expect(mockChatApi.getOrCreateSession).toHaveBeenCalledTimes(3)
 
-      expect(result.current.session).toBeNull()
-      expect(result.current.messages).toEqual([])
-    })
+        expect(result.current.session).toBeNull()
+        expect(result.current.messages).toEqual([])
+      } finally {
+        mockChatApi.getOrCreateSession.mockResolvedValue(mockChatSession)
+      }
+    }, 8000)
 
     it('sends message with optimistic update', async () => {
       const wrapper = createWrapper()
@@ -89,16 +95,27 @@ describe('useChat hooks', () => {
       })
 
       const messageContent = 'Test message'
-      
-      // Send message
+
+      // Hold the request open so the in-flight state is observable
+      let finishSend: (value: unknown) => void = () => {}
+      mockChatApi.sendMessage.mockImplementationOnce(() => new Promise(resolve => { finishSend = resolve }))
+
       act(() => {
         result.current.sendMessage(messageContent)
       })
 
-      // Should show optimistic update
-      expect(result.current.isSending).toBe(true)
-      
-      // Wait for completion
+      await waitFor(() => {
+        expect(result.current.isSending).toBe(true)
+      })
+
+      await act(async () => {
+        finishSend({
+          user_message: { ...mockMessages[1], content: messageContent },
+          assistant_message: mockMessages[2],
+          session: mockChatSession,
+        })
+      })
+
       await waitFor(() => {
         expect(result.current.isSending).toBe(false)
       })
@@ -211,13 +228,13 @@ describe('useChat hooks', () => {
     it('handles stats loading error', async () => {
       const wrapper = createWrapper()
       const error = new Error('Failed to load stats')
-      mockChatApi.getStats.mockRejectedValueOnce(error)
-
+      mockChatApi.getStats.mockRejectedValue(error)  // the hook retries once
       const { result } = renderHook(() => useChatStats(subjectId), { wrapper })
 
       await waitFor(() => {
         expect(result.current.isError).toBe(true)
-      })
+      }, { timeout: 4000 })
+      mockChatApi.getStats.mockResolvedValue(mockStats)
 
       expect(result.current.error).toEqual(error)
     })

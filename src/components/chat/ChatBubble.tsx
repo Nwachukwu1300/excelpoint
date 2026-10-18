@@ -5,17 +5,12 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
   onClick, 
   hasNewMessages = false 
 }) => {
-  console.log('ChatBubble: Component rendering')
-  const bubbleStyle: React.CSSProperties = {
+  // One native button: it is focusable and handles Enter/Space itself (no nested interactive elements)
+  const buttonStyle: React.CSSProperties = {
     position: 'fixed',
     bottom: '24px',
     right: '24px',
     zIndex: 1000,
-    cursor: 'pointer',
-    userSelect: 'none'
-  }
-
-  const buttonStyle: React.CSSProperties = {
     width: '60px',
     height: '60px',
     borderRadius: '50%',
@@ -26,29 +21,26 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
     alignItems: 'center',
     justifyContent: 'center',
     color: 'white',
+    cursor: 'pointer',
+    userSelect: 'none',
     transition: 'all 0.3s ease',
-    outline: 'none',
     fontSize: '24px'
   }
 
-  const handleClick = () => {
-    console.log('Chat bubble clicked!')
-    onClick()
-  }
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault()
-      handleClick()
-    }
-  }
-
   return (
-    <div style={bubbleStyle} onClick={handleClick} onKeyDown={handleKeyDown} tabIndex={0} role="button" aria-label="Open chat">
-      <button style={buttonStyle} aria-label="Chat with XP">
-        💬
-        {hasNewMessages && (
-          <div style={{
+    <button
+      type="button"
+      style={buttonStyle}
+      onClick={onClick}
+      title="Chat with XP"
+      aria-label={hasNewMessages ? 'Open chat - You have new messages' : 'Open chat'}
+    >
+      <span aria-hidden="true">💬</span>
+      {hasNewMessages && (
+        <span
+          data-testid="new-messages-badge"
+          aria-hidden="true"
+          style={{
             position: 'absolute',
             top: '-6px',
             right: '-6px',
@@ -57,11 +49,9 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
             background: '#ef4444',
             borderRadius: '50%',
             border: '2px solid white'
-          }} />
-        )}
-      </button>
-    </div>
+          }}
+        />
+      )}
+    </button>
   )
 }
-
-export default ChatBubble 

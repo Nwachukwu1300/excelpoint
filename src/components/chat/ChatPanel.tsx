@@ -25,13 +25,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     error
   } = useChatMessages(subjectId);
 
-  const handleSendMessage = async (content: string) => {
-    try {
-      await sendMessage(content);
-    } catch (error) {
-      console.error('Failed to send message:', error);
-    }
-  };
+  // Let failures reach MessageInput so it can restore the unsent text (the hook already logs them)
+  const handleSendMessage = (content: string) => sendMessage(content);
 
   // Styled components
   const Container = className ? 'div' : 'div';
@@ -91,7 +86,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   };
 
   return (
-    <Container style={containerStyles} className={className}>
+    <Container style={containerStyles} className={className} role="dialog" aria-label="XP Assistant">
       <Header style={headerStyles}>
         <div style={{ color: 'white', fontWeight: 'bold', fontSize: '16px' }}>
           🤖 XP Assistant
@@ -100,6 +95,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
         <HeaderControls style={controlsStyles}>
           {onClose && (
             <ControlButton
+              type="button"
               onClick={onClose}
               aria-label="Close chat"
               title="Close chat"
@@ -123,6 +119,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
           onSendMessage={handleSendMessage}
           isLoading={isSending}
           disabled={isLoading}
+          autoFocus
         />
       </Content>
 

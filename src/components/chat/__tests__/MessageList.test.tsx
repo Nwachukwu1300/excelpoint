@@ -35,7 +35,7 @@ describe('MessageList', () => {
       const emptyMessage = screen.getByText(/welcome to xp/i)
       expect(emptyMessage).toBeInTheDocument()
       
-      const aiDescription = screen.getByText(/your ai study companion/i)
+      const aiDescription = screen.getByText(/ai assistant for this subject/i)
       expect(aiDescription).toBeInTheDocument()
     })
 
@@ -100,7 +100,7 @@ describe('MessageList', () => {
 
   describe('Message Types', () => {
     it('renders user messages with correct styling', () => {
-      const userMessage = mockMessages.find(msg => msg.is_user)
+      const userMessage = mockMessages.find(msg => msg.role === 'user')
       if (userMessage) {
         render(<MessageList messages={[userMessage]} />)
         
@@ -114,7 +114,7 @@ describe('MessageList', () => {
     })
 
     it('renders AI messages with correct styling', () => {
-      const aiMessage = mockMessages.find(msg => !msg.is_user)
+      const aiMessage = mockMessages.find(msg => msg.role === 'assistant')
       if (aiMessage) {
         render(<MessageList messages={[aiMessage]} />)
         
@@ -195,7 +195,7 @@ describe('MessageList', () => {
       const newMessage = {
         id: 999,
         content: 'New message',
-        is_user: true,
+        role: 'user' as const,
         timestamp: new Date().toISOString(),
         session: 1,
       }
@@ -237,7 +237,7 @@ describe('MessageList', () => {
       const minimalMessage = {
         id: 1,
         content: 'Test message',
-        is_user: false,
+        role: 'assistant' as const,
         timestamp: new Date().toISOString(),
         session: 1,
       }
@@ -255,11 +255,9 @@ describe('MessageList', () => {
       render(<MessageList messages={mockMessages} />)
       
       // Check for proper ARIA roles or semantic elements
-      const messageList = screen.getByRole('region', { name: /message/i }) || 
-                         screen.getByRole('log') ||
-                         document.querySelector('[role="feed"]')
-      
-      expect(messageList || screen.getByTestId('message-list')).toBeInTheDocument()
+      // A live log, so screen readers announce new messages
+      const messageList = screen.getByRole('log', { name: /chat messages/i })
+      expect(messageList).toHaveAttribute('aria-live', 'polite')
     })
 
     it('makes messages accessible to screen readers', () => {

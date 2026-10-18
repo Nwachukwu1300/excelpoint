@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, useId } from 'react'
 import styled from 'styled-components'
 import { Send, Loader2 } from 'lucide-react'
 import type { MessageInputProps } from '@/types/chat'
@@ -102,7 +102,8 @@ interface MessageInputComponent extends React.FC<MessageInputProps> {}
 export const MessageInput: MessageInputComponent = ({
   onSendMessage,
   isLoading = false,
-  disabled = false
+  disabled = false,
+  autoFocus = false
 }) => {
   const [message, setMessage] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -121,24 +122,25 @@ export const MessageInput: MessageInputComponent = ({
     e?.preventDefault()
     
     const trimmedMessage = message.trim()
-    console.log('MessageInput: handleSubmit called with:', trimmedMessage)
     if (trimmedMessage && !isLoading && !disabled) {
-      console.log('MessageInput: Calling onSendMessage')
-      onSendMessage(trimmedMessage)
+      const pending = onSendMessage(trimmedMessage)
       setMessage('')
+      // Put the text back if sending failed, unless the user already started typing again
+      Promise.resolve(pending).catch(() => setMessage(current => current || trimmedMessage))
       
       // Reset textarea height
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto'
       }
-    } else {
-      console.log('MessageInput: Message not sent - conditions not met:', {
-        trimmedMessage,
-        isLoading,
-        disabled
-      })
     }
   }
+
+  // Focus once the input becomes usable: when the chat opens and after each reply
+  useEffect(() => {
+    if (autoFocus && !disabled && !isLoading) {
+      textareaRef.current?.focus()
+    }
+  }, [autoFocus, disabled, isLoading])
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter') {
@@ -154,12 +156,12 @@ export const MessageInput: MessageInputComponent = ({
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const value = e.target.value
-    if (value.length <= maxLength) {
-      setMessage(value)
-    }
+    // Trim rather than reject, so a long paste keeps its first maxLength characters
+    setMessage(e.target.value.slice(0, maxLength))
   }
 
+  const countId = useId()
+  const showCount = message.length > maxLength * 0.7
   const isNearLimit = message.length > maxLength * 0.8
   const canSend = message.trim().length > 0 && !isLoading && !disabled
 
@@ -175,9 +177,10 @@ export const MessageInput: MessageInputComponent = ({
           disabled={disabled || isLoading}
           rows={1}
           aria-label="Type your message"
+          aria-describedby={showCount ? countId : undefined}
         />
-        {message.length > maxLength * 0.7 && (
-          <CharacterCount isNearLimit={isNearLimit}>
+        {showCount && (
+          <CharacterCount id={countId} isNearLimit={isNearLimit} aria-live="polite">
             {message.length}/{maxLength}
           </CharacterCount>
         )}

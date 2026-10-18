@@ -6,8 +6,8 @@ import { ChatWidget } from '../ChatWidget'
 import { mockChatApi, mockChatSession, mockMessages } from '../../../test/mocks/chatApi'
 
 // Mock the chatApi module
-vi.mock('../../../services/chatApi', () => ({
-  chatApi: mockChatApi,
+vi.mock('../../../services/chatApi', async () => ({
+  chatApi: (await import('../../../test/mocks/chatApi')).mockChatApi,
 }))
 
 // Mock intersection observer
@@ -53,16 +53,6 @@ describe('ChatWidget Integration Tests', () => {
     global.IntersectionObserver = mockIntersectionObserver
     Element.prototype.scrollIntoView = vi.fn()
     
-    // Mock keyboard events
-    Object.defineProperty(window, 'addEventListener', {
-      value: vi.fn(),
-      writable: true,
-    })
-    Object.defineProperty(document, 'addEventListener', {
-      value: vi.fn(),
-      writable: true,
-    })
-
     vi.clearAllMocks()
   })
 
@@ -87,15 +77,15 @@ describe('ChatWidget Integration Tests', () => {
       expect(chatBubble).toBeInTheDocument()
       
       // Chat panel should not be visible
-      expect(screen.queryByText(/welcome to xp/i)).not.toBeInTheDocument()
+      expect(screen.queryByRole('dialog', { name: /xp assistant/i })).not.toBeInTheDocument()
     })
 
     it('renders in expanded state when specified', () => {
       renderChatWidget(expandedProps)
       
       // Should show the chat panel
-      expect(screen.getByText(/welcome to xp/i)).toBeInTheDocument()
-      expect(screen.getByPlaceholderText(/type your message/i)).toBeInTheDocument()
+      expect(screen.getByRole('dialog', { name: /xp assistant/i })).toBeInTheDocument()
+      expect(screen.getByRole('textbox', { name: /type your message/i })).toBeInTheDocument()
     })
   })
 
@@ -109,10 +99,10 @@ describe('ChatWidget Integration Tests', () => {
       
       // Should expand and show the chat interface
       await waitFor(() => {
-        expect(screen.getByText(/welcome to xp/i)).toBeInTheDocument()
+        expect(screen.getByRole('dialog', { name: /xp assistant/i })).toBeInTheDocument()
       })
       
-      expect(screen.getByPlaceholderText(/type your message/i)).toBeInTheDocument()
+      expect(screen.getByRole('textbox', { name: /type your message/i })).toBeInTheDocument()
     })
 
     it('collapses when close button is clicked', async () => {
@@ -124,23 +114,12 @@ describe('ChatWidget Integration Tests', () => {
       
       // Should collapse back to bubble
       await waitFor(() => {
-        expect(screen.queryByText(/welcome to xp/i)).not.toBeInTheDocument()
+        expect(screen.queryByRole('dialog', { name: /xp assistant/i })).not.toBeInTheDocument()
       })
       
       expect(screen.getByRole('button', { name: /open chat/i })).toBeInTheDocument()
     })
 
-    it('toggles fullscreen mode', async () => {
-      const user = userEvent.setup()
-      renderChatWidget({ ...defaultProps, initialState: 'expanded' })
-      
-      const fullscreenButton = screen.getByRole('button', { name: /toggle fullscreen/i })
-      await user.click(fullscreenButton)
-      
-      // Should be in fullscreen mode (check for fullscreen-specific content or styles)
-      const chatContainer = screen.getByTestId('chat-widget')
-      expect(chatContainer).toBeInTheDocument()
-    })
   })
 
   describe('Message Flow', () => {
@@ -168,7 +147,7 @@ describe('ChatWidget Integration Tests', () => {
         expect(screen.getByText('Hello! How can I help you learn about SQL today?')).toBeInTheDocument()
       })
       
-      const messageInput = screen.getByPlaceholderText(/type your message/i)
+      const messageInput = screen.getByRole('textbox', { name: /type your message/i })
       const sendButton = screen.getByRole('button', { name: /send message/i })
       
       // Type and send a message
@@ -195,12 +174,12 @@ describe('ChatWidget Integration Tests', () => {
       
       renderChatWidget({ ...defaultProps, initialState: 'expanded' })
       
-      // Wait for initial load
+      // Wait until the session has loaded and the input is usable
       await waitFor(() => {
-        expect(screen.getByPlaceholderText(/type your message/i)).toBeInTheDocument()
+        expect(screen.getByRole('textbox', { name: /type your message/i })).toBeEnabled()
       })
       
-      const messageInput = screen.getByPlaceholderText(/type your message/i)
+      const messageInput = screen.getByRole('textbox', { name: /type your message/i })
       const sendButton = screen.getByRole('button', { name: /send message/i })
       
       await user.type(messageInput, 'Test message')
@@ -218,12 +197,12 @@ describe('ChatWidget Integration Tests', () => {
       
       renderChatWidget({ ...defaultProps, initialState: 'expanded' })
       
-      // Wait for initial load
+      // Wait until the session has loaded and the input is usable
       await waitFor(() => {
-        expect(screen.getByPlaceholderText(/type your message/i)).toBeInTheDocument()
+        expect(screen.getByRole('textbox', { name: /type your message/i })).toBeEnabled()
       })
       
-      const messageInput = screen.getByPlaceholderText(/type your message/i)
+      const messageInput = screen.getByRole('textbox', { name: /type your message/i })
       const sendButton = screen.getByRole('button', { name: /send message/i })
       
       await user.type(messageInput, 'Test message')
@@ -244,12 +223,12 @@ describe('ChatWidget Integration Tests', () => {
       const user = userEvent.setup()
       renderChatWidget({ ...defaultProps, initialState: 'expanded' })
       
-      // Wait for initial load
+      // Wait until the session has loaded and the input is usable
       await waitFor(() => {
-        expect(screen.getByPlaceholderText(/type your message/i)).toBeInTheDocument()
+        expect(screen.getByRole('textbox', { name: /type your message/i })).toBeEnabled()
       })
       
-      const messageInput = screen.getByPlaceholderText(/type your message/i)
+      const messageInput = screen.getByRole('textbox', { name: /type your message/i })
       
       await user.type(messageInput, 'Hello with Enter')
       await user.keyboard('{Enter}')
@@ -264,14 +243,14 @@ describe('ChatWidget Integration Tests', () => {
       const user = userEvent.setup()
       renderChatWidget({ ...defaultProps, initialState: 'expanded' })
       
-      // Wait for initial load
+      // Wait until the session has loaded and the input is usable
       await waitFor(() => {
-        expect(screen.getByPlaceholderText(/type your message/i)).toBeInTheDocument()
+        expect(screen.getByRole('textbox', { name: /type your message/i })).toBeEnabled()
       })
       
-      const messageInput = screen.getByPlaceholderText(/type your message/i)
+      const messageInput = screen.getByRole('textbox', { name: /type your message/i })
       
-      await user.type(messageInput, 'Line 1{shift}{enter}Line 2')
+      await user.type(messageInput, 'Line 1{Shift>}{Enter}{/Shift}Line 2')
       
       expect(messageInput).toHaveValue('Line 1\nLine 2')
       expect(mockChatApi.sendMessage).not.toHaveBeenCalled()
@@ -287,7 +266,7 @@ describe('ChatWidget Integration Tests', () => {
       fireEvent(window, new Event('resize'))
       
       // Component should still be rendered
-      expect(screen.getByText(/welcome to xp/i)).toBeInTheDocument()
+      expect(screen.getByRole('dialog', { name: /xp assistant/i })).toBeInTheDocument()
     })
 
     it('adapts to mobile viewport', () => {
@@ -301,7 +280,7 @@ describe('ChatWidget Integration Tests', () => {
       renderChatWidget({ ...defaultProps, initialState: 'expanded' })
       
       // Should render mobile-optimized layout
-      expect(screen.getByText(/welcome to xp/i)).toBeInTheDocument()
+      expect(screen.getByRole('dialog', { name: /xp assistant/i })).toBeInTheDocument()
     })
   })
 
@@ -319,7 +298,7 @@ describe('ChatWidget Integration Tests', () => {
       
       // Should end up in expanded state
       await waitFor(() => {
-        expect(screen.getByText(/welcome to xp/i)).toBeInTheDocument()
+        expect(screen.getByRole('dialog', { name: /xp assistant/i })).toBeInTheDocument()
       })
     })
 
@@ -352,7 +331,7 @@ describe('ChatWidget Integration Tests', () => {
       
       // Should show error state without crashing
       await waitFor(() => {
-        expect(screen.getByText(/welcome to xp/i)).toBeInTheDocument()
+        expect(screen.getByRole('dialog', { name: /xp assistant/i })).toBeInTheDocument()
       })
     })
 
@@ -366,7 +345,7 @@ describe('ChatWidget Integration Tests', () => {
       
       // Should eventually recover and load content
       await waitFor(() => {
-        expect(screen.getByText(/welcome to xp/i)).toBeInTheDocument()
+        expect(screen.getByRole('dialog', { name: /xp assistant/i })).toBeInTheDocument()
       }, { timeout: 3000 })
     })
   })
@@ -381,7 +360,7 @@ describe('ChatWidget Integration Tests', () => {
       
       // After opening, focus should be managed appropriately
       await waitFor(() => {
-        const messageInput = screen.getByPlaceholderText(/type your message/i)
+        const messageInput = screen.getByRole('textbox', { name: /type your message/i })
         expect(document.activeElement === messageInput || 
                document.activeElement === chatBubble).toBe(true)
       })
@@ -391,7 +370,7 @@ describe('ChatWidget Integration Tests', () => {
       renderChatWidget({ ...defaultProps, initialState: 'expanded' })
       
       // Check for accessibility attributes
-      const messageInput = await screen.findByPlaceholderText(/type your message/i)
+      const messageInput = await screen.findByRole('textbox', { name: /type your message/i })
       expect(messageInput).toHaveAttribute('aria-label')
       
       const sendButton = screen.getByRole('button', { name: /send message/i })

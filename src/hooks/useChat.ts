@@ -149,7 +149,7 @@ export const useChatMessages = (subjectId: number, selectedSessionId?: number) =
   // Get messages for the current session
   const { 
     data: messages = [], 
-    isLoading: isMessagesLoading 
+    isLoading: isMessagesQueryLoading 
   } = useQuery({
     queryKey: chatQueryKeys.messages(subjectId, currentSession?.id),
     queryFn: () => currentSession 
@@ -159,6 +159,10 @@ export const useChatMessages = (subjectId: number, selectedSessionId?: number) =
     staleTime: 1000 * 60 * 5, // 5 minutes
     refetchInterval: 30000, // Refetch every 30 seconds for real-time updates
   })
+
+  // Still loading until a session exists (unless creating it failed) and its messages arrive.
+  // react-query v4 leaves a disabled query in isLoading forever, so it can't be used alone.
+  const isMessagesLoading = currentSession ? isMessagesQueryLoading : !sessionError
 
   // Send message mutation
   const sendMessageMutation = useMutation({
@@ -291,7 +295,7 @@ export const useChatMessages = (subjectId: number, selectedSessionId?: number) =
     
     // Loading states
     isLoading: isSessionLoading || isMessagesLoading || isValidatingSession,
-    isSending: sendMessageMutation.isPending,
+    isSending: sendMessageMutation.isLoading,  // react-query v4 name (isPending is v5)
     isValidatingSession,
     
     // Actions

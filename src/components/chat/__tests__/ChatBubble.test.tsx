@@ -39,18 +39,15 @@ describe('ChatBubble', () => {
     })
 
     it('shows notification badge when there are new messages', () => {
-      const { container } = render(<ChatBubble onClick={mockOnClick} hasNewMessages />)
-      
-      // Check for notification badge (it doesn't have a specific role/text)
-      const badge = container.querySelector('[class*="NotificationBadge"]')
-      expect(badge).toBeInTheDocument()
+      render(<ChatBubble onClick={mockOnClick} hasNewMessages />)
+
+      expect(screen.getByTestId('new-messages-badge')).toBeInTheDocument()
     })
 
     it('does not show notification badge when there are no new messages', () => {
-      const { container } = render(<ChatBubble onClick={mockOnClick} />)
-      
-      const badge = container.querySelector('[class*="NotificationBadge"]')
-      expect(badge).not.toBeInTheDocument()
+      render(<ChatBubble onClick={mockOnClick} />)
+
+      expect(screen.queryByTestId('new-messages-badge')).not.toBeInTheDocument()
     })
   })
 
@@ -87,19 +84,10 @@ describe('ChatBubble', () => {
       expect(mockOnClick).toHaveBeenCalledTimes(1)
     })
 
-    it('shows tooltip on hover', async () => {
-      const user = userEvent.setup()
+    it('has a tooltip', () => {
       render(<ChatBubble onClick={mockOnClick} />)
-      
-      const container = screen.getByRole('button').closest('div')
-      expect(container).toBeInTheDocument()
-      
-      if (container) {
-        await user.hover(container)
-        // Tooltip text is rendered but may not be visible due to CSS
-        // We can check that the component structure supports tooltips
-        expect(container).toBeInTheDocument()
-      }
+
+      expect(screen.getByRole('button')).toHaveAttribute('title', 'Chat with XP')
     })
   })
 
@@ -122,19 +110,17 @@ describe('ChatBubble', () => {
       render(<ChatBubble onClick={mockOnClick} />)
       
       const bubble = screen.getByRole('button')
-      expect(bubble).toHaveAttribute('tabIndex', '0')
+      bubble.focus()
+      expect(bubble).toHaveFocus()
     })
 
     it('has proper semantic structure', () => {
       render(<ChatBubble onClick={mockOnClick} />)
       
-      // Check for proper button role
-      const bubble = screen.getByRole('button')
-      expect(bubble).toBeInTheDocument()
-      
-      // Check for container with button role
-      const container = screen.getByRole('button').closest('[role="button"]')
-      expect(container).toBeInTheDocument()
+      // Exactly one control, and it's a real <button> (no nested interactive elements)
+      const buttons = screen.getAllByRole('button')
+      expect(buttons).toHaveLength(1)
+      expect(buttons[0].tagName).toBe('BUTTON')
     })
   })
 

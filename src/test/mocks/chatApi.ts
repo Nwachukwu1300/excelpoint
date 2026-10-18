@@ -6,30 +6,32 @@ export const mockChatSession: ChatSession = {
   id: 1,
   user: 1,
   subject: 1,
+  status: 'active',
+  is_active: true,
+  last_activity: '2025-01-08T10:00:00Z',
   created_at: '2025-01-08T10:00:00Z',
   updated_at: '2025-01-08T10:00:00Z',
-  is_active: true,
 }
 
 export const mockMessages: ChatMessage[] = [
   {
     id: 1,
     content: 'Hello! How can I help you learn about SQL today?',
-    is_user: false,
+    role: 'assistant',
     timestamp: '2025-01-08T10:00:00Z',
     session: 1,
   },
   {
     id: 2,
     content: 'Can you explain JOIN operations?',
-    is_user: true,
+    role: 'user',
     timestamp: '2025-01-08T10:01:00Z',
     session: 1,
   },
   {
     id: 3,
     content: 'Certainly! JOIN operations are used to combine rows from two or more tables...',
-    is_user: false,
+    role: 'assistant',
     timestamp: '2025-01-08T10:01:30Z',
     session: 1,
   },
@@ -46,18 +48,25 @@ export const mockStats: ChatStats = {
 export const mockChatApi = {
   getOrCreateSession: vi.fn().mockResolvedValue(mockChatSession),
   getMessages: vi.fn().mockResolvedValue(mockMessages),
-  sendMessage: vi.fn().mockImplementation(async (subjectId: number, data: any) => {
+  sendMessage: vi.fn().mockImplementation(async (_subjectId: number, data: { content: string }) => {
+    const now = new Date().toISOString()
     const response: SendMessageResponse = {
-      message: {
-        id: Date.now(),
+      user_message: { id: Date.now(), content: data.content, role: 'user', timestamp: now, session: mockChatSession.id },
+      assistant_message: {
+        id: Date.now() + 1,
         content: `Mock response to: ${data.content}`,
-        is_user: false,
-        timestamp: new Date().toISOString(),
+        role: 'assistant',
+        timestamp: now,
         session: mockChatSession.id,
       },
       session: mockChatSession,
     }
     return response
+  }),
+  validateSession: vi.fn().mockResolvedValue({ valid: true, session: mockChatSession, message: 'ok' }),
+  getSessionHistory: vi.fn().mockResolvedValue({
+    sessions: [mockChatSession],
+    metadata: { total_sessions: 1, active_sessions: 1, returned_count: 1, max_limit: 100 },
   }),
   getStats: vi.fn().mockResolvedValue(mockStats),
   getSession: vi.fn().mockResolvedValue(mockChatSession),
