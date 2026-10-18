@@ -81,7 +81,7 @@ class StrictPipelineTest(TestCase):
 
     def _pipeline(self, category, chunks):
         p = ReasoningPipeline()
-        p._classify_query = lambda q: (classified(category), 0.0)
+        p._classify_query = lambda q, h=None: (classified(category), 0.0)
         p._rewrite_query = lambda q, h: (RewriteResult('q', 'rewritten q', [], 0, ''), 0.0)
         p._retrieve_chunks = lambda q, s, n: (chunks, 0.0, {})
         return p
@@ -240,7 +240,7 @@ from reasoning.pipeline import ReasoningError
 class TraceCaptureTest(TestCase):
     def test_prompt_and_stage_timings_are_recorded(self):
         p = ReasoningPipeline()
-        p._classify_query = lambda q: (classified(QueryClassificationCategory.RETRIEVAL_REQUIRED), 1.0)
+        p._classify_query = lambda q, h=None: (classified(QueryClassificationCategory.RETRIEVAL_REQUIRED), 1.0)
         p._rewrite_query = lambda q, h: (RewriteResult('q', 'DDL meaning', [], 0, ''), 2.0)
         chunk = RankedChunk(1, 'DDL is Data Definition Language.', 0, 1, 'db.pdf', 0.8)
         p._retrieve_chunks = lambda q, s, n: ([chunk], 5.0, {'embedding_ms': 3.0, 'search_ms': 2.0})
@@ -262,7 +262,7 @@ class TraceCaptureTest(TestCase):
     def test_only_missing_pipeline_falls_back(self, get_pipeline, fallback_cls):
         fallback_cls.return_value.search.side_effect = ValueError('384 vs 768 dimensions')
         p = ReasoningPipeline()
-        p._classify_query = lambda q: (classified(QueryClassificationCategory.RETRIEVAL_REQUIRED), 0.0)
+        p._classify_query = lambda q, h=None: (classified(QueryClassificationCategory.RETRIEVAL_REQUIRED), 0.0)
         p._rewrite_query = lambda q, h: (RewriteResult('q', 'q', [], 0, ''), 0.0)
 
         with self.assertRaisesMessage(ReasoningError, 'dimensions'):
@@ -305,3 +305,25 @@ class InsightPagesTest(TestCase):
         self.assertEqual(self.client.get(reverse('insights:session', args=[self.session.session_id])).status_code, 404)
         self.client.logout()
         self.assertEqual(self.client.get(reverse('insights:dashboard')).status_code, 302)
+
+
+
+class ClassifierHistoryTest(TestCase):
+    def test_follow_up_is_classified_with_the_conversation(self):
+        from reasoning.classifier import QueryClassifier
+        client = MagicMock()
+        client.chat.completions.create.return_value.choices = [MagicMock(message=MagicMock(
+            content='{"category": "RETRIEVAL_REQUIRED", "reasoning": "follow-up"}'))]
+        p = ReasoningPipeline()
+        p._classifier = QueryClassifier()
+        p._classifier._client = client
+
+        p._classify_query('Give an example of the second one', [
+            {'role': 'user', 'content': 'What is the difference between DDL and DML?'},
+            {'role': 'assistant', 'content': 'DDL defines schema; DML changes rows.'},
+        ])
+
+        messages = client.chat.completions.create.call_args.kwargs['messages']
+        self.assertIn('Recent conversation:', messages[1]['content'])
+        self.assertIn('DDL defines schema; DML changes rows.', messages[1]['content'])
+        self.assertIn('FOLLOW-UPS', messages[0]['content'])

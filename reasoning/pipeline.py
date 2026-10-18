@@ -286,7 +286,7 @@ class ReasoningPipeline:
         try:
             # Step 1: Classification
             logger.info(f"Starting reasoning pipeline for query: '{query[:50]}...'")
-            classification_result, classification_time = self._classify_query(query)
+            classification_result, classification_time = self._classify_query(query, conversation_history)
             result.classification_result = classification_result
             latency_breakdown['classification_ms'] = classification_time
 
@@ -463,7 +463,7 @@ class ReasoningPipeline:
             result.latency_breakdown = latency_breakdown
             raise ReasoningError(f"Reasoning pipeline failed: {str(e)}")
 
-    def _classify_query(self, query: str) -> tuple[ClassificationResult, float]:
+    def _classify_query(self, query: str, conversation_history=None) -> tuple[ClassificationResult, float]:
         """
         Classify the query.
 
@@ -472,7 +472,8 @@ class ReasoningPipeline:
         """
         start = time.perf_counter()
         classifier = self._get_classifier()
-        result = classifier.classify(query)
+        history = self._format_conversation_history(conversation_history) if conversation_history else ""
+        result = classifier.classify(query, history)
         latency = (time.perf_counter() - start) * 1000
         return result, latency
 

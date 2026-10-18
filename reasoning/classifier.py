@@ -138,12 +138,13 @@ class QueryClassifier:
             self._client = OpenAI(api_key=settings.OPENAI_API_KEY)
         return self._client
 
-    def classify(self, query: str) -> ClassificationResult:
+    def classify(self, query: str, history: str = "") -> ClassificationResult:
         """
         Classify a query into a category.
 
         Args:
             query: The user's query to classify.
+            history: Recent conversation, formatted, so follow-ups aren't mistaken for vague queries.
 
         Returns:
             ClassificationResult with category and reasoning.
@@ -159,7 +160,10 @@ class QueryClassifier:
 
         try:
             client = self._get_client()
-            user_prompt = CLASSIFIER_USER_PROMPT_TEMPLATE.format(query=query)
+            user_prompt = CLASSIFIER_USER_PROMPT_TEMPLATE.format(
+                query=query,
+                history=f"\nRecent conversation:\n{history}\n" if history else "",
+            )
 
             response = client.chat.completions.create(
                 model=self._model,

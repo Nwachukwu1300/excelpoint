@@ -283,7 +283,7 @@ class SentenceTransformerEmbedding(BaseEmbedding):
                 from subjects.utils import load_embedding_model
                 self._model = load_embedding_model(self._model_name)
                 # Get actual dimensions from the model
-                self._dimensions = self._model.get_sentence_embedding_dimension()
+                self._dimensions = self._model.get_embedding_dimension()
                 logger.info(
                     f"Loaded {self._model_name} with {self._dimensions} dimensions"
                 )
