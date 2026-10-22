@@ -8,112 +8,46 @@ ExcelPoint is a learning enhancement platform designed to elevate the educationa
 ## Mission
 To bridge the gap between traditional learning methods and modern educational needs by providing intelligent, adaptive learning experiences that cater to diverse learning styles and professional requirements.
 
-## **What Makes ExcelPoint Special - Core Features**
+## Features
 
-### **🔐 Advanced Authentication & Security**
-- **Google OAuth Integration** - Seamless login with Google accounts
-- **Session Management** - Secure, persistent user sessions with timeout controls
-- **JWT Token Support** - RESTful API authentication
-- **Role-Based Access Control** - User permissions and admin management
-- **Secure File Uploads** - Validation and sanitization for all file types
+### Study from your own materials
+- **Uploads:** PDF and Word documents; audio and video too when Whisper is installed (transcribed, then treated like text).
+- **Processing in the background:** files are chunked and embedded with Celery, then flashcards, a quiz and a summary are generated in parallel. A notification tells you when they're ready.
+- **XP, the chat assistant:** answers only from your uploaded materials, cites the file it used, and says plainly when your notes don't cover a question. Answers stream in as they're written.
+- **Quizzes:** generated from your materials, including fresh questions on each retake, with scores and history.
+- **Flashcards with spaced repetition:** SM-2 scheduling (the method Anki uses), a review page, and a daily reminder when cards are due.
+- **Suggestions:** the Study Dashboard ranks next steps from your quiz scores, due cards, questions your notes couldn't answer, and untried quizzes.
 
-### **🧠 Intelligent Content Processing Engine**
-- **Multi-Format Support** - PDF, DOCX, Word documents, videos, audio files
-- **Smart Content Chunking** - Intelligent document segmentation for optimal learning
-- **Vector Embeddings** - Advanced semantic search using sentence transformers
-- **Real-Time Processing** - Background task processing with Celery and Redis
-- **Content Validation** - File type verification and security checks
+### Quality and transparency
+- **Verified answers:** a second model call checks each claim against your materials; unverified answers are marked.
+- **AI Insights:** a dashboard of answer quality over time, and a per-answer trace showing the chunks, prompt, claims and timings.
+- **Evaluation tools:** an optional LLM judge for answer relevance, and a retrieval benchmark (hit@k, MRR) on your own question set.
 
-### **💬  Chat System**
-- **Context-Aware Conversations** - Chatbot remembers entire conversation history
-- **Session Persistence** - Chat sessions saved and restored across browser sessions
-- **Material Integration** - AI responses based on your uploaded study materials
-- **Smart Caching** - Intelligent response caching to reduce API costs
-- **Conversation Memory** - Bot remembers previous discussions and user preferences
+### Accounts and safety
+- Email/password and Google sign-in (with state checks and verified-email matching).
+- Every query is limited to your own subjects; per-user rate limit on questions that call the LLM.
+- Local or S3 file storage.
 
-### **📚 Dynamic Learning Tools**
-- **AI-Generated Quizzes** - Automatic quiz creation from uploaded materials
-- **Smart Flashcards** - Personalized flashcard generation with spaced repetition
-- **Adaptive Learning Paths** - Content recommendations based on user progress
-- **Progress Tracking** - Detailed analytics and learning insights
-- **Achievement System** - Gamified learning with milestones and badges
+## Tech stack
 
-### **🔄 Real-Time Processing & Background Tasks**
-- **Celery Worker System** - Asynchronous processing for heavy operations
-- **Redis Message Broker** - Fast, reliable task queuing and caching
-- **Background File Processing** - Non-blocking document analysis
-- **Task Monitoring** - Real-time status updates for long-running operations
-- **Error Recovery** - Automatic retry mechanisms for failed tasks
+- **Backend:** Django 5.2 and Django REST Framework on Python 3.13, Celery + Redis for background work and scheduled jobs.
+- **Database:** PostgreSQL with pgvector (HNSW index) for semantic search.
+- **AI:** OpenAI chat models (default `gpt-5.4-mini`, set with `OPENAI_MODEL`), `all-MiniLM-L6-v2` sentence-transformers embeddings, LangChain/Unstructured document loaders.
+- **Frontend:** Django templates with Bootstrap; the chat widget is React 18 + TypeScript (Vite), streaming answers over Server-Sent Events.
 
-### **☁️ Cloud-Ready Architecture**
-- **Storage Abstraction** - Seamless switching between local and S3 storage
-- **AWS S3 Integration** - Scalable cloud storage for media files
-- **Environment Configuration** - Flexible deployment across different environments
-- **Docker Support** - Containerized deployment ready
-- **Horizontal Scaling** - Architecture supports multiple worker instances
+## Running the tests
 
-### **📱 Modern Frontend Experience**
-- **React 18 with TypeScript** - Latest frontend technologies
-- **Responsive Design** - Works perfectly on desktop, tablet, and mobile
-- **Real-Time Updates** - Live chat and progress updates
-- **Modern UI/UX** - Clean, intuitive interface design
-- **Progressive Web App** - App-like experience in the browser
+```bash
+TESTING=1 python manage.py test   # backend (needs Postgres with pgvector; never calls OpenAI)
+npm test                          # frontend chat widget (Vitest)
+```
 
-### **🗄️ Robust Data Management**
-- **PostgreSQL Database** - Enterprise-grade data storage
-- **Advanced Querying** - Optimized database queries with proper indexing
-- **Data Migration System** - Safe database schema evolution
-- **Backup & Recovery** - Data protection and restoration capabilities
-- **Performance Optimization** - Database query optimization and caching
+## Known limitations
 
-### **🔍 Advanced Search & Discovery**
-- **Semantic Search** - Find content by meaning, not just keywords
-- **Vector Similarity** - AI-powered content matching
-- **Subject Organization** - Hierarchical content categorization
-- **Smart Filtering** - Advanced content filtering and sorting
-- **Search Analytics** - Track what users are searching for
-
-### **📊 Comprehensive Analytics & Insights**
-- **User Behavior Tracking** - Detailed learning pattern analysis
-- **Performance Metrics** - Quiz scores, completion rates, time spent
-- **Content Analytics** - Which materials are most effective
-- **Progress Visualization** - Charts and graphs for learning progress
-- **Export Capabilities** - Download reports and analytics data
-
-### **🛠️ Developer Experience & Maintainability**
-- **Comprehensive Documentation** - Every module and function documented
-- **Type Safety** - Full TypeScript support for frontend
-- **Testing Framework** - Vitest setup for frontend testing
-- **Code Quality** - Linting and formatting standards
-- **Modular Architecture** - Clean separation of concerns
-
-### **🚀 Production Ready Features**
-- **Environment Configuration** - Separate settings for dev/staging/prod
-- **Logging & Monitoring** - Comprehensive error tracking and debugging
-- **Security Headers** - CSRF protection, XSS prevention
-- **Rate Limiting** - API abuse prevention
-- **Error Handling** - Graceful error handling with user-friendly messages
-
-## Technical Architecture
-
-### **Backend Stack**
-- **Framework**: Django 5.2.1 with Python 3.13
-- **Database**: PostgreSQL with advanced querying
-- **Content Processing**: LangChain, Sentence Transformers, OpenAI integration
-- **Task Processing**: Celery with Redis for background tasks
-- **Content Processing**: Unstructured.io for document analysis
-
-### **Frontend & UI**
-- **Framework**: React with TypeScript
-- **Styling**: Modern CSS with responsive design
-- **Real-time Features**: WebSocket integration for live chat
-- **User Experience**: Intuitive, accessible interface design
-
-### **Smart Features & Machine Learning**
-- **Content Analysis**: Advanced NLP for document processing
-- **Vector Search**: Semantic search capabilities
-- **Chat Intelligence**: Context-aware responses
-- **Learning Optimization**: Adaptive algorithms for personalized experience
+- No Docker setup yet; run the services as described below.
+- The rate limit is counted per server process. Point Django's cache at Redis before running several workers.
+- The first question after a server start takes a few extra seconds while the embedding model loads.
+- Audio/video uploads need Whisper installed and may hit `pydub` issues on Python 3.13.
 
 ## How XP answers (RAG pipeline)
 
