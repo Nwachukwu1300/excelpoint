@@ -121,6 +121,9 @@ A claim is UNSUPPORTED if:
 - The claim introduces new facts not present in the sources
 - The claim contradicts information in the sources
 
+Only list factual claims about the subject matter. Do NOT list offers to help ("If you want, I can..."),
+questions back to the user, source citations, or remarks about what the materials do or don't cover.
+
 You must output ONLY valid JSON in this exact format:
 {
     "grounded": true | false,

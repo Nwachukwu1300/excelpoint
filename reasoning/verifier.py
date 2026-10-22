@@ -276,6 +276,13 @@ class AnswerVerifier:
             # Clamp faithfulness score to [0, 1]
             faithfulness_score = max(0.0, min(1.0, faithfulness_score))
 
+            # The model's own score can contradict its claim lists (0.95 with 2 of 5 unsupported),
+            # so derive both numbers from the claims whenever it listed any
+            claims = len(supported_claims) + len(unsupported_claims)
+            if claims:
+                faithfulness_score = len(supported_claims) / claims
+                grounded = grounded and faithfulness_score >= getattr(settings, 'REASONING_FAITHFULNESS_THRESHOLD', 0.7)
+
             return VerificationResult(
                 grounded=grounded,
                 supported_claims=supported_claims,

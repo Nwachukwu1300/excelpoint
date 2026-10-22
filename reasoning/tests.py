@@ -422,3 +422,29 @@ class ConfidenceTest(TestCase):
         breakdown = result.confidence_score.score_breakdown
         self.assertAlmostEqual(breakdown['top_similarity'], 0.31 * ConfidenceScorer().top_similarity_weight)
         self.assertGreater(breakdown['first_attempt_bonus'], 0)
+
+
+from reasoning.verifier import AnswerVerifier
+
+
+class VerifierConsistencyTest(TestCase):
+    def parse(self, data):
+        import json
+        return AnswerVerifier()._parse_verification_response(json.dumps(data))
+
+    def test_score_follows_the_claims_when_the_model_contradicts_itself(self):
+        # Seen live: 0.95 and grounded, yet 2 of 5 claims unsupported
+        r = self.parse({'grounded': True, 'faithfulness_score': 0.95, 'reasoning': '',
+                        'supported_claims': ['a', 'b', 'c'], 'unsupported_claims': ['d', 'e']})
+        self.assertAlmostEqual(r.faithfulness_score, 0.6)
+        self.assertFalse(r.grounded)  # below the 0.7 bar, so the pipeline will retry
+
+    def test_fully_supported_answer_stays_grounded(self):
+        r = self.parse({'grounded': True, 'faithfulness_score': 0.8, 'reasoning': '',
+                        'supported_claims': ['a', 'b'], 'unsupported_claims': []})
+        self.assertEqual((r.faithfulness_score, r.grounded), (1.0, True))
+
+    def test_model_score_kept_when_no_claims_listed(self):
+        r = self.parse({'grounded': True, 'faithfulness_score': 0.9, 'reasoning': '',
+                        'supported_claims': [], 'unsupported_claims': []})
+        self.assertEqual((r.faithfulness_score, r.grounded), (0.9, True))
