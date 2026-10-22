@@ -20,10 +20,11 @@ from .models import AnswerEvaluation
 def heuristic_metrics(result):
     """Faithfulness, hallucination rate and retrieval similarity for a ReasoningResult."""
     verification = result.verification_result
-    scores = [c.initial_score for c in result.retrieved_chunks]
+    chunks = result.final_chunks or result.retrieved_chunks  # the chunks behind the final answer
+    scores = [c.initial_score for c in chunks]
     hallucination_rate = None
     faithfulness = None
-    if verification is not None and result.retrieved_chunks:
+    if verification is not None and chunks:
         faithfulness = verification.faithfulness_score
         claims = len(verification.supported_claims) + len(verification.unsupported_claims)
         if claims:
@@ -71,8 +72,12 @@ def judge_session(session, client=None):
     from openai import OpenAI
 
     client = client or OpenAI(api_key=settings.OPENAI_API_KEY)
+    # Grade against the chunks behind the final answer (a retry's, if one won), each chunk once
+    final_ids = (session.full_result or {}).get('final_chunk_ids')
+    rows = session.chunks.filter(chunk_id__in=final_ids) if final_ids else session.chunks.filter(used_in_retry=False)
+    chunks = {c.chunk_id: c for c in rows}.values()
     context = "\n\n---\n\n".join(
-        f"[{c.material_name}]\n{c.chunk_text[:1500]}" for c in session.chunks.filter(used_in_retry=False)
+        f"[{c.material_name}]\n{c.chunk_text[:1500]}" for c in chunks
     ) or "(nothing retrieved)"
     response = client.chat.completions.create(
         model=settings.EVAL_JUDGE_MODEL,

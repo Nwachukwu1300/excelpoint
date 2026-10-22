@@ -128,3 +128,17 @@ class AnswerLogTest(TestCase):
         self.assertEqual(line['path'], 'reasoning')
         self.assertTrue(line['reasoning_session_id'])
         self.assertEqual(line['stage_ms'], {'generation_ms': 900.0})
+
+
+class RetrySourcesTest(TestCase):
+    @patch('reasoning.pipeline.ReasoningPipeline.run')
+    def test_chat_sources_are_the_chunks_behind_the_answer(self, run):
+        user = get_user_model().objects.create_user('rs', password='p')
+        subject = Subject.objects.create(user=user, name='S')
+        result = reasoning_result(subject.id)
+        result.final_chunks = [RankedChunk(9, 'retry chunk', 0, 1, 'other.pdf', 0.9)]
+        run.return_value = result
+        rag = RAGService()
+        with patch.object(rag, '_retrieve_relevant_chunks', return_value=[CHUNK]):
+            response = rag.generate_response('What is DDL?', subject.id)
+        self.assertEqual([c['material_name'] for c in response['retrieved_chunks']], ['other.pdf'])

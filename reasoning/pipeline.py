@@ -65,6 +65,8 @@ class ReasoningResult:
     # Retrieval
     pipeline_name: str = ""
     retrieved_chunks: List[RankedChunk] = field(default_factory=list)
+    # Chunks behind final_answer: a retry's chunks when a retry won, else retrieved_chunks
+    final_chunks: List[RankedChunk] = field(default_factory=list)
 
     # Generation
     generated_answer: str = ""
@@ -103,6 +105,7 @@ class ReasoningResult:
                 for chunk in self.retrieved_chunks
             ],
             'retrieved_chunk_count': len(self.retrieved_chunks),
+            'final_chunk_ids': [c.chunk_id for c in self.final_chunks],
             'generated_answer': self.generated_answer,
             'verification_result': (
                 self.verification_result.to_dict()
@@ -400,10 +403,11 @@ class ReasoningPipeline:
             # Step 7: Confidence Scoring, from the chunks that produced the chosen answer
             # (the initial answer can win even after retries ran)
             winner = next((r for r in retry_results if r.verification_result is final_verification), None)
+            result.final_chunks = winner.retrieved_chunks if winner else chunks
             scorer = self._get_confidence_scorer()
             confidence_score = scorer.score(
                 verification=final_verification,
-                chunks=winner.retrieved_chunks if winner else chunks,
+                chunks=result.final_chunks,
                 is_first_attempt=winner is None,
             )
             result.confidence_score = confidence_score

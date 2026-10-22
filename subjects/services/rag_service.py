@@ -249,7 +249,7 @@ class RAGService:
         except Exception as e:
             logger.error(f"Could not save reasoning trace: {e}")
 
-        chunks = reasoning.retrieved_chunks
+        chunks = reasoning.final_chunks or reasoning.retrieved_chunks  # sources of the answer shown
         if not chunks and not reasoning.final_answer:
             answer = self._get_subject_specific_fallback(subject_name)
         else:

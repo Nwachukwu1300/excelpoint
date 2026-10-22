@@ -448,3 +448,33 @@ class VerifierConsistencyTest(TestCase):
         r = self.parse({'grounded': True, 'faithfulness_score': 0.9, 'reasoning': '',
                         'supported_claims': [], 'unsupported_claims': []})
         self.assertEqual((r.faithfulness_score, r.grounded), (0.9, True))
+
+
+class RetryWinnerChunksTest(TestCase):
+    """When a retry produces the final answer, everything downstream must use the retry's chunks."""
+
+    _run_with_retry = ConfidenceTest._run_with_retry  # reuse the retry scenario without re-running its tests
+
+    def _won_by_retry(self):
+        result = self._run_with_retry(0.95)  # initial chunk 'weak' (0.31), retry chunk 'strong' (0.9)
+        result.verification_result = VerificationResult(True, ['y'], [], 0.95)
+        return result
+
+    def test_final_chunks_follow_the_winning_attempt(self):
+        self.assertEqual([c.content for c in self._won_by_retry().final_chunks], ['strong'])
+        self.assertEqual([c.content for c in self._run_with_retry(0.2).final_chunks], ['weak'])
+
+    def test_evaluation_and_judge_use_the_winning_chunks(self):
+        result = self._won_by_retry()
+        result.retry_results[0].retrieved_chunks = result.final_chunks  # what the pipeline stores for a retry
+        session = ReasoningSession.create_from_result(result)
+
+        self.assertEqual(session.evaluations.get(evaluator='heuristic').retrieval_top_similarity, 0.9)
+
+        client = MagicMock()
+        client.chat.completions.create.return_value.choices = [MagicMock(message=MagicMock(
+            content='{"answer_relevance": 1, "faithfulness": 1, "unsupported_claims": [], "reasoning": ""}'))]
+        judge_session(session, client=client)
+        prompt = client.chat.completions.create.call_args.kwargs['messages'][0]['content']
+        self.assertIn('strong', prompt)
+        self.assertNotIn('weak', prompt)
