@@ -103,3 +103,42 @@ class ChatStreamTest(TestCase):
         response = self.client.post(self.url, {}, format='json', HTTP_ACCEPT='text/event-stream')
         self.assertEqual(response.status_code, 400)
         self.assertIn('message', json.loads(response.content))
+
+
+from django.core.cache import cache
+from rest_framework.throttling import ScopedRateThrottle
+
+FAKE_ANSWER = {'response': 'ok', 'retrieved_chunks': [], 'context_used': False, 'response_time': 0.1,
+               'metadata': {'pipeline': 'fallback'}}
+
+
+@patch.dict(ScopedRateThrottle.THROTTLE_RATES, {'llm': '2/min'})
+@patch.object(RAGService, 'generate_response', return_value=FAKE_ANSWER)
+class LLMRateLimitTest(TestCase):
+    def setUp(self):
+        cache.clear()
+        self.user = get_user_model().objects.create_user('rl', password='p')
+        self.subject = Subject.objects.create(user=self.user, name='S')
+        self.client = APIClient()
+        self.client.force_authenticate(self.user)
+
+    def send(self):
+        return self.client.post(reverse('chat-messages', args=[self.subject.id]), {'message': 'hi'}, format='json')
+
+    def test_sending_is_capped_per_user(self, _):
+        self.assertEqual([self.send().status_code for _ in range(3)], [201, 201, 429])
+        # the stream endpoint shares the same budget
+        self.assertEqual(self.client.post(reverse('chat-stream', args=[self.subject.id]), {'message': 'hi'},
+                                          format='json', HTTP_ACCEPT='text/event-stream').status_code, 429)
+
+    def test_reading_history_is_not_limited(self, _):
+        self.send(); self.send()
+        self.assertEqual(self.client.get(reverse('chat-messages', args=[self.subject.id])).status_code, 200)
+
+    def test_each_user_has_their_own_budget(self, _):
+        self.send(); self.send()
+        other = get_user_model().objects.create_user('rl2', password='p')
+        self.client.force_authenticate(other)
+        subject = Subject.objects.create(user=other, name='T')
+        self.assertEqual(self.client.post(reverse('chat-messages', args=[subject.id]), {'message': 'hi'},
+                                          format='json').status_code, 201)

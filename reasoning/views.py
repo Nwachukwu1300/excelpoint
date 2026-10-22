@@ -13,6 +13,7 @@ from uuid import UUID
 
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.db.models import Avg, Count, Q, Min, Max
@@ -61,6 +62,8 @@ class QueryView(APIView):
     """
 
     permission_classes = [IsAuthenticated]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'llm'
 
     def post(self, request):
         """Execute the reasoning pipeline."""

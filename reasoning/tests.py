@@ -365,3 +365,16 @@ class StreamingPipelineTest(TestCase):
         self.assertEqual(events[-1][0], 'result')
         self.assertEqual(events[-1][1].final_answer, 'INSERT is DML.')
         self.assertTrue(client.chat.completions.create.call_args.kwargs['stream'])
+
+
+class ReasoningQueryRateLimitTest(TestCase):
+    @patch.dict('rest_framework.throttling.ScopedRateThrottle.THROTTLE_RATES', {'llm': '1/min'})
+    def test_query_endpoint_is_capped(self):
+        from django.core.cache import cache
+        cache.clear()
+        user = get_user_model().objects.create_user('rq', password='p')
+        client = APIClient()
+        client.force_authenticate(user)
+        url = reverse('reasoning:query')
+        client.post(url, {'query': 'hi', 'subject_id': 999}, format='json')  # 404, but counts as an LLM request
+        self.assertEqual(client.post(url, {'query': 'hi', 'subject_id': 999}, format='json').status_code, 429)

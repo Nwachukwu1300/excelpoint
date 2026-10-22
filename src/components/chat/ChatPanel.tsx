@@ -126,14 +126,15 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
       </Content>
 
       {error ? (
-        <div style={{
+        <div role="alert" style={{
           padding: '12px 20px',
           backgroundColor: '#ff4444',
           color: 'white',
           fontSize: '14px',
           borderTop: '1px solid #333'
         }}>
-          Error: {error instanceof Error ? error.message : String(error)}
+          {/* API errors are plain { message } objects, not Error instances */}
+          Error: {(error as { message?: string }).message ?? String(error)}
         </div>
       ) : null}
     </Container>

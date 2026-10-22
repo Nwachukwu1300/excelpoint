@@ -167,7 +167,13 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
-    ]
+    ],
+    # Each chat question costs LLM calls; cap them per user (views opt in with throttle_scope = 'llm').
+    # shortcut: counts live in the default per-process cache, so N server workers allow N x the rate;
+    # point CACHES at Redis before running multiple workers in production.
+    'DEFAULT_THROTTLE_RATES': {
+        'llm': os.getenv('LLM_RATE_LIMIT', '60/hour'),
+    },
 }
 
 # Session settings

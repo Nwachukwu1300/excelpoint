@@ -13,6 +13,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.renderers import BaseRenderer, JSONRenderer
+from rest_framework.throttling import ScopedRateThrottle
 from django.db import transaction
 from django.utils import timezone
 import logging
@@ -1058,6 +1059,12 @@ class ChatMessageListCreateAPIView(generics.ListCreateAPIView):
                 'has_more': False
             })
     
+    throttle_scope = 'llm'
+
+    def get_throttles(self):
+        # Only sending costs LLM calls; reading history stays unlimited
+        return [ScopedRateThrottle()] if self.request.method == 'POST' else []
+
     @transaction.atomic
     def create(self, request, *args, **kwargs):
         """
