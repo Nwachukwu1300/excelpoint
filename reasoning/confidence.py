@@ -209,14 +209,14 @@ class ConfidenceScorer:
 
         scores = []
         for chunk in chunks:
-            # Try to get the best available score (reranked or initial)
-            if hasattr(chunk, 'reranked_score') and chunk.reranked_score is not None:
-                scores.append(chunk.reranked_score)
-            elif hasattr(chunk, 'initial_score'):
-                scores.append(chunk.initial_score)
+            # Cosine similarity only: reranker scores are unbounded logits (e.g. 7.3 or -4) and only order chunks
+            if hasattr(chunk, 'initial_score'):
+                score = chunk.initial_score
             elif isinstance(chunk, dict):
-                score = chunk.get('reranked_score') or chunk.get('initial_score') or chunk.get('similarity_score', 0.0)
-                scores.append(score)
+                score = chunk.get('initial_score', chunk.get('similarity_score', 0.0))
+            else:
+                continue
+            scores.append(max(0.0, min(1.0, score)))
 
         if not scores:
             return 0.0, 0.0

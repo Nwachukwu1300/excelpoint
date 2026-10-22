@@ -378,3 +378,47 @@ class ReasoningQueryRateLimitTest(TestCase):
         url = reverse('reasoning:query')
         client.post(url, {'query': 'hi', 'subject_id': 999}, format='json')  # 404, but counts as an LLM request
         self.assertEqual(client.post(url, {'query': 'hi', 'subject_id': 999}, format='json').status_code, 429)
+
+
+from reasoning.confidence import ConfidenceScorer
+from reasoning.retry import RetryResult
+
+
+class ConfidenceTest(TestCase):
+    def test_reranker_logits_do_not_leak_into_the_0_to_1_score(self):
+        chunks = [RankedChunk(1, 'a', 0, 1, 'a.pdf', 0.6, reranked_score=7.3),
+                  RankedChunk(2, 'b', 1, 1, 'a.pdf', 0.4, reranked_score=-4.0)]
+        verification = VerificationResult(True, ['x'], [], 1.0)
+        with_rerank = ConfidenceScorer().score(verification, chunks)
+        without = ConfidenceScorer().score(verification, [RankedChunk(1, 'a', 0, 1, 'a.pdf', 0.6),
+                                                          RankedChunk(2, 'b', 1, 1, 'a.pdf', 0.4)])
+        self.assertEqual(with_rerank.score_breakdown, without.score_breakdown)
+        self.assertAlmostEqual(with_rerank.score_breakdown['top_similarity'], 0.6 * ConfidenceScorer().top_similarity_weight)
+
+    def _run_with_retry(self, retry_faithfulness):
+        """Initial answer fails verification (0.5); one retry with different chunks scores retry_faithfulness."""
+        initial = [RankedChunk(1, 'weak', 0, 1, 'a.pdf', 0.31)]
+        retry = [RankedChunk(2, 'strong', 0, 1, 'a.pdf', 0.9)]
+        verdicts = iter([VerificationResult(False, [], ['x'], 0.5),
+                         VerificationResult(retry_faithfulness >= 0.7, ['y'], [], retry_faithfulness)])
+        p = ReasoningPipeline(max_retries=1)
+        p._retrieve_chunks = MagicMock(side_effect=[(initial, 0.0, {}), (retry, 0.0, {})])
+        p._generate_answer = MagicMock(side_effect=[('first', 0.0, []), ('second', 0.0, [])])
+        p._verify_answer = MagicMock(side_effect=lambda a, c: (next(verdicts), 0.0))
+        handler = p._get_retry_handler()
+        handler.handle = MagicMock(return_value=RetryResult(attempt_number=1, rewritten_query='better q'))
+        return p.run('q', subject_id=1)
+
+    def test_confidence_uses_the_winning_retrys_chunks(self):
+        result = self._run_with_retry(0.95)
+        self.assertEqual(result.final_answer, 'second')
+        breakdown = result.confidence_score.score_breakdown
+        self.assertAlmostEqual(breakdown['top_similarity'], 0.9 * ConfidenceScorer().top_similarity_weight)
+        self.assertEqual(breakdown['first_attempt_bonus'], 0.0)
+
+    def test_confidence_uses_initial_chunks_when_the_initial_answer_wins(self):
+        result = self._run_with_retry(0.2)  # retry is worse, so the first answer is kept
+        self.assertEqual(result.final_answer, 'first')
+        breakdown = result.confidence_score.score_breakdown
+        self.assertAlmostEqual(breakdown['top_similarity'], 0.31 * ConfidenceScorer().top_similarity_weight)
+        self.assertGreater(breakdown['first_attempt_bonus'], 0)

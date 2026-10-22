@@ -329,9 +329,7 @@ class ReasoningPipeline:
 
             # Step 5: Retry if needed
             retry_results = []
-            current_answer = answer
             current_verification = verification
-            current_chunks = chunks
 
             retry_handler = self._get_retry_handler()
             attempt = 1
@@ -382,9 +380,7 @@ class ReasoningPipeline:
                 retry_results.append(retry_partial)
 
                 # Update current values for next iteration
-                current_answer = retry_answer
                 current_verification = retry_verification
-                current_chunks = retry_chunks
 
                 if retry_partial.success:
                     break
@@ -401,12 +397,14 @@ class ReasoningPipeline:
             result.verification_result = final_verification
             result.unverified_flag = not is_verified
 
-            # Step 7: Confidence Scoring
+            # Step 7: Confidence Scoring, from the chunks that produced the chosen answer
+            # (the initial answer can win even after retries ran)
+            winner = next((r for r in retry_results if r.verification_result is final_verification), None)
             scorer = self._get_confidence_scorer()
             confidence_score = scorer.score(
                 verification=final_verification,
-                chunks=current_chunks,
-                is_first_attempt=len(retry_results) == 0,
+                chunks=winner.retrieved_chunks if winner else chunks,
+                is_first_attempt=winner is None,
             )
             result.confidence_score = confidence_score
 
