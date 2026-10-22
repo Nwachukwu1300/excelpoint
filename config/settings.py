@@ -56,8 +56,6 @@ INSTALLED_APPS = [
     'reasoning',  # Stage 2: Agentic Reasoning Pipeline
     'rest_framework',
     'rest_framework_simplejwt',
-    'requests',
-    'config.celery',
 ]
 
 MIDDLEWARE = [
