@@ -1,7 +1,7 @@
 import json
 import logging
 import time
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Dict, Any, Optional
 from openai import OpenAI
 from django.conf import settings
 
@@ -705,119 +705,6 @@ RULES:
         
         return False
 
-    def _contains_general_knowledge_indicators(self, response: str) -> bool:
-        """
-        Check if response contains indicators of general knowledge usage.
-        
-        Args:
-            response: The response to check
-            
-        Returns:
-            True if general knowledge indicators found
-        """
-        # Expanded list of general knowledge indicators
-        general_knowledge_indicators = [
-            # Common general knowledge phrases
-            "generally speaking", "in general", "typically", "usually", "commonly",
-            "as we know", "it is well known", "according to", "studies show",
-            "research indicates", "experts say", "it is important to note",
-            "as a general rule", "in most cases", "traditionally", "historically",
-            "it's widely accepted", "the consensus is", "most people believe",
-            "everyone knows", "it's obvious", "obviously", "clearly",
-            
-            # Academic/external reference patterns
-            "published research", "academic studies", "scientific literature",
-            "peer-reviewed", "according to researchers", "studies have shown",
-            "data suggests", "statistics show", "surveys indicate",
-            
-            # Authority/external source patterns  
-            "industry standards", "best practices", "widely recommended",
-            "standard procedure", "conventional wisdom", "common practice",
-            "established method", "proven technique", "well-documented"
-        ]
-        
-        response_lower = response.lower()
-        for indicator in general_knowledge_indicators:
-            if indicator in response_lower:
-                return True
-        
-        return False
-    
-    def _is_response_grounded_in_context(self, response: str, context: str) -> bool:
-        """
-        Check if response content is grounded in the provided context.
-        
-        Args:
-            response: The response to validate
-            context: The context that was provided
-            
-        Returns:
-            True if response appears grounded in context
-        """
-        try:
-            # Simple heuristic: Check if key terms from response appear in context
-            # Remove common stop words and focus on content words
-            import re
-            
-            # Extract meaningful words from response (excluding common words)
-            stop_words = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'can', 'this', 'that', 'these', 'those', 'i', 'you', 'he', 'she', 'it', 'we', 'they'}
-            
-            # Extract words from response (alphanumeric, 3+ characters)
-            response_words = set(re.findall(r'\b[a-zA-Z]{3,}\b', response.lower()))
-            response_content_words = response_words - stop_words
-            
-            if not response_content_words:
-                return True  # If no content words, let it pass (likely a simple response)
-            
-            # Extract words from context
-            context_words = set(re.findall(r'\b[a-zA-Z]{3,}\b', context.lower()))
-            
-            # Check if significant portion of response words appear in context
-            overlap = response_content_words.intersection(context_words)
-            overlap_ratio = len(overlap) / len(response_content_words) if response_content_words else 0
-            
-            # Require at least 50% overlap of content words for proper grounding
-            return overlap_ratio >= 0.5
-            
-        except Exception as e:
-            logger.error(f"Error in content grounding validation: {str(e)}")
-            return True  # If validation fails, err on the side of allowing the response
-    
-    def _contains_prohibited_patterns(self, response: str) -> bool:
-        """
-        Check for patterns that indicate general knowledge or inappropriate content.
-        
-        Args:
-            response: The response to check
-            
-        Returns:
-            True if prohibited patterns found
-        """
-        # Patterns that suggest general knowledge or inappropriate responses
-        prohibited_patterns = [
-            # External references
-            r'\b(wikipedia|google|internet|web search|online|website)\b',
-            r'\b(I learned|I know|I understand|from my training)\b',
-            r'\b(AI assistant|language model|artificial intelligence)\b',
-            r'\b(as an AI|I am an AI|I\'m an AI)\b',
-            
-            # General knowledge assertions without source
-            r'\b(everyone knows|it\'s obvious|clearly|obviously)\b',
-            r'\b(fundamental principle|basic concept|standard definition)\b',
-            
-            # Time-based references that couldn't be in materials
-            r'\b(currently|nowadays|these days|in recent years|latest)\b',
-            r'\b(as of \d{4}|since \d{4}|until \d{4})\b'
-        ]
-        
-        import re
-        
-        for pattern in prohibited_patterns:
-            if re.search(pattern, response, re.IGNORECASE):
-                return True
-        
-        return False
-    
     def get_service_stats(self, subject_id: int) -> Dict[str, Any]:
         """
         Get statistics about the RAG service for a specific subject.

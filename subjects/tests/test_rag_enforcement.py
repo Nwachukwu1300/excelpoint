@@ -9,10 +9,8 @@ import unittest
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from unittest.mock import patch, MagicMock
-from subjects.models import Subject, SubjectMaterial, ContentChunk
+from subjects.models import Subject
 from subjects.services.rag_service import RAGService
-from subjects.services.vector_search import VectorSearchService
-import logging
 
 User = get_user_model()
 
@@ -179,55 +177,6 @@ class RAGEnforcementTestCase(TestCase):
                     # Should return comp sci specific fallback, not math knowledge
                     self.assertIn('Computer Science', result['response'])
                     self.assertFalse(result['context_used'])
-    
-    def test_response_validation_catches_leakage(self):
-        """Test that response validation catches potential general knowledge leakage"""
-        # Test general knowledge indicators detection
-        test_cases = [
-            ("Generally speaking, databases are important.", True),
-            ("According to studies, SQL is widely used.", True), 
-            ("Based on your materials, DDL creates tables.", False),
-            ("From the uploaded document, SQL stands for Structured Query Language.", False),
-            ("Everyone knows that databases store data.", True),
-            ("It's obvious that programming requires logic.", True)
-        ]
-        
-        for response_text, should_be_blocked in test_cases:
-            with self.subTest(response=response_text):
-                contains_indicators = self.rag_service._contains_general_knowledge_indicators(response_text)
-                self.assertEqual(contains_indicators, should_be_blocked)
-    
-    def test_prohibited_patterns_detection(self):
-        """Test that prohibited patterns are properly detected"""
-        test_cases = [
-            ("According to Wikipedia, SQL is a language.", True),
-            ("I learned from my training that databases are important.", True),
-            ("As an AI assistant, I can help you.", True),
-            ("Currently, databases are widely used.", True),
-            ("Based on the provided materials, DDL is used for schema definition.", False),
-            ("The document states that SQL creates tables.", False)
-        ]
-        
-        for response_text, should_be_blocked in test_cases:
-            with self.subTest(response=response_text):
-                contains_prohibited = self.rag_service._contains_prohibited_patterns(response_text)
-                self.assertEqual(contains_prohibited, should_be_blocked)
-    
-    def test_content_grounding_validation(self):
-        """Test that content grounding validation works correctly"""
-        context = "SQL stands for Structured Query Language. DDL is Data Definition Language used to create and modify database structures."
-        
-        test_cases = [
-            ("SQL stands for Structured Query Language.", True),  # Well grounded
-            ("DDL creates database tables and structures.", True),  # Well grounded
-            ("Python is a programming language used for web development.", False),  # Not grounded
-            ("Machine learning algorithms require large datasets.", False)  # Not grounded
-        ]
-        
-        for response_text, should_pass in test_cases:
-            with self.subTest(response=response_text):
-                is_grounded = self.rag_service._is_response_grounded_in_context(response_text, context)
-                self.assertEqual(is_grounded, should_pass)
     
     def test_subject_specific_fallback_generation(self):
         """Test that subject-specific fallback messages are generated correctly"""
