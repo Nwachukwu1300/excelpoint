@@ -1,13 +1,10 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from .serializers import UserSerializer
+from rest_framework.permissions import AllowAny
 from django.contrib.auth import login, logout, authenticate, update_session_auth_hash
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth.forms import PasswordChangeForm, SetPasswordForm
 from .forms import (
     RegistrationForm,
     UserProfileForm,
@@ -16,21 +13,17 @@ from .forms import (
     UserEducationForm,
     SettingsForm,
 )
-from .models import Notification, User, UserProfile, UserAchievement, UserCertification, UserEducation
-from django.db.models import Count, Sum
+from .models import Notification, UserProfile, UserAchievement, UserCertification, UserEducation
 from django.utils import timezone
 from django.utils.crypto import constant_time_compare
 from datetime import timedelta
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from learning.models import CourseProgress, UserAchievement as LearningUserAchievement
-import json
 import logging
 
 # Import Google OAuth service with error handling
 try:
-    from .services import GoogleOAuthService, GoogleOAuthBackend
+    from .services import GoogleOAuthService
     GOOGLE_OAUTH_AVAILABLE = True
 except (ImportError, ValueError) as e:
     GOOGLE_OAUTH_AVAILABLE = False
@@ -231,151 +224,20 @@ def logout_user(request):
 
 
 
-@api_view(['GET', 'PUT'])
-@permission_classes([IsAuthenticated])
-def update_profile(request):
-    """
-    Updates the profile of the currently logged-in user.
-    GET: View profile data for editing
-    PUT: Save profile changes
-    """
-    if request.method == 'GET':
-        try:
-            user = request.user
-            serializer = UserSerializer(user)
-            return Response({
-                'status': 'success',
-                'profile': serializer.data,
-                'update_template': {
-                    'current_role': user.current_role or 'enter_role',
-                    'experience_level': user.experience_level,
-                    'bio': user.bio or 'enter_bio',
-                    'linkedin_profile': user.linkedin_profile or '',
-                    'github_profile': user.github_profile or ''
-                }
-            })
-        except Exception as e:
-            return Response({
-                'error': 'Failed to fetch profile',
-                'details': str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
-    elif request.method == 'PUT':
-        try:
-            serializer = UserSerializer(request.user, data=request.data, partial=True)
-            if serializer.is_valid():
-                serializer.save()
-                return Response({
-                    'status': 'success',
-                    'message': 'Profile updated successfully',
-                    'profile': serializer.data
-                })
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            return Response({
-                'error': 'Profile update failed',
-                'details': str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-@api_view(['GET', 'PUT', 'POST'])
-@permission_classes([IsAuthenticated])
-def user_profile(request):
-    """
-    Comprehensive profile endpoint.
-    GET: View profile
-    PUT: Update profile
-    POST: Change password
-    """
-    if request.method == 'GET':
-        try:
-            user = request.user
-            serializer = UserSerializer(user)
-            
-            return Response({
-                'status': 'success',
-                'profile_info': {
-                    'details': serializer.data,
-                    'completion_percentage': calculate_profile_completion(user),
-                },
-                'update_template': {
-                    'current_role': 'enter_role',
-                    'experience_level': 'entry/mid/senior',
-                    'bio': 'enter_bio'
-                },
-                'password_change_template': {
-                    'old_password': 'enter_current_password',
-                    'new_password': 'enter_new_password'
-                }
-            })
-            
-        except Exception as e:
-            return Response({
-                'error': 'Failed to fetch profile',
-                'details': str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-    elif request.method == 'PUT':
-        try:
-            serializer = UserSerializer(request.user, data=request.data, partial=True)
-            if serializer.is_valid():
-                serializer.save()
-                return Response({
-                    'status': 'success',
-                    'message': 'Profile updated successfully',
-                    'profile': serializer.data
-                })
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            return Response({
-                'error': 'Profile update failed',
-                'details': str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-    elif request.method == 'POST':
-        try:
-            if not request.user.check_password(request.data.get('old_password')):
-                return Response({
-                    'error': 'Current password is incorrect'
-                }, status=status.HTTP_400_BAD_REQUEST)
-
-            request.user.set_password(request.data.get('new_password'))
-            request.user.save()
-            
-            return Response({
-                'message': 'Password updated successfully'
-            })
-        except Exception as e:
-            return Response({
-                'error': 'Password change failed',
-                'details': str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@login_required
 def change_password(request):
-    """
-    Allows users to change their password while logged in.
-    """
-    try:
-        # Validate old password
-        if not request.user.check_password(request.data.get('old_password')):
-            return Response({
-                'error': 'Current password is incorrect'
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        # Set and validate new password
-        request.user.set_password(request.data.get('new_password'))
-        request.user.save()
-        
-        return Response({
-            'message': 'Password updated successfully'
-        })
-    except Exception as e:
-        return Response({
-            'error': 'Password change failed',
-            'details': str(e)
-        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    """Change (or, for Google-only accounts, set) the password without logging the user out."""
+    # Google sign-ups have no usable password, so there is no "old password" to ask for
+    form_class = PasswordChangeForm if request.user.has_usable_password() else SetPasswordForm
+    form = form_class(request.user, request.POST or None)  # runs AUTH_PASSWORD_VALIDATORS
+    for field in form.fields.values():
+        field.widget.attrs['class'] = 'form-control'
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        update_session_auth_hash(request, form.user)  # otherwise the password change ends this session
+        messages.success(request, 'Your password has been updated.')
+        return redirect('users:settings')
+    return render(request, 'users/change_password.html', {'form': form})
 
 @login_required
 def profile(request):

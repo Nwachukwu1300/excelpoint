@@ -114,3 +114,42 @@ class NotificationTest(TestCase):
         self.note(); self.note()
         self.client.post(reverse('users:notifications'))
         self.assertFalse(self.user.notifications.filter(read_at__isnull=True).exists())
+
+
+class ChangePasswordTest(TestCase):
+    url = reverse('users:change_password')
+    NEW = 'Correct-Horse-Battery-9'
+
+    def setUp(self):
+        from users.models import User
+        self.user = User.objects.create_user('cp', 'cp@x.com', 'Old-Password-123')
+        self.client.force_login(self.user)
+
+    def post(self, **data):
+        return self.client.post(self.url, data)
+
+    def test_page_renders_the_form(self):
+        self.assertContains(self.client.get(self.url), 'name="old_password"')
+
+    def test_wrong_old_password_or_weak_new_one_is_rejected(self):
+        self.post(old_password='wrong', new_password1=self.NEW, new_password2=self.NEW)
+        self.post(old_password='Old-Password-123', new_password1='a', new_password2='a')
+        self.post(old_password='Old-Password-123')  # missing new password used to lock the account
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password('Old-Password-123'))
+
+    def test_change_keeps_the_user_logged_in(self):
+        response = self.post(old_password='Old-Password-123', new_password1=self.NEW, new_password2=self.NEW)
+        self.assertRedirects(response, reverse('users:settings'), fetch_redirect_response=False)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password(self.NEW))
+        self.assertEqual(self.client.get(reverse('users:settings')).status_code, 200)  # session survived
+
+    def test_google_only_account_sets_a_password_without_an_old_one(self):
+        self.user.set_unusable_password()
+        self.user.save()
+        self.client.force_login(self.user)
+        self.assertNotContains(self.client.get(self.url), 'name="old_password"')
+        self.post(new_password1=self.NEW, new_password2=self.NEW)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password(self.NEW))

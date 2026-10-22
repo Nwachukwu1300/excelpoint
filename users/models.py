@@ -15,7 +15,6 @@ Key features:
 
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from django.db import models #gives us access to Django's database field types (like CharField, URLField, etc.).
 from django.conf import settings
 
 class User(AbstractUser):

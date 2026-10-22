@@ -1,8 +1,6 @@
-import os
 import requests
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import User
 from django.db import transaction
 import logging
 
@@ -14,7 +12,6 @@ try:
     from google.oauth2 import id_token
     from google.auth.transport import requests as google_requests
     from google_auth_oauthlib.flow import Flow
-    from google.auth.exceptions import GoogleAuthError
     GOOGLE_OAUTH_AVAILABLE = True
 except ImportError:
     GOOGLE_OAUTH_AVAILABLE = False
@@ -197,29 +194,3 @@ class GoogleOAuthService:
         
         return username
 
-
-class GoogleOAuthBackend:
-    """
-    Custom authentication backend for Google OAuth users.
-    """
-    
-    def authenticate(self, request, google_id=None, email=None):
-        if not google_id and not email:
-            return None
-        
-        try:
-            if google_id:
-                user = User.objects.filter(google_id=google_id).first()
-            else:
-                user = User.objects.filter(email=email).first()
-            
-            return user
-        except Exception as e:
-            logger.error(f"Error in Google OAuth authentication: {e}")
-            return None
-    
-    def get_user(self, user_id):
-        try:
-            return User.objects.get(pk=user_id)
-        except User.DoesNotExist:
-            return None 
