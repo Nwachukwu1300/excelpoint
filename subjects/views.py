@@ -3,9 +3,6 @@ from django.views.generic import ListView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseBadRequest, JsonResponse, StreamingHttpResponse
-from django.views.decorators.http import require_http_methods
-from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
 from django.conf import settings
 from rest_framework import viewsets, status, permissions, generics
@@ -20,14 +17,13 @@ import logging
 
 from .models import (
     Subject, SubjectMaterial, Flashcard, QuizQuestion, QuizAttempt,
-    Quiz, Question, Choice, Answer, UserQuizAttempt, UserAnswer,
+    Quiz, Choice, UserQuizAttempt, UserAnswer,
     ChatSession, ChatMessage
 )
 from .serializers import (
     SubjectSerializer, SubjectMaterialSerializer, FlashcardSerializer,
-    QuizQuestionSerializer, QuizAttemptSerializer, QuizAnswerSerializer,
+    QuizQuestionSerializer, QuizAnswerSerializer,
     ChatSessionSerializer, ChatMessageSerializer, ChatMessageCreateSerializer,
-    ChatHistorySerializer, ChatResponseSerializer
 )
 from .permissions import IsSubjectOwner, ChatAPIPermission, IsChatSessionOwner
 from .services.rag_service import RAGService
@@ -39,7 +35,6 @@ import json
 import os
 from django.utils import timezone
 from django.db import models
-from django.db.models import Avg, Max
 
 logger = logging.getLogger(__name__)
 
@@ -92,26 +87,16 @@ def upload_material(request, pk):
     """Handle material upload from form submission"""
     subject = get_object_or_404(Subject, id=pk, user=request.user)
     
-    print(f"Upload material called for subject {pk}")
-    print(f"Request method: {request.method}")
-    print(f"Request FILES: {request.FILES}")
-    
     if request.method == 'POST':
         uploaded_file = request.FILES.get('file')
-        print(f"Uploaded file: {uploaded_file}")
-        
+
         if uploaded_file:
             try:
-                print(f"Processing file: {uploaded_file.name}")
-                
                 file_type = material_file_type(uploaded_file.name)
                 if not file_type:
                     messages.error(request, 'Unsupported file type. Please upload PDF, Word (DOC/DOCX), video (MP4/MOV/AVI), or audio (MP3/WAV/M4A) files.')
                     return redirect('subject_detail', pk=pk)
-                
-                print(f"File type determined: {file_type}")
-                
-                # Create the material within a transaction
+
                 with transaction.atomic():
                     material = SubjectMaterial.objects.create(
                         subject=subject,
@@ -119,36 +104,26 @@ def upload_material(request, pk):
                         file_type=file_type,
                         status='PENDING'
                     )
-                    
-                    print(f"Material created with ID: {material.id}")
-                    print(f"Material object: {material}")
-                    print(f"Material ID type: {type(material.id)}")
-                    
-                    # Trigger background processing for material and quiz generation
+                    # Only queue the main processing task - it will handle the rest
                     try:
-                        # Only queue the main processing task - it will handle the rest
-                        task_result = process_material.delay(material.id)
-                        print(f"Background processing task queued successfully with task ID: {task_result.id}")
-                        print(f"Material ID passed to task: {material.id}")
+                        process_material.delay(material.id)
                     except Exception as e:
-                        # If Celery is not running, just log the error
-                        print(f"Background processing failed: {e}")
-                        # Update material status to indicate processing failed
+                        logger.error(f"Could not queue processing for material {material.id}: {e}")
                         material.status = 'FAILED'
                         material.save()
-                
-                messages.success(request, f'Material "{uploaded_file.name}" uploaded successfully! Quiz generation started.')
+
+                if material.status == 'FAILED':
+                    messages.error(request, f'"{uploaded_file.name}" was saved but processing could not start. Please try again later.')
+                else:
+                    messages.success(request, f'Material "{uploaded_file.name}" uploaded successfully! Quiz generation started.')
                 return redirect('subject_detail', pk=pk)
-                
+
             except Exception as e:
-                print(f"Error creating material: {e}")
+                logger.exception(f"Error creating material for subject {pk}: {e}")
                 messages.error(request, f'Failed to upload material: {str(e)}')
         else:
-            print("No file uploaded")
             messages.error(request, 'Please select a file to upload.')
-    else:
-        print("Not a POST request")
-    
+
     return redirect('subject_detail', pk=pk)
 
 @login_required
@@ -556,19 +531,6 @@ class SubjectViewSet(viewsets.ModelViewSet):
         materials = SubjectMaterial.objects.filter(subject=subject)
         serializer = SubjectMaterialSerializer(materials, many=True)
         return Response(serializer.data)
-
-    @action(detail=True, methods=['post'])
-    def ask_question(self, request, pk=None):
-        subject = self.get_object()
-        question = request.data.get('question')
-        if not question:
-            return Response(
-                {'error': 'Question is required'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        # TODO: Implement AI question answering
-        return Response({'answer': 'AI answer will be implemented here'})
 
     @action(detail=True, methods=['get'])
     def quiz_results(self, request, pk=None):

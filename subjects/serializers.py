@@ -149,26 +149,3 @@ class ChatMessageCreateSerializer(serializers.Serializer):
             raise serializers.ValidationError("Message cannot be empty.")
         return value.strip()
 
-
-class ChatHistorySerializer(serializers.Serializer):
-    """Serializer for chat history with pagination and filtering options"""
-    
-    session = ChatSessionSerializer(read_only=True)
-    messages = ChatMessageSerializer(many=True, read_only=True)
-    total_messages = serializers.IntegerField(read_only=True)
-    has_more = serializers.BooleanField(read_only=True)
-    
-    class Meta:
-        fields = ['session', 'messages', 'total_messages', 'has_more']
-
-
-class ChatResponseSerializer(serializers.Serializer):
-    """Serializer for chat response including both user and assistant messages"""
-    
-    user_message = ChatMessageSerializer(read_only=True)
-    assistant_message = ChatMessageSerializer(read_only=True)
-    session = ChatSessionSerializer(read_only=True)
-    response_metadata = serializers.DictField(read_only=True)
-    
-    class Meta:
-        fields = ['user_message', 'assistant_message', 'session', 'response_metadata'] 

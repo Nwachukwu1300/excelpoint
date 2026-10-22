@@ -1,5 +1,4 @@
 from rest_framework import permissions
-from django.shortcuts import get_object_or_404
 from .models import Subject, ChatSession
 
 
@@ -112,46 +111,6 @@ class IsChatSessionOwner(permissions.BasePermission):
         elif hasattr(obj, 'session'):  # ChatMessage
             return obj.session.user == request.user
         
-        return False
-
-
-class IsAuthenticatedAndOwner(permissions.BasePermission):
-    """
-    Combined permission that checks authentication and ownership.
-    
-    This is a convenience permission that combines IsAuthenticated
-    with ownership checking for various subject-related resources.
-    """
-    
-    message = "Authentication required and you must own this resource."
-    
-    def has_permission(self, request, view):
-        """
-        Check if user is authenticated.
-        """
-        return request.user and request.user.is_authenticated
-    
-    def has_object_permission(self, request, view, obj):
-        """
-        Check if the user owns the object.
-        """
-        # Superusers have access to all objects
-        if request.user.is_superuser:
-            return True
-        
-        # Check ownership based on object type
-        if isinstance(obj, Subject):
-            return obj.user == request.user
-        elif isinstance(obj, ChatSession):
-            return obj.user == request.user
-        elif hasattr(obj, 'session'):  # ChatMessage
-            return obj.session.user == request.user
-        elif hasattr(obj, 'subject'):  # SubjectMaterial, ContentChunk, etc.
-            return obj.subject.user == request.user
-        elif hasattr(obj, 'user'):  # Any object with direct user relationship
-            return obj.user == request.user
-        
-        # Default deny
         return False
 
 

@@ -15,12 +15,11 @@ except ImportError:
     pass
 
 from celery import chord, group, shared_task
-from .models import SubjectMaterial, ContentChunk, Flashcard, Quiz, Question, Choice, Answer, UserQuizAttempt
+from .models import SubjectMaterial, ContentChunk, Flashcard, Quiz, Question, Choice, UserQuizAttempt
 from .utils import ContentProcessor
 from openai import OpenAI
 import logging
 import json
-import re
 from django.conf import settings
 from .utils import extract_text_from_pdf, chunk_text, local_file_path
 from django.utils import timezone

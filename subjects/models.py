@@ -7,7 +7,7 @@ and modern AI-enhanced features like RAG-powered chatbots and dynamic quiz
 generation.
 
 Key features:
-- File storage abstraction via FileStorageMixin
+- Local or S3 file storage chosen at runtime (get_storage_backend)
 - Content chunking with vector embeddings for AI search
 - Comprehensive quiz system with multiple question types
 - AI chatbot session management with caching
@@ -21,51 +21,9 @@ from pgvector.django import HnswIndex, VectorField
 from django.contrib.auth import get_user_model
 from django.core.validators import FileExtensionValidator
 from django.utils import timezone
-from django.core.files.storage import default_storage
 from django.conf import settings
 
 User = get_user_model()
-
-class FileStorageMixin:
-    """Mixin providing file storage abstraction across storage backends.
-    
-    This mixin allows models to work with both local filesystem and S3
-    storage without changing their implementation. It delegates storage
-    operations to the appropriate service based on Django settings.
-    """
-    
-    def save_file(self, file_obj, path):
-        """Save a file using the currently configured storage backend.
-        
-        Args:
-            file_obj: File object to save
-            path: Destination path within the storage
-        """
-        from .services.storage_factory import StorageFactory
-        storage_service = StorageFactory.get_storage_service()
-        return storage_service.save_file(file_obj, path)
-    
-    def get_file_url(self, path):
-        """Get the public URL for a stored file.
-        
-        Args:
-            path: Path to the file in storage
-        Returns:
-            Public URL for accessing the file
-        """
-        from .services.storage_factory import StorageFactory
-        storage_service = StorageFactory.get_storage_service()
-        return storage_service.get_file_url(path)
-    
-    def delete_file(self, path):
-        """Delete a file from the configured storage backend.
-        
-        Args:
-            path: Path to the file to delete
-        """
-        from .services.storage_factory import StorageFactory
-        storage_service = StorageFactory.get_storage_service()
-        storage_service.delete_file(path)
 
 def get_storage_backend():
     """Get the appropriate storage backend based on Django settings.

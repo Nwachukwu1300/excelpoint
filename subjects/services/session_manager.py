@@ -1,5 +1,4 @@
 from django.utils import timezone
-from datetime import timedelta
 from django.db import transaction
 import logging
 
@@ -103,45 +102,6 @@ class SessionManager:
         """
         session.expire_session()
         logger.debug(f"Expired session {session.id}")
-    
-    def cleanup_expired_sessions(self, user=None, subject=None):
-        """
-        Find and expire all sessions that have exceeded the timeout.
-        
-        Args:
-            user: Optional User instance to limit cleanup to specific user
-            subject: Optional Subject instance to limit cleanup to specific subject
-            
-        Returns:
-            int: Number of sessions expired
-        """
-        timeout_threshold = timezone.now() - timedelta(minutes=self.timeout_minutes)
-        
-        # Build query filters
-        filters = {
-            'is_active': True,
-            'status': 'active',
-            'last_activity__lt': timeout_threshold
-        }
-        
-        if user:
-            filters['user'] = user
-        if subject:
-            filters['subject'] = subject
-        
-        # Find expired sessions
-        expired_sessions = ChatSession.objects.filter(**filters)
-        
-        # Mark them as expired
-        expired_count = 0
-        for session in expired_sessions:
-            self.expire_session(session)
-            expired_count += 1
-        
-        if expired_count > 0:
-            logger.info(f"Expired {expired_count} sessions during cleanup")
-        
-        return expired_count
     
     def validate_session(self, session_id, user, subject):
         """

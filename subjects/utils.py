@@ -8,12 +8,10 @@ from langchain_community.document_loaders import (
     UnstructuredHTMLLoader,
     UnstructuredMarkdownLoader,
 )
-from langchain.schema import Document
 import PyPDF2
 import os
 from functools import cached_property, lru_cache
 from typing import List, Dict, Any
-import numpy as np
 from sentence_transformers import SentenceTransformer
 import torch
 import mimetypes
