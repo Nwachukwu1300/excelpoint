@@ -59,6 +59,7 @@ export interface ChatWidgetProps {
 export interface MessageListProps {
   messages: ChatMessage[]
   isLoading?: boolean
+  streamingText?: string | null
 }
 
 export interface MessageInputProps {

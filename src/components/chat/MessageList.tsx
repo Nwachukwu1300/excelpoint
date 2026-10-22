@@ -187,7 +187,8 @@ interface MessageListComponent extends React.FC<MessageListProps> {}
 
 export const MessageList: MessageListComponent = ({ 
   messages, 
-  isLoading = false 
+  isLoading = false,
+  streamingText = null 
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -197,7 +198,7 @@ export const MessageList: MessageListComponent = ({
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' })
     }
-  }, [messages, isLoading])
+  }, [messages, isLoading, streamingText])
 
   const formatMessageTime = (timestamp: string) => {
     try {
@@ -232,9 +233,14 @@ export const MessageList: MessageListComponent = ({
     )
   }
 
+  // The answer being streamed shows as a provisional assistant message until the saved one replaces it
+  const shown: ChatMessage[] = streamingText
+    ? [...messages, { id: -1, role: 'assistant', content: streamingText, timestamp: new Date().toISOString(), session: 0 }]
+    : messages
+
   return (
     <MessagesContainer ref={containerRef} role="log" aria-label="Chat messages" aria-live="polite">
-      {messages.map((message: ChatMessage) => {
+      {shown.map((message: ChatMessage) => {
         const isUser = message.role === 'user'
         return (
           <MessageGroup key={message.id} isUser={isUser} data-testid={`message-${message.id}`}>

@@ -17,9 +17,12 @@ const api = axios.create({
   },
 })
 
+const getCsrfToken = () =>
+  document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content
+
 // Add CSRF token to requests (Django requirement)
 api.interceptors.request.use((config) => {
-  const csrfToken = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content
+  const csrfToken = getCsrfToken()
   if (csrfToken) {
     config.headers['X-CSRFToken'] = csrfToken
   }
@@ -49,6 +52,20 @@ api.interceptors.response.use(
 )
 
 // Chat API functions
+// The stream could not start (network, HTTP error, no streaming support): safe to retry without streaming
+export class StreamUnavailableError extends Error {}
+
+// Parse one Server-Sent Events block ("event: x\ndata: {...}") into its type and JSON data
+export const parseSseBlock = (block: string): { type: string; data: any } | null => {
+  let type = 'message'
+  let data = ''
+  for (const line of block.split('\n')) {
+    if (line.startsWith('event:')) type = line.slice(6).trim()
+    else if (line.startsWith('data:')) data += line.slice(5).trim()
+  }
+  return data ? { type, data: JSON.parse(data) } : null
+}
+
 export const chatApi = {
   // Get or create chat session for a subject
   getOrCreateSession: async (subjectId: number): Promise<ChatSession> => {
@@ -80,6 +97,52 @@ export const chatApi = {
       { message: data.content }  // Django expects 'message' field, not 'content'
     )
     return response.data
+  },
+
+  // Send a message and receive the answer as it is written (token callback), resolving with the saved exchange
+  streamMessage: async (
+    subjectId: number,
+    data: SendMessageRequest,
+    onToken: (text: string) => void
+  ): Promise<SendMessageResponse> => {
+    let response: Response
+    try {
+      const csrfToken = getCsrfToken()
+      response = await fetch(`/api/subjects/${subjectId}/chat/stream/`, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'text/event-stream',
+          ...(csrfToken ? { 'X-CSRFToken': csrfToken } : {}),
+        },
+        body: JSON.stringify({ message: data.content }),
+      })
+    } catch (error) {
+      throw new StreamUnavailableError(String(error))
+    }
+    if (!response.ok || !response.body) {
+      throw new StreamUnavailableError(`Stream request failed (${response.status})`)
+    }
+
+    const reader = response.body.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ''
+    for (;;) {
+      const { value, done } = await reader.read()
+      if (done) break
+      buffer += decoder.decode(value, { stream: true })
+      let boundary
+      while ((boundary = buffer.indexOf('\n\n')) !== -1) {
+        const event = parseSseBlock(buffer.slice(0, boundary))
+        buffer = buffer.slice(boundary + 2)
+        if (!event) continue
+        if (event.type === 'token') onToken(event.data.text)
+        else if (event.type === 'done') return event.data as SendMessageResponse
+        else if (event.type === 'error') throw new Error(event.data.message)
+      }
+    }
+    throw new Error('The answer stream ended unexpectedly')
   },
 
   // Get chat statistics

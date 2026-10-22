@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { chatApi } from '@/services/chatApi'
+import { chatApi, StreamUnavailableError } from '@/services/chatApi'
 import { SessionStorageManager } from '@/utils/sessionStorage'
 import type { ChatMessage, ChatSession, SendMessageRequest } from '@/types/chat'
 
@@ -164,10 +164,18 @@ export const useChatMessages = (subjectId: number, selectedSessionId?: number) =
   // react-query v4 leaves a disabled query in isLoading forever, so it can't be used alone.
   const isMessagesLoading = currentSession ? isMessagesQueryLoading : !sessionError
 
-  // Send message mutation
+  // Text of the answer being streamed in (null when no answer is in flight)
+  const [streamingText, setStreamingText] = useState<string | null>(null)
+
+  // Send message mutation: stream the answer; if the stream can't start, send without streaming
   const sendMessageMutation = useMutation({
-    mutationFn: (data: SendMessageRequest) => 
-      chatApi.sendMessage(subjectId, data),
+    mutationFn: (data: SendMessageRequest) =>
+      chatApi
+        .streamMessage(subjectId, data, (text) => setStreamingText((current) => (current ?? '') + text))
+        .catch((error) => {
+          if (error instanceof StreamUnavailableError) return chatApi.sendMessage(subjectId, data)
+          throw error
+        }),
     onMutate: async ({ content }) => {
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({
@@ -193,8 +201,10 @@ export const useChatMessages = (subjectId: number, selectedSessionId?: number) =
         [...previousMessages, optimisticMessage]
       )
 
+      setStreamingText('')
       return { previousMessages }
     },
+    onSettled: () => setStreamingText(null),
     onError: (err, variables, context) => {
       // Rollback on error
       if (context?.previousMessages) {
@@ -296,6 +306,7 @@ export const useChatMessages = (subjectId: number, selectedSessionId?: number) =
     // Loading states
     isLoading: isSessionLoading || isMessagesLoading || isValidatingSession,
     isSending: sendMessageMutation.isLoading,  // react-query v4 name (isPending is v5)
+    streamingText,
     isValidatingSession,
     
     // Actions

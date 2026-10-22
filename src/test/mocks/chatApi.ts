@@ -45,10 +45,7 @@ export const mockStats: ChatStats = {
 }
 
 // Mock API functions
-export const mockChatApi = {
-  getOrCreateSession: vi.fn().mockResolvedValue(mockChatSession),
-  getMessages: vi.fn().mockResolvedValue(mockMessages),
-  sendMessage: vi.fn().mockImplementation(async (_subjectId: number, data: { content: string }) => {
+const sendMessage = vi.fn().mockImplementation(async (_subjectId: number, data: { content: string }) => {
     const now = new Date().toISOString()
     const response: SendMessageResponse = {
       user_message: { id: Date.now(), content: data.content, role: 'user', timestamp: now, session: mockChatSession.id },
@@ -62,7 +59,19 @@ export const mockChatApi = {
       session: mockChatSession,
     }
     return response
-  }),
+  })
+
+export const mockChatApi = {
+  getOrCreateSession: vi.fn().mockResolvedValue(mockChatSession),
+  getMessages: vi.fn().mockResolvedValue(mockMessages),
+  sendMessage,
+  // Streams by delegating to sendMessage, so tests can control sending through that one mock
+  streamMessage: vi.fn((subjectId: number, data: { content: string }, onToken: (text: string) => void): Promise<SendMessageResponse> =>
+    sendMessage(subjectId, data).then((response: SendMessageResponse) => {
+      onToken(response.assistant_message.content)
+      return response
+    })
+  ),
   validateSession: vi.fn().mockResolvedValue({ valid: true, session: mockChatSession, message: 'ok' }),
   getSessionHistory: vi.fn().mockResolvedValue({
     sessions: [mockChatSession],

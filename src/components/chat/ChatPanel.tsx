@@ -21,6 +21,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     session,
     isLoading,
     isSending,
+    streamingText,
     sendMessage,
     error
   } = useChatMessages(subjectId);
@@ -111,9 +112,10 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
         <MessageList 
           messages={messages} 
           isLoading={isLoading}
+          streamingText={streamingText}
         />
         
-        {isSending ? <TypingIndicator /> : null}
+        {isSending && !streamingText ? <TypingIndicator /> : null}
         
         <MessageInput 
           onSendMessage={handleSendMessage}

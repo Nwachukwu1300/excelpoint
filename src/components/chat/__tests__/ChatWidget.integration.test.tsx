@@ -8,6 +8,7 @@ import { mockChatApi, mockChatSession, mockMessages } from '../../../test/mocks/
 // Mock the chatApi module
 vi.mock('../../../services/chatApi', async () => ({
   chatApi: (await import('../../../test/mocks/chatApi')).mockChatApi,
+  StreamUnavailableError: (await vi.importActual<typeof import('../../../services/chatApi')>('../../../services/chatApi')).StreamUnavailableError,
 }))
 
 // Mock intersection observer

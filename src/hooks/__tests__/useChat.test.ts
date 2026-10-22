@@ -8,6 +8,7 @@ import { mockChatApi, mockChatSession, mockMessages, mockStats } from '../../tes
 // Mock the chatApi module
 vi.mock('../../services/chatApi', async () => ({
   chatApi: (await import('../../test/mocks/chatApi')).mockChatApi,
+  StreamUnavailableError: (await vi.importActual<typeof import('../../services/chatApi')>('../../services/chatApi')).StreamUnavailableError,
 }))
 
 // Create a wrapper for React Query
@@ -390,17 +391,58 @@ describe('useChat hooks', () => {
         expect(result.current.isLoading).toBe(false)
       })
 
-      // Send multiple messages concurrently
-      const promises = [
-        act(() => result.current.sendMessage('Message 1')),
-        act(() => result.current.sendMessage('Message 2')),
-        act(() => result.current.sendMessage('Message 3')),
-      ]
-
-      await Promise.all(promises)
+      // Send multiple messages concurrently, inside one act() (overlapping act scopes corrupt React's test state)
+      await act(async () => {
+        await Promise.all([
+          result.current.sendMessage('Message 1'),
+          result.current.sendMessage('Message 2'),
+          result.current.sendMessage('Message 3'),
+        ])
+      })
 
       // All messages should have been sent
       expect(mockChatApi.sendMessage).toHaveBeenCalledTimes(3)
     })
   })
-}) 
+
+  describe('streaming answers', () => {
+
+    it('exposes the answer as it streams, then clears it once the saved reply lands', async () => {
+      let emit: (t: string) => void = () => {}
+      let finish: (v: any) => void = () => {}
+      mockChatApi.streamMessage.mockImplementationOnce((_s: number, _d: unknown, onToken: (t: string) => void) => {
+        emit = onToken
+        return new Promise((resolve) => { finish = resolve })
+      })
+      const { result } = renderHook(() => useChatMessages(1), { wrapper: createWrapper() })
+      await waitFor(() => expect(result.current.isLoading).toBe(false))
+
+      act(() => { result.current.sendMessage('Explain DML') })
+      await waitFor(() => expect(result.current.streamingText).toBe(''))
+      act(() => { emit('DML changes '); emit('rows.') })
+      expect(result.current.streamingText).toBe('DML changes rows.')
+
+      await act(async () => {
+        finish({
+          user_message: { ...mockMessages[1], id: 101, content: 'Explain DML' },
+          assistant_message: { ...mockMessages[2], id: 102, content: 'DML changes rows.' },
+          session: mockChatSession,
+        })
+      })
+      await waitFor(() => expect(result.current.streamingText).toBeNull())
+      expect(result.current.messages.at(-1)?.content).toBe('DML changes rows.')
+    })
+
+    it('falls back to a normal request when the stream cannot start', async () => {
+      const { StreamUnavailableError } = await vi.importActual<typeof import('../../services/chatApi')>('../../services/chatApi')
+      mockChatApi.streamMessage.mockRejectedValueOnce(new StreamUnavailableError('no stream'))
+      const { result } = renderHook(() => useChatMessages(1), { wrapper: createWrapper() })
+      await waitFor(() => expect(result.current.isLoading).toBe(false))
+      mockChatApi.sendMessage.mockClear()
+
+      await act(async () => { await result.current.sendMessage('Hello') })
+
+      expect(mockChatApi.sendMessage).toHaveBeenCalledTimes(1)
+    })
+  })
+})
