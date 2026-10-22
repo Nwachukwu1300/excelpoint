@@ -12,6 +12,7 @@ from rest_framework import viewsets, status, permissions, generics
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.renderers import BaseRenderer, JSONRenderer
 from django.db import transaction
 from django.utils import timezone
 import logging
@@ -1198,6 +1199,16 @@ Title:"""
             return "New conversation"
 
 
+class EventStreamRenderer(BaseRenderer):
+    """Lets DRF accept `Accept: text/event-stream` (it answers 406 otherwise). The stream itself is a
+    StreamingHttpResponse; this only renders non-stream replies such as validation errors, as JSON."""
+    media_type = 'text/event-stream'
+    format = 'sse'
+
+    def render(self, data, accepted_media_type=None, renderer_context=None):
+        return json.dumps(data).encode()
+
+
 class ChatMessageStreamAPIView(ChatMessageListCreateAPIView):
     """
     POST /api/subjects/{subject_id}/chat/stream/
@@ -1208,6 +1219,7 @@ class ChatMessageStreamAPIView(ChatMessageListCreateAPIView):
     or one `error` event.
     """
     http_method_names = ['post', 'options']
+    renderer_classes = [JSONRenderer, EventStreamRenderer]
 
     def create(self, request, *args, **kwargs):
         subject = get_object_or_404(Subject, id=self.kwargs.get('subject_id'), user=request.user)

@@ -44,7 +44,8 @@ class ChatStreamTest(TestCase):
         self.url = reverse('chat-stream', args=[self.subject.id])
 
     def post(self, message='What is INSERT?'):
-        return self.client.post(self.url, {'message': message}, format='json')
+        # Send the Accept header a browser's fetch() sends; without the SSE renderer DRF answers 406
+        return self.client.post(self.url, {'message': message}, format='json', HTTP_ACCEPT='text/event-stream')
 
     @patch.object(RAGService, '_retrieve_relevant_chunks', return_value=[CHUNK])
     def test_tokens_then_done_with_saved_message(self, _):
@@ -95,3 +96,8 @@ class ChatStreamTest(TestCase):
             events = parse_sse(self.post())
         self.assertEqual([e for e, _ in events], ['token', 'done'])
         self.assertIn("couldn't find information", events[0][1]['text'])
+
+    def test_invalid_input_is_a_json_400_even_when_asking_for_a_stream(self):
+        response = self.client.post(self.url, {}, format='json', HTTP_ACCEPT='text/event-stream')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('message', json.loads(response.content))
