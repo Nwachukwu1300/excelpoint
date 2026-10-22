@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MessageInput } from '../MessageInput'
 
@@ -168,6 +168,7 @@ describe('MessageInput', () => {
       render(<MessageInput onSendMessage={mockOnSendMessage} />)
       
       const textarea = screen.getByRole('textbox', { name: /type your message/i })
+      await user.click(textarea)  // Enter must reach the textbox, or this test proves nothing
       await user.keyboard('{Enter}')
       
       expect(mockOnSendMessage).not.toHaveBeenCalled()

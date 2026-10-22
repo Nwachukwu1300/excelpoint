@@ -88,7 +88,6 @@ export const useChatMessages = (subjectId: number, selectedSessionId?: number) =
 
   // Get or create chat session with persistence
   const { 
-    data: session, 
     isLoading: isSessionLoading,
     error: sessionError
   } = useQuery({
@@ -205,7 +204,7 @@ export const useChatMessages = (subjectId: number, selectedSessionId?: number) =
       return { previousMessages }
     },
     onSettled: () => setStreamingText(null),
-    onError: (err, variables, context) => {
+    onError: (_error, _variables, context) => {
       // Rollback on error
       if (context?.previousMessages) {
         queryClient.setQueryData(

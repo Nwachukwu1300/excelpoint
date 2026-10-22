@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { X } from 'lucide-react';
 import { MessageList } from './MessageList';
 import { MessageInput } from './MessageInput';
@@ -18,7 +18,6 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
 }) => {
   const {
     messages,
-    session,
     isLoading,
     isSending,
     streamingText,
