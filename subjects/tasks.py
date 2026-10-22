@@ -15,7 +15,7 @@ except ImportError:
     pass
 
 from celery import chord, group, shared_task
-from .models import SubjectMaterial, ContentChunk, Flashcard, QuizQuestion, Quiz, Question, Choice, Answer, UserQuizAttempt
+from .models import SubjectMaterial, ContentChunk, Flashcard, Quiz, Question, Choice, Answer, UserQuizAttempt
 from .utils import ContentProcessor
 from openai import OpenAI
 import logging
@@ -205,67 +205,6 @@ def material_ready(results, material_id: int):
     return {'made': made, 'failed': failed}
 
 
-@shared_task
-def generate_quiz_questions(material_id: int):
-    """Generate quiz questions from processed material."""
-    try:
-        # Add more detailed logging for debugging
-        logger.info(f"Starting quiz questions generation for material ID: {material_id}")
-        
-        # Check if material exists before proceeding
-        try:
-            material = SubjectMaterial.objects.get(id=material_id)
-        except SubjectMaterial.DoesNotExist:
-            logger.error(f"Material with ID {material_id} does not exist in database")
-            return {'status': 'error', 'message': f'Material with ID {material_id} not found'}
-        
-        logger.info(f"Generating quiz questions for material ID {material_id}: {material.file.name}")
-        
-        # Check if material is in completed status
-        if material.status != 'COMPLETED':
-            logger.warning(f"Material {material_id} is not in COMPLETED status (current: {material.status})")
-            return {'status': 'error', 'message': f'Material {material_id} is not ready for processing (status: {material.status})'}
-        
-        chunks = ContentChunk.objects.filter(material=material)
-        logger.info(f"Found {chunks.count()} content chunks for material {material_id}")
-        
-        if chunks.count() == 0:
-            logger.warning(f"No content chunks found for material {material_id}")
-            return {'status': 'error', 'message': f'No content chunks found for material {material_id}'}
-        
-        processor = ContentProcessor()
-        chunks_data = [
-            {
-                'content': chunk.content,
-                'chunk_index': chunk.chunk_index,
-                'embedding_vector': chunk.embedding_vector
-            }
-            for chunk in chunks
-        ]
-        
-        questions = processor.generate_quiz_questions(chunks_data)
-        
-        # Create QuizQuestion objects
-        question_count = 0
-        for question in questions:
-            QuizQuestion.objects.create(
-                subject=material.subject,
-                material=material,  # Link to specific material
-                question=question['question'],
-                correct_answer=question['correct_answer'],
-                options=question['options'],
-                hint=question['hint']
-            )
-            question_count += 1
-        
-        logger.info(f"Successfully created {question_count} quiz questions for material {material_id}: {material.file.name}")
-        return {'status': 'success', 'questions_created': question_count}
-            
-    except Exception as e:
-        logger.error(f"Error generating quiz questions for material {material_id}: {str(e)}")
-        logger.exception("Full traceback:")
-        return {'status': 'error', 'message': str(e)}
-
 @shared_task(bind=True, max_retries=3, time_limit=300)  # 5 minute timeout
 def generate_quiz_from_material(self, material_id, num_questions=10):
     """
@@ -426,61 +365,6 @@ Output format (JSON):
 }}
 """
 
-def _create_true_false_prompt(text, num_questions):
-    """Create prompt for true/false questions"""
-    return f"""
-Based on the following text, generate {num_questions} true/false questions that test understanding.
-
-Text:
-{text}
-
-Instructions:
-1. Create {num_questions} true/false questions
-2. Include a mix of true and false statements
-3. Focus on important facts and concepts from the text
-4. Avoid ambiguous statements
-
-Output format (JSON):
-{{
-    "questions": [
-        {{
-            "question": "Statement to evaluate",
-            "options": [
-                {{"text": "True", "is_correct": true}},
-                {{"text": "False", "is_correct": false}}
-            ],
-            "explanation": "Brief explanation of why the statement is true or false"
-        }}
-    ]
-}}
-"""
-
-def _create_short_answer_prompt(text, num_questions):
-    """Create prompt for short answer questions"""
-    return f"""
-Based on the following text, generate {num_questions} short answer questions that require brief responses.
-
-Text:
-{text}
-
-Instructions:
-1. Create {num_questions} short answer questions
-2. Questions should require 1-3 sentence responses
-3. Focus on key concepts, definitions, and explanations
-4. Provide model answers and acceptable variations
-
-Output format (JSON):
-{{
-    "questions": [
-        {{
-            "question": "Question text here?",
-            "correct_answers": ["Primary answer", "Alternative answer", "Another acceptable answer"],
-            "explanation": "Brief explanation of what makes a good answer"
-        }}
-    ]
-}}
-"""
-
 def _call_openai_api(prompt, temperature=0.3, max_retries=3):
     """
     Call OpenAI API with error handling and retries
@@ -538,48 +422,6 @@ def _parse_multiple_choice_response(response):
     
     except (json.JSONDecodeError, KeyError) as e:
         logger.warning(f"Error parsing multiple choice response: {str(e)}")
-        return []
-
-def _parse_true_false_response(response):
-    """Parse OpenAI response for true/false questions"""
-    try:
-        data = json.loads(response)
-        questions = []
-        
-        for q in data.get('questions', []):
-            questions.append({
-                'type': 'true_false',
-                'question': q['question'],
-                'options': q['options'],
-                'explanation': q.get('explanation', ''),
-                'points': 1
-            })
-        
-        return questions
-    
-    except (json.JSONDecodeError, KeyError) as e:
-        logger.warning(f"Error parsing true/false response: {str(e)}")
-        return []
-
-def _parse_short_answer_response(response):
-    """Parse OpenAI response for short answer questions"""
-    try:
-        data = json.loads(response)
-        questions = []
-        
-        for q in data.get('questions', []):
-            questions.append({
-                'type': 'short_answer',
-                'question': q['question'],
-                'correct_answers': q['correct_answers'],
-                'explanation': q.get('explanation', ''),
-                'points': 2  # Short answer questions worth more points
-            })
-        
-        return questions
-    
-    except (json.JSONDecodeError, KeyError) as e:
-        logger.warning(f"Error parsing short answer response: {str(e)}")
         return []
 
 @shared_task(bind=True)

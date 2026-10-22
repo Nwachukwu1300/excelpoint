@@ -17,8 +17,6 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 import torch
 import mimetypes
-from pydub import AudioSegment
-import speech_recognition as sr
 import tempfile
 import shutil
 from contextlib import contextmanager
@@ -26,8 +24,6 @@ import psutil
 import gc
 import logging
 from .llm_utils import generate_flashcards as llm_generate_flashcards
-from .llm_utils import generate_quiz_questions as llm_generate_quiz_questions
-from .llm_utils import answer_question as llm_answer_question
 
 # Conditional import for transcription service
 try:
@@ -135,8 +131,6 @@ class ContentProcessor:
         # Initialize the sentence transformer for embeddings
         self.model = load_embedding_model()
         
-        # Initialize speech recognizer (legacy)
-        self.recognizer = sr.Recognizer()
         
         # Initialize storage service for S3 file handling
         try:
@@ -237,26 +231,6 @@ class ContentProcessor:
             return 'VIDEO'
         
         return 'UNKNOWN'
-
-    def extract_text_from_audio(self, file_path: str) -> str:
-        """Extract text from audio file using speech recognition."""
-        try:
-            # Convert audio to WAV format if needed
-            audio = AudioSegment.from_file(file_path)
-            with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as temp_wav:
-                audio.export(temp_wav.name, format='wav')
-                
-                # Perform speech recognition
-                with sr.AudioFile(temp_wav.name) as source:
-                    audio_data = self.recognizer.record(source)
-                    text = self.recognizer.recognize_google(audio_data)
-                
-                # Clean up temporary file
-                os.unlink(temp_wav.name)
-                return text
-                
-        except Exception as e:
-            raise Exception(f"Error processing audio file: {str(e)}")
 
     def _download_s3_file(self, s3_path: str) -> str:
         """Download S3 file to temporary location"""
@@ -460,37 +434,7 @@ class ContentProcessor:
         logger.info(f"Completed processing {total_chunks} chunks in {total_batches} batches")
         return chunk_data
     
-    def process_file_with_progress(self, file_path: str, progress_callback=None) -> List[Dict[str, Any]]:
-        """Process file with progress tracking callback."""
-        return self.process_file(file_path, use_batch_processing=True)
-    
-    def find_relevant_chunks(self, query: str, chunks: List[Dict[str, Any]], top_k: int = 3) -> List[Dict[str, Any]]:
-        """Find the most relevant chunks for a given query using cosine similarity."""
-        # Generate query embedding
-        query_embedding = self.model.encode(query)
-        
-        # Calculate similarities
-        similarities = []
-        for chunk in chunks:
-            chunk_embedding = np.array(chunk['embedding_vector'])
-            similarity = np.dot(query_embedding, chunk_embedding) / (
-                np.linalg.norm(query_embedding) * np.linalg.norm(chunk_embedding)
-            )
-            similarities.append((chunk, similarity))
-        
-        # Sort by similarity and return top k chunks
-        similarities.sort(key=lambda x: x[1], reverse=True)
-        return [chunk for chunk, _ in similarities[:top_k]]
-    
     def generate_flashcards(self, chunks: List[Dict[str, Any]], num_cards: int = 5) -> List[Dict[str, str]]:
         """Generate flashcards from content chunks using LLM."""
         return llm_generate_flashcards(chunks, num_cards)
     
-    def generate_quiz_questions(self, chunks: List[Dict[str, Any]], num_questions: int = 5) -> List[Dict[str, Any]]:
-        """Generate quiz questions from content chunks using LLM."""
-        return llm_generate_quiz_questions(chunks, num_questions)
-    
-    def answer_question(self, question: str, chunks: List[Dict[str, Any]]) -> str:
-        """Answer a question using LLM and relevant content chunks."""
-        relevant_chunks = self.find_relevant_chunks(question, chunks)
-        return llm_answer_question(question, relevant_chunks) 
