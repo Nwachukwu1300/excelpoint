@@ -61,6 +61,8 @@ class ChatStreamTest(TestCase):
         self.assertEqual(done['assistant_message']['content'], 'INSERT is DML.')
         self.assertTrue(done['assistant_message']['trace_url'])
         self.assertEqual(ChatMessage.objects.filter(session__subject=self.subject).count(), 2)
+        from reasoning.models import ReasoningSession
+        self.assertEqual(ReasoningSession.objects.filter(subject_id=self.subject.id).count(), 1)  # one trace per question
 
     @patch.object(RAGService, '_retrieve_relevant_chunks', return_value=[CHUNK])
     def test_done_carries_retry_answer_that_replaces_streamed_text(self, _):
