@@ -25,16 +25,9 @@ Usage:
 """
 
 from typing import Dict, Any, List, Optional
-from datetime import datetime
 import logging
 
-from django.db.models import Avg, Count
-
-from .models import (
-    RetrievalExperiment,
-    RetrievalExperimentResult,
-    RetrievalPipelineConfig
-)
+from .models import RetrievalExperiment, RetrievalExperimentResult
 from .pipeline import RetrievalPipeline, PipelineConfig
 from .metrics import MetricsCollector
 
@@ -366,72 +359,3 @@ class RetrievalExperimentService:
             return True
         except RetrievalExperiment.DoesNotExist:
             return False
-
-    def clone_experiment(
-        self,
-        source_name: str,
-        new_name: str,
-        config_overrides: Optional[Dict[str, Any]] = None
-    ) -> RetrievalExperiment:
-        """
-        Clone an existing experiment with optional configuration changes.
-
-        Args:
-            source_name: The source experiment name.
-            new_name: The new experiment name.
-            config_overrides: Optional configuration values to override.
-
-        Returns:
-            The created RetrievalExperiment instance.
-
-        Raises:
-            ExperimentError: If source not found or new name already exists.
-        """
-        source = self.get_experiment(source_name)
-
-        if RetrievalExperiment.objects.filter(name=new_name).exists():
-            raise ExperimentError(f"Experiment '{new_name}' already exists")
-
-        # Copy and override config
-        new_config = source.pipeline_config.copy()
-        new_config['name'] = new_name
-        if config_overrides:
-            new_config.update(config_overrides)
-
-        return self.create_experiment(
-            name=new_name,
-            description=f"Cloned from '{source_name}'. {source.description}",
-            pipeline_config=new_config,
-            notes=source.notes
-        )
-
-    def run_experiment_batch(
-        self,
-        experiment_name: str,
-        queries: List[str],
-        subject_id: int
-    ) -> List[RetrievalExperimentResult]:
-        """
-        Run an experiment with multiple queries.
-
-        Args:
-            experiment_name: The experiment name.
-            queries: List of search queries.
-            subject_id: The subject to search within.
-
-        Returns:
-            A list of experiment results.
-        """
-        results = []
-        for query in queries:
-            try:
-                result = self.run_experiment(experiment_name, query, subject_id)
-                results.append(result)
-            except ExperimentError as e:
-                logger.warning(f"Query failed in batch: {query[:50]}... Error: {str(e)}")
-
-        logger.info(
-            f"Batch experiment '{experiment_name}' completed: "
-            f"{len(results)}/{len(queries)} queries successful"
-        )
-        return results

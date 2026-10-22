@@ -16,21 +16,14 @@ Tracked metrics:
 Usage:
     from retrieval.metrics import MetricsCollector
 
-    collector = MetricsCollector()
-    collector.start_timing('embedding')
-    # ... do embedding ...
-    collector.stop_timing('embedding')
-
-    collector.record_retrieval(
-        pipeline_name='my_pipeline',
-        query='What is AI?',
-        result=retrieval_result
+    MetricsCollector().record_retrieval(
+        pipeline_name='my_pipeline', query='What is AI?', chunks=result.chunks,
+        top_k=5, reranking_applied=False, total_latency_ms=result.total_latency_ms,
     )
 """
 
 from typing import Dict, Any, Optional, List
 from datetime import datetime, timedelta
-import time
 import logging
 
 from django.db.models import Avg, Max, Min, Count, F
@@ -43,85 +36,8 @@ class MetricsCollector:
     """
     Collector for retrieval operation metrics.
 
-    Provides timing utilities and methods to record metrics to the database.
-    Each collector instance can track multiple timing stages and then
-    persist the complete metrics for a retrieval operation.
-
-    Usage:
-        collector = MetricsCollector()
-        collector.start_timing('embedding')
-        # ... do embedding ...
-        collector.stop_timing('embedding')
-        collector.record_retrieval(pipeline_name, query, result)
+    Records a retrieval operation's scores and latencies to the database.
     """
-
-    def __init__(self):
-        """Initialize the metrics collector."""
-        self._timings: Dict[str, Dict[str, float]] = {}
-        self._start_times: Dict[str, float] = {}
-
-    def start_timing(self, stage: str) -> None:
-        """
-        Start timing a pipeline stage.
-
-        Args:
-            stage: The name of the stage (e.g., 'embedding', 'search', 'reranking').
-        """
-        self._start_times[stage] = time.perf_counter()
-
-    def stop_timing(self, stage: str) -> float:
-        """
-        Stop timing a pipeline stage and record the duration.
-
-        Args:
-            stage: The name of the stage.
-
-        Returns:
-            The duration in milliseconds.
-
-        Raises:
-            ValueError: If start_timing was not called for this stage.
-        """
-        if stage not in self._start_times:
-            raise ValueError(f"Timing for stage '{stage}' was not started")
-
-        duration_ms = (time.perf_counter() - self._start_times[stage]) * 1000
-        self._timings[stage] = {
-            'duration_ms': duration_ms,
-            'timestamp': time.time()
-        }
-        del self._start_times[stage]
-
-        logger.debug(f"Stage '{stage}' completed in {duration_ms:.2f}ms")
-        return duration_ms
-
-    def get_timing(self, stage: str) -> Optional[float]:
-        """
-        Get the recorded timing for a stage.
-
-        Args:
-            stage: The name of the stage.
-
-        Returns:
-            The duration in milliseconds, or None if not recorded.
-        """
-        if stage in self._timings:
-            return self._timings[stage]['duration_ms']
-        return None
-
-    def get_all_timings(self) -> Dict[str, float]:
-        """
-        Get all recorded timings.
-
-        Returns:
-            A dictionary mapping stage names to durations in milliseconds.
-        """
-        return {stage: data['duration_ms'] for stage, data in self._timings.items()}
-
-    def reset(self) -> None:
-        """Reset all timings."""
-        self._timings.clear()
-        self._start_times.clear()
 
     def record_retrieval(
         self,
@@ -146,10 +62,10 @@ class MetricsCollector:
             top_k: The top-K setting used.
             reranking_applied: Whether reranking was applied.
             reranker_used: The reranker name if reranking was applied.
-            total_latency_ms: Total operation latency. Uses recorded timing if not provided.
-            embedding_latency_ms: Embedding latency. Uses recorded timing if not provided.
-            search_latency_ms: Search latency. Uses recorded timing if not provided.
-            reranking_latency_ms: Reranking latency. Uses recorded timing if not provided.
+            total_latency_ms: Total operation latency (0 if not provided).
+            embedding_latency_ms: Embedding latency (0 if not provided).
+            search_latency_ms: Search latency (0 if not provided).
+            reranking_latency_ms: Reranking latency, if reranking ran.
 
         Returns:
             The created RetrievalMetric instance.
@@ -158,18 +74,13 @@ class MetricsCollector:
 
         # Calculate scores from chunks
         if chunks:
+            # Cosine similarity only: reranker scores are unbounded logits, not similarities
             scores = []
             for chunk in chunks:
-                if hasattr(chunk, 'reranked_score') and chunk.reranked_score is not None:
-                    scores.append(chunk.reranked_score)
-                elif hasattr(chunk, 'initial_score'):
+                if hasattr(chunk, 'initial_score'):
                     scores.append(chunk.initial_score)
                 elif isinstance(chunk, dict):
-                    scores.append(
-                        chunk.get('reranked_score') or
-                        chunk.get('initial_score') or
-                        chunk.get('similarity_score', 0)
-                    )
+                    scores.append(chunk.get('initial_score', chunk.get('similarity_score', 0)))
 
             mean_score = sum(scores) / len(scores) if scores else 0.0
             top_score = max(scores) if scores else 0.0
@@ -177,15 +88,9 @@ class MetricsCollector:
             mean_score = 0.0
             top_score = 0.0
 
-        # Use recorded timings if not explicitly provided
-        if total_latency_ms is None:
-            total_latency_ms = self.get_timing('total') or 0.0
-        if embedding_latency_ms is None:
-            embedding_latency_ms = self.get_timing('embedding') or 0.0
-        if search_latency_ms is None:
-            search_latency_ms = self.get_timing('search') or 0.0
-        if reranking_latency_ms is None and reranking_applied:
-            reranking_latency_ms = self.get_timing('reranking')
+        total_latency_ms = total_latency_ms or 0.0
+        embedding_latency_ms = embedding_latency_ms or 0.0
+        search_latency_ms = search_latency_ms or 0.0
 
         metric = RetrievalMetric(
             pipeline_name=pipeline_name,

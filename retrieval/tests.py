@@ -68,3 +68,17 @@ class BenchmarkTest(TestCase):
         self.assertEqual((summary['cases'], summary['hit_at_5'], summary['mrr']), (2, 0.5, 0.5))
         self.assertEqual(run.results.get(query='What does DDL stand for?').metrics['rank'], 1)
         self.assertFalse(run.results.get(query='What is a B-tree index?').metrics['hit'])
+
+
+from retrieval.metrics import MetricsCollector
+
+
+class MetricsScaleTest(TestCase):
+    def test_similarity_metrics_ignore_reranker_logits(self):
+        chunks = [RankedChunk(1, 'a', 0, 1, 'a.pdf', 0.6, reranked_score=7.3),
+                  RankedChunk(2, 'b', 1, 1, 'a.pdf', 0.4, reranked_score=-4.0)]
+        metric = MetricsCollector().record_retrieval('p', 'q', chunks, top_k=5, reranking_applied=True,
+                                                    reranker_used='cross-encoder', total_latency_ms=12.0)
+        self.assertAlmostEqual(metric.mean_similarity_score, 0.5)
+        self.assertEqual(metric.top_score, 0.6)
+        self.assertEqual((metric.total_latency_ms, metric.embedding_latency_ms), (12.0, 0.0))

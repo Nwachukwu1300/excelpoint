@@ -5,14 +5,13 @@ Handles retry logic when answer verification fails,
 including query rewriting based on unsupported claims.
 """
 
-import time
 import logging
 from dataclasses import dataclass, field
 from typing import List, Optional, Any, Dict
 
 from django.conf import settings
 
-from .verifier import VerificationResult, AnswerVerifier
+from .verifier import VerificationResult
 from .rewriter import QueryRewriter
 
 logger = logging.getLogger(__name__)
@@ -112,19 +111,12 @@ class RetryHandler:
 
         # Components for retry operations
         self._rewriter: Optional[QueryRewriter] = None
-        self._verifier: Optional[AnswerVerifier] = None
 
     def _get_rewriter(self) -> QueryRewriter:
         """Get or create the query rewriter."""
         if self._rewriter is None:
             self._rewriter = QueryRewriter()
         return self._rewriter
-
-    def _get_verifier(self) -> AnswerVerifier:
-        """Get or create the answer verifier."""
-        if self._verifier is None:
-            self._verifier = AnswerVerifier()
-        return self._verifier
 
     def should_retry(
         self,
@@ -172,7 +164,6 @@ class RetryHandler:
         pipeline_name: str,
         subject_id: int,
         attempt_number: int,
-        answer_generator_func: Any = None,
     ) -> RetryResult:
         """
         Handle a retry attempt.
@@ -186,7 +177,6 @@ class RetryHandler:
             pipeline_name: Retrieval pipeline to use.
             subject_id: Subject ID for retrieval.
             attempt_number: Current attempt number.
-            answer_generator_func: Optional callback for generating answers.
 
         Returns:
             RetryResult with rewritten query (caller handles retrieval/generation).
