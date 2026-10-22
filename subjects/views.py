@@ -240,69 +240,36 @@ def take_quiz(request, quiz_id):
             uses_dynamic_questions=True
         )
         
-        # Try synchronous generation first for immediate results
-        try:
-            from .tasks import generate_dynamic_quiz_questions
-            
-            # Call the task synchronously (without Celery)
-            print(f"Attempting synchronous generation for attempt {attempt.id}")
-            result = generate_dynamic_quiz_questions(attempt.id, num_questions=10)
-            print(f"Synchronous generation result: {result}")
-            
-            if result.get('status') == 'success' and result.get('questions_generated', 0) > 0:
-                # Questions generated successfully, refresh to show them
-                attempt.refresh_from_db()
-                if attempt.dynamic_questions:
-                    print(f"Questions generated successfully: {len(attempt.dynamic_questions)}")
-                    context = {
-                        'quiz': quiz,
-                        'attempt': attempt,
-                        'questions': attempt.dynamic_questions,
-                        'loading_dynamic': False,
-                        'total_questions': len(attempt.dynamic_questions),
-                        'total_points': sum(q.get('points', 1) for q in attempt.dynamic_questions),
-                        'is_dynamic': True
-                    }
-                    return render(request, 'subjects/take_quiz.html', context)
-                        
-        except Exception as e:
-            print(f"Synchronous generation failed: {e}")
-            import traceback
-            traceback.print_exc()
-            
-            # If API fails, provide user-friendly error and fallback to static questions
-            messages.warning(request, "Dynamic question generation is temporarily unavailable. Using static questions instead.")
-            
-            # Fall back to static questions
-            questions = quiz.questions.all().order_by('order')
-            if questions.exists():
-                context = {
-                    'quiz': quiz,
-                    'attempt': attempt,
-                    'questions': questions,
-                    'total_questions': questions.count(),
-                    'total_points': sum(q.points for q in questions),
-                    'loading_dynamic': False,
-                    'is_dynamic': False,
-                    'api_error': True
-                }
-                return render(request, 'subjects/take_quiz.html', context)
-            else:
-                messages.error(request, "No questions available for this quiz. Please contact support.")
-                return redirect('subject_detail', pk=quiz.subject.id)
-        
-        # Fall back to background generation if sync fails
+        # Generate in the background: the LLM call takes seconds, so the page shows a loader and polls
         try:
             generate_dynamic_quiz_questions.delay(attempt.id, num_questions=10)
         except Exception as e:
-            print(f"Background task failed: {e}")
-        
-        # Show loading message with refresh option
+            logger.error(f"Could not queue dynamic questions for attempt {attempt.id}: {e}")
+            messages.warning(request, "Dynamic question generation is temporarily unavailable. Using static questions instead.")
+            questions = quiz.questions.all().order_by('order')
+            if not questions.exists():
+                messages.error(request, "No questions available for this quiz. Please contact support.")
+                return redirect('subject_detail', pk=quiz.subject.id)
+            attempt.uses_dynamic_questions = False
+            attempt.save(update_fields=['uses_dynamic_questions'])
+            return render(request, 'subjects/take_quiz.html', {
+                'quiz': quiz,
+                'attempt': attempt,
+                'questions': questions,
+                'total_questions': questions.count(),
+                'total_points': sum(q.points for q in questions),
+                'loading_dynamic': False,
+                'is_dynamic': False,
+                'api_error': True,
+            })
+
         context = {
             'quiz': quiz,
             'attempt': attempt,
             'loading_dynamic': True,
-            'refresh_url': request.build_absolute_uri() + f'?attempt_id={attempt.id}',
+            # Must carry attempt_id: reloading without it would abandon this attempt and start another
+            'refresh_url': f"{request.path}?dynamic=true&attempt_id={attempt.id}",
+            'static_url': request.path,
             'questions': [],
             'total_questions': 0,
             'total_points': 0,
