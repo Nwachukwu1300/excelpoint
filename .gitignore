@@ -105,3 +105,6 @@ celerybeat-schedule.db
 celerybeat.pid
 *.celerybeat
 !.env.example
+
+# Playwright MCP snapshots
+.playwright-mcp/

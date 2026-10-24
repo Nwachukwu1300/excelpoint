@@ -24,6 +24,8 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
+    // The chat widget only; the new app in frontend/ has its own React 19 setup and test run.
+    include: ['src/**/*.test.{ts,tsx}'],
   },
   resolve: {
     alias: {

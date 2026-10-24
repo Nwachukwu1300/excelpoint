@@ -1,12 +1,29 @@
+from django.conf import settings
+from django.http import HttpResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import ensure_csrf_cookie
 from django.utils import timezone
 from datetime import timedelta
 from django.db.models import Count, Q, Avg
 
 from learning.models import Course, CourseProgress, Achievement, UserAchievement
 from subjects.models import Subject, SubjectMaterial, UserQuizAttempt
+
+
+APP_INDEX = settings.BASE_DIR / 'static' / 'app' / 'index.html'
+
+
+@login_required
+@ensure_csrf_cookie
+def app_shell(request):
+    """Serve the built React app's index.html for every /app/ route; React Router takes it from there."""
+    try:
+        return HttpResponse(APP_INDEX.read_text())
+    except FileNotFoundError:
+        return HttpResponse('The app is not built yet. Run: npm --prefix frontend run build',
+                            status=503, content_type='text/plain')
 
 
 def home(request):

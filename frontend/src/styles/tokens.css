@@ -1,0 +1,60 @@
+/* Design tokens, verbatim from the Figma Make prototype (src/index.css). */
+:root {
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --ai-one: #667eea;
+  --ai-two: #764ba2;
+  --success: #06a77f;
+  --success-soft: #e6fbf5;
+  --warning: #d97706;
+  --warning-soft: #fff7e6;
+  --danger: #ef4444;
+  --danger-soft: #fef2f2;
+  --text: #1e293b;
+  --muted: #64748b;
+  --border: #e2e8f0;
+  --background: #f8fafc;
+  --card: #ffffff;
+  --sidebar: #ffffff;
+  --hover: #f1f5f9;
+  --primary-soft: #eff6ff;
+  --ai-soft: #f3f0ff;
+  --shadow: 0 1px 2px rgb(15 23 42 / .04), 0 5px 16px rgb(15 23 42 / .035);
+  --shadow-lg: 0 20px 45px rgb(15 23 42 / .14);
+  --radius: 8px;
+  --sidebar-width: 240px;
+  --topbar-height: 64px;
+}
+
+[data-theme='dark'] {
+  --primary: #3b82f6;
+  --primary-hover: #60a5fa;
+  --success: #06d6a0;
+  --success-soft: rgb(6 214 160 / .12);
+  --warning: #f59e0b;
+  --warning-soft: rgb(245 158 11 / .12);
+  --danger-soft: rgb(239 68 68 / .12);
+  --text: #f1f5f9;
+  --muted: #94a3b8;
+  --border: #334155;
+  --background: #0f172a;
+  --card: #1e293b;
+  --sidebar: #172033;
+  --hover: #273449;
+  --primary-soft: rgb(59 130 246 / .13);
+  --ai-soft: rgb(118 75 162 / .15);
+  --shadow: 0 1px 2px rgb(0 0 0 / .2), 0 5px 16px rgb(0 0 0 / .08);
+  --shadow-lg: 0 20px 45px rgb(0 0 0 / .32);
+}
+
+@media (max-width: 640px) { :root { --topbar-height: 56px; } }
+
+/* Motion tokens (curves measured on bencho.dev). JS springs live in lib/motion.ts. */
+:root {
+  --ease-out: cubic-bezier(.22, 1, .36, 1);
+  --ease-spring: cubic-bezier(.28, 1.3, .36, 1);
+  --ease-drawer: cubic-bezier(.32, .72, 0, 1);
+  --dur-fast: 120ms;
+  --dur: 200ms;
+  --dur-slow: 320ms;
+}

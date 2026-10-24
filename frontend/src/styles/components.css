@@ -1,0 +1,59 @@
+/* Shared primitives (ui/). Values from the prototype; press feedback added (easyui PressButton: scale .97). */
+.button { display: inline-flex; min-height: 40px; align-items: center; justify-content: center; gap: 8px; padding: 0 16px; border: 1px solid transparent; border-radius: var(--radius); font-size: 13px; font-weight: 600; transition: .15s ease, scale var(--dur-fast) var(--ease-spring); }
+.button:active:not(:disabled), .icon-button:active:not(:disabled) { scale: .97; }
+.button--primary { color: white; background: var(--primary); box-shadow: 0 1px 2px rgb(37 99 235 / .15); }
+.button--primary:hover { background: var(--primary-hover); }
+.button--secondary { border-color: var(--border); color: var(--text); background: var(--card); }
+.button--secondary:hover, .button--ghost:hover { background: var(--hover); }
+.button--ghost { color: var(--text); background: transparent; }
+.button--danger { color: white; background: var(--danger); }
+.button--ai { color: white; background: linear-gradient(135deg, var(--ai-one), var(--ai-two)); }
+.full-width { width: 100%; }
+
+.icon-button { display: inline-grid; width: 34px; height: 34px; place-items: center; border: 0; border-radius: 7px; color: var(--muted); background: transparent; transition: .15s ease, scale var(--dur-fast) var(--ease-spring); }
+.icon-button:hover { color: var(--text); background: var(--hover); }
+
+.badge { display: inline-flex; min-height: 22px; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 20px; color: var(--muted); background: var(--hover); font-size: 10px; font-weight: 700; white-space: nowrap; }
+.badge--primary { color: var(--primary); background: var(--primary-soft); }
+.badge--ai { color: #6746a5; background: var(--ai-soft); }
+[data-theme='dark'] .badge--ai { color: #c4b5fd; }
+.badge--success { color: var(--success); background: var(--success-soft); }
+.badge--warning { color: var(--warning); background: var(--warning-soft); }
+.badge--danger { color: var(--danger); background: var(--danger-soft); }
+.status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+.avatar { display: grid; width: 38px; height: 38px; flex: 0 0 auto; place-items: center; border: 1px solid #bfdbfe; border-radius: 50%; color: #1e40af; background: #dbeafe; font-size: 12px; font-weight: 700; }
+[data-theme='dark'] .avatar { border-color: #475569; color: #dbeafe; background: #334155; }
+.avatar--small { width: 32px; height: 32px; font-size: 10px; }
+
+.logo { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.logo-mark { display: grid; width: 32px; height: 32px; flex: 0 0 auto; place-items: center; border-radius: var(--radius); color: white; background: var(--primary); box-shadow: 0 5px 10px rgb(37 99 235 / .22); }
+.logo-mark span { font-size: 12px; font-weight: 700; letter-spacing: -.04em; }
+.logo-word { font-size: 16px; font-weight: 700; letter-spacing: -.025em; }
+
+.xp-avatar { display: grid; width: 40px; height: 40px; flex: 0 0 auto; place-items: center; border-radius: 10px; color: white; background: linear-gradient(135deg, var(--ai-one), var(--ai-two)); box-shadow: 0 5px 12px rgb(102 126 234 / .25); }
+.xp-avatar--small { width: 32px; height: 32px; border-radius: 8px; }
+
+.progress-track { height: 5px; overflow: hidden; border-radius: 5px; background: var(--hover); }
+.progress-track span { display: block; height: 100%; border-radius: inherit; background: var(--primary); }
+
+.skeleton { display: block; width: 100%; height: 10px; overflow: hidden; border-radius: 5px; background: var(--hover); }
+.skeleton::after { display: block; width: 50%; height: 100%; background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--card) 70%, transparent), transparent); animation: shimmer 1.4s infinite; content: ''; }
+.skeleton-avatar { width: 32px; height: 32px; flex: 0 0 auto; border-radius: 50%; }
+.skeleton-list-row { display: flex; align-items: center; gap: 9px; margin-top: 12px; }
+.skeleton-list-row > div { display: flex; flex: 1; flex-direction: column; gap: 6px; }
+.skeleton-list-row > div .skeleton:last-child { width: 60%; height: 7px; }
+
+.empty-state { display: flex; min-height: 420px; flex-direction: column; align-items: center; justify-content: center; padding: 40px; border: 1px dashed var(--border); border-radius: 12px; background: var(--card); text-align: center; }
+.empty-icon { display: grid; width: 52px; height: 52px; place-items: center; border-radius: 12px; color: var(--primary); background: var(--primary-soft); }
+.empty-state h2 { margin: 18px 0 7px; font-size: 17px; }
+.empty-state p { max-width: 430px; margin: 0 0 20px; color: var(--muted); font-size: 13px; line-height: 1.6; }
+
+/* Full-screen error pages (404 / 500) */
+.error-page { display: flex; min-height: 100vh; flex-direction: column; align-items: center; justify-content: center; padding: 24px; background: var(--background); text-align: center; }
+.error-page > .logo { position: absolute; top: 24px; left: 28px; }
+.error-code { color: var(--primary-soft); font-size: clamp(100px, 18vw, 220px); font-weight: 700; letter-spacing: -.08em; line-height: .8; }
+.error-page .badge { margin-top: -12px; }
+.error-page h1 { margin: 18px 0 8px; font-size: 28px; }
+.error-page p { max-width: 440px; margin: 0 0 22px; color: var(--muted); font-size: 11px; line-height: 1.6; }
+.error-page > div:last-child { display: flex; gap: 8px; }

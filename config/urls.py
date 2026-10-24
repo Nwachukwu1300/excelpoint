@@ -15,17 +15,22 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
 from django.conf import settings
 from django.conf.urls.static import static
 from subjects.views import SubjectListView, SubjectDetailView, create_subject, upload_material, review_flashcards
-from .views import home
+from users import api as users_api
+from .views import home, app_shell
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', home, name='home'),
+    re_path(r'^app(?:/.*)?$', app_shell, name='app'),  # the new React app; its router handles the rest
     path('users/', include('users.urls')),
     path('learning/', include('learning.urls')),
+    path('api/me/', users_api.me, name='api_me'),
+    path('api/notifications/', users_api.notifications, name='api_notifications'),
+    path('api/notifications/read/', users_api.mark_notifications_read, name='api_notifications_read'),
     path('api/', include('subjects.urls')),
     path('api/retrieval/', include('retrieval.urls')),  # Stage 1: Retrieval System Optimization
     path('api/reasoning/', include('reasoning.urls')),  # Stage 2: Agentic Reasoning Pipeline

@@ -1,0 +1,101 @@
+/* App shell: sidebar, top bar, dropdowns, mobile tab bar. From the prototype unless marked "added". */
+.app-shell { min-height: 100vh; background: var(--background); }
+.sidebar { position: fixed; inset: 0 auto 0 0; z-index: 20; display: flex; width: var(--sidebar-width); flex-direction: column; border-right: 1px solid var(--border); background: var(--sidebar); transition: width .24s var(--ease-drawer); }
+.sidebar.is-collapsed { width: 72px; }
+.sidebar-top { display: flex; height: var(--topbar-height); align-items: center; justify-content: space-between; padding: 0 16px 0 20px; border-bottom: 1px solid var(--border); }
+.is-collapsed .sidebar-top { justify-content: center; padding: 0; }
+.is-collapsed .sidebar-top .icon-button { display: none; }
+.logo-button { border-radius: var(--radius); } /* added: the logo expands a collapsed sidebar */
+.main-nav { display: flex; flex: 1; flex-direction: column; gap: 4px; padding: 20px 12px; overflow-x: hidden; overflow-y: auto; }
+.nav-item { position: relative; display: flex; width: 100%; height: 40px; flex: 0 0 auto; align-items: center; gap: 12px; padding: 0 12px; border: 0; border-radius: var(--radius); color: var(--muted); background: transparent; font-size: 14px; font-weight: 500; text-align: left; white-space: nowrap; transition: color .15s ease, background .15s ease; }
+.nav-item > :not(.nav-active) { position: relative; } /* added: sit above the sliding pill */
+.nav-item:hover { color: var(--text); background: var(--hover); }
+.nav-item.is-active { color: var(--primary); font-weight: 600; }
+.nav-item.is-active:hover { background: transparent; }
+/* added: the active background is one shared element that slides between items (motion layoutId) */
+.nav-active { position: absolute; inset: 0; border-radius: var(--radius); background: var(--primary-soft); }
+.nav-active::before { position: absolute; top: 9px; left: -12px; width: 3px; height: 22px; border-radius: 0 3px 3px 0; background: var(--primary); content: ''; }
+.is-collapsed .nav-item { justify-content: center; padding: 0; }
+.nav-badge { margin-left: auto; min-width: 22px; padding: 2px 6px; border-radius: 20px; color: var(--primary); background: var(--card); font-size: 11px; font-weight: 700; text-align: center; }
+.subject-nav { display: flex; flex-direction: column; gap: 2px; margin: 0 0 8px 30px; padding-left: 12px; overflow: hidden; border-left: 1px solid var(--border); }
+.subject-nav a { display: flex; min-height: 34px; align-items: center; gap: 8px; padding: 6px 8px; border: 0; border-radius: 6px; color: var(--muted); background: transparent; font-size: 12px; text-align: left; }
+.subject-nav a:hover, .subject-nav a.is-active { color: var(--text); background: var(--hover); }
+.subject-nav a span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.subject-nav a small { display: grid; min-width: 20px; height: 20px; place-items: center; border-radius: 10px; color: var(--muted); background: var(--hover); font-size: 10px; }
+.subject-nav .new-subject { color: var(--primary); font-weight: 600; }
+.sidebar-help { padding: 12px; }
+.sidebar-help > p { margin: 10px 4px 16px; color: var(--muted); font-size: 12px; line-height: 1.5; }
+.sidebar-user { display: flex; min-height: 52px; align-items: center; gap: 10px; padding: 8px; border-top: 1px solid var(--border); }
+.sidebar-user > div { flex: 1; min-width: 0; }
+/* scoped to the text (the prototype's `.sidebar-user span` also hit the avatar and knocked its initials off-centre) */
+.sidebar-user > div strong, .sidebar-user > div span { display: block; overflow: hidden; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.sidebar-user > div span { margin-top: 2px; color: var(--muted); font-size: 10px; }
+.sidebar-user > .icon { color: var(--muted); }
+.is-collapsed .sidebar-user { justify-content: center; padding: 10px 0; }
+.app-main { min-height: 100vh; margin-left: var(--sidebar-width); transition: margin .24s var(--ease-drawer); }
+.app-main.sidebar-collapsed { margin-left: 72px; }
+
+.topbar { position: sticky; top: 0; z-index: 15; display: flex; height: var(--topbar-height); align-items: center; justify-content: space-between; padding: 0 32px; border-bottom: 1px solid var(--border); background: color-mix(in srgb, var(--card) 92%, transparent); backdrop-filter: blur(12px); }
+.breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+.breadcrumb span { color: var(--muted); }
+.breadcrumb .icon { color: var(--muted); }
+.breadcrumb strong { font-weight: 600; }
+.top-actions { display: flex; align-items: center; gap: 6px; }
+.menu-wrap { position: relative; }
+.unread { position: absolute; top: -2px; right: -1px; display: grid; min-width: 16px; height: 16px; padding: 0 3px; place-items: center; border: 2px solid var(--card); border-radius: 8px; color: white; background: var(--danger); font-size: 9px; font-weight: 700; pointer-events: none; }
+.avatar-button { display: flex; align-items: center; gap: 4px; margin-left: 4px; padding: 2px 4px; border: 0; border-radius: 20px; color: var(--muted); background: transparent; }
+.avatar-button:hover { background: var(--hover); }
+.theme-icon { display: grid; place-items: center; } /* added: sun/moon swap */
+
+.dropdown { position: absolute; top: calc(100% + 10px); right: 0; z-index: 40; width: 330px; overflow: hidden; border: 1px solid var(--border); border-radius: 10px; background: var(--card); box-shadow: var(--shadow-lg); transform-origin: top right; }
+.dropdown--account { width: 250px; }
+.dropdown-head { display: flex; align-items: center; justify-content: space-between; padding: 16px; border-bottom: 1px solid var(--border); font-size: 14px; }
+.dropdown-head button, .dropdown-footer { border: 0; color: var(--primary); background: transparent; font-size: 11px; font-weight: 600; }
+.dropdown-head button:disabled { color: var(--muted); }
+.dropdown-list { max-height: min(420px, 60vh); overflow-y: auto; }
+.notification { display: flex; width: 100%; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--border); text-align: left; transition: background .15s ease; }
+.notification:hover { background: var(--hover); }
+.notification.is-new { background: var(--primary-soft); }
+.notification-icon { display: grid; width: 32px; height: 32px; flex: 0 0 auto; place-items: center; border-radius: 50%; color: var(--primary); background: var(--card); }
+.notification-icon.ai-bg { color: white; background: linear-gradient(135deg, var(--ai-one), var(--ai-two)); }
+.notification-icon.failed { color: var(--danger); background: var(--danger-soft); }
+.notification strong, .notification p, .notification small { display: block; margin: 0; font-size: 12px; }
+.notification p { margin: 3px 0; color: var(--muted); }
+.notification small { color: var(--muted); font-size: 10px; }
+.dropdown-empty { padding: 28px 16px; color: var(--muted); font-size: 12px; text-align: center; } /* added */
+.dropdown-loading { padding: 4px 16px 16px; } /* added */
+.dropdown-footer { display: block; width: 100%; padding: 12px; text-align: center; }
+.account-summary { display: flex; gap: 10px; padding: 16px; border-bottom: 1px solid var(--border); }
+.account-summary div { min-width: 0; }
+.account-summary > div strong, .account-summary > div span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+.account-summary > div span { margin-top: 3px; color: var(--muted); font-size: 10px; }
+.dropdown-links { padding: 6px; }
+.dropdown-links a, .dropdown-links button { display: flex; width: 100%; align-items: center; gap: 10px; padding: 9px 10px; border: 0; border-radius: 6px; color: var(--text); background: transparent; font-size: 12px; }
+.dropdown-links a:hover, .dropdown-links button:hover { background: var(--hover); }
+.dropdown-links .logout { margin-top: 5px; border-top: 1px solid var(--border); border-radius: 0; color: var(--danger); }
+
+.mobile-nav { display: none; }
+
+@media (max-width: 900px) {
+  .sidebar, .sidebar.is-collapsed { width: 72px; }
+  .sidebar-top { justify-content: center; padding: 0; }
+  .sidebar-top .icon-button, .logo-word, .nav-item span, .nav-badge, .subject-nav, .sidebar-help > p, .sidebar-help > .badge, .sidebar-user > div, .sidebar-user > .icon { display: none; }
+  .nav-item { justify-content: center; padding: 0; }
+  .sidebar-user { justify-content: center; }
+  .app-main, .app-main.sidebar-collapsed { margin-left: 72px; }
+}
+
+@media (max-width: 640px) {
+  .sidebar { display: none; }
+  .app-main, .app-main.sidebar-collapsed { margin-left: 0; padding-bottom: 68px; }
+  .topbar { padding: 0 16px; }
+  .breadcrumb span, .breadcrumb .icon, .avatar-button > .icon { display: none; }
+  .breadcrumb strong { font-size: 15px; }
+  .mobile-nav { position: fixed; inset: auto 0 0; z-index: 30; display: grid; height: 68px; grid-template-columns: repeat(5, 1fr); border-top: 1px solid var(--border); background: color-mix(in srgb, var(--card) 94%, transparent); backdrop-filter: blur(12px); padding-bottom: env(safe-area-inset-bottom); }
+  .mobile-nav a { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 0; color: var(--muted); background: transparent; font-size: 9px; font-weight: 500; }
+  .mobile-nav a.is-active { color: var(--primary); }
+  .mobile-nav .nav-dot { position: absolute; top: 0; width: 24px; height: 2px; border-radius: 2px; background: var(--primary); } /* was ::before; now slides (layoutId) */
+  .mobile-nav small { position: absolute; top: 6px; left: calc(50% + 7px); display: grid; min-width: 16px; height: 16px; padding: 0 3px; place-items: center; border-radius: 8px; color: white; background: var(--danger); font-size: 8px; }
+  .dropdown { position: fixed; top: 62px; right: 12px; left: 12px; width: auto; }
+  .dropdown--account { left: auto; width: 250px; }
+}

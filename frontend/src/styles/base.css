@@ -1,0 +1,60 @@
+/* The prototype ran on Tailwind's preflight reset; this is the part of it the design relies on. */
+@layer base {
+  *, ::before, ::after, ::backdrop { box-sizing: border-box; margin: 0; padding: 0; border: 0 solid; }
+  html { line-height: 1.5; -webkit-text-size-adjust: 100%; tab-size: 4; -webkit-tap-highlight-color: transparent; }
+  h1, h2, h3, h4, h5, h6 { font-size: inherit; font-weight: inherit; }
+  a { color: inherit; text-decoration: inherit; }
+  b, strong { font-weight: bolder; }
+  code, kbd, samp, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 1em; }
+  small { font-size: 80%; }
+  table { text-indent: 0; border-color: inherit; border-collapse: collapse; }
+  ol, ul, menu { list-style: none; }
+  img, svg, video, canvas { display: block; vertical-align: middle; }
+  img, video { max-width: 100%; height: auto; }
+  button, input, select, textarea { font: inherit; letter-spacing: inherit; color: inherit; border-radius: 0; background-color: transparent; opacity: 1; }
+  ::placeholder { opacity: 1; color: color-mix(in oklab, currentcolor 50%, transparent); }
+  textarea { resize: vertical; }
+  [hidden]:where(:not([hidden='until-found'])) { display: none !important; }
+
+  /* Prototype base */
+  html { font-family: 'Inter', system-ui, sans-serif; color: var(--text); background: var(--background); }
+  body { min-width: 320px; min-height: 100vh; background: var(--background); }
+  button { cursor: pointer; }
+  button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, a:focus-visible { outline: 3px solid rgb(37 99 235 / .25); outline-offset: 2px; }
+  button:disabled { cursor: not-allowed; opacity: .5; }
+}
+
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+.icon { display: block; flex: 0 0 auto; }
+
+main { min-height: calc(100vh - var(--topbar-height)); }
+.page-content { max-width: 1360px; margin: 0 auto; padding: 36px 40px 56px; }
+.page-intro { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 28px; }
+.overline, .eyebrow { margin: 0 0 6px; color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: .1em; }
+.page-intro h1 { margin: 0; font-size: 28px; font-weight: 650; letter-spacing: -.035em; line-height: 1.25; }
+.page-intro > div > p:last-child { margin: 7px 0 0; color: var(--muted); font-size: 14px; }
+.section-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+.section-heading h2 { margin: 0; font-size: 16px; font-weight: 650; letter-spacing: -.015em; }
+.section-heading p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+.section-heading > button, .section-heading > a { display: flex; align-items: center; gap: 6px; border: 0; color: var(--primary); background: transparent; font-size: 11px; font-weight: 600; }
+
+@keyframes fade { from { opacity: 0; } }
+@keyframes enter { from { opacity: 0; transform: translateY(5px); } }
+@keyframes pulse { to { opacity: .25; transform: translateY(-2px); } }
+@keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(220%); } }
+
+/* Theme switch: a short cross-fade of the whole page (document.startViewTransition in lib/theme.ts). */
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: var(--dur); animation-timing-function: var(--ease-out); }
+
+@media (max-width: 640px) {
+  .page-content { padding: 24px 16px 36px; }
+  .page-intro { align-items: flex-start; margin-bottom: 22px; }
+  .page-intro h1 { font-size: 23px; }
+  .page-intro > .button { width: 40px; min-width: 40px; padding: 0; font-size: 0; }
+}
+
+/* Calm and quick, or none at all when the user asks for less motion. */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+}
