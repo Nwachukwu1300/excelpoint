@@ -21,7 +21,9 @@ def _material_name(material):
 
 
 def recommend(user, limit=6):
-    """Suggestions sorted by priority (higher first): dicts of kind, title, reason, url, priority."""
+    """Suggestions sorted by priority (higher first): dicts of kind, title, reason, url, priority,
+    subject_id and quiz_id (None unless the suggestion is about a quiz). `url` points at the old pages;
+    the React app builds its own links from the ids."""
     recs = []
 
     # 1. Flashcards due (spaced repetition)
@@ -32,6 +34,7 @@ def recommend(user, limit=6):
             'title': f"Review {row['n']} flashcard{'s' if row['n'] != 1 else ''} in {row['subject__name']}",
             'reason': "They're due now; reviewing on schedule is what makes them stick.",
             'url': reverse('review_flashcards', args=[row['subject_id']]),
+            'subject_id': row['subject_id'], 'quiz_id': None,
         })
 
     # 2. Weak quizzes: latest completed attempt under the threshold
@@ -44,6 +47,7 @@ def recommend(user, limit=6):
                 'title': f"Retake the quiz on {_material_name(last.quiz.material)}",
                 'reason': f"Your last score was {last.score:.0f}%. Each retake asks new questions from the same material.",
                 'url': reverse('take_quiz', args=[quiz_id]),
+                'subject_id': last.quiz.subject_id, 'quiz_id': quiz_id,
             })
 
     # 3. Quizzes never attempted
@@ -55,6 +59,7 @@ def recommend(user, limit=6):
             'title': f"Test yourself on {_material_name(quiz.material)}",
             'reason': "You haven't tried this quiz yet.",
             'url': reverse('take_quiz', args=[quiz.id]),
+            'subject_id': quiz.subject_id, 'quiz_id': quiz.id,
         })
 
     # 4. Knowledge gaps: recent questions the materials couldn't answer (strict-RAG fallbacks)
@@ -73,9 +78,10 @@ def recommend(user, limit=6):
         recs.append({
             'kind': 'knowledge_gap', 'priority': 35 + len(questions),
             'title': f"Add materials to {subject.name}",
-            'reason': (f"{len(questions)} recent question{'s' if len(questions) != 1 else ''} weren't covered by your notes"
+            'reason': (f"{len(questions)} recent question{'s weren’t' if len(questions) != 1 else ' wasn’t'} covered by your notes"
                        + (f", e.g. “{example[:80]}”." if example else ".")),
             'url': reverse('subject_detail', args=[subject.id]),
+            'subject_id': subject.id, 'quiz_id': None,
         })
 
     # 5. Subjects with nothing uploaded yet
@@ -85,6 +91,7 @@ def recommend(user, limit=6):
             'title': f"Upload your first material to {subject.name}",
             'reason': "XP can only answer, quiz and make flashcards from what you upload.",
             'url': reverse('subject_detail', args=[subject.id]),
+            'subject_id': subject.id, 'quiz_id': None,
         })
 
     recs.sort(key=lambda r: r['priority'], reverse=True)

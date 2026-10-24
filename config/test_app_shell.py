@@ -28,6 +28,20 @@ class AppShellTest(TestCase):
                 self.assertContains(response, '<div id="root">')
         self.assertIn('csrftoken', response.cookies)
 
+    def test_signed_in_home_goes_to_the_app(self):
+        self.client.force_login(self.user)
+        self.assertRedirects(self.client.get('/'), '/app', fetch_redirect_response=False)
+
+    def test_login_lands_in_the_app_or_a_safe_next(self):
+        response = self.client.post('/users/login/', {'username': 's', 'password': 'p'})
+        self.assertRedirects(response, '/app', fetch_redirect_response=False)
+        self.client.logout()
+        response = self.client.post('/users/login/?next=/app/subjects/3', {'username': 's', 'password': 'p'})
+        self.assertRedirects(response, '/app/subjects/3', fetch_redirect_response=False)
+        self.client.logout()
+        response = self.client.post('/users/login/?next=https://evil.example/', {'username': 's', 'password': 'p'})
+        self.assertRedirects(response, '/app', fetch_redirect_response=False)
+
     def test_missing_build_is_503(self):
         self.client.force_login(self.user)
         with patch.object(views, 'APP_INDEX', self.index.with_name('missing.html')):

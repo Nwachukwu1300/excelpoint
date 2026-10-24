@@ -1,0 +1,72 @@
+/* Home "Today". From the prototype unless marked "added". */
+.today-grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 28px; align-items: start; }
+.today-main, .today-side { display: flex; min-width: 0; flex-direction: column; gap: 28px; }
+.review-hero { position: relative; display: flex; min-height: 132px; align-items: center; justify-content: space-between; gap: 24px; overflow: hidden; padding: 24px 28px; border: 1px solid var(--border); border-radius: 12px; background: var(--card); box-shadow: var(--shadow); }
+.review-hero::after { position: absolute; top: -80px; right: -60px; width: 210px; height: 210px; border-radius: 50%; background: var(--primary-soft); content: ''; }
+.review-hero > * { position: relative; z-index: 1; }
+.review-hero > div { display: flex; align-items: center; gap: 16px; }
+.review-hero > .skeleton-stack { flex-direction: column; align-items: stretch; max-width: 420px; } /* added */
+.review-symbol { display: grid; width: 48px; height: 48px; flex: 0 0 auto; place-items: center; border-radius: 10px; color: var(--primary); background: var(--primary-soft); }
+.review-hero h2 { margin: 0; font-size: 23px; font-weight: 650; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.review-hero p { margin: 5px 0 0; color: var(--muted); font-size: 12px; }
+.dashboard-section { min-width: 0; }
+.next-list, .conversations-card, .new-user-preview { overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow); }
+.next-item { display: flex; align-items: center; gap: 14px; padding: 14px 16px; }
+.next-item + .next-item { border-top: 1px solid var(--border); }
+.next-item > div { flex: 1; min-width: 0; }
+.next-item strong { display: block; overflow: hidden; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.next-item p { margin: 4px 0 0; overflow: hidden; color: var(--muted); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.next-item .button { min-height: 32px; padding: 0 11px; font-size: 10px; }
+.rank { display: grid; width: 28px; height: 28px; flex: 0 0 auto; place-items: center; border-radius: 50%; color: var(--muted); background: var(--hover); font-size: 10px; font-weight: 700; }
+.rank--warning { color: var(--warning); background: var(--warning-soft); }
+.rank--primary { color: var(--primary); background: var(--primary-soft); }
+.rank--ai { color: var(--ai-one); background: var(--ai-soft); }
+.rank--success { color: var(--success); background: var(--success-soft); }
+.home-subjects { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.home-subject { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 16px; border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); background: var(--card); text-align: left; box-shadow: var(--shadow); transition: border-color .15s ease, translate .15s ease; }
+.home-subject:hover { border-color: var(--primary); translate: 0 -2px; } /* lift added (prototype subject-card hover) */
+.home-subject > div strong, .home-subject > div span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.home-subject > div strong { font-size: 11px; }
+.home-subject > div span { margin-top: 3px; color: var(--muted); font-size: 9px; }
+.home-subject dl { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; margin: 3px 0 0; padding-top: 12px; border-top: 1px solid var(--border); }
+.home-subject dl div + div { border-left: 1px solid var(--border); padding-left: 14px; }
+.home-subject dt { color: var(--muted); font-size: 8px; text-transform: uppercase; }
+.home-subject dd { margin: 2px 0 0; font-size: 12px; font-weight: 650; }
+.subject-icon { display: grid; width: 36px; height: 36px; place-items: center; border-radius: var(--radius); font-size: 11px; font-weight: 700; }
+.subject-icon--violet { color: #6d28d9; background: #ede9fe; }
+.subject-icon--blue { color: #1d4ed8; background: #dbeafe; }
+.subject-icon--green { color: #047857; background: #d1fae5; }
+[data-theme='dark'] .subject-icon--violet { color: #ddd6fe; background: rgb(109 40 217 / .25); }
+[data-theme='dark'] .subject-icon--blue { color: #bfdbfe; background: rgb(29 78 216 / .25); }
+[data-theme='dark'] .subject-icon--green { color: #a7f3d0; background: rgb(4 120 87 / .25); }
+.conversations-card { padding: 18px; }
+.conversations-card .section-heading { margin-bottom: 8px; }
+.conversation-row { display: flex; width: 100%; align-items: center; gap: 10px; padding: 12px 0; border: 0; border-top: 1px solid var(--border); color: var(--text); background: transparent; text-align: left; }
+.conversation-row:hover strong { color: var(--primary); } /* added */
+.conversation-row > div { flex: 1; min-width: 0; }
+.conversation-row strong, .conversation-row div > span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.conversation-row strong { font-size: 11px; transition: color .15s ease; }
+.conversation-row div > span { margin-top: 3px; color: var(--muted); font-size: 9px; }
+.conversation-row > .icon { color: var(--muted); }
+.new-user-preview { padding: 24px; text-align: center; }
+.new-user-preview .empty-icon { margin: 0 auto; }
+.new-user-preview h3 { margin: 14px 0 5px; font-size: 13px; }
+.new-user-preview p { margin: 0 0 16px; color: var(--muted); font-size: 10px; line-height: 1.5; }
+
+@media (max-width: 1100px) {
+  .today-grid { grid-template-columns: 1fr; }
+  .today-side { display: grid; grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 800px) {
+  .home-subjects { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 640px) {
+  .today-grid, .today-side { display: flex; flex-direction: column; align-items: stretch; } /* prototype left out the direction, so it laid out as a row */
+  .review-hero { min-height: 0; align-items: flex-start; flex-direction: column; padding: 20px; }
+  .review-hero .button { width: 100%; }
+  .next-item { align-items: flex-start; flex-wrap: wrap; }
+  .next-item > div { width: calc(100% - 48px); }
+  .next-item > .button { margin-left: 42px; }
+  .next-item strong, .next-item p { white-space: normal; }
+  .home-subjects { grid-template-columns: 1fr; }
+}

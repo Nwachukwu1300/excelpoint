@@ -1,7 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { me, mockApi, renderApp } from '../test/render'
+import { emptyHome, me, mockApi, renderApp } from '../test/render'
 
 const notifications = {
   unread: 2,
@@ -15,7 +15,7 @@ afterEach(() => vi.unstubAllGlobals())
 
 describe('Shell', () => {
   it('shows the user, subjects with due counts, and badges from /api/me/', async () => {
-    mockApi({ 'GET /api/me/': me })
+    mockApi({ 'GET /api/me/': me, 'GET /api/home/': emptyHome })
     renderApp('/')
     expect(await screen.findByRole('heading', { name: /, Alex$/ })).toBeInTheDocument()
     const nav = screen.getByRole('navigation', { name: 'Primary navigation' })
@@ -39,6 +39,7 @@ describe('Shell', () => {
     document.cookie = 'csrftoken=tok123'
     const fetchMock = mockApi({
       'GET /api/me/': me,
+      'GET /api/home/': emptyHome,
       'GET /api/notifications/?limit=5': notifications,
       'POST /api/notifications/read/': { marked: 1, unread: 0 },
     })
@@ -56,7 +57,7 @@ describe('Shell', () => {
   })
 
   it('closes a menu with Escape', async () => {
-    mockApi({ 'GET /api/me/': me })
+    mockApi({ 'GET /api/me/': me, 'GET /api/home/': emptyHome })
     renderApp('/')
     await userEvent.click(await screen.findByRole('button', { name: 'Open account menu' }))
     expect(screen.getByRole('link', { name: 'Settings' })).toBeInTheDocument()
@@ -65,7 +66,7 @@ describe('Shell', () => {
   })
 
   it('collapses the sidebar and remembers it', async () => {
-    mockApi({ 'GET /api/me/': me })
+    mockApi({ 'GET /api/me/': me, 'GET /api/home/': emptyHome })
     renderApp('/')
     await userEvent.click(await screen.findByRole('button', { name: 'Collapse sidebar' }))
     expect(screen.queryByText('Database Systems')).not.toBeInTheDocument()

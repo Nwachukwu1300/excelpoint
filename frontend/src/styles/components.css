@@ -57,3 +57,14 @@
 .error-page h1 { margin: 18px 0 8px; font-size: 28px; }
 .error-page p { max-width: 440px; margin: 0 0 22px; color: var(--muted); font-size: 11px; line-height: 1.6; }
 .error-page > div:last-child { display: flex; gap: 8px; }
+
+.skeleton-label { width: 45%; }
+.skeleton-value { width: 35%; height: 28px; margin: 22px 0 10px; }
+.page-intro h1 .skeleton-value { width: 280px; margin: 4px 0; } /* added: greeting placeholder */
+.skeleton-stack { display: flex; flex: 1; flex-direction: column; gap: 10px; } /* added */
+/* added: one-line empty message inside a list card */
+.list-empty { padding: 16px; color: var(--muted); font-size: 11px; line-height: 1.5; }
+.conversations-card .list-empty { padding: 12px 0 2px; border-top: 1px solid var(--border); }
+/* added: a load failure in place of the content, with a retry */
+.inline-error { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 20px; border: 1px solid var(--border); border-left: 3px solid var(--danger); border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow); }
+.inline-error p { color: var(--muted); font-size: 13px; }

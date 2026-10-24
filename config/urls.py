@@ -19,6 +19,7 @@ from django.urls import path, include, re_path
 from django.conf import settings
 from django.conf.urls.static import static
 from subjects.views import SubjectListView, SubjectDetailView, create_subject, upload_material, review_flashcards
+from subjects import app_api as subjects_app_api
 from users import api as users_api
 from .views import home, app_shell
 
@@ -29,6 +30,7 @@ urlpatterns = [
     path('users/', include('users.urls')),
     path('learning/', include('learning.urls')),
     path('api/me/', users_api.me, name='api_me'),
+    path('api/home/', subjects_app_api.home, name='api_home'),
     path('api/notifications/', users_api.notifications, name='api_notifications'),
     path('api/notifications/read/', users_api.mark_notifications_read, name='api_notifications_read'),
     path('api/', include('subjects.urls')),

@@ -16,6 +16,7 @@ from .forms import (
 from .models import Notification, UserProfile, UserAchievement, UserCertification, UserEducation
 from django.utils import timezone
 from django.utils.crypto import constant_time_compare
+from django.utils.http import url_has_allowed_host_and_scheme
 from datetime import timedelta
 from django.views.decorators.http import require_http_methods
 from learning.models import CourseProgress, UserAchievement as LearningUserAchievement
@@ -111,8 +112,8 @@ def google_oauth_callback(request):
             # Log the user in
             login(request, user)
             messages.success(request, f"Welcome back, {user.first_name or user.username}!")
-            
-            return redirect('learning:dashboard')
+
+            return redirect('app')
         else:
             messages.error(request, "Unable to authenticate with Google. Please try again.")
             return redirect('users:login')
@@ -148,7 +149,12 @@ def login_user(request):
         if user is not None:
             login(request, user)
             messages.success(request, 'Login successful!')
-            return redirect('home')
+            # The form posts back to its own URL, so ?next= survives; only follow it to this site.
+            next_url = request.POST.get('next') or request.GET.get('next')
+            if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()},
+                                                           require_https=request.is_secure()):
+                return redirect(next_url)
+            return redirect('app')
         else:
             messages.error(request, 'Invalid username or password')
     

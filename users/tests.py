@@ -43,7 +43,7 @@ class GoogleOAuthCallbackTest(TestCase):
 
         response = self.client.get(self.url, {'code': 'c', 'state': 'ok', 'next': 'https://evil.example'})
 
-        self.assertRedirects(response, reverse('learning:dashboard'), fetch_redirect_response=False)
+        self.assertRedirects(response, reverse('app'), fetch_redirect_response=False)
         self.assertNotIn('google_oauth_state', self.client.session)
 
 

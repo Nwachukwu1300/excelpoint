@@ -34,6 +34,7 @@ class RecommendationTest(TestCase):
         by_kind = {r['kind']: r for r in recs}
         self.assertIn('40%', by_kind['weak_quiz']['reason'])
         self.assertIn('B-tree', by_kind['knowledge_gap']['reason'])
+        self.assertIn('1 recent question wasn’t covered', by_kind['knowledge_gap']['reason'])
         self.assertEqual(by_kind['review']['url'], reverse('review_flashcards', args=[self.db.id]))
 
     def test_good_scores_and_answered_questions_are_quiet(self):

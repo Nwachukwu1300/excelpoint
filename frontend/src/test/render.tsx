@@ -35,3 +35,5 @@ export function renderApp(path = '/') {
     </QueryClientProvider>,
   )
 }
+
+export const emptyHome = { due: { count: 0, subjects: 0, minutes: 0 }, suggestions: [], recent_chats: [], subjects: [] }

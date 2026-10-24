@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.http import HttpResponse
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -32,7 +32,7 @@ def home(request):
     and marketing content for non-authenticated users.
     """
     if request.user.is_authenticated:
-        return authenticated_home(request)
+        return redirect('app')  # the new React "Today" page replaced the old dashboard
     else:
         return marketing_home(request)
 
