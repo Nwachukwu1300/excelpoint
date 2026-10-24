@@ -5,7 +5,6 @@ import { api, useMe } from '../../lib/api'
 import { reveal } from '../../lib/motion'
 import { SubjectIcon } from '../../ui/SubjectIcon'
 import { timeAgo } from '../../lib/format'
-import { reviewHref } from '../../layout/nav'
 import { CountUp } from '../../ui/CountUp'
 import { Icon } from '../../ui/Icon'
 import { Button, Skeleton, buttonClass, type Tone } from '../../ui/primitives'
@@ -28,6 +27,12 @@ type Home = {
 
 const MotionLink = motion.create(Link)
 
+/** Where a suggestion goes inside the app; null while its screen still lives on the old pages. */
+const inApp = (s: Suggestion): string | null =>
+  s.kind === 'review' ? `/review?subject=${s.subject_id}`
+    : s.kind === 'knowledge_gap' || s.kind === 'empty_subject' ? `/subjects/${s.subject_id}?upload=1`
+    : null
+
 const ACTIONS: Record<Suggestion['kind'], { label: string; tone: Tone }> = {
   weak_quiz: { label: 'Retake', tone: 'warning' },
   review: { label: 'Review', tone: 'primary' },
@@ -46,7 +51,7 @@ export function todayLabel(date = new Date()) {
   return `${weekday}, ${day}`.toUpperCase()
 }
 
-function ReviewHero({ due, href }: { due: Home['due']; href: string }) {
+function ReviewHero({ due }: { due: Home['due'] }) {
   const caughtUp = due.count === 0
   return (
     <section className="review-hero">
@@ -62,7 +67,7 @@ function ReviewHero({ due, href }: { due: Home['due']; href: string }) {
           </p>
         </div>
       </div>
-      {!caughtUp && <a className={buttonClass()} href={href}><Icon name="play" />Start review</a>}
+      {!caughtUp && <Link className={buttonClass()} to="/review"><Icon name="play" />Start review</Link>}
     </section>
   )
 }
@@ -107,7 +112,7 @@ export function Today() {
       {data && (
         <div className="today-grid">
           <div className="today-main">
-            <ReviewHero due={data.due} href={reviewHref(me.data)} />
+            <ReviewHero due={data.due} />
 
             <section className="dashboard-section">
               <div className="section-heading">
@@ -129,8 +134,8 @@ export function Today() {
                         <strong>{s.title}</strong>
                         <p>{s.reason}</p>
                       </div>
-                      {s.kind === 'knowledge_gap' || s.kind === 'empty_subject'
-                        ? <Link className={buttonClass(i === 0 ? 'primary' : 'secondary')} to={`/subjects/${s.subject_id}?upload=1`}>{action.label}</Link>
+                      {inApp(s)
+                        ? <Link className={buttonClass(i === 0 ? 'primary' : 'secondary')} to={inApp(s)!}>{action.label}</Link>
                         : <a className={buttonClass(i === 0 ? 'primary' : 'secondary')} href={s.url}>{action.label}</a>}
                     </motion.article>
                   )

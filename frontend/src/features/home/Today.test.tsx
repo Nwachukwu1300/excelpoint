@@ -27,12 +27,13 @@ describe('Today', () => {
 
     expect(await screen.findByRole('heading', { name: '20 flashcards due' })).toBeInTheDocument()
     expect(screen.getByText('Across 2 subjects · about 9 minutes')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Start review' })).toHaveAttribute('href', '/subjects/3/review/')
+    expect(screen.getByRole('link', { name: 'Start review' })).toHaveAttribute('href', '/review')
 
     const steps = screen.getAllByRole('article')
     expect(within(steps[0]!).getByRole('link', { name: 'Retake' })).toHaveAttribute('href', '/api/quiz/9/take/')
     expect(within(steps[0]!).getByRole('link', { name: 'Retake' })).toHaveClass('button--primary') // top pick stands out
     expect(within(steps[1]!).getByRole('link', { name: 'Review' })).toHaveClass('button--secondary')
+    expect(within(steps[1]!).getByRole('link', { name: 'Review' })).toHaveAttribute('href', '/review?subject=3')
 
     const db = screen.getByRole('link', { name: /Database Systems\s*8 materials/ })
     expect(within(db).getByText('45%')).toBeInTheDocument()

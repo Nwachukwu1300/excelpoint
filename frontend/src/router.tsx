@@ -1,5 +1,6 @@
 import { createBrowserRouter } from 'react-router'
 import { ChatPage } from './features/chat/ChatPage'
+import { ReviewSession } from './features/review/ReviewSession'
 import { Today } from './features/home/Today'
 import { SubjectWorkspace } from './features/subjects/SubjectWorkspace'
 import { SubjectsList } from './features/subjects/SubjectsList'
@@ -23,6 +24,7 @@ export const routes = [
         handle: { title: subjectTitle } satisfies RouteHandle,
       },
       // XP chat fills the window: no top bar or mobile tab bar (the design's full chat page)
+      { path: 'review', element: <ReviewSession />, handle: { title: 'Review', focus: true } satisfies RouteHandle },
       { path: 'subjects/:subjectId/chat/:sessionId?', element: <ChatPage />, handle: { title: subjectTitle, fullBleed: true } satisfies RouteHandle },
     ],
   },

@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
-from django.http import Http404, HttpResponseBadRequest, JsonResponse, StreamingHttpResponse
+from django.http import Http404, JsonResponse, StreamingHttpResponse
 from django.contrib import messages
 from django.conf import settings
 from rest_framework import viewsets, status, permissions, generics
@@ -29,7 +29,6 @@ from .services.rag_service import RAGService
 from .services.session_manager import SessionManager
 from .tasks import process_material, generate_dynamic_quiz_questions
 from .utils import material_file_type, short_answer_matches
-from .services.spaced_repetition import due_cards, record_review
 from .app_api import due_by_subject, subject_summaries
 import json
 import os
@@ -1347,32 +1346,3 @@ class ChatStatsAPIView(APIView):
                 'error': 'Failed to get chat statistics',
                 'details': str(e) if settings.DEBUG else None
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-
-# Grades shown on the review page, mapped to SM-2's 0-5 scale
-REVIEW_GRADES = [(1, 'Again'), (3, 'Hard'), (4, 'Good'), (5, 'Easy')]
-
-
-@login_required
-def review_flashcards(request, pk):
-    """Spaced-repetition review: one due card at a time, graded with SM-2."""
-    subject = get_object_or_404(Subject, id=pk, user=request.user)
-    if request.method == 'POST':
-        card = get_object_or_404(Flashcard, id=request.POST.get('flashcard_id'), subject=subject)
-        try:
-            grade = int(request.POST.get('grade', ''))
-            if grade not in dict(REVIEW_GRADES):
-                raise ValueError
-        except ValueError:
-            return HttpResponseBadRequest('Invalid grade')
-        record_review(request.user, card, grade)
-        return redirect('review_flashcards', pk=pk)
-
-    due = due_cards(request.user, subject)
-    return render(request, 'subjects/review_flashcards.html', {
-        'subject': subject,
-        'card': due.first(),
-        'due_count': due.count(),
-        'grades': REVIEW_GRADES,
-    })

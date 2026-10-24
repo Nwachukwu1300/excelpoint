@@ -2,7 +2,7 @@ import { motion } from 'motion/react'
 import { useState } from 'react'
 import { plural } from '../../lib/format'
 import { reveal } from '../../lib/motion'
-import { oldPages } from '../../layout/nav'
+import { Link } from 'react-router'
 import { Icon } from '../../ui/Icon'
 import { Badge, Button, Skeleton, buttonClass } from '../../ui/primitives'
 import { useFlashcards, type Flashcard } from './api'
@@ -41,7 +41,7 @@ export function FlashcardsTab({ subjectId, dueCount }: { subjectId: number; dueC
             </div>
           )}
           {dueCount > 0
-            ? <a className={buttonClass()} href={oldPages.review(subjectId)}>Review {dueCount} due</a>
+            ? <Link className={buttonClass()} to={`/review?subject=${subjectId}`}>Review {dueCount} due</Link>
             : <Button disabled>Nothing due</Button>}
         </div>
       </div>

@@ -19,7 +19,7 @@ from django.urls import path, include, re_path
 from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import RedirectView
-from subjects.views import create_subject, upload_material, review_flashcards
+from subjects.views import create_subject, upload_material
 from subjects import app_api as subjects_app_api
 from users import api as users_api
 from .views import home, app_shell
@@ -32,6 +32,8 @@ urlpatterns = [
     path('learning/', include('learning.urls')),
     path('api/me/', users_api.me, name='api_me'),
     path('api/home/', subjects_app_api.home, name='api_home'),
+    path('api/review/queue/', subjects_app_api.review_queue, name='api_review_queue'),
+    path('api/review/grade/', subjects_app_api.review_grade, name='api_review_grade'),
     path('api/notifications/', users_api.notifications, name='api_notifications'),
     path('api/notifications/read/', users_api.mark_notifications_read, name='api_notifications_read'),
     path('api/', include('subjects.urls')),
@@ -42,7 +44,7 @@ urlpatterns = [
     path('subjects/create/', create_subject, name='create_subject'),
     path('subjects/<int:pk>/upload/', upload_material, name='upload_material'),
     path('subjects/<int:pk>/', RedirectView.as_view(url='/app/subjects/%(pk)s'), name='subject_detail'),  # workspace + XP chat now in the app
-    path('subjects/<int:pk>/review/', review_flashcards, name='review_flashcards'),
+    path('subjects/<int:pk>/review/', RedirectView.as_view(url='/app/review?subject=%(pk)s'), name='review_flashcards'),  # review is in the app
 ]
 
 # Only serve media files locally when not using S3

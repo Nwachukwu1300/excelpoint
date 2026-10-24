@@ -1,0 +1,45 @@
+/* Full-screen review. From the prototype unless marked "added". */
+.review-focus { min-height: 100vh; background: var(--background); }
+.review-focus-head { display: grid; height: 64px; grid-template-columns: 1fr minmax(240px, 420px) 1fr; align-items: center; gap: 28px; padding: 0 28px; border-bottom: 1px solid var(--border); background: var(--card); }
+.review-focus-head > div strong { display: block; margin-bottom: 7px; font-size: 10px; text-align: center; }
+.review-focus-head .icon-button { justify-self: end; }
+.review-card-stage { display: flex; min-height: calc(100vh - 64px); flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; }
+.study-card { display: flex; width: min(620px, 90vw); min-height: 340px; flex-direction: column; align-items: center; justify-content: center; padding: 50px; border: 1px solid var(--border); border-radius: 14px; background: var(--card); box-shadow: 0 12px 40px rgb(15 23 42 / .07); text-align: center; }
+.study-card.is-revealed { border-top: 3px solid var(--success); }
+.study-card h1 { max-width: 520px; margin: 15px 0; font-size: 26px; font-weight: 600; line-height: 1.5; }
+.study-card.is-revealed h1 { font-size: 17px; }
+.card-source { color: var(--muted); font-size: 9px; }
+.review-card-stage > .button { min-width: 150px; margin-top: 22px; }
+.grade-area { margin-top: 22px; text-align: center; }
+.grade-area > p { color: var(--muted); font-size: 9px; }
+.grade-area > div { display: flex; gap: 8px; }
+.grade-area button { min-width: 92px; padding: 9px 14px; border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); background: var(--card); }
+.grade-area strong, .grade-area span { display: block; }
+.grade-area strong { font-size: 10px; }
+.grade-area span { margin-top: 2px; color: var(--muted); font-size: 8px; }
+.grade-area .grade-again { border-color: var(--danger); color: var(--danger); }
+.grade-area .grade-easy { border-color: var(--success); color: var(--success); }
+.done-review { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.done-review > .logo { position: absolute; top: 18px; left: 24px; }
+.success-burst { display: grid; width: 72px; height: 72px; place-items: center; border-radius: 50%; color: var(--success); background: var(--success-soft); }
+.done-review h1 { margin: 22px 0 8px; font-size: 28px; }
+.done-review p { max-width: 450px; margin: 0 0 22px; color: var(--muted); font-size: 11px; line-height: 1.6; }
+.review-focus-head > .logo { justify-self: start; } /* added */
+.grade-area > div { justify-content: center; }
+.grade-area button { transition: background .15s ease, border-color .15s ease, scale var(--dur-fast) var(--ease-spring); } /* added: hover and press */
+.grade-area button:hover { background: var(--hover); }
+.grade-area button:active { scale: .97; }
+.grade-area .grade-again:hover { background: var(--danger-soft); }
+.grade-area .grade-easy:hover { background: var(--success-soft); }
+.study-card h1 { overflow-wrap: anywhere; }
+.review-keys { margin-top: 18px; color: var(--muted); font-size: 9px; } /* added: keyboard hint */
+.review-card-stage .inline-error { width: min(620px, 90vw); }
+@media (hover: none) { .review-keys { display: none; } }
+@media (max-width: 640px) {
+  .review-focus-head { grid-template-columns: auto 1fr auto; gap: 14px; padding: 0 14px; }
+  .review-focus-head .logo-word { display: none; }
+  .study-card { min-height: 300px; padding: 34px 24px; }
+  .study-card h1 { font-size: 23px; }
+  .grade-area > div { display: grid; grid-template-columns: 1fr 1fr; }
+  .grade-area button { min-width: 120px; }
+}

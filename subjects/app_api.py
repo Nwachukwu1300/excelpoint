@@ -4,12 +4,18 @@ import math
 from collections import Counter
 
 from django.db.models import Count, Max, OuterRef, Subquery
+import os
+
+from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
-from .models import ChatSession, UserQuizAttempt
+from .models import ChatSession, Flashcard, FlashcardReview, Subject, UserQuizAttempt
 from .services.recommendations import recommend
-from .services.spaced_repetition import due_cards
+from .services.spaced_repetition import REVIEW_GRADES, due_cards, preview_intervals, record_review
+
+REVIEW_BATCH = 50  # cards per review session; the rest come back next time
 
 SECONDS_PER_CARD = 27  # rough review pace for the "about N minutes" estimate
 
@@ -58,3 +64,46 @@ def home(request):
         ],
         'subjects': subject_summaries(user, due),
     })
+
+
+@api_view(['GET'])
+def review_queue(request):
+    """Cards due now (one subject with ?subject=<id>, otherwise all), each with how long every grade would push it back."""
+    user = request.user
+    subject = None
+    if request.GET.get('subject'):
+        if not request.GET['subject'].isdigit():
+            raise ValidationError({'subject': 'Must be a subject id.'})
+        subject = get_object_or_404(Subject, id=int(request.GET['subject']), user=user)
+    due = due_cards(user, subject).select_related('subject', 'material')
+    cards = list(due[:REVIEW_BATCH])
+    reviews = {r.flashcard_id: r for r in FlashcardReview.objects.filter(user=user, flashcard__in=cards)}
+    return Response({
+        'due_count': due.count(),
+        'subject': {'id': subject.id, 'name': subject.name} if subject else None,
+        'grades': [{'grade': g, 'label': label} for g, label in REVIEW_GRADES],
+        'cards': [
+            {
+                'id': c.id, 'question': c.question, 'answer': c.answer,
+                'subject_id': c.subject_id, 'subject_name': c.subject.name,
+                'material_name': os.path.basename(c.material.file.name) if c.material and c.material.file else None,
+                'next_days': preview_intervals(reviews.get(c.id) or FlashcardReview()),
+            }
+            for c in cards
+        ],
+    })
+
+
+@api_view(['POST'])
+def review_grade(request):
+    """Grade one card (SM-2) and say when it comes back."""
+    try:
+        grade = int(request.data.get('grade'))
+        card_id = int(request.data.get('flashcard_id'))
+    except (TypeError, ValueError):
+        raise ValidationError({'detail': 'Send flashcard_id and grade as numbers.'})
+    if grade not in dict(REVIEW_GRADES):
+        raise ValidationError({'grade': f'Must be one of {sorted(dict(REVIEW_GRADES))}.'})
+    card = get_object_or_404(Flashcard, id=card_id, subject__user=request.user)
+    review = record_review(request.user, card, grade)
+    return Response({'flashcard_id': card.id, 'interval_days': review.interval_days, 'due_at': review.due_at})

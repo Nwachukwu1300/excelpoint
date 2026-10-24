@@ -55,17 +55,9 @@ class ReviewPageTest(TestCase):
         self.client.force_login(self.user)
         self.url = reverse('review_flashcards', args=[self.subject.id])
 
-    def test_shows_due_card_and_records_grade(self):
-        self.assertContains(self.client.get(self.url), 'What is DDL?')
-        response = self.client.post(self.url, {'flashcard_id': self.card.id, 'grade': 4})
-        self.assertRedirects(response, self.url, fetch_redirect_response=False)
-        self.assertEqual(FlashcardReview.objects.get().last_grade, 4)
-        self.assertContains(self.client.get(self.url), 'Nothing due')
-
-    def test_rejects_bad_grade_and_other_users_subjects(self):
-        self.assertEqual(self.client.post(self.url, {'flashcard_id': self.card.id, 'grade': 9}).status_code, 400)
-        other = Subject.objects.create(user=get_user_model().objects.create_user('z', password='p'), name='Z')
-        self.assertEqual(self.client.get(reverse('review_flashcards', args=[other.id])).status_code, 404)
+    def test_old_review_page_opens_the_app_review(self):
+        # Grading and its rules (bad grades, other people's cards) are covered by test_review_api
+        self.assertRedirects(self.client.get(self.url), f'/app/review?subject={self.subject.id}', fetch_redirect_response=False)
 
     def test_subject_shows_due_count(self):
         # The subject page is now the app's workspace; its due count comes from the summary API

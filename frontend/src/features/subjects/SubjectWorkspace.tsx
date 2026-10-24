@@ -2,7 +2,6 @@ import { motion } from 'motion/react'
 import { Link, useParams, useSearchParams } from 'react-router'
 import { plural, timeAgo } from '../../lib/format'
 import { spring } from '../../lib/motion'
-import { oldPages } from '../../layout/nav'
 import { Icon } from '../../ui/Icon'
 import { Skeleton, buttonClass } from '../../ui/primitives'
 import { useSubjects } from './api'
@@ -75,7 +74,7 @@ export function SubjectWorkspace() {
         <div className="workspace-actions">
           <button type="button" className={buttonClass('secondary')} onClick={() => setUploading(true)}><Icon name="upload" />Upload material</button>
           {subject?.due_count
-            ? <a className={buttonClass('secondary')} href={oldPages.review(id)}><Icon name="repeat" />Review {subject.due_count} due</a>
+            ? <Link className={buttonClass('secondary')} to={`/review?subject=${id}`}><Icon name="repeat" />Review {subject.due_count} due</Link>
             : <button type="button" className={buttonClass('secondary')} disabled><Icon name="repeat" />Nothing due</button>}
           <Link className={buttonClass('ai')} to={`/subjects/${id}/chat`}><Icon name="sparkles" />Ask XP</Link>
         </div>

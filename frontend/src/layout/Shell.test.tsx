@@ -20,7 +20,7 @@ describe('Shell', () => {
     expect(await screen.findByRole('heading', { name: /, Alex$/ })).toBeInTheDocument()
     const nav = screen.getByRole('navigation', { name: 'Primary navigation' })
     expect(within(nav).getByRole('link', { name: /Database Systems\s*12/ })).toHaveAttribute('href', '/subjects/3')
-    expect(within(nav).getByRole('link', { name: /Review\s*20/ })).toHaveAttribute('href', '/subjects/3/review/')
+    expect(within(nav).getByRole('link', { name: /Review\s*20/ })).toHaveAttribute('href', '/review')
     expect(within(nav).getByRole('link', { name: /Home/ })).toHaveAttribute('aria-current', 'page')
     expect(screen.getByRole('button', { name: 'Notifications, 2 unread' })).toBeInTheDocument()
     expect(screen.getByText('Alex Morgan')).toBeInTheDocument()

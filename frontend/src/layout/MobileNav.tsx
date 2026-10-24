@@ -4,14 +4,14 @@ import type { Me } from '../lib/api'
 import { spring } from '../lib/motion'
 import { Icon, type IconName } from '../ui/Icon'
 import { NavLinkItem } from './NavLinkItem'
-import { oldPages, reviewHref } from './nav'
+import { oldPages } from './nav'
 
 export function MobileNav({ me }: { me?: Me }) {
   const { pathname } = useLocation()
   const items: { icon: IconName; label: string; to?: string; href?: string; active: boolean; badge?: number }[] = [
     { icon: 'home', label: 'Home', to: '/', active: pathname === '/' },
     { icon: 'book', label: 'Subjects', to: '/subjects', active: pathname.startsWith('/subjects') },
-    { icon: 'repeat', label: 'Review', href: reviewHref(me), active: pathname.startsWith('/review'), badge: me?.due_count },
+    { icon: 'repeat', label: 'Review', to: '/review', active: pathname.startsWith('/review'), badge: me?.due_count },
     { icon: 'chart', label: 'Insights', href: oldPages.insights, active: pathname.startsWith('/insights') },
     { icon: 'user', label: 'Account', href: oldPages.settings, active: pathname.startsWith('/settings') },
   ]

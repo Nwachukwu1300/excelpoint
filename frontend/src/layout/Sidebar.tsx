@@ -5,7 +5,7 @@ import { spring } from '../lib/motion'
 import { Icon, type IconName } from '../ui/Icon'
 import { Avatar, Badge, IconButton, Logo, Skeleton } from '../ui/primitives'
 import { NavLinkItem } from './NavLinkItem'
-import { oldPages, reviewHref } from './nav'
+import { oldPages } from './nav'
 
 type Item = { icon: IconName; label: string; to?: string; href?: string; badge?: number; active: boolean }
 
@@ -31,7 +31,7 @@ export function Sidebar({ me, collapsed, onToggle }: { me?: Me; collapsed: boole
   const items: Item[] = [
     { icon: 'home', label: 'Home', to: '/', active: pathname === '/' },
     { icon: 'book', label: 'Subjects', to: '/subjects', active: pathname.startsWith('/subjects') },
-    { icon: 'repeat', label: 'Review', href: reviewHref(me), badge: me?.due_count, active: pathname.startsWith('/review') },
+    { icon: 'repeat', label: 'Review', to: '/review', badge: me?.due_count, active: pathname.startsWith('/review') },
     { icon: 'chart', label: 'Insights', href: oldPages.insights, active: pathname.startsWith('/insights') },
   ]
   const name = me ? displayName(me) : ''

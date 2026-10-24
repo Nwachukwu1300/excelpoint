@@ -38,7 +38,9 @@ export function Shell() {
   const me = useMe()
   const [collapsed, setCollapsed] = useState(readCollapsed)
   const signedOut = me.error instanceof ApiError && me.error.status === 403
-  const fullBleed = useMatches().some(m => (m.handle as RouteHandle | undefined)?.fullBleed)
+  const handles = useMatches().map(m => m.handle as RouteHandle | undefined)
+  const fullBleed = handles.some(h => h?.fullBleed)
+  const focus = handles.some(h => h?.focus) // e.g. a review session: just the page, nothing around it
 
   useEffect(() => { if (signedOut) location.assign(loginUrl()) }, [signedOut])
 
@@ -50,6 +52,7 @@ export function Shell() {
   }
 
   if (signedOut) return null
+  if (focus) return <><AnimatedOutlet /><Toaster /><ScrollRestoration /></>
   return (
     <div className="app-shell">
       <Sidebar me={me.data} collapsed={collapsed} onToggle={toggle} />
