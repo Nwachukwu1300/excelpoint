@@ -1,0 +1,118 @@
+/* Quizzes: take, generating, results, history. From the prototype unless marked "added". */
+.quiz-focus { min-height: 100vh; background: var(--background); }
+.focus-header { display: grid; height: 64px; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 0 28px; border-bottom: 1px solid var(--border); background: var(--card); }
+.focus-header > div:not(.logo) { text-align: center; } /* :not(.logo): the prototype rules also shrank the logo */
+.focus-header > div:not(.logo) strong, .focus-header > div:not(.logo) span { display: block; }
+.focus-header > div:not(.logo) strong { font-size: 11px; }
+.focus-header > div:not(.logo) span { margin-top: 2px; color: var(--muted); font-size: 8px; }
+.focus-header > a { display: flex; align-items: center; justify-self: end; gap: 6px; border: 0; color: var(--muted); background: transparent; font-size: 10px; }
+.quiz-stage { max-width: 760px; min-height: calc(100vh - 64px); margin: 0 auto; padding: 38px 24px; }
+.quiz-progress-head { display: flex; justify-content: space-between; margin-bottom: 8px; color: var(--muted); font-size: 10px; }
+.quiz-progress-head span:last-child { display: flex; align-items: center; gap: 5px; }
+.question-card { margin-top: 28px; padding: 32px; border: 1px solid var(--border); border-radius: 12px; background: var(--card); box-shadow: var(--shadow); }
+.question-meta { display: flex; align-items: center; justify-content: space-between; color: var(--muted); font-size: 9px; }
+.question-card h1 { margin: 22px 0 28px; font-size: 20px; font-weight: 600; line-height: 1.45; }
+.answer-options { display: flex; flex-direction: column; gap: 9px; }
+.answer-options button { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); background: var(--card); font-size: 11px; text-align: left; }
+.answer-options button:hover, .answer-options button.is-selected { border-color: var(--primary); background: var(--primary-soft); }
+.answer-options button > span { display: grid; width: 26px; height: 26px; flex: 0 0 auto; place-items: center; border: 1px solid var(--border); border-radius: 50%; color: var(--muted); font-size: 9px; font-weight: 600; }
+.answer-options button.is-selected > span { border-color: var(--primary); color: white; background: var(--primary); }
+.short-answer { width: 100%; resize: vertical; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); outline: none; color: var(--text); background: var(--background); font-size: 11px; }
+.quiz-navigation { display: flex; align-items: center; justify-content: space-between; margin-top: 18px; }
+.question-dots { display: flex; gap: 4px; }
+.question-dots span { width: 6px; height: 6px; border-radius: 50%; background: var(--border); }
+.question-dots span.is-active { background: var(--primary); transform: scale(1.35); }
+.question-dots span { transition: background .2s ease, transform .2s var(--ease-spring); } /* added */
+.question-dots span.is-done { background: var(--success); }
+.generation-state { display: flex; min-height: 100vh; flex-direction: column; align-items: center; justify-content: center; padding: 24px; background: var(--background); text-align: center; }
+.generation-state .badge { margin-top: 18px; }
+.generation-state h1 { margin: 12px 0 8px; font-size: 22px; }
+.generation-state p { max-width: 420px; margin: 0; color: var(--muted); font-size: 11px; line-height: 1.6; }
+.generation-progress { width: min(360px, 80vw); height: 6px; margin: 24px 0 8px; overflow: hidden; border-radius: 6px; background: var(--border); }
+.generation-progress span { display: block; width: 42%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--ai-one), var(--ai-two)); animation: generating 1.7s ease-in-out infinite; }
+.generation-state small { color: var(--muted); font-size: 8px; }
+.generation-state > .button { margin-top: 20px; }
+.generation-state > div:last-child { display: flex; gap: 8px; margin-top: 20px; }
+.warning-icon { color: var(--warning); background: var(--warning-soft); }
+.results-page { max-width: 1000px; }
+.results-hero { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 24px; padding: 26px; border: 1px solid var(--border); border-radius: 12px; background: var(--card); box-shadow: var(--shadow); }
+.results-hero .progress-ring { width: 94px; height: 94px; }
+.results-hero .progress-ring::before { width: 80px; height: 80px; }
+.results-hero h1 { margin: 8px 0 5px; font-size: 22px; }
+.results-hero p { margin: 0; color: var(--muted); font-size: 10px; }
+.results-actions { display: flex; flex-direction: column; gap: 7px; }
+.review-heading { margin: 28px 0 14px; }
+.review-heading h2 { margin: 0; font-size: 16px; }
+.review-heading p { margin: 4px 0 0; color: var(--muted); font-size: 10px; }
+.result-question { margin-bottom: 12px; padding: 20px 22px; border: 1px solid var(--border); border-left-width: 3px; border-radius: var(--radius); background: var(--card); }
+.result-question.is-correct { border-left-color: var(--success); }
+.result-question.is-incorrect { border-left-color: var(--danger); }
+.result-number { display: flex; align-items: center; gap: 8px; }
+.result-number > span { display: grid; width: 24px; height: 24px; place-items: center; border-radius: 50%; }
+.is-correct .result-number > span { color: var(--success); background: var(--success-soft); }
+.is-incorrect .result-number > span { color: var(--danger); background: var(--danger-soft); }
+.result-number strong { font-size: 10px; }
+.result-number small { margin-left: auto; color: var(--muted); font-size: 8px; }
+.result-question h3 { margin: 14px 0; font-size: 12px; }
+.answer-review { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.answer-review > div { padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--background); }
+.answer-review span, .answer-review strong { display: block; }
+.answer-review span { color: var(--muted); font-size: 8px; }
+.answer-review strong { margin-top: 3px; font-size: 10px; }
+.explanation { margin-top: 12px; padding: 11px; border-radius: 6px; background: var(--primary-soft); }
+.explanation strong { font-size: 9px; }
+.explanation p { margin: 4px 0 0; color: var(--muted); font-size: 9px; line-height: 1.55; }
+.performance-card { max-width: 720px; margin-bottom: 24px; padding: 20px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow); }
+.performance-card > div:first-child { margin-bottom: 18px; }
+.performance-card h2 { margin: 0; font-size: 15px; }
+.performance-card p { margin: 4px 0 0; color: var(--muted); font-size: 9px; }
+.performance-row { display: grid; grid-template-columns: 150px 1fr 40px; align-items: center; gap: 12px; margin-top: 12px; }
+.performance-row > span, .performance-row > strong { font-size: 10px; }
+.table-link { border: 0; color: var(--primary); background: transparent; font-size: 10px; font-weight: 600; }
+@keyframes generating { 0% { transform: translateX(-100%); } 50% { width: 55%; } 100% { transform: translateX(230%); } }
+.table-wrap { overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow); }
+table { width: 100%; border-collapse: collapse; }
+th { padding: 10px 14px; color: var(--muted); background: var(--background); font-size: 10px; font-weight: 600; text-align: left; }
+td { padding: 12px 14px; border-top: 1px solid var(--border); color: var(--muted); font-size: 11px; }
+td:last-child, th:last-child { width: 36px; padding-left: 0; }
+/* Score ring (ui ProgressRing); the fill animates once on show (added) */
+@property --progress { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+.progress-ring { position: relative; display: grid; width: 72px; height: 72px; flex: 0 0 auto; place-items: center; border-radius: 50%; background: conic-gradient(var(--success) var(--progress), var(--hover) 0); animation: ring-fill .7s var(--ease-out) both; }
+@keyframes ring-fill { from { --progress: 0deg; } }
+.progress-ring::before { position: absolute; width: 60px; height: 60px; border-radius: 50%; background: var(--card); content: ''; }
+.progress-ring > div { z-index: 1; text-align: center; }
+.progress-ring strong, .progress-ring span { display: block; }
+.progress-ring strong { font-size: 13px; font-variant-numeric: tabular-nums; }
+.progress-ring span { margin-top: 1px; color: var(--muted); font-size: 7px; text-transform: uppercase; }
+
+/* added */
+.focus-header > .logo { justify-self: start; }
+.focus-header > a:hover { color: var(--text); }
+.quiz-progress-head span.is-low { color: var(--danger); font-weight: 600; }
+.answer-options button { transition: border-color .15s ease, background .15s ease, scale var(--dur-fast) var(--ease-spring); }
+.answer-options button:active { scale: .99; }
+.short-answer:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgb(37 99 235 / .1); }
+.unanswered-note { margin-top: 12px; color: var(--muted); font-size: 10px; text-align: right; }
+.no-answer { color: var(--muted); font-weight: 400; }
+.history-table td strong { color: var(--text); }
+.history-table td .badge { margin-left: 6px; }
+.generation-state > div:last-child { flex-wrap: wrap; justify-content: center; }
+
+@media (max-width: 640px) {
+  .focus-header { grid-template-columns: auto 1fr auto; padding: 0 14px; }
+  .focus-header .logo-word { display: none; }
+  .focus-header > a { font-size: 0; }
+  .quiz-stage { padding: 24px 16px; }
+  .question-card { padding: 22px 18px; }
+  .question-card h1 { font-size: 17px; }
+  .question-dots { display: none; }
+  .results-hero { grid-template-columns: auto 1fr; padding: 20px; }
+  .results-hero .progress-ring { width: 78px; height: 78px; }
+  .results-hero .progress-ring::before { width: 66px; height: 66px; }
+  .results-actions { grid-column: 1 / -1; }
+  .answer-review { grid-template-columns: 1fr; }
+  .performance-row { grid-template-columns: 105px 1fr 36px; }
+  .history-table { overflow-x: auto; }
+  .history-table table { min-width: 620px; }
+}
+.history-table td:last-child, .history-table th:last-child { width: auto; padding-left: 14px; white-space: nowrap; } /* the shared table rule sizes the last column for a "…" button */

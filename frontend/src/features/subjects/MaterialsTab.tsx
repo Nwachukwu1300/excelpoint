@@ -2,7 +2,7 @@ import { AnimatePresence, motion } from 'motion/react'
 import { useState } from 'react'
 import { plural, shortDate } from '../../lib/format'
 import { reveal, spring } from '../../lib/motion'
-import { oldPages } from '../../layout/nav'
+import { Link } from 'react-router'
 import { Icon } from '../../ui/Icon'
 import { MoreMenu } from '../../ui/Menu'
 import { Modal } from '../../ui/Modal'
@@ -27,7 +27,7 @@ function Summary({ material }: { material: Material }) {
       {intro.map((line, i) => <p key={i}>{line}</p>)}
       {points.length > 0 && <ul>{points.map((p, i) => <li key={i}>{p}</li>)}</ul>}
       {material.quiz_id && (
-        <a className="summary-link" href={oldPages.takeQuiz(material.quiz_id)}>Take the quiz for this file <Icon name="arrow" size={14} /></a>
+        <Link className="summary-link" to={`/quizzes/${material.quiz_id}/start`}>Take the quiz for this file <Icon name="arrow" size={14} /></Link>
       )}
     </div>
   )

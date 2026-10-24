@@ -459,6 +459,7 @@ def generate_dynamic_quiz_questions(self, attempt_id, num_questions=10):
                             text_content = f.read()
                     except UnicodeDecodeError:
                         logger.error(f"Cannot read file {material.file.name} as text")
+                        _give_up(attempt_id)
                         return {'status': 'error', 'message': 'Cannot read file as text'}
         else:
             # Use processed content chunks
@@ -467,6 +468,7 @@ def generate_dynamic_quiz_questions(self, attempt_id, num_questions=10):
         
         if not text_content.strip():
             logger.warning(f"No text content found for material {material.id}")
+            _give_up(attempt_id)
             return {'status': 'error', 'message': 'No text content found in the material'}
         
         logger.info(f"Extracted {len(text_content)} characters for dynamic question generation")
@@ -480,6 +482,7 @@ def generate_dynamic_quiz_questions(self, attempt_id, num_questions=10):
         
         if not questions_data:
             logger.warning(f"No dynamic questions generated for attempt {attempt_id}")
+            _give_up(attempt_id)
             return {'status': 'error', 'message': 'Failed to generate dynamic questions'}
         
         # Store the generated questions directly in the attempt as JSON
@@ -529,7 +532,13 @@ def generate_dynamic_quiz_questions(self, attempt_id, num_questions=10):
     
     except Exception as e:
         logger.exception(f"Error generating dynamic questions for attempt {attempt_id}: {str(e)}")
+        _give_up(attempt_id)
         return {'status': 'error', 'message': str(e)}
+
+
+def _give_up(attempt_id):
+    """Record that fresh questions won't come ([] rather than None), so the quiz page stops waiting."""
+    UserQuizAttempt.objects.filter(id=attempt_id, dynamic_questions__isnull=True).update(dynamic_questions=[])
 
 def _generate_dynamic_questions_with_openai(text_content, num_questions=10, attempt_number=1):
     """

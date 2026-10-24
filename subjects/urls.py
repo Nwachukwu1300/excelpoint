@@ -18,14 +18,13 @@ urlpatterns = [
     path('material/<int:material_id>/status/', views.material_status, name='material_status'),
     
     # Quiz URLs
+    # Quizzes are taken in the React app; the old pages redirect there (the answer-leaking check-questions poll is gone)
     path('quiz/<int:quiz_id>/take/', views.take_quiz, name='take_quiz'),
-    path('quiz/<int:quiz_id>/submit/', views.submit_quiz, name='submit_quiz'),
-    path('quiz/results/<int:attempt_id>/', views.quiz_results, name='quiz_results'),
-    path('quiz/attempt/<int:attempt_id>/check-questions/', views.check_dynamic_questions, name='check_dynamic_questions'),
+    path('quiz/results/<int:attempt_id>/', RedirectView.as_view(url='/app/quiz-attempts/%(attempt_id)s/results'), name='quiz_results'),
     
     # Quiz History URLs
-    path('quiz/history/', views.quiz_history, name='quiz_history'),
-    path('quiz/attempt/<int:attempt_id>/detail/', views.quiz_attempt_detail, name='quiz_attempt_detail'),
+    path('quiz/history/', RedirectView.as_view(url='/app/quizzes/history'), name='quiz_history'),
+    path('quiz/attempt/<int:attempt_id>/detail/', RedirectView.as_view(url='/app/quiz-attempts/%(attempt_id)s/results'), name='quiz_attempt_detail'),
     
     # XP Chatbot API URLs - Subject-specific endpoints
     path('subjects/<int:subject_id>/chat/session/', views.ChatSessionCreateAPIView.as_view(), name='chat-session-create'),

@@ -30,7 +30,7 @@ describe('Today', () => {
     expect(screen.getByRole('link', { name: 'Start review' })).toHaveAttribute('href', '/review')
 
     const steps = screen.getAllByRole('article')
-    expect(within(steps[0]!).getByRole('link', { name: 'Retake' })).toHaveAttribute('href', '/api/quiz/9/take/')
+    expect(within(steps[0]!).getByRole('link', { name: 'Retake' })).toHaveAttribute('href', '/quizzes/9/start?fresh=1')
     expect(within(steps[0]!).getByRole('link', { name: 'Retake' })).toHaveClass('button--primary') // top pick stands out
     expect(within(steps[1]!).getByRole('link', { name: 'Review' })).toHaveClass('button--secondary')
     expect(within(steps[1]!).getByRole('link', { name: 'Review' })).toHaveAttribute('href', '/review?subject=3')

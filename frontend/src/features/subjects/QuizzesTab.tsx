@@ -1,7 +1,7 @@
 import { motion } from 'motion/react'
 import { plural } from '../../lib/format'
 import { reveal } from '../../lib/motion'
-import { oldPages } from '../../layout/nav'
+import { Link } from 'react-router'
 import { Icon } from '../../ui/Icon'
 import { Button, Skeleton, buttonClass } from '../../ui/primitives'
 import { useQuizzes } from './api'
@@ -17,7 +17,7 @@ export function QuizzesTab({ subjectId }: { subjectId: number }) {
           <h2>Quizzes</h2>
           <p>Test your recall with questions grounded in each file.</p>
         </div>
-        <a className={buttonClass('secondary')} href={oldPages.quizHistory}>Quiz history</a>
+        <Link className={buttonClass('secondary')} to={`/quizzes/history?subject=${subjectId}`}>Quiz history</Link>
       </div>
       {quizzes.isPending && (
         <div className="quiz-list" aria-busy="true" aria-label="Loading quizzes">
@@ -52,8 +52,8 @@ export function QuizzesTab({ subjectId }: { subjectId: number }) {
                 <div><dt>Attempts</dt><dd>{q.attempts ? plural(q.attempts, 'attempt') : 'No attempts'}</dd></div>
               </dl>
               <div className="quiz-actions">
-                <a className={buttonClass('secondary')} href={oldPages.takeQuiz(q.id)}>Start</a>
-                <a className={buttonClass('ai')} href={oldPages.takeQuiz(q.id, true)}><Icon name="sparkles" size={14} /> New questions</a>
+                <Link className={buttonClass('secondary')} to={`/quizzes/${q.id}/start`}>Start</Link>
+                <Link className={buttonClass('ai')} to={`/quizzes/${q.id}/start?fresh=1`}><Icon name="sparkles" size={14} /> New questions</Link>
               </div>
             </motion.article>
           ))}

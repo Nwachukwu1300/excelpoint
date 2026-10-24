@@ -30,6 +30,8 @@ const MotionLink = motion.create(Link)
 /** Where a suggestion goes inside the app; null while its screen still lives on the old pages. */
 const inApp = (s: Suggestion): string | null =>
   s.kind === 'review' ? `/review?subject=${s.subject_id}`
+    : s.kind === 'weak_quiz' ? `/quizzes/${s.quiz_id}/start?fresh=1` // a retake asks new questions
+    : s.kind === 'untried_quiz' ? `/quizzes/${s.quiz_id}/start`
     : s.kind === 'knowledge_gap' || s.kind === 'empty_subject' ? `/subjects/${s.subject_id}?upload=1`
     : null
 

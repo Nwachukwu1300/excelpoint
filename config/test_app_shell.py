@@ -58,3 +58,18 @@ class SubjectsCutoverTest(TestCase):
             self.assertRedirects(self.client.get(old), '/app/subjects', fetch_redirect_response=False)
         for old in [f'/subjects/{subject.id}/', f'/api/{subject.id}/']:
             self.assertRedirects(self.client.get(old), f'/app/subjects/{subject.id}', fetch_redirect_response=False)
+
+    def test_old_quiz_pages_redirect_to_the_app(self):
+        user = get_user_model().objects.create_user('q', password='p')
+        self.client.force_login(user)
+        cases = {
+            '/api/quiz/9/take/': '/app/quizzes/9/start',
+            '/api/quiz/9/take/?dynamic=true': '/app/quizzes/9/start?fresh=1',
+            '/api/quiz/results/5/': '/app/quiz-attempts/5/results',
+            '/api/quiz/attempt/5/detail/': '/app/quiz-attempts/5/results',
+            '/api/quiz/history/': '/app/quizzes/history',
+        }
+        for old, new in cases.items():
+            self.assertRedirects(self.client.get(old), new, fetch_redirect_response=False)
+        # the old poll that sent correct answers to the browser no longer exists
+        self.assertEqual(self.client.get('/api/quiz/attempt/5/check-questions/').status_code, 404)

@@ -1,4 +1,5 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import type { ButtonHTMLAttributes, CSSProperties, ReactNode } from 'react'
+import { CountUp } from './CountUp'
 import { Icon, type IconName } from './Icon'
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'ai'
@@ -69,6 +70,18 @@ export function ProgressBar({ value, label }: { value?: number; label: string })
     <div className={`progress-track ${value === undefined ? 'is-indeterminate' : ''}`} role="progressbar" aria-label={label}
       aria-valuenow={value} aria-valuemin={0} aria-valuemax={100}>
       <span style={value === undefined ? undefined : { width: `${value}%` }} />
+    </div>
+  )
+}
+
+/** Score ring: fills from empty and counts up on first show (both skip with reduced motion). */
+export function ProgressRing({ value, label }: { value: number; label: string }) {
+  return (
+    <div className="progress-ring" style={{ '--progress': `${value * 3.6}deg` } as CSSProperties} role="img" aria-label={`${label} ${value}%`}>
+      <div aria-hidden="true">
+        <strong><CountUp value={value} />%</strong>
+        <span>{label}</span>
+      </div>
     </div>
   )
 }

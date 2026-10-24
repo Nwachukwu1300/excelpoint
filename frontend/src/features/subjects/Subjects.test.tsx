@@ -70,7 +70,7 @@ describe('Subject workspace', () => {
     await userEvent.click(screen.getByRole('button', { name: /AI summary/ }))
     expect(await screen.findByText('B-trees stay balanced')).toBeInTheDocument()
     expect(screen.getByText('Leaves are linked')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Take the quiz for this file/ })).toHaveAttribute('href', '/api/quiz/9/take/')
+    expect(screen.getByRole('link', { name: /Take the quiz for this file/ })).toHaveAttribute('href', '/quizzes/9/start')
   })
 
   it('deletes a file after confirming', async () => {
@@ -115,7 +115,7 @@ describe('Subject workspace', () => {
     renderApp('/subjects/3?tab=quizzes')
     const row = (await screen.findByRole('heading', { name: 'lecture4.pdf' })).closest('article')!
     expect(within(row).getByText('3 attempts')).toBeInTheDocument()
-    expect(within(row).getByRole('link', { name: /New questions/ })).toHaveAttribute('href', '/api/quiz/9/take/?dynamic=true')
+    expect(within(row).getByRole('link', { name: /New questions/ })).toHaveAttribute('href', '/quizzes/9/start?fresh=1')
 
     await userEvent.click(screen.getByRole('tab', { name: /Flashcards/ }))
     expect(await screen.findByText('B-tree index')).toBeInTheDocument()
