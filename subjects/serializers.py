@@ -178,6 +178,7 @@ class ChatMessageCreateSerializer(serializers.Serializer):
     """Serializer for creating new chat messages (user input only)"""
     
     message = serializers.CharField(max_length=10000, trim_whitespace=True)
+    session_id = serializers.IntegerField(required=False, min_value=1)  # continue this conversation instead of the active one
     
     def validate_message(self, value):
         """Validate the user message"""

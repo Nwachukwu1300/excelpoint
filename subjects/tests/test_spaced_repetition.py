@@ -67,8 +67,10 @@ class ReviewPageTest(TestCase):
         other = Subject.objects.create(user=get_user_model().objects.create_user('z', password='p'), name='Z')
         self.assertEqual(self.client.get(reverse('review_flashcards', args=[other.id])).status_code, 404)
 
-    def test_subject_page_shows_due_count(self):
-        self.assertContains(self.client.get(reverse('subject_detail', args=[self.subject.id])), '1 due')
+    def test_subject_shows_due_count(self):
+        # The subject page is now the app's workspace; its due count comes from the summary API
+        rows = self.client.get(reverse('subject-summary')).json()
+        self.assertEqual([r['due_count'] for r in rows if r['id'] == self.subject.id], [1])
 
 
 class ReviewReminderTest(TestCase):

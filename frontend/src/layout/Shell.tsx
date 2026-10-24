@@ -1,11 +1,11 @@
 import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useState } from 'react'
-import { ScrollRestoration, useLocation, useOutlet } from 'react-router'
+import { ScrollRestoration, useLocation, useMatches, useOutlet } from 'react-router'
 import { ApiError, loginUrl, useMe } from '../lib/api'
 import { Toaster } from '../ui/Toast'
 import { MobileNav } from './MobileNav'
 import { Sidebar } from './Sidebar'
-import { Topbar } from './Topbar'
+import { Topbar, type RouteHandle } from './Topbar'
 
 const COLLAPSED_KEY = 'xp-sidebar-collapsed'
 
@@ -17,10 +17,12 @@ function readCollapsed() {
 function AnimatedOutlet() {
   const outlet = useOutlet()
   const { pathname } = useLocation()
+  // Moving between conversations stays on one chat page (no remount, so a streaming answer survives).
+  const page = pathname.replace(/\/chat(\/\d+)?$/, '/chat')
   return (
     <AnimatePresence mode="wait" initial={false}>
       <motion.div
-        key={pathname}
+        key={page}
         initial={{ opacity: 0, y: 4 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, transition: { duration: 0.08 } }}
@@ -36,6 +38,7 @@ export function Shell() {
   const me = useMe()
   const [collapsed, setCollapsed] = useState(readCollapsed)
   const signedOut = me.error instanceof ApiError && me.error.status === 403
+  const fullBleed = useMatches().some(m => (m.handle as RouteHandle | undefined)?.fullBleed)
 
   useEffect(() => { if (signedOut) location.assign(loginUrl()) }, [signedOut])
 
@@ -50,11 +53,11 @@ export function Shell() {
   return (
     <div className="app-shell">
       <Sidebar me={me.data} collapsed={collapsed} onToggle={toggle} />
-      <div className={`app-main ${collapsed ? 'sidebar-collapsed' : ''}`}>
-        <Topbar me={me.data} />
+      <div className={`app-main ${collapsed ? 'sidebar-collapsed' : ''} ${fullBleed ? 'is-full-bleed' : ''}`}>
+        {!fullBleed && <Topbar me={me.data} />}
         <main><AnimatedOutlet /></main>
       </div>
-      <MobileNav me={me.data} />
+      {!fullBleed && <MobileNav me={me.data} />}
       <Toaster />
       <ScrollRestoration />
     </div>

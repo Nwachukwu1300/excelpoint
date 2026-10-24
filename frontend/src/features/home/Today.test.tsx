@@ -38,7 +38,7 @@ describe('Today', () => {
     expect(within(db).getByText('45%')).toBeInTheDocument()
     expect(within(screen.getByRole('link', { name: /Maths\s*0 materials/ })).getByText('—')).toBeInTheDocument()
 
-    expect(screen.getByRole('link', { name: /B-tree indexes explained/ })).toHaveAttribute('href', '/subjects/3/')
+    expect(screen.getByRole('link', { name: /B-tree indexes explained/ })).toHaveAttribute('href', '/subjects/3/chat/5')
     expect(screen.queryByText('New to ExcelPoint?')).not.toBeInTheDocument()
   })
 

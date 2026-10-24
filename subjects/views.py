@@ -1,8 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.views.generic import DetailView
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponseBadRequest, JsonResponse, StreamingHttpResponse
+from django.http import Http404, HttpResponseBadRequest, JsonResponse, StreamingHttpResponse
 from django.contrib import messages
 from django.conf import settings
 from rest_framework import viewsets, status, permissions, generics
@@ -45,22 +43,6 @@ logger = logging.getLogger(__name__)
 # Create your views here.
 
 # Web Interface Views
-class SubjectDetailView(LoginRequiredMixin, DetailView):
-    model = Subject
-    template_name = 'subjects/subject_detail.html'
-    context_object_name = 'subject'
-
-    def get_queryset(self):
-        return Subject.objects.filter(user=self.request.user)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['materials'] = self.object.materials.all()
-        # Include quizzes for this subject
-        context['quizzes'] = Quiz.objects.filter(subject=self.object)
-        context['due_card_count'] = due_cards(self.request.user, self.object).count()
-        return context
-
 @login_required
 def create_subject(request):
     """Handle subject creation from form submission"""
@@ -971,7 +953,21 @@ class ChatMessageListCreateAPIView(generics.ListCreateAPIView):
         """
         subject_id = self.kwargs.get('subject_id')
         subject = get_object_or_404(Subject, id=subject_id, user=self.request.user)
-        
+
+        session_id = request.query_params.get('session_id')
+        if session_id:
+            # A specific past conversation (the app's history list); only the user's own, on this subject
+            if not session_id.isdigit():
+                return Response({'session_id': ['Must be a number.']}, status=status.HTTP_400_BAD_REQUEST)
+            session = get_object_or_404(ChatSession, id=int(session_id), user=request.user, subject=subject)
+            messages = ChatMessage.objects.filter(session=session).order_by('timestamp')
+            return Response({
+                'session': ChatSessionSerializer(session).data,
+                'messages': ChatMessageSerializer(messages, many=True).data,
+                'total_messages': messages.count(),
+                'has_more': False,
+            })
+
         try:
             session = ChatSession.objects.get(
                 user=self.request.user,
@@ -1024,9 +1020,10 @@ class ChatMessageListCreateAPIView(generics.ListCreateAPIView):
         serializer.is_valid(raise_exception=True)
         
         user_message_content = serializer.validated_data['message']
+        session_id = serializer.validated_data.get('session_id')
         
         try:
-            session_manager, session, user_message, chat_history = self._start_exchange(subject, user_message_content)
+            session_manager, session, user_message, chat_history = self._start_exchange(subject, user_message_content, session_id)
 
             logger.info(f"Generating RAG response for user {request.user.id}, subject {subject_id}, query: {user_message_content[:100]}...")
             rag_response = RAGService().generate_response(
@@ -1043,7 +1040,9 @@ class ChatMessageListCreateAPIView(generics.ListCreateAPIView):
                 self._exchange_payload(user_message, assistant_message, session, rag_response),
                 status=status.HTTP_201_CREATED,
             )
-            
+
+        except Http404:
+            raise  # e.g. a session_id that isn't theirs: a 404, not "XP is unavailable"
         except Exception as e:
             logger.error(f"Error generating chat response for user {request.user.id}, subject {subject_id}: {str(e)}")
             
@@ -1054,14 +1053,17 @@ class ChatMessageListCreateAPIView(generics.ListCreateAPIView):
                 'details': str(e) if settings.DEBUG else None
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
-    def _start_exchange(self, subject, user_message_content):
-        """Get/extend the session, save the user's message, and build the chat history for RAG."""
+    def _start_exchange(self, subject, user_message_content, session_id=None):
+        """Get/extend the session (or resume `session_id`), save the user's message, and build the chat history for RAG."""
         session_manager = SessionManager()
-        session, created = session_manager.get_or_create_session(
-            user=self.request.user,
-            subject=subject,
-            content=user_message_content  # Used for title generation
-        )
+        if session_id:
+            session, created = session_manager.resume_session(self.request.user, subject, session_id), False
+        else:
+            session, created = session_manager.get_or_create_session(
+                user=self.request.user,
+                subject=subject,
+                content=user_message_content  # Used for title generation
+            )
         if created:
             logger.info(f"Created new chat session {session.id} for user {self.request.user.id} and subject {subject.id}")
 
@@ -1179,7 +1181,8 @@ class ChatMessageStreamAPIView(ChatMessageListCreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         content = serializer.validated_data['message']
-        session_manager, session, user_message, chat_history = self._start_exchange(subject, content)
+        session_manager, session, user_message, chat_history = self._start_exchange(
+            subject, content, serializer.validated_data.get('session_id'))
 
         def sse(event, data):
             return f"event: {event}\ndata: {json.dumps(data, default=str)}\n\n"

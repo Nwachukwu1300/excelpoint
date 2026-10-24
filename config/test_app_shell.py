@@ -50,11 +50,11 @@ class AppShellTest(TestCase):
 
 
 class SubjectsCutoverTest(TestCase):
-    def test_old_subject_lists_redirect_but_the_detail_page_stays(self):
+    def test_old_subject_pages_redirect_to_the_app(self):
         user = get_user_model().objects.create_user('s', password='p')
         subject = Subject.objects.create(user=user, name='DB')
         self.client.force_login(user)
         for old in ['/subjects/', '/api/']:
             self.assertRedirects(self.client.get(old), '/app/subjects', fetch_redirect_response=False)
-        # still the old page: it hosts the chat widget until the new chat screen ships
-        self.assertEqual(self.client.get(f'/subjects/{subject.id}/').status_code, 200)
+        for old in [f'/subjects/{subject.id}/', f'/api/{subject.id}/']:
+            self.assertRedirects(self.client.get(old), f'/app/subjects/{subject.id}', fetch_redirect_response=False)

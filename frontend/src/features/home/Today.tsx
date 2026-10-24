@@ -5,7 +5,7 @@ import { api, useMe } from '../../lib/api'
 import { reveal } from '../../lib/motion'
 import { SubjectIcon } from '../../ui/SubjectIcon'
 import { timeAgo } from '../../lib/format'
-import { oldPages, reviewHref } from '../../layout/nav'
+import { reviewHref } from '../../layout/nav'
 import { CountUp } from '../../ui/CountUp'
 import { Icon } from '../../ui/Icon'
 import { Button, Skeleton, buttonClass, type Tone } from '../../ui/primitives'
@@ -180,14 +180,14 @@ export function Today() {
                 <p className="list-empty">No conversations yet. Open a subject and ask XP about your materials.</p>
               )}
               {data.recent_chats.map(c => (
-                <a className="conversation-row" key={c.id} href={oldPages.chat(c.subject_id)}>
+                <Link className="conversation-row" key={c.id} to={`/subjects/${c.subject_id}/chat/${c.id}`}>
                   <span className="xp-avatar xp-avatar--small"><Icon name="sparkles" size={14} /></span>
                   <div>
                     <strong>{c.title}</strong>
                     <span>{c.subject_name} · {timeAgo(c.last_activity)}</span>
                   </div>
                   <Icon name="chevronRight" size={14} />
-                </a>
+                </Link>
               ))}
             </section>
             {data.subjects.length === 0 && (

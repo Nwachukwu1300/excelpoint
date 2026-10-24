@@ -12,7 +12,7 @@ urlpatterns = [
     # Web Views
     path('', RedirectView.as_view(url='/app/subjects'), name='subject_list'),  # rebuilt in the React app
     path('create/', views.create_subject, name='create_subject'),
-    path('<int:pk>/', views.SubjectDetailView.as_view(), name='subject_detail'),
+    path('<int:pk>/', RedirectView.as_view(url='/app/subjects/%(pk)s'), name='subject_detail'),  # rebuilt in the React app
     path('<int:pk>/upload/', views.upload_material, name='upload_material'),
     path('<int:pk>/material/<int:material_id>/delete/', views.delete_material, name='delete_material'),
     path('material/<int:material_id>/status/', views.material_status, name='material_status'),

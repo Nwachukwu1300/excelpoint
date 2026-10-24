@@ -99,3 +99,7 @@
   .dropdown { position: fixed; top: 62px; right: 12px; left: 12px; width: auto; }
   .dropdown--account { left: auto; width: 250px; }
 }
+
+/* added: full-bleed pages (XP chat) have no top bar, so main fills the window */
+.app-main.is-full-bleed main { min-height: 0; }
+@media (max-width: 640px) { .app-main.is-full-bleed { padding-bottom: 0; } }

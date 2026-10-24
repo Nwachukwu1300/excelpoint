@@ -11,7 +11,7 @@ import { Icon } from '../ui/Icon'
 import { Avatar, IconButton, Skeleton } from '../ui/primitives'
 import { oldPages } from './nav'
 
-export type RouteHandle = { title: string | ((params: Record<string, string | undefined>, me?: Me) => string) }
+export type RouteHandle = { title: string | ((params: Record<string, string | undefined>, me?: Me) => string); fullBleed?: boolean }
 
 type Notification = { id: number; kind: string; title: string; body: string; url: string; read: boolean; created_at: string }
 

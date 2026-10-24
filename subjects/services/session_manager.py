@@ -1,3 +1,4 @@
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.db import transaction
 import logging
@@ -67,6 +68,16 @@ class SessionManager:
             logger.info(f"Created new session {new_session.id} for user {user.id} and subject {subject.id}")
             return new_session, True
     
+    def resume_session(self, user, subject, session_id):
+        """Make one of the user's past conversations on this subject the active one again.
+        Raises Http404 if it isn't theirs (or belongs to another subject)."""
+        session = get_object_or_404(ChatSession, id=session_id, user=user, subject=subject)
+        with transaction.atomic():
+            ChatSession.objects.filter(user=user, subject=subject, is_active=True).exclude(id=session.id).update(is_active=False)
+            session.is_active, session.status, session.last_activity = True, 'active', timezone.now()
+            session.save(update_fields=['is_active', 'status', 'last_activity'])
+        return session
+
     def is_session_active(self, session):
         """
         Check if a session is still active (not expired).

@@ -77,13 +77,13 @@ export function SubjectWorkspace() {
           {subject?.due_count
             ? <a className={buttonClass('secondary')} href={oldPages.review(id)}><Icon name="repeat" />Review {subject.due_count} due</a>
             : <button type="button" className={buttonClass('secondary')} disabled><Icon name="repeat" />Nothing due</button>}
-          <a className={buttonClass('ai')} href={oldPages.chat(id)}><Icon name="sparkles" />Ask XP</a>
+          <Link className={buttonClass('ai')} to={`/subjects/${id}/chat`}><Icon name="sparkles" />Ask XP</Link>
         </div>
       </div>
 
       <div className="tabs" role="tablist" aria-label="Subject sections">
         {tabButton('materials', 'Materials')}
-        <a role="tab" aria-selected={false} href={oldPages.chat(id)}>Chat</a>
+        <Link role="tab" aria-selected={false} to={`/subjects/${id}/chat`}>Chat</Link>
         {tabButton('quizzes', 'Quizzes')}
         {tabButton('flashcards', 'Flashcards', subject?.due_count)}
       </div>

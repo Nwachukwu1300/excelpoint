@@ -136,3 +136,13 @@
 [data-theme='dark'] .subject-icon--violet { color: #ddd6fe; background: rgb(109 40 217 / .25); }
 [data-theme='dark'] .subject-icon--blue { color: #bfdbfe; background: rgb(29 78 216 / .25); }
 [data-theme='dark'] .subject-icon--green { color: #a7f3d0; background: rgb(4 120 87 / .25); }
+
+/* Answer badges (ui/AnswerBadges): verification, confidence, citation chip */
+.verification, .confidence { display: inline-flex; align-items: center; gap: 4px; padding: 3px 7px; border-radius: 20px; font-size: 10px; font-weight: 700; }
+.is-verified, .confidence--high { color: var(--success); background: var(--success-soft); }
+.is-unverified, .confidence--moderate { color: var(--warning); background: var(--warning-soft); }
+.confidence--low { color: var(--danger); background: var(--danger-soft); }
+.citation-chip { display: inline-flex; max-width: 100%; align-items: center; gap: 5px; padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px; color: var(--primary); background: var(--card); font-size: 10px; font-weight: 600; }
+.citation-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.citation-chip { transition: border-color .15s ease, background .15s ease; }
+.citation-chip:hover, .citation-chip.is-active { border-color: var(--primary); background: var(--primary-soft); }

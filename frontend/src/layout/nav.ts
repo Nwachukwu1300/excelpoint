@@ -2,7 +2,6 @@ import type { Me } from '../lib/api'
 
 // Screens not rebuilt yet still live on the old Django pages. Each step swaps its entry for an in-app route.
 export const oldPages = {
-  chat: (subjectId: number) => `/subjects/${subjectId}/`, // the old subject page hosts the XP chat widget (until step 4)
   review: (subjectId: number) => `/subjects/${subjectId}/review/`,
   takeQuiz: (quizId: number, fresh = false) => `/api/quiz/${quizId}/take/${fresh ? '?dynamic=true' : ''}`,
   quizHistory: '/api/quiz/history/',

@@ -1,0 +1,240 @@
+import { useQueryClient } from '@tanstack/react-query'
+import { AnimatePresence } from 'motion/react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router'
+import { useMe } from '../../lib/api'
+import { shortDate } from '../../lib/format'
+import { Icon } from '../../ui/Icon'
+import { Button, IconButton, Skeleton } from '../../ui/primitives'
+import {
+  createSession, messagesKey, RateLimitError, sendMessage, sessionsKey, streamMessage, StreamUnavailableError,
+  useMessages, useSessions, type ChatMessage, type Exchange, type SourceChunk,
+} from './api'
+import { Answer, StreamingAnswer, Thinking, UserBubble } from './Thread'
+import { SourcesPanel } from './SourcesPanel'
+import '../../styles/chat.css'
+
+const MAX = 1000
+const wide = () => typeof matchMedia === 'function' && matchMedia('(min-width: 1101px)').matches
+
+type Pending = { question: string; text: string }
+
+export function ChatPage() {
+  const params = useParams()
+  const subjectId = Number(params.subjectId)
+  const sessionId = params.sessionId ? Number(params.sessionId) : undefined
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const me = useMe()
+  const subjectName = me.data?.subjects.find(s => s.id === subjectId)?.name ?? ''
+  const sessions = useSessions(subjectId)
+  const messages = useMessages(subjectId, sessionId)
+
+  const [draft, setDraft] = useState('')
+  const [pending, setPending] = useState<Pending | null>(null)
+  const [justArrived, setJustArrived] = useState<number[]>([])
+  const [error, setError] = useState<string | null>(null)
+  const [rateLimit, setRateLimit] = useState<RateLimitError | null>(null)
+  const [sourcesOpen, setSourcesOpen] = useState(wide)
+  const [selectedId, setSelectedId] = useState<number | null>(null)
+  const [focus, setFocus] = useState<SourceChunk | null>(null)
+  const inflight = useRef<{ sid: number; controller: AbortController } | null>(null)
+  const scroller = useRef<HTMLDivElement>(null)
+  const composer = useRef<HTMLTextAreaElement>(null)
+
+  // Opening another conversation drops a half-finished answer from view (the server still saves it).
+  // A new chat moving to its own URL is the same conversation, so its stream keeps going.
+  useEffect(() => {
+    if (inflight.current && inflight.current.sid !== sessionId) {
+      inflight.current.controller.abort()
+      inflight.current = null
+      setPending(null)
+    }
+  }, [sessionId])
+  useEffect(() => () => inflight.current?.controller.abort(), [])
+  useEffect(() => { setSelectedId(null); setFocus(null); setError(null) }, [sessionId])
+
+  const thread = messages.data ?? []
+  const lastWithSources = [...thread].reverse().find(m => m.role === 'assistant' && m.metadata?.retrieved_chunks?.length)
+  const shown = thread.find(m => m.id === selectedId) ?? lastWithSources
+
+  // Keep the newest words in view while the answer streams, unless the reader scrolled up.
+  // A conversation opens at its newest message.
+  const openedAt = useRef<number | undefined>(undefined)
+  useLayoutEffect(() => {
+    const el = scroller.current
+    if (!el) return
+    const firstLoad = thread.length > 0 && openedAt.current !== sessionId
+    if (firstLoad) openedAt.current = sessionId
+    if (firstLoad || el.scrollHeight - el.scrollTop - el.clientHeight < 160) el.scrollTop = el.scrollHeight
+  }, [thread.length, pending?.text, pending?.question, sessionId])
+
+  const finish = (sid: number, exchange: Exchange) => {
+    queryClient.setQueryData<{ messages: ChatMessage[] }>(messagesKey(subjectId, sid), old => {
+      const fresh = [exchange.user_message, exchange.assistant_message]
+      return { messages: [...(old?.messages ?? []).filter(m => !fresh.some(f => f.id === m.id)), ...fresh] }
+    })
+    setJustArrived(ids => [...ids, exchange.user_message.id, exchange.assistant_message.id])
+    setSelectedId(null)
+    for (const key of [sessionsKey(subjectId), ['home']]) queryClient.invalidateQueries({ queryKey: key })
+  }
+
+  const send = async (text = draft) => {
+    const question = text.trim()
+    if (!question || pending) return
+    setDraft('')
+    setError(null)
+    setRateLimit(null)
+    setPending({ question, text: '' })
+    try {
+      let sid = sessionId
+      const controller = new AbortController()
+      if (!sid) {
+        sid = (await createSession(subjectId)).id
+        inflight.current = { sid, controller }
+        queryClient.setQueryData(messagesKey(subjectId, sid), { messages: [] }) // nothing to fetch yet
+        navigate(`/subjects/${subjectId}/chat/${sid}`, { replace: true })
+      }
+      inflight.current = { sid, controller }
+      const body = { message: question, session_id: sid }
+      let exchange: Exchange
+      try {
+        exchange = await streamMessage(subjectId, body, t => setPending(p => p && { ...p, text: p.text + t }), controller.signal)
+      } catch (e) {
+        if (!(e instanceof StreamUnavailableError)) throw e
+        exchange = await sendMessage(subjectId, body) // the stream couldn't start: ask the normal way
+      }
+      finish(sid, exchange)
+      setPending(null)
+      inflight.current = null
+    } catch (e) {
+      if ((e as Error).name === 'AbortError') return
+      inflight.current = null
+      setPending(null)
+      setDraft(question) // nothing lost: the question goes back in the box
+      if (e instanceof RateLimitError) setRateLimit(e)
+      else setError((e as Error).message || 'XP is currently unavailable. Please try again later.')
+    } finally {
+      composer.current?.focus()
+    }
+  }
+
+  const cite = (message: ChatMessage, chunk: SourceChunk) => {
+    setSelectedId(message.id)
+    setFocus(chunk)
+    setSourcesOpen(true)
+  }
+
+  const title = sessions.data?.find(s => s.id === sessionId)?.title || (sessionId ? 'Conversation' : 'New conversation')
+  const empty = !sessionId && !pending
+  const minutes = rateLimit?.retryInSeconds ? Math.ceil(rateLimit.retryInSeconds / 60) : null
+
+  return (
+    <div className={`chat-layout ${sourcesOpen ? '' : 'sources-closed'}`}>
+      <aside className="chat-history" aria-label="Conversations">
+        <Link className="button button--secondary full-width" to={`/subjects/${subjectId}/chat`}><Icon name="plus" />New chat</Link>
+        <span className="history-label">RECENT</span>
+        {sessions.isPending && <div className="skeleton-stack history-loading"><Skeleton /><Skeleton /><Skeleton /></div>}
+        {sessions.data?.length === 0 && <p className="history-empty">Your conversations will be listed here.</p>}
+        {sessions.data?.map(s => (
+          <Link key={s.id} to={`/subjects/${subjectId}/chat/${s.id}`} className={s.id === sessionId ? 'is-active' : ''} aria-current={s.id === sessionId ? 'page' : undefined}>
+            <strong>{s.title || 'Untitled conversation'}</strong>
+            <span>{shortDate(s.last_activity)}</span>
+          </Link>
+        ))}
+      </aside>
+
+      <section className="chat-thread" aria-label="Conversation with XP">
+        <header className="chat-top">
+          <div>
+            <Link to={`/subjects/${subjectId}`} aria-label={`Back to ${subjectName || 'subject'}`}><Icon name="chevronRight" size={15} /></Link>
+            <div>
+              <strong>{title}</strong>
+              <span>{subjectName}</span>
+            </div>
+          </div>
+          <IconButton icon="panel" label={sourcesOpen ? 'Hide sources' : 'Show sources'} aria-pressed={sourcesOpen} onClick={() => setSourcesOpen(o => !o)} />
+        </header>
+
+        <div className="messages" ref={scroller}>
+          {empty ? (
+            <div className="chat-empty">
+              <span className="xp-avatar"><Icon name="sparkles" /></span>
+              <h1>Ask anything about your {subjectName} materials</h1>
+              <p>Every answer is grounded in your files and includes its sources.</p>
+              <div>
+                {['Summarise the key ideas', 'Explain the hardest concept simply', 'What are the most important definitions?'].map(q => (
+                  <button type="button" key={q} onClick={() => { setDraft(q); composer.current?.focus() }}>{q}</button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <>
+              {messages.isPending && sessionId && (
+                <div className="skeleton-chat" aria-label="Loading conversation"><Skeleton className="skeleton-avatar" /><div><Skeleton /><Skeleton /><Skeleton /></div></div>
+              )}
+              {messages.isError && (
+                <div className="inline-error" role="alert">
+                  <p>We couldn’t load this conversation.</p>
+                  <Button variant="secondary" onClick={() => messages.refetch()}>Try again</Button>
+                </div>
+              )}
+              {thread.map(m => m.role === 'user'
+                ? <UserBubble key={m.id} text={m.content} animate={justArrived.includes(m.id)} />
+                : <Answer key={m.id} message={m} subjectId={subjectId} selected={sourcesOpen && shown?.id === m.id}
+                    onCite={c => cite(m, c)} animate={justArrived.includes(m.id)} />)}
+              {pending && <UserBubble text={pending.question} animate />}
+              {pending && !pending.text && <Thinking />}
+              {pending?.text && <StreamingAnswer text={pending.text} />}
+              {error && <div className="chat-error" role="alert">{error}</div>}
+            </>
+          )}
+        </div>
+
+        <AnimatePresence>
+          {rateLimit && (
+            <div className="rate-banner" role="alert">
+              <Icon name="clock" size={15} />
+              <span>
+                <strong>You’ve reached your limit of questions for this hour.</strong>{' '}
+                {minutes ? `Try again in about ${minutes} minute${minutes === 1 ? '' : 's'}.` : 'Try again later.'}
+              </span>
+              <IconButton icon="close" label="Dismiss" onClick={() => setRateLimit(null)} />
+            </div>
+          )}
+        </AnimatePresence>
+
+        <form className="chat-composer" onSubmit={e => { e.preventDefault(); send() }}>
+          <textarea
+            ref={composer}
+            value={draft}
+            maxLength={MAX}
+            rows={1}
+            aria-label="Ask XP"
+            placeholder="Ask XP about your materials…"
+            onChange={e => {
+              setDraft(e.target.value)
+              e.target.style.height = 'auto'
+              e.target.style.height = `${Math.min(e.target.scrollHeight, 110)}px`
+            }}
+            onKeyDown={e => {
+              if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); send() }
+            }}
+          />
+          {draft.length > 850 && <span>{draft.length}/{MAX}</span>}
+          <button type="submit" disabled={!draft.trim() || !!pending} aria-label="Send message"><Icon name="arrow" /></button>
+          <small>Enter to send · Shift + Enter for a new line</small>
+        </form>
+      </section>
+
+      <AnimatePresence>
+        {sourcesOpen && (
+          <>
+            <div className="sources-scrim" onClick={() => setSourcesOpen(false)} aria-hidden="true" />
+            <SourcesPanel message={shown} focus={focus} onClose={() => setSourcesOpen(false)} />
+          </>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}

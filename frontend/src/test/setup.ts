@@ -9,6 +9,7 @@ if (jsdomWindow) {
 }
 
 window.scrollTo = () => {} // jsdom has no scrolling; ScrollRestoration calls it
+Element.prototype.scrollIntoView = () => {}
 
 afterEach(() => {
   cleanup()
