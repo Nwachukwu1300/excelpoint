@@ -1,6 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'motion/react'
+import { Link } from 'react-router'
 import { api, useMe } from '../../lib/api'
+import { reveal } from '../../lib/motion'
+import { SubjectIcon } from '../../ui/SubjectIcon'
 import { timeAgo } from '../../lib/format'
 import { oldPages, reviewHref } from '../../layout/nav'
 import { CountUp } from '../../ui/CountUp'
@@ -16,13 +19,14 @@ type Suggestion = {
   subject_id: number
   quiz_id: number | null
 }
-export type SubjectSummary = { id: number; name: string; materials_count: number; due_count: number; last_quiz_score: number | null }
 type Home = {
   due: { count: number; subjects: number; minutes: number }
   suggestions: Suggestion[]
   recent_chats: { id: number; title: string; subject_id: number; subject_name: string; last_activity: string }[]
-  subjects: SubjectSummary[]
+  subjects: { id: number; name: string; materials_count: number; due_count: number; last_quiz_score: number | null }[]
 }
+
+const MotionLink = motion.create(Link)
 
 const ACTIONS: Record<Suggestion['kind'], { label: string; tone: Tone }> = {
   weak_quiz: { label: 'Retake', tone: 'warning' },
@@ -30,13 +34,6 @@ const ACTIONS: Record<Suggestion['kind'], { label: string; tone: Tone }> = {
   knowledge_gap: { label: 'Upload', tone: 'ai' },
   untried_quiz: { label: 'Start quiz', tone: 'success' },
   empty_subject: { label: 'Upload', tone: 'neutral' },
-}
-
-const COLORS = ['violet', 'blue', 'green'] as const
-export const subjectColor = (id: number) => COLORS[id % COLORS.length]
-export const subjectInitials = (name: string) => {
-  const words = name.trim().split(/\s+/)
-  return (words.length > 1 ? words[0]![0]! + words[1]![0]! : name.slice(0, 2)).toUpperCase()
 }
 
 export function greeting(hour = new Date().getHours()) {
@@ -48,13 +45,6 @@ export function todayLabel(date = new Date()) {
   const day = date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })
   return `${weekday}, ${day}`.toUpperCase()
 }
-
-/** First-load reveal: rows rise in one after another (30ms apart, capped so long lists don't drag). */
-const reveal = (i: number) => ({
-  initial: { opacity: 0, y: 6 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.28, ease: [0.22, 1, 0.36, 1] as const, delay: Math.min(i, 8) * 0.03 },
-})
 
 function ReviewHero({ due, href }: { due: Home['due']; href: string }) {
   const caughtUp = due.count === 0
@@ -139,7 +129,9 @@ export function Today() {
                         <strong>{s.title}</strong>
                         <p>{s.reason}</p>
                       </div>
-                      <a className={buttonClass(i === 0 ? 'primary' : 'secondary')} href={s.url}>{action.label}</a>
+                      {s.kind === 'knowledge_gap' || s.kind === 'empty_subject'
+                        ? <Link className={buttonClass(i === 0 ? 'primary' : 'secondary')} to={`/subjects/${s.subject_id}?upload=1`}>{action.label}</Link>
+                        : <a className={buttonClass(i === 0 ? 'primary' : 'secondary')} href={s.url}>{action.label}</a>}
                     </motion.article>
                   )
                 })}
@@ -153,12 +145,12 @@ export function Today() {
                     <h2>Your subjects</h2>
                     <p>Progress across your current courses.</p>
                   </div>
-                  <a href={oldPages.subjects}>View all <Icon name="arrow" size={15} /></a>
+                  <Link to="/subjects">View all <Icon name="arrow" size={15} /></Link>
                 </div>
                 <div className="home-subjects">
                   {data.subjects.slice(0, 3).map((s, i) => (
-                    <motion.a className="home-subject" key={s.id} href={oldPages.subject(s.id)} {...reveal(i)}>
-                      <span className={`subject-icon subject-icon--${subjectColor(s.id)}`}>{subjectInitials(s.name)}</span>
+                    <MotionLink className="home-subject" key={s.id} to={`/subjects/${s.id}`} {...reveal(i)}>
+                      <SubjectIcon id={s.id} name={s.name} />
                       <div>
                         <strong>{s.name}</strong>
                         <span>{s.materials_count} material{s.materials_count === 1 ? '' : 's'}</span>
@@ -168,7 +160,7 @@ export function Today() {
                         <div><dt>Last quiz</dt><dd>{s.last_quiz_score === null ? '—' : `${s.last_quiz_score}%`}</dd></div>
                       </dl>
                       <Icon name="chevronRight" size={16} />
-                    </motion.a>
+                    </MotionLink>
                   ))}
                 </div>
               </section>
@@ -182,13 +174,13 @@ export function Today() {
                   <h2>Continue chatting</h2>
                   <p>Recent XP conversations</p>
                 </div>
-                {data.recent_chats.length > 0 && <a href={oldPages.subjects}>View all</a>}
+                {data.recent_chats.length > 0 && <Link to="/subjects">View all</Link>}
               </div>
               {data.recent_chats.length === 0 && (
                 <p className="list-empty">No conversations yet. Open a subject and ask XP about your materials.</p>
               )}
               {data.recent_chats.map(c => (
-                <a className="conversation-row" key={c.id} href={oldPages.subject(c.subject_id)}>
+                <a className="conversation-row" key={c.id} href={oldPages.chat(c.subject_id)}>
                   <span className="xp-avatar xp-avatar--small"><Icon name="sparkles" size={14} /></span>
                   <div>
                     <strong>{c.title}</strong>
@@ -203,7 +195,7 @@ export function Today() {
                 <span className="empty-icon"><Icon name="book" /></span>
                 <h3>New to ExcelPoint?</h3>
                 <p>Create your first subject to organise materials and start learning.</p>
-                <a className={buttonClass('secondary')} href={oldPages.subjects}>Create your first subject</a>
+                <Link className={buttonClass('secondary')} to="/subjects?new=1">Create your first subject</Link>
               </section>
             )}
           </aside>

@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.views.generic import ListView, DetailView
+from django.views.generic import DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseBadRequest, JsonResponse, StreamingHttpResponse
@@ -12,11 +12,12 @@ from rest_framework.views import APIView
 from rest_framework.renderers import BaseRenderer, JSONRenderer
 from rest_framework.throttling import ScopedRateThrottle
 from django.db import transaction
+from django.db.models import Prefetch
 from django.utils import timezone
 import logging
 
 from .models import (
-    Subject, SubjectMaterial, Flashcard, QuizQuestion, QuizAttempt,
+    Subject, SubjectMaterial, Flashcard, FlashcardReview, QuizQuestion, QuizAttempt,
     Quiz, Choice, UserQuizAttempt, UserAnswer,
     ChatSession, ChatMessage
 )
@@ -31,8 +32,11 @@ from .services.session_manager import SessionManager
 from .tasks import process_material, generate_dynamic_quiz_questions
 from .utils import material_file_type, short_answer_matches
 from .services.spaced_repetition import due_cards, record_review
+from .app_api import due_by_subject, subject_summaries
 import json
 import os
+
+MAX_UPLOAD_BYTES = 100 * 1024 * 1024  # matches the "up to 100 MB" promise in the upload dialog
 from django.utils import timezone
 from django.db import models
 
@@ -41,14 +45,6 @@ logger = logging.getLogger(__name__)
 # Create your views here.
 
 # Web Interface Views
-class SubjectListView(LoginRequiredMixin, ListView):
-    model = Subject
-    template_name = 'subjects/subject_list.html'
-    context_object_name = 'subjects'
-
-    def get_queryset(self):
-        return Subject.objects.filter(user=self.request.user)
-
 class SubjectDetailView(LoginRequiredMixin, DetailView):
     model = Subject
     template_name = 'subjects/subject_detail.html'
@@ -517,6 +513,8 @@ class SubjectViewSet(viewsets.ModelViewSet):
         file_type = material_file_type(uploaded_file.name) if uploaded_file else None
         if uploaded_file and not file_type:
             return Response({'file': ['Unsupported file type.']}, status=status.HTTP_400_BAD_REQUEST)
+        if uploaded_file and uploaded_file.size > MAX_UPLOAD_BYTES:
+            return Response({'file': ['Files can be up to 100 MB.']}, status=status.HTTP_400_BAD_REQUEST)
 
         if serializer.is_valid():
             material = serializer.save(subject=subject, file_type=file_type)
@@ -525,10 +523,15 @@ class SubjectViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @action(detail=False, methods=['get'])
+    def summary(self, request):
+        """Every subject with material count, due cards, latest quiz score and last update (for the app)."""
+        return Response(subject_summaries(request.user, due_by_subject(request.user)))
+
     @action(detail=True, methods=['get'])
     def materials(self, request, pk=None):
         subject = self.get_object()
-        materials = SubjectMaterial.objects.filter(subject=subject)
+        materials = SubjectMaterial.objects.filter(subject=subject).prefetch_related('quizzes').order_by('-created_at')
         serializer = SubjectMaterialSerializer(materials, many=True)
         return Response(serializer.data)
 
@@ -584,7 +587,9 @@ class SubjectViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['get'])
     def flashcards(self, request, pk=None):
         subject = self.get_object()
-        flashcards = Flashcard.objects.filter(subject=subject)
+        flashcards = (Flashcard.objects.filter(subject=subject).select_related('material')
+                      .prefetch_related(Prefetch('reviews', queryset=FlashcardReview.objects.filter(user=request.user),
+                                                 to_attr='my_reviews')))
         serializer = FlashcardSerializer(flashcards, many=True)
         return Response(serializer.data)
 
@@ -595,8 +600,15 @@ class SubjectViewSet(viewsets.ModelViewSet):
         quizzes = Quiz.objects.filter(subject=subject)
         quiz_data = []
         
-        for quiz in quizzes:
+        for quiz in quizzes.select_related('material'):
+            scores = list(quiz.attempts.filter(user=request.user, is_completed=True, score__isnull=False)
+                          .order_by('-end_time', '-id').values_list('score', flat=True))
             quiz_data.append({
+                'material_id': quiz.material_id,
+                'material_name': os.path.basename(quiz.material.file.name) if quiz.material and quiz.material.file else None,
+                'attempts': len(scores),
+                'last_score': round(scores[0]) if scores else None,
+                'best_score': round(max(scores)) if scores else None,
                 'id': quiz.id,
                 'title': quiz.title,
                 'description': quiz.description,
@@ -656,6 +668,11 @@ class SubjectMaterialViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return SubjectMaterial.objects.filter(subject__user=self.request.user)
+
+    def perform_destroy(self, instance):
+        if instance.file:
+            instance.file.delete(save=False)  # the stored file too (local or S3), like the old delete page
+        instance.delete()
 
     @action(detail=True, methods=['get'])
     def flashcards(self, request, pk=None):

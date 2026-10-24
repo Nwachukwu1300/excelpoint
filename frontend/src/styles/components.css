@@ -68,3 +68,71 @@
 /* added: a load failure in place of the content, with a retry */
 .inline-error { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 20px; border: 1px solid var(--border); border-left: 3px solid var(--danger); border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow); }
 .inline-error p { color: var(--muted); font-size: 13px; }
+
+/* Indeterminate progress (added): processing has no real percentage, so sweep instead of faking one */
+.progress-track.is-indeterminate span { width: 40%; animation: sweep 1.4s var(--ease-drawer) infinite; }
+@keyframes sweep { from { transform: translateX(-100%); } to { transform: translateX(260%); } }
+
+/* Modal, forms and upload (prototype) */
+.modal-backdrop { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 20px; background: rgb(15 23 42 / .45); backdrop-filter: blur(2px); }
+.modal { width: 100%; max-width: 500px; padding: 24px; border: 1px solid var(--border); border-radius: 12px; background: var(--card); box-shadow: var(--shadow-lg); }
+.modal--small { max-width: 420px; }
+.modal-head { display: flex; align-items: flex-start; justify-content: space-between; }
+.modal-head h2 { margin: 0; font-size: 19px; font-weight: 650; letter-spacing: -.02em; }
+.modal-head p { margin: 5px 0 0; color: var(--muted); font-size: 12px; }
+.form-field { margin: 22px 0 14px; }
+.form-field label { display: block; margin-bottom: 7px; font-size: 11px; font-weight: 600; }
+.select-wrap { position: relative; }
+.select-wrap select { width: 100%; height: 42px; appearance: none; padding: 0 36px 0 12px; border: 1px solid var(--border); border-radius: var(--radius); outline: none; color: var(--text); background: var(--card); font-size: 12px; }
+.select-wrap select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgb(37 99 235 / .1); }
+.select-wrap .icon { position: absolute; top: 13px; right: 12px; color: var(--muted); pointer-events: none; }
+.compact-select select { min-width: 170px; height: 40px; }
+.compact-select .icon { top: 13px; }
+.text-input { width: 100%; height: 42px; padding: 0 12px; border: 1px solid var(--border); border-radius: var(--radius); outline: none; color: var(--text); background: var(--card); font-size: 13px; }
+.text-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgb(37 99 235 / .1); }
+.text-input.is-invalid { border-color: var(--danger); }
+.field-error { display: block; margin-top: 6px; color: var(--danger); font-size: 10px; }
+.dropzone { display: flex; width: 100%; min-height: 180px; flex-direction: column; align-items: center; justify-content: center; gap: 7px; border: 1px dashed #94a3b8; border-radius: var(--radius); color: var(--text); background: var(--background); transition: border-color .15s ease, background .15s ease; }
+.dropzone:hover, .dropzone.is-dragging { border-color: var(--primary); background: var(--primary-soft); }
+.dropzone > span:last-child { color: var(--muted); font-size: 10px; }
+.dropzone > strong { max-width: 90%; overflow: hidden; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.upload-icon { display: grid; width: 42px; height: 42px; margin-bottom: 4px; place-items: center; border-radius: 50%; color: var(--primary); background: var(--primary-soft); }
+.upload-icon.success { color: var(--success); background: var(--success-soft); }
+.modal-note { display: flex; gap: 7px; margin: 14px 0 20px; color: var(--muted); font-size: 10px; line-height: 1.5; }
+.upload-file-error { display: flex; align-items: center; gap: 7px; margin-top: 8px; padding: 9px 10px; border-radius: 6px; color: var(--danger); background: var(--danger-soft); font-size: 9px; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.confirm-dialog { text-align: center; }
+.danger-icon { display: grid; width: 48px; height: 48px; margin: 0 auto 16px; place-items: center; border-radius: 50%; color: var(--danger); background: var(--danger-soft); }
+.confirm-dialog h2 { margin: 0; font-size: 18px; overflow-wrap: anywhere; }
+.confirm-dialog p { margin: 8px 0 22px; color: var(--muted); font-size: 11px; line-height: 1.6; }
+.confirm-dialog .modal-actions { justify-content: center; }
+
+/* Row "…" menu (added; reuses the dropdown look) */
+.row-menu { width: 170px; z-index: 30; }
+.dropdown-links .danger { color: var(--danger); }
+
+/* Toasts (prototype look; stacked and animated in ui/Toast.tsx) */
+.toast-stack { position: fixed; right: 24px; bottom: 24px; z-index: 80; display: flex; flex-direction: column; gap: 8px; }
+.toast { display: flex; width: min(360px, calc(100vw - 32px)); align-items: flex-start; gap: 10px; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow-lg); }
+.toast > span { display: grid; width: 26px; height: 26px; flex: 0 0 auto; place-items: center; border-radius: 50%; }
+.toast--success > span { color: var(--success); background: var(--success-soft); }
+.toast--error > span { color: var(--danger); background: var(--danger-soft); }
+.toast > div { flex: 1; min-width: 0; }
+.toast strong { font-size: 9px; }
+.toast p { margin: 3px 0 0; color: var(--muted); font-size: 8px; }
+
+@media (max-width: 640px) {
+  .modal-backdrop { align-items: end; padding: 0; }
+  .modal { max-width: none; max-height: 92vh; overflow-y: auto; border-radius: 14px 14px 0 0; }
+  .toast-stack { right: 16px; bottom: 82px; left: 16px; }
+  .toast { width: 100%; }
+}
+
+/* Subject initials tile (ui/SubjectIcon) */
+.subject-icon { display: grid; width: 36px; height: 36px; place-items: center; border-radius: var(--radius); font-size: 11px; font-weight: 700; }
+.subject-icon--violet { color: #6d28d9; background: #ede9fe; }
+.subject-icon--blue { color: #1d4ed8; background: #dbeafe; }
+.subject-icon--green { color: #047857; background: #d1fae5; }
+[data-theme='dark'] .subject-icon--violet { color: #ddd6fe; background: rgb(109 40 217 / .25); }
+[data-theme='dark'] .subject-icon--blue { color: #bfdbfe; background: rgb(29 78 216 / .25); }
+[data-theme='dark'] .subject-icon--green { color: #a7f3d0; background: rgb(4 120 87 / .25); }

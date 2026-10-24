@@ -1,4 +1,5 @@
 from django.urls import path, include
+from django.views.generic import RedirectView
 from rest_framework.routers import DefaultRouter
 from . import views
 
@@ -9,7 +10,7 @@ router.register(r'quiz', views.QuizViewSet, basename='quiz')
 
 urlpatterns = [
     # Web Views
-    path('', views.SubjectListView.as_view(), name='subject_list'),
+    path('', RedirectView.as_view(url='/app/subjects'), name='subject_list'),  # rebuilt in the React app
     path('create/', views.create_subject, name='create_subject'),
     path('<int:pk>/', views.SubjectDetailView.as_view(), name='subject_detail'),
     path('<int:pk>/upload/', views.upload_material, name='upload_material'),

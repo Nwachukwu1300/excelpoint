@@ -20,6 +20,7 @@ export function mockApi(handlers: Record<string, Handler | unknown>) {
     if (!(key in handlers)) throw new Error(`Unexpected request: ${key}`)
     const handler = handlers[key]
     const { status = 200, body } = typeof handler === 'function' ? (handler as Handler)(init) : { body: handler }
+    if (status === 204) return new Response(null, { status }) // a 204 can't carry a body
     return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
   })
   vi.stubGlobal('fetch', fetchMock)
@@ -37,3 +38,6 @@ export function renderApp(path = '/') {
 }
 
 export const emptyHome = { due: { count: 0, subjects: 0, minutes: 0 }, suggestions: [], recent_chats: [], subjects: [] }
+
+/** A handler for mockApi that answers with a status code (plain objects are always 200 bodies). */
+export const reply = (status: number, body: unknown = null) => () => ({ status, body })

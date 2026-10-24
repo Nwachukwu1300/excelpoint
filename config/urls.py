@@ -18,7 +18,8 @@ from django.contrib import admin
 from django.urls import path, include, re_path
 from django.conf import settings
 from django.conf.urls.static import static
-from subjects.views import SubjectListView, SubjectDetailView, create_subject, upload_material, review_flashcards
+from django.views.generic import RedirectView
+from subjects.views import SubjectDetailView, create_subject, upload_material, review_flashcards
 from subjects import app_api as subjects_app_api
 from users import api as users_api
 from .views import home, app_shell
@@ -37,7 +38,7 @@ urlpatterns = [
     path('api/retrieval/', include('retrieval.urls')),  # Stage 1: Retrieval System Optimization
     path('api/reasoning/', include('reasoning.urls')),  # Stage 2: Agentic Reasoning Pipeline
     path('insights/', include('reasoning.page_urls')),  # Stage 3/4: quality dashboard + debug panel
-    path('subjects/', SubjectListView.as_view(), name='subjects'),
+    path('subjects/', RedirectView.as_view(url='/app/subjects'), name='subjects'),  # rebuilt in the React app
     path('subjects/create/', create_subject, name='create_subject'),
     path('subjects/<int:pk>/upload/', upload_material, name='upload_material'),
     path('subjects/<int:pk>/', SubjectDetailView.as_view(), name='subject_detail'),

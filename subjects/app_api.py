@@ -3,7 +3,7 @@
 import math
 from collections import Counter
 
-from django.db.models import Count, OuterRef, Subquery
+from django.db.models import Count, Max, OuterRef, Subquery
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
@@ -14,17 +14,23 @@ from .services.spaced_repetition import due_cards
 SECONDS_PER_CARD = 27  # rough review pace for the "about N minutes" estimate
 
 
+def due_by_subject(user):
+    return Counter(due_cards(user).order_by().values_list('subject_id', flat=True))
+
+
 def subject_summaries(user, due):
-    """Subjects with material count, due cards and latest quiz score; most cards due first, then by name."""
+    """Subjects with material count, due cards, latest quiz score and last update; most cards due first."""
     last_score = (UserQuizAttempt.objects
                   .filter(user=user, quiz__subject=OuterRef('pk'), is_completed=True, score__isnull=False)
                   .order_by('-end_time', '-id').values('score')[:1])
     subjects = (user.subjects
-                .annotate(materials_count=Count('materials', distinct=True), last_quiz_score=Subquery(last_score))
+                .annotate(materials_count=Count('materials', distinct=True), last_quiz_score=Subquery(last_score),
+                          latest_upload=Max('materials__created_at'))
                 .order_by('name'))
     rows = [
         {'id': s.id, 'name': s.name, 'materials_count': s.materials_count, 'due_count': due.get(s.id, 0),
-         'last_quiz_score': None if s.last_quiz_score is None else round(s.last_quiz_score)}
+         'last_quiz_score': None if s.last_quiz_score is None else round(s.last_quiz_score),
+         'updated_at': max(filter(None, [s.updated_at, s.latest_upload]))}
         for s in subjects
     ]
     return sorted(rows, key=lambda r: -r['due_count'])  # stable, so ties stay alphabetical
@@ -34,7 +40,7 @@ def subject_summaries(user, due):
 def home(request):
     """The "Today" page: what's due, ranked suggestions, recent chats, and subjects."""
     user = request.user
-    due = Counter(due_cards(user).order_by().values_list('subject_id', flat=True))
+    due = due_by_subject(user)
     count = sum(due.values())
     chats = (ChatSession.objects.filter(user=user)
              .annotate(n=Count('messages')).filter(n__gt=0)

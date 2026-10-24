@@ -1,3 +1,5 @@
+import os
+
 from django.urls import reverse
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
@@ -11,11 +13,33 @@ class SubjectSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'created_at', 'updated_at']
         read_only_fields = ['created_at', 'updated_at']
 
+    def validate_name(self, value):
+        """Names are unique per user (ignoring case); say so instead of failing on the DB constraint."""
+        name = value.strip()
+        if not name:
+            raise serializers.ValidationError('Give the subject a name.')
+        taken = Subject.objects.filter(user=self.context['request'].user, name__iexact=name)
+        if self.instance:
+            taken = taken.exclude(pk=self.instance.pk)
+        if taken.exists():
+            raise serializers.ValidationError(f'A subject named {name} already exists.')
+        return name
+
 class SubjectMaterialSerializer(serializers.ModelSerializer):
+    filename = serializers.SerializerMethodField()
+    quiz_id = serializers.SerializerMethodField()
+
     class Meta:
         model = SubjectMaterial
-        fields = ['id', 'file', 'file_type', 'status', 'created_at', 'updated_at']
-        read_only_fields = ['file_type', 'status', 'created_at', 'updated_at']
+        fields = ['id', 'file', 'file_type', 'status', 'created_at', 'updated_at', 'filename', 'summary', 'quiz_id']
+        read_only_fields = ['file_type', 'status', 'created_at', 'updated_at', 'summary']
+
+    def get_filename(self, obj):
+        return os.path.basename(obj.file.name) if obj.file else ''
+
+    def get_quiz_id(self, obj):
+        quiz = next(iter(obj.quizzes.all()), None)  # .all() so a prefetch is used
+        return quiz.id if quiz else None
 
 class ContentChunkSerializer(serializers.ModelSerializer):
     class Meta:
@@ -24,10 +48,22 @@ class ContentChunkSerializer(serializers.ModelSerializer):
         read_only_fields = ['created_at']
 
 class FlashcardSerializer(serializers.ModelSerializer):
+    material_name = serializers.SerializerMethodField()
+    due_at = serializers.SerializerMethodField()
+
     class Meta:
         model = Flashcard
-        fields = ['id', 'question', 'answer', 'created_at']
+        fields = ['id', 'question', 'answer', 'created_at', 'material_name', 'due_at']
         read_only_fields = ['created_at']
+
+    def get_material_name(self, obj):
+        return os.path.basename(obj.material.file.name) if obj.material and obj.material.file else None
+
+    def get_due_at(self, obj):
+        """Next review time for the requesting user; None means never reviewed (due now).
+        Needs the view to prefetch the user's reviews into `my_reviews`."""
+        reviews = getattr(obj, 'my_reviews', None)
+        return reviews[0].due_at if reviews else None
 
 class QuizQuestionSerializer(serializers.ModelSerializer):
     class Meta:

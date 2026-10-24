@@ -10,7 +10,7 @@ export function MobileNav({ me }: { me?: Me }) {
   const { pathname } = useLocation()
   const items: { icon: IconName; label: string; to?: string; href?: string; active: boolean; badge?: number }[] = [
     { icon: 'home', label: 'Home', to: '/', active: pathname === '/' },
-    { icon: 'book', label: 'Subjects', href: oldPages.subjects, active: pathname.startsWith('/subjects') },
+    { icon: 'book', label: 'Subjects', to: '/subjects', active: pathname.startsWith('/subjects') },
     { icon: 'repeat', label: 'Review', href: reviewHref(me), active: pathname.startsWith('/review'), badge: me?.due_count },
     { icon: 'chart', label: 'Insights', href: oldPages.insights, active: pathname.startsWith('/insights') },
     { icon: 'user', label: 'Account', href: oldPages.settings, active: pathname.startsWith('/settings') },

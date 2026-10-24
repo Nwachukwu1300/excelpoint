@@ -49,3 +49,26 @@ export function Logo({ compact = false }: { compact?: boolean }) {
 export function Skeleton({ className = '' }: { className?: string }) {
   return <span className={`skeleton ${className}`.trim()} aria-hidden="true" />
 }
+
+export type MaterialStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED'
+const STATUS: Record<MaterialStatus, { label: string; tone: Tone }> = {
+  PENDING: { label: 'Pending', tone: 'warning' },
+  PROCESSING: { label: 'Processing', tone: 'primary' },
+  COMPLETED: { label: 'Ready', tone: 'success' },
+  FAILED: { label: 'Failed', tone: 'danger' },
+}
+
+export function StatusChip({ status }: { status: MaterialStatus }) {
+  const { label, tone } = STATUS[status]
+  return <Badge tone={tone}><span className="status-dot" />{label}</Badge>
+}
+
+/** Determinate when `value` is given; otherwise an indeterminate sweep (processing has no real %). */
+export function ProgressBar({ value, label }: { value?: number; label: string }) {
+  return (
+    <div className={`progress-track ${value === undefined ? 'is-indeterminate' : ''}`} role="progressbar" aria-label={label}
+      aria-valuenow={value} aria-valuemin={0} aria-valuemax={100}>
+      <span style={value === undefined ? undefined : { width: `${value}%` }} />
+    </div>
+  )
+}

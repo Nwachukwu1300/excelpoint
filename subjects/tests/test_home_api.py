@@ -44,6 +44,7 @@ class HomeApiTest(TestCase):
 
         self.assertEqual([s['name'] for s in data['subjects']], ['Databases', 'Maths'])  # most due first
         subjects = {s['name']: s for s in data['subjects']}
+        self.assertTrue(subjects['Databases'].pop('updated_at'))
         self.assertEqual(subjects['Databases'], {'id': self.db.id, 'name': 'Databases', 'materials_count': 1,
                                                  'due_count': 3, 'last_quiz_score': 45})  # latest attempt, not best
         self.assertIsNone(subjects['Maths']['last_quiz_score'])

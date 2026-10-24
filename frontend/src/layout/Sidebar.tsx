@@ -1,5 +1,5 @@
 import { motion } from 'motion/react'
-import { useLocation } from 'react-router'
+import { Link, useLocation } from 'react-router'
 import { displayName, initials, type Me } from '../lib/api'
 import { spring } from '../lib/motion'
 import { Icon, type IconName } from '../ui/Icon'
@@ -30,7 +30,7 @@ export function Sidebar({ me, collapsed, onToggle }: { me?: Me; collapsed: boole
   const { pathname } = useLocation()
   const items: Item[] = [
     { icon: 'home', label: 'Home', to: '/', active: pathname === '/' },
-    { icon: 'book', label: 'Subjects', href: oldPages.subjects, active: pathname.startsWith('/subjects') },
+    { icon: 'book', label: 'Subjects', to: '/subjects', active: pathname.startsWith('/subjects') },
     { icon: 'repeat', label: 'Review', href: reviewHref(me), badge: me?.due_count, active: pathname.startsWith('/review') },
     { icon: 'chart', label: 'Insights', href: oldPages.insights, active: pathname.startsWith('/insights') },
   ]
@@ -50,15 +50,15 @@ export function Sidebar({ me, collapsed, onToggle }: { me?: Me; collapsed: boole
         {!collapsed && me && (
           <div className="subject-nav">
             {me.subjects.map(s => (
-              <a key={s.id} href={oldPages.subject(s.id)}>
+              <Link key={s.id} to={`/subjects/${s.id}`} className={pathname === `/subjects/${s.id}` ? 'is-active' : ''}>
                 <span>{s.name}</span>
                 <small>{s.due_count}</small>
-              </a>
+              </Link>
             ))}
-            <a className="new-subject" href={oldPages.subjects}>
+            <Link className="new-subject" to="/subjects?new=1">
               <Icon name="plus" size={14} />
               <span>New subject</span>
-            </a>
+            </Link>
           </div>
         )}
         <NavItem item={items[2]!} collapsed={collapsed} />

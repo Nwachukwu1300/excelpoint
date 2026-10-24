@@ -6,6 +6,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 
 from config import views
+from subjects.models import Subject
 
 
 class AppShellTest(TestCase):
@@ -46,3 +47,14 @@ class AppShellTest(TestCase):
         self.client.force_login(self.user)
         with patch.object(views, 'APP_INDEX', self.index.with_name('missing.html')):
             self.assertEqual(self.client.get('/app/').status_code, 503)
+
+
+class SubjectsCutoverTest(TestCase):
+    def test_old_subject_lists_redirect_but_the_detail_page_stays(self):
+        user = get_user_model().objects.create_user('s', password='p')
+        subject = Subject.objects.create(user=user, name='DB')
+        self.client.force_login(user)
+        for old in ['/subjects/', '/api/']:
+            self.assertRedirects(self.client.get(old), '/app/subjects', fetch_redirect_response=False)
+        # still the old page: it hosts the chat widget until the new chat screen ships
+        self.assertEqual(self.client.get(f'/subjects/{subject.id}/').status_code, 200)

@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useState } from 'react'
 import { ScrollRestoration, useLocation, useOutlet } from 'react-router'
 import { ApiError, loginUrl, useMe } from '../lib/api'
+import { Toaster } from '../ui/Toast'
 import { MobileNav } from './MobileNav'
 import { Sidebar } from './Sidebar'
 import { Topbar } from './Topbar'
@@ -54,6 +55,7 @@ export function Shell() {
         <main><AnimatedOutlet /></main>
       </div>
       <MobileNav me={me.data} />
+      <Toaster />
       <ScrollRestoration />
     </div>
   )

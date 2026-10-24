@@ -1,31 +1,19 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { AnimatePresence, motion } from 'motion/react'
-import { useCallback, useEffect, useRef, useState, type RefObject } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { useMatches, useNavigate } from 'react-router'
 import { api, csrfToken, displayName, initials, type Me } from '../lib/api'
 import { timeAgo } from '../lib/format'
 import { ease, popover } from '../lib/motion'
 import { useTheme } from '../lib/theme'
+import { useDismiss } from '../lib/useDismiss'
 import { Icon } from '../ui/Icon'
 import { Avatar, IconButton, Skeleton } from '../ui/primitives'
 import { oldPages } from './nav'
 
-type Notification = { id: number; kind: string; title: string; body: string; url: string; read: boolean; created_at: string }
+export type RouteHandle = { title: string | ((params: Record<string, string | undefined>, me?: Me) => string) }
 
-/** Close a menu on outside press or Escape. */
-function useDismiss(ref: RefObject<HTMLElement | null>, onClose: () => void, active: boolean) {
-  useEffect(() => {
-    if (!active) return
-    const onDown = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) onClose() }
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    window.addEventListener('mousedown', onDown)
-    window.addEventListener('keydown', onKey)
-    return () => {
-      window.removeEventListener('mousedown', onDown)
-      window.removeEventListener('keydown', onKey)
-    }
-  }, [ref, onClose, active])
-}
+type Notification = { id: number; kind: string; title: string; body: string; url: string; read: boolean; created_at: string }
 
 function NotificationsMenu({ onClose }: { onClose: () => void }) {
   const queryClient = useQueryClient()
@@ -151,7 +139,10 @@ export function Topbar({ me }: { me?: Me }) {
   const close = useCallback(() => setMenu(null), [])
   useDismiss(menu === 'notifications' ? notificationsRef : accountRef, close, menu !== null)
 
-  const title = useMatches().map(m => (m.handle as { title?: string } | undefined)?.title).filter(Boolean).at(-1)
+  // A route's title is a string, or computed from its URL params and the signed-in user's data.
+  const match = useMatches().filter(m => (m.handle as RouteHandle | undefined)?.title).at(-1)
+  const handleTitle = (match?.handle as RouteHandle | undefined)?.title
+  const title = typeof handleTitle === 'function' ? handleTitle(match!.params, me) : handleTitle
   const unread = me?.unread_notifications ?? 0
 
   return (

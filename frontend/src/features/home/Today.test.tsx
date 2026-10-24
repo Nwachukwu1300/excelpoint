@@ -2,7 +2,8 @@ import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { emptyHome, me, mockApi, renderApp } from '../../test/render'
-import { greeting, subjectInitials, todayLabel } from './Today'
+import { subjectInitials } from '../../ui/SubjectIcon'
+import { greeting, todayLabel } from './Today'
 
 const home = {
   due: { count: 20, subjects: 2, minutes: 9 },

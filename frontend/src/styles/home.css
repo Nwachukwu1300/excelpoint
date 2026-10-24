@@ -32,13 +32,6 @@
 .home-subject dl div + div { border-left: 1px solid var(--border); padding-left: 14px; }
 .home-subject dt { color: var(--muted); font-size: 8px; text-transform: uppercase; }
 .home-subject dd { margin: 2px 0 0; font-size: 12px; font-weight: 650; }
-.subject-icon { display: grid; width: 36px; height: 36px; place-items: center; border-radius: var(--radius); font-size: 11px; font-weight: 700; }
-.subject-icon--violet { color: #6d28d9; background: #ede9fe; }
-.subject-icon--blue { color: #1d4ed8; background: #dbeafe; }
-.subject-icon--green { color: #047857; background: #d1fae5; }
-[data-theme='dark'] .subject-icon--violet { color: #ddd6fe; background: rgb(109 40 217 / .25); }
-[data-theme='dark'] .subject-icon--blue { color: #bfdbfe; background: rgb(29 78 216 / .25); }
-[data-theme='dark'] .subject-icon--green { color: #a7f3d0; background: rgb(4 120 87 / .25); }
 .conversations-card { padding: 18px; }
 .conversations-card .section-heading { margin-bottom: 8px; }
 .conversation-row { display: flex; width: 100%; align-items: center; gap: 10px; padding: 12px 0; border: 0; border-top: 1px solid var(--border); color: var(--text); background: transparent; text-align: left; }
