@@ -140,9 +140,9 @@ describe('useChat hooks', () => {
       const error = new Error('Failed to send message')
       mockChatApi.sendMessage.mockRejectedValueOnce(error)
 
-      // Send message
-      act(() => {
-        result.current.sendMessage('Test message')
+      // Send message: the hook rethrows so MessageInput can restore the text
+      await act(async () => {
+        await expect(result.current.sendMessage('Test message')).rejects.toBe(error)
       })
 
       // Wait for error
