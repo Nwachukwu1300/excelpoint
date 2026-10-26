@@ -44,6 +44,17 @@ describe('Sign in', () => {
     renderApp('/login')
     await waitFor(() => expect(replace).toHaveBeenCalledWith('/app/'))
   })
+
+  it('keeps signed-in people on this site whatever next says', async () => {
+    const replace = vi.fn()
+    vi.stubGlobal('location', { ...location, replace })
+    mockApi({ 'GET /api/me/': me })
+    const first = renderApp('/login?next=' + encodeURIComponent('/\\evil.com'))
+    await waitFor(() => expect(replace).toHaveBeenCalledWith('/app/'))
+    first.unmount()
+    renderApp('/login?next=' + encodeURIComponent('/app/review?subject=2'))
+    await waitFor(() => expect(replace).toHaveBeenLastCalledWith('/app/review?subject=2'))
+  })
 })
 
 describe('Register', () => {

@@ -20,12 +20,21 @@ async function post(path: string, body: object): Promise<{ ok: true; next: strin
   return { ok: false, errors: data.detail ? { __all__: [data.detail] } : data }
 }
 
+/** Only same-site paths; the URL parser catches tricks like `/\evil.com` that browsers read as `//evil.com`. */
+function safeNext(next?: string) {
+  try {
+    const u = new URL(next ?? '', location.origin)
+    if (next && u.origin === location.origin) return u.pathname + u.search + u.hash
+  } catch { /* not a URL: fall through */ }
+  return '/app/'
+}
+
 export function AuthPage({ mode }: { mode: 'signin' | 'register' }) {
   const register = mode === 'register'
   const [params] = useSearchParams()
   const next = params.get('next') ?? undefined
   const me = useMe() // signed in already? go straight in
-  useEffect(() => { if (me.data) location.replace(next?.startsWith('/') && !next.startsWith('//') ? next : '/app/') }, [me.data, next])
+  useEffect(() => { if (me.data) location.replace(safeNext(next)) }, [me.data, next])
 
   const [form, setForm] = useState({ username: '', email: '', password1: '', password2: '' })
   const [errors, setErrors] = useState<Errors>(params.get('error') === 'google' ? { __all__: ['Google sign-in didn’t work. Try again, or use your username and password.'] } : {})
