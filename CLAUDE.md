@@ -18,7 +18,7 @@ The UI is a **React app in `frontend/`** (React 19, React Router 7, TanStack Que
 - Auth is Django **session cookies + CSRF**: the app reads the `csrftoken` cookie (set by `/api/me/` and the shell) and sends `X-CSRFToken`. Sign-in/register/logout are plain Django views (`users/auth_api.py`) so CSRF is checked for signed-out visitors too.
 - Every old page that was rebuilt **redirects** into the app, keeping its URL name (`/`, subjects, review, quizzes, insights, notifications, settings, password, login, register). Career pages (`/learning/`, profile, achievements, education, certs) are unchanged.
 - Every app endpoint is owner-scoped and tested. Shared styles load first in `frontend/src/main.tsx`; each page imports its own CSS from `frontend/src/styles/`.
-- Not yet removed (waiting on Lord Soma's OK): old templates for rebuilt pages, the old chat widget in `src/`, the old dashboard code in `config/views.py`.
+- The old chat widget (`src/`, root `package.json`), the old templates for rebuilt pages and the old dashboard code were deleted on 2026-10-26. The old `users/logout.html` page stays because the career pages' `base.html` still links to it.
 
 ### Design source (Figma Make)
 
@@ -55,7 +55,6 @@ Motion should feel calm and fast: respect `prefers-reduced-motion`, and never an
 | `learning/` | Career features (out of redesign scope) |
 | `config/` | Settings, URLs, Celery (`celery.py`, beat schedule in settings) |
 | `frontend/` | The React app at `/app/` (its own package.json, tests and build to `static/app/`) |
-| `src/` | Old React 18 chat widget (no longer shown on any page; kept until cleanup) |
 
 **Chat flow:** search similarity gate (≥0.3; nothing relevant means a fixed "not in your materials" reply with **no LLM call**) → small talk uses one call → otherwise the reasoning pipeline (2 LLM calls; 3 for follow-ups). The answer streams over SSE from `POST /api/subjects/<id>/chat/stream/` (`token` / `done` / `error` events; `done` carries the saved message, which is authoritative). There is a per-user LLM rate limit (`LLM_RATE_LIMIT`, default 60/hour).
 
@@ -75,7 +74,6 @@ TESTING=1 venv/bin/python manage.py test   # backend (~250 tests); test runs bla
 npm --prefix frontend test                 # the app's tests (vitest); also: cd frontend && npx tsc --noEmit
 npm --prefix frontend run build            # rebuild the app into static/app/ (Django serves it at /app/)
 npm --prefix frontend run dev              # Vite on :5173, proxies /api etc. to runserver on :8000
-npm test && npx tsc --noEmit               # old widget tests + typecheck (root package)
 venv/bin/python manage.py runserver        # plus: redis-server, celery worker, celery beat
 venv/bin/python -m celery -A config.celery.app worker -l INFO --pool=solo   # the venv's celery shebang is broken
 venv/bin/python -m celery -A config.celery.app beat -l INFO   # daily flashcard reminders
@@ -87,7 +85,7 @@ venv/bin/python manage.py judge_answers    # optional LLM judge backlog
 
 - Postgres 15 (Homebrew) on **port 5433**, with **pgvector 0.8.0 built from source**: Homebrew's pgvector only supports PG 17/18. A `brew upgrade` can wipe it; rebuild with `make PG_CONFIG=/opt/homebrew/opt/postgresql@15/bin/pg_config && make install`.
 - The venv's `pip` shebang is broken: use `venv/bin/python -m pip`.
-- Node 25: both `src/test/setup.ts` and `frontend/src/test/setup.ts` swap in jsdom's `localStorage` (Node's built-in one shadows it).
+- Node 25: `frontend/src/test/setup.ts` swaps in jsdom's `localStorage` (Node's built-in one shadows it).
 - The app's test helper `mockApi` treats a plain object as a 200 body; use `reply(status, body)` for other statuses.
 - Disk space on this Mac runs low; a crash-looping Homebrew Postgres 14 once filled it with a 1 GB log (now stopped).
 - In zsh, quote `grep --include="*.py"` patterns, and don't expect `$VAR` to word-split.

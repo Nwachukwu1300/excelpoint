@@ -33,13 +33,13 @@ To bridge the gap between traditional learning methods and modern educational ne
 - **Backend:** Django 5.2 and Django REST Framework on Python 3.13, Celery + Redis for background work and scheduled jobs.
 - **Database:** PostgreSQL with pgvector (HNSW index) for semantic search.
 - **AI:** OpenAI chat models (default `gpt-5.4-mini`, set with `OPENAI_MODEL`), `all-MiniLM-L6-v2` sentence-transformers embeddings, LangChain/Unstructured document loaders.
-- **Frontend:** Django templates with Bootstrap; the chat widget is React 18 + TypeScript (Vite), streaming answers over Server-Sent Events.
+- **Frontend:** a React 19 + TypeScript app in `frontend/` (React Router, TanStack Query, Motion, Vite), served by Django at `/app/`; answers stream over Server-Sent Events. The career pages still use Django templates with Bootstrap.
 
 ## Running the tests
 
 ```bash
 TESTING=1 python manage.py test   # backend (needs Postgres with pgvector; never calls OpenAI)
-npm test                          # frontend chat widget (Vitest)
+npm --prefix frontend test        # the React app (Vitest)
 ```
 
 ## Known limitations
@@ -99,8 +99,8 @@ Each answer also logs one JSON line (`"event": "chat_answer"`) with its path, ch
 
 3. **Set up frontend**
    ```bash
-   npm install
-   npm run build
+   npm --prefix frontend install
+   npm --prefix frontend run build   # builds into static/app/
    ```
 
 4. **Configure environment**

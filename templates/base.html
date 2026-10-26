@@ -344,16 +344,6 @@
     });
     </script>
     
-    <!-- Chat Widget Container (only on subject detail pages) -->
-    {% if request.resolver_match.url_name == 'subject_detail' %}
-    <div id="chat-widget-root" data-subject-id="{{ subject.id }}"></div>
-    {% endif %}
-    
-    <!-- Chat Widget Script (only on subject detail pages) -->
-    {% if request.resolver_match.url_name == 'subject_detail' %}
-    <script src="{% static 'js/chat-widget.js' %}?v=1.2" defer></script>
-    {% endif %}
-    
     {% block extra_js %}{% endblock %}
 </body>
 </html> 
