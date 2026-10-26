@@ -1,24 +1,21 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
-from django.contrib.auth import login, logout, authenticate, update_session_auth_hash
+from django.contrib.auth import login, logout, authenticate
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import PasswordChangeForm, SetPasswordForm
 from .forms import (
     RegistrationForm,
     UserProfileForm,
     UserAchievementForm,
     UserCertificationForm,
     UserEducationForm,
-    SettingsForm,
 )
-from .models import Notification, UserProfile, UserAchievement, UserCertification, UserEducation
+from .models import UserProfile, UserAchievement, UserCertification, UserEducation
 from django.utils import timezone
 from django.utils.crypto import constant_time_compare
 from django.utils.http import url_has_allowed_host_and_scheme
 from datetime import timedelta
-from django.views.decorators.http import require_http_methods
 from learning.models import CourseProgress, UserAchievement as LearningUserAchievement
 import logging
 
@@ -182,33 +179,6 @@ def calculate_profile_completion(user):
 
 
 @login_required
-def settings_view(request):
-    """Basic settings: edit first/last name, email, and education level."""
-    user = request.user
-    profile, _ = UserProfile.objects.get_or_create(user=user)
-    if request.method == 'POST':
-        form = SettingsForm(request.POST, instance=profile)
-        if form.is_valid():
-            form.save()
-            user.first_name = form.cleaned_data.get('first_name', user.first_name)
-            user.last_name = form.cleaned_data.get('last_name', user.last_name)
-            email_val = form.cleaned_data.get('email')
-            if email_val is not None:
-                user.email = email_val
-            user.save()
-            messages.success(request, 'Settings saved.')
-            return redirect('users:settings')
-    else:
-        initial = {
-            'first_name': user.first_name,
-            'last_name': user.last_name,
-            'email': user.email,
-            'education_level': profile.education_level,
-        }
-        form = SettingsForm(instance=profile, initial=initial)
-    return render(request, 'users/settings.html', {'form': form})
-
-@login_required
 def logout_user(request):
     """
     Handles the logout process:
@@ -229,21 +199,6 @@ def logout_user(request):
 
 
 
-
-@login_required
-def change_password(request):
-    """Change (or, for Google-only accounts, set) the password without logging the user out."""
-    # Google sign-ups have no usable password, so there is no "old password" to ask for
-    form_class = PasswordChangeForm if request.user.has_usable_password() else SetPasswordForm
-    form = form_class(request.user, request.POST or None)  # runs AUTH_PASSWORD_VALIDATORS
-    for field in form.fields.values():
-        field.widget.attrs['class'] = 'form-control'
-    if request.method == 'POST' and form.is_valid():
-        form.save()
-        update_session_auth_hash(request, form.user)  # otherwise the password change ends this session
-        messages.success(request, 'Your password has been updated.')
-        return redirect('users:settings')
-    return render(request, 'users/change_password.html', {'form': form})
 
 @login_required
 def profile(request):
@@ -520,26 +475,3 @@ def delete_education(request, education_id):
     return render(request, 'users/delete_education.html', {
         'education': education
     })
-
-
-@login_required
-def notifications(request):
-    if request.method == 'POST':
-        request.user.notifications.filter(read_at__isnull=True).update(read_at=timezone.now())
-        return redirect('users:notifications')
-    return render(request, 'users/notifications.html', {
-        'notifications': request.user.notifications.all()[:50],
-    })
-
-
-@login_required
-@require_http_methods(['POST'])
-def open_notification(request, notification_id):
-    note = get_object_or_404(Notification, id=notification_id, user=request.user)
-    if note.read_at is None:
-        note.read_at = timezone.now()
-        note.save(update_fields=['read_at'])
-    # Only follow site-relative links ('/x', not '//evil.com') so a stored URL can't redirect off-site
-    if note.url.startswith('/') and not note.url.startswith('//'):
-        return redirect(note.url)
-    return redirect('users:notifications')

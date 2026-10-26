@@ -4,7 +4,6 @@ import type { Me } from '../lib/api'
 import { spring } from '../lib/motion'
 import { Icon, type IconName } from '../ui/Icon'
 import { NavLinkItem } from './NavLinkItem'
-import { oldPages } from './nav'
 
 export function MobileNav({ me }: { me?: Me }) {
   const { pathname } = useLocation()
@@ -13,7 +12,7 @@ export function MobileNav({ me }: { me?: Me }) {
     { icon: 'book', label: 'Subjects', to: '/subjects', active: pathname.startsWith('/subjects') },
     { icon: 'repeat', label: 'Review', to: '/review', active: pathname.startsWith('/review'), badge: me?.due_count },
     { icon: 'chart', label: 'Insights', to: '/insights', active: pathname.startsWith('/insights') },
-    { icon: 'user', label: 'Account', href: oldPages.settings, active: pathname.startsWith('/settings') },
+    { icon: 'user', label: 'Account', to: '/settings', active: pathname.startsWith('/settings') || pathname.startsWith('/notifications') },
   ]
   return (
     <nav className="mobile-nav" aria-label="Mobile navigation">

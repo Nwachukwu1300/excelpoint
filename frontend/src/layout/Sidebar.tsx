@@ -5,7 +5,6 @@ import { spring } from '../lib/motion'
 import { Icon, type IconName } from '../ui/Icon'
 import { Avatar, Badge, IconButton, Logo, Skeleton } from '../ui/primitives'
 import { NavLinkItem } from './NavLinkItem'
-import { oldPages } from './nav'
 
 type Item = { icon: IconName; label: string; to?: string; href?: string; badge?: number; active: boolean }
 
@@ -75,7 +74,7 @@ export function Sidebar({ me, collapsed, onToggle }: { me?: Me; collapsed: boole
             </p>
           </>
         )}
-        <a className="sidebar-user" href={oldPages.settings} title={collapsed ? 'Settings' : undefined}>
+        <Link className="sidebar-user" to="/settings" title={collapsed ? 'Settings' : undefined}>
           {me ? <Avatar small initials={initials(name)} /> : <Skeleton className="skeleton-avatar" />}
           <div>
             {!collapsed && me && (
@@ -86,7 +85,7 @@ export function Sidebar({ me, collapsed, onToggle }: { me?: Me; collapsed: boole
             )}
           </div>
           {!collapsed && <Icon name="more" />}
-        </a>
+        </Link>
       </div>
     </aside>
   )

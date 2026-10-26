@@ -3,12 +3,13 @@ import { MotionConfig } from 'motion/react'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { RouterProvider } from 'react-router'
-import { ApiError } from './lib/api'
-import { router } from './router'
+// Shared styles first, so each page's own CSS (imported via the router) can build on them.
 import './styles/tokens.css'
 import './styles/base.css'
 import './styles/components.css'
 import './styles/shell.css'
+import { ApiError } from './lib/api'
+import { router } from './router'
 
 const queryClient = new QueryClient({
   defaultOptions: {

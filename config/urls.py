@@ -32,6 +32,7 @@ urlpatterns = [
     path('users/', include('users.urls')),
     path('learning/', include('learning.urls')),
     path('api/me/', users_api.me, name='api_me'),
+    path('api/me/password/', users_api.change_password, name='api_change_password'),
     path('api/home/', subjects_app_api.home, name='api_home'),
     path('api/review/queue/', subjects_app_api.review_queue, name='api_review_queue'),
     path('api/review/grade/', subjects_app_api.review_grade, name='api_review_grade'),

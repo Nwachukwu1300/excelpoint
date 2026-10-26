@@ -1,4 +1,7 @@
 import { createBrowserRouter } from 'react-router'
+import { ChangePassword } from './features/account/ChangePassword'
+import { NotificationsPage } from './features/account/NotificationsPage'
+import { SettingsPage } from './features/account/SettingsPage'
 import { ChatPage } from './features/chat/ChatPage'
 import { AnswerTrace } from './features/insights/AnswerTrace'
 import { Insights } from './features/insights/Insights'
@@ -33,6 +36,9 @@ export const routes = [
       { path: 'review', element: <ReviewSession />, handle: { title: 'Review', focus: true } satisfies RouteHandle },
       { path: 'quizzes/history', element: <QuizHistory />, handle: { title: 'Quiz history' } },
       { path: 'insights', element: <Insights />, handle: { title: 'Insights' } },
+      { path: 'notifications', element: <NotificationsPage />, handle: { title: 'Notifications' } },
+      { path: 'settings', element: <SettingsPage />, handle: { title: 'Settings' } },
+      { path: 'settings/password', element: <ChangePassword />, handle: { title: 'Password' } },
       { path: 'insights/:sessionId', element: <AnswerTrace />, handle: { title: 'Answer trace' } },
       { path: 'quizzes/:quizId/start', element: <StartQuiz />, handle: { title: 'Quiz', focus: true } satisfies RouteHandle },
       { path: 'quiz-attempts/:attemptId', element: <TakeQuiz />, handle: { title: 'Quiz', focus: true } satisfies RouteHandle },

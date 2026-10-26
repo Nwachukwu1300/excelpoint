@@ -1,4 +1,5 @@
 from django.urls import path
+from django.views.generic import RedirectView
 from . import views
 
 app_name = 'users'
@@ -16,12 +17,11 @@ urlpatterns = [
     # Profile endpoints
     path('profile/', views.profile, name='profile'),
     path('profile/edit/', views.edit_profile, name='edit_profile'),
-    path('change-password/', views.change_password, name='change_password'),
-    path('settings/', views.settings_view, name='settings'),
+    path('change-password/', RedirectView.as_view(url='/app/settings/password'), name='change_password'),  # now in the app
+    path('settings/', RedirectView.as_view(url='/app/settings'), name='settings'),
 
     # Notifications
-    path('notifications/', views.notifications, name='notifications'),
-    path('notifications/<int:notification_id>/open/', views.open_notification, name='open_notification'),
+    path('notifications/', RedirectView.as_view(url='/app/notifications'), name='notifications'),
     
     # Achievement management endpoints
     path('achievements/', views.manage_achievements, name='manage_achievements'),

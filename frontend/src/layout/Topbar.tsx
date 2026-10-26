@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { AnimatePresence, motion } from 'motion/react'
 import { useCallback, useRef, useState } from 'react'
-import { useMatches, useNavigate } from 'react-router'
+import { Link, useMatches, useNavigate } from 'react-router'
 import { api, csrfToken, displayName, initials, type Me } from '../lib/api'
 import { timeAgo } from '../lib/format'
 import { ease, popover } from '../lib/motion'
@@ -9,11 +9,11 @@ import { useTheme } from '../lib/theme'
 import { useDismiss } from '../lib/useDismiss'
 import { Icon } from '../ui/Icon'
 import { Avatar, IconButton, Skeleton } from '../ui/primitives'
+import { followNotification, notificationLook, type Notification } from '../features/account/notifications'
 import { oldPages } from './nav'
 
 export type RouteHandle = { title: string | ((params: Record<string, string | undefined>, me?: Me) => string); fullBleed?: boolean; focus?: boolean }
 
-type Notification = { id: number; kind: string; title: string; body: string; url: string; read: boolean; created_at: string }
 
 function NotificationsMenu({ onClose }: { onClose: () => void }) {
   const queryClient = useQueryClient()
@@ -33,8 +33,7 @@ function NotificationsMenu({ onClose }: { onClose: () => void }) {
   const open = async (n: Notification) => {
     if (!n.read) await markRead.mutateAsync([n.id]).catch(() => undefined) // still follow the link if this fails
     onClose()
-    if (n.url.startsWith('/app/')) navigate(n.url.slice('/app'.length))
-    else if (n.url.startsWith('/')) location.assign(n.url)
+    followNotification(n, navigate)
   }
 
   const items = list.data?.results ?? []
@@ -60,12 +59,11 @@ function NotificationsMenu({ onClose }: { onClose: () => void }) {
         {list.isError && <p className="dropdown-empty">Couldn’t load notifications. Try again in a moment.</p>}
         {list.isSuccess && items.length === 0 && <p className="dropdown-empty">You’re all caught up.</p>}
         {items.map(n => {
-          const failed = /fail|couldn/i.test(n.kind + n.title)
-          const review = n.kind.includes('review')
+          const look = notificationLook(n)
           return (
             <button type="button" key={n.id} className={`notification ${n.read ? '' : 'is-new'}`} onClick={() => open(n)}>
-              <span className={`notification-icon ${failed ? 'failed' : n.kind.includes('ready') ? 'ai-bg' : ''}`}>
-                <Icon name={failed ? 'close' : review ? 'repeat' : 'sparkles'} size={16} />
+              <span className={`notification-icon ${look.className}`}>
+                <Icon name={look.icon} size={16} />
               </span>
               <div>
                 <strong>{n.title}</strong>
@@ -76,12 +74,12 @@ function NotificationsMenu({ onClose }: { onClose: () => void }) {
           )
         })}
       </div>
-      <a className="dropdown-footer" href={oldPages.notifications}>View all notifications</a>
+      <Link className="dropdown-footer" to="/notifications" onClick={onClose}>View all notifications</Link>
     </motion.div>
   )
 }
 
-function AccountMenu({ me }: { me?: Me }) {
+function AccountMenu({ me, onClose }: { me?: Me; onClose: () => void }) {
   const name = me ? displayName(me) : ''
   return (
     <motion.div className="dropdown dropdown--account" {...popover}>
@@ -93,8 +91,8 @@ function AccountMenu({ me }: { me?: Me }) {
         </div>
       </div>
       <div className="dropdown-links">
-        <a href={oldPages.settings}><Icon name="settings" />Settings</a>
-        <a href={oldPages.password}><Icon name="lock" />Change password</a>
+        <Link to="/settings" onClick={onClose}><Icon name="settings" />Settings</Link>
+        <Link to="/settings/password" onClick={onClose}><Icon name="lock" />Change password</Link>
         {/* Django's logout only accepts POST with the CSRF token */}
         <form method="post" action={oldPages.logout}>
           <input type="hidden" name="csrfmiddlewaretoken" value={csrfToken()} />
@@ -175,7 +173,7 @@ export function Topbar({ me }: { me?: Me }) {
             {me ? <Avatar small initials={initials(displayName(me))} /> : <Skeleton className="skeleton-avatar" />}
             <Icon name="chevronDown" size={14} />
           </button>
-          <AnimatePresence>{menu === 'account' && <AccountMenu me={me} />}</AnimatePresence>
+          <AnimatePresence>{menu === 'account' && <AccountMenu me={me} onClose={close} />}</AnimatePresence>
         </div>
       </div>
     </header>

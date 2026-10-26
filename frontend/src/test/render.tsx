@@ -7,6 +7,8 @@ import { routes } from '../router'
 
 export const me: Me = {
   id: 1, username: 'alex', first_name: 'Alex', last_name: 'Morgan', email: 'alex@example.com',
+  education_level: 'undergraduate', has_password: true,
+  education_choices: [{ value: 'secondary', label: 'Secondary school' }, { value: 'undergraduate', label: 'Undergraduate' }],
   unread_notifications: 2, due_count: 20,
   subjects: [{ id: 3, name: 'Database Systems', due_count: 12 }, { id: 4, name: 'Maths', due_count: 0 }],
 }

@@ -90,3 +90,57 @@ class NotificationsApiTest(TestCase):
         token = client.cookies['csrftoken'].value
         r = client.post('/api/notifications/read/', {}, content_type='application/json', HTTP_X_CSRFTOKEN=token)
         self.assertEqual(r.status_code, 200)
+
+
+class SettingsApiTest(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user('s', email='old@x.com', password='Old-pass-123!', first_name='Sam')
+        self.client.force_login(self.user)
+
+    def patch(self, body):
+        return self.client.patch('/api/me/', body, content_type='application/json')
+
+    def test_saves_names_email_and_education(self):
+        data = self.patch({'first_name': 'Samira', 'email': 'new@x.com', 'education_level': 'undergraduate'}).json()
+        self.assertEqual((data['first_name'], data['last_name'], data['email'], data['education_level']), ('Samira', '', 'new@x.com', 'undergraduate'))
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.email, 'new@x.com')
+        self.assertIn({'value': 'undergraduate', 'label': 'Undergraduate'}, data['education_choices'])
+        # fields left out keep their value
+        self.assertEqual(self.patch({'last_name': 'K'}).json()['first_name'], 'Samira')
+
+    def test_rejects_a_bad_email_or_level(self):
+        r = self.patch({'email': 'not-an-email'})
+        self.assertEqual(r.status_code, 400)
+        self.assertIn('email', r.json())
+        self.assertIn('education_level', self.patch({'education_level': 'wizard'}).json())
+
+    def test_change_password_keeps_you_signed_in(self):
+        r = self.client.post('/api/me/password/', {'old_password': 'Old-pass-123!', 'new_password1': 'Brand-new-456!',
+                                                   'new_password2': 'Brand-new-456!'}, content_type='application/json')
+        self.assertEqual(r.json(), {'ok': True})
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password('Brand-new-456!'))
+        self.assertEqual(self.client.get('/api/me/').status_code, 200)  # session survived
+
+    def test_change_password_errors(self):
+        r = self.client.post('/api/me/password/', {'old_password': 'wrong', 'new_password1': 'short', 'new_password2': 'other'},
+                             content_type='application/json')
+        self.assertEqual(r.status_code, 400)
+        self.assertIn('old_password', r.json())
+        self.assertIn('new_password2', r.json())
+
+    def test_missing_new_password_does_not_lock_the_account(self):
+        r = self.client.post('/api/me/password/', {'old_password': 'Old-pass-123!'}, content_type='application/json')
+        self.assertEqual(r.status_code, 400)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password('Old-pass-123!'))
+
+    def test_google_only_accounts_set_a_password_without_the_old_one(self):
+        self.user.set_unusable_password()
+        self.user.save()
+        self.client.force_login(self.user)
+        self.assertFalse(self.client.get('/api/me/').json()['has_password'])
+        r = self.client.post('/api/me/password/', {'new_password1': 'Brand-new-456!', 'new_password2': 'Brand-new-456!'},
+                             content_type='application/json')
+        self.assertEqual(r.json(), {'ok': True})
