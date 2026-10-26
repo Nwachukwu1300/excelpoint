@@ -22,7 +22,7 @@ class GoogleOAuthCallbackTest(TestCase):
     @patch('users.views.GoogleOAuthService')
     def test_rejects_callback_without_session_state(self, service):
         response = self._callback('anything')
-        self.assertRedirects(response, reverse('users:login'), fetch_redirect_response=False)
+        self.assertRedirects(response, '/app/login?error=google', fetch_redirect_response=False)
         service.assert_not_called()
 
     @patch('users.views.GoogleOAuthService')

@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { AnimatePresence, motion } from 'motion/react'
 import { useCallback, useRef, useState } from 'react'
 import { Link, useMatches, useNavigate } from 'react-router'
-import { api, csrfToken, displayName, initials, type Me } from '../lib/api'
+import { api, displayName, initials, type Me } from '../lib/api'
 import { timeAgo } from '../lib/format'
 import { ease, popover } from '../lib/motion'
 import { useTheme } from '../lib/theme'
@@ -10,7 +10,6 @@ import { useDismiss } from '../lib/useDismiss'
 import { Icon } from '../ui/Icon'
 import { Avatar, IconButton, Skeleton } from '../ui/primitives'
 import { followNotification, notificationLook, type Notification } from '../features/account/notifications'
-import { oldPages } from './nav'
 
 export type RouteHandle = { title: string | ((params: Record<string, string | undefined>, me?: Me) => string); fullBleed?: boolean; focus?: boolean }
 
@@ -81,6 +80,10 @@ function NotificationsMenu({ onClose }: { onClose: () => void }) {
 
 function AccountMenu({ me, onClose }: { me?: Me; onClose: () => void }) {
   const name = me ? displayName(me) : ''
+  const signOut = async () => {
+    await api('/api/auth/logout/', { method: 'POST' }).catch(() => undefined)
+    location.assign('/app/welcome') // full load clears everything cached for this user
+  }
   return (
     <motion.div className="dropdown dropdown--account" {...popover}>
       <div className="account-summary">
@@ -93,11 +96,7 @@ function AccountMenu({ me, onClose }: { me?: Me; onClose: () => void }) {
       <div className="dropdown-links">
         <Link to="/settings" onClick={onClose}><Icon name="settings" />Settings</Link>
         <Link to="/settings/password" onClick={onClose}><Icon name="lock" />Change password</Link>
-        {/* Django's logout only accepts POST with the CSRF token */}
-        <form method="post" action={oldPages.logout}>
-          <input type="hidden" name="csrfmiddlewaretoken" value={csrfToken()} />
-          <button type="submit" className="logout"><Icon name="logout" />Log out</button>
-        </form>
+        <button type="button" className="logout" onClick={signOut}><Icon name="logout" />Log out</button>
       </div>
     </motion.div>
   )

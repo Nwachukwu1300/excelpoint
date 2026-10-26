@@ -79,7 +79,7 @@
 @media (max-width: 900px) {
   .sidebar, .sidebar.is-collapsed { width: 72px; }
   .sidebar-top { justify-content: center; padding: 0; }
-  .sidebar-top .icon-button, .logo-word, .nav-item span, .nav-badge, .subject-nav, .sidebar-help > p, .sidebar-help > .badge, .sidebar-user > div, .sidebar-user > .icon { display: none; }
+  .sidebar-top .icon-button, .sidebar .logo-word, .nav-item span, .nav-badge, .subject-nav, .sidebar-help > p, .sidebar-help > .badge, .sidebar-user > div, .sidebar-user > .icon { display: none; }
   .nav-item { justify-content: center; padding: 0; }
   .sidebar-user { justify-content: center; }
   .app-main, .app-main.sidebar-collapsed { margin-left: 72px; }

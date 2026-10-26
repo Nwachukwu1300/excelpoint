@@ -1,11 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
-from django.contrib.auth import login, logout, authenticate
+from django.contrib.auth import login, logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from .forms import (
-    RegistrationForm,
     UserProfileForm,
     UserAchievementForm,
     UserCertificationForm,
@@ -14,7 +11,6 @@ from .forms import (
 from .models import UserProfile, UserAchievement, UserCertification, UserEducation
 from django.utils import timezone
 from django.utils.crypto import constant_time_compare
-from django.utils.http import url_has_allowed_host_and_scheme
 from datetime import timedelta
 from learning.models import CourseProgress, UserAchievement as LearningUserAchievement
 import logging
@@ -30,39 +26,13 @@ except (ImportError, ValueError) as e:
 logger = logging.getLogger(__name__)
 
 
-def register_user(request):
-   """
-   Registration endpoint.
-   GET: Shows registration form
-   POST: Creates new user
-   """
-   if request.user.is_authenticated:
-       # If already logged in, redirect to profile page
-       return redirect('users:profile')
-       
-   if request.method == 'POST':
-       form = RegistrationForm(request.POST)
-       if form.is_valid():
-           # Create the user account
-           user = form.save()
-           # Log the user in
-           login(request, user)
-           messages.success(request, 'Your account has been created successfully! Welcome to ExcelPoint.')
-           return redirect('home')
-   else:
-       # GET request: show registration form
-       form = RegistrationForm()
-   
-   return render(request, 'users/register.html', {'form': form})
-
-
 def google_oauth_initiate(request):
     """
     Initiate Google OAuth flow.
     """
     if not GOOGLE_OAUTH_AVAILABLE:
         messages.error(request, "Google OAuth is not configured. Please contact the administrator.")
-        return redirect('users:login')
+        return redirect('/app/login?error=google')
     
     try:
         oauth_service = GoogleOAuthService()
@@ -72,7 +42,7 @@ def google_oauth_initiate(request):
     except Exception as e:
         logger.error(f"Error initiating Google OAuth: {e}")
         messages.error(request, "Unable to connect to Google. Please try again later.")
-        return redirect('users:login')
+        return redirect('/app/login?error=google')
 
 def google_oauth_callback(request):
     """
@@ -80,20 +50,20 @@ def google_oauth_callback(request):
     """
     if not GOOGLE_OAUTH_AVAILABLE:
         messages.error(request, "Google OAuth is not configured. Please contact the administrator.")
-        return redirect('users:login')
+        return redirect('/app/login?error=google')
     
     # Reject callbacks we didn't start (login CSRF)
     expected_state = request.session.pop('google_oauth_state', None)
     if not expected_state or not constant_time_compare(expected_state, request.GET.get('state', '')):
         messages.error(request, "Invalid login attempt. Please try again.")
-        return redirect('users:login')
+        return redirect('/app/login?error=google')
 
     try:
         # Get authorization code from request
         authorization_code = request.GET.get('code')
         if not authorization_code:
             messages.error(request, "Authorization code not received from Google.")
-            return redirect('users:login')
+            return redirect('/app/login?error=google')
         
         # Exchange code for token
         oauth_service = GoogleOAuthService()
@@ -113,50 +83,13 @@ def google_oauth_callback(request):
             return redirect('app')
         else:
             messages.error(request, "Unable to authenticate with Google. Please try again.")
-            return redirect('users:login')
+            return redirect('/app/login?error=google')
             
     except Exception as e:
         logger.error(f"Error in Google OAuth callback: {e}")
         messages.error(request, "Authentication failed. Please try again or use email login.")
-        return redirect('users:login')
+        return redirect('/app/login?error=google')
 
-
-@api_view(['GET', 'POST'])
-@permission_classes([AllowAny])
-def login_user(request):
-    """
-    Handles user login.
-    - GET: Show login form
-    - POST: Process login request
-    """
-    if request.user.is_authenticated:
-        # If already logged in, redirect to profile page
-        return redirect('users:profile')
-        
-    if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        
-        if not username or not password:
-            messages.error(request, 'Both username and password are required')
-            return render(request, 'users/login.html')
-        
-        user = authenticate(request, username=username, password=password)
-        
-        if user is not None:
-            login(request, user)
-            messages.success(request, 'Login successful!')
-            # The form posts back to its own URL, so ?next= survives; only follow it to this site.
-            next_url = request.POST.get('next') or request.GET.get('next')
-            if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()},
-                                                           require_https=request.is_secure()):
-                return redirect(next_url)
-            return redirect('app')
-        else:
-            messages.error(request, 'Invalid username or password')
-    
-    # If GET request or login failed
-    return render(request, 'users/login.html')
 
 def calculate_profile_completion(user):
     """

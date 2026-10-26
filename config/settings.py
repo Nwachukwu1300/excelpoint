@@ -182,7 +182,7 @@ CSRF_COOKIE_SECURE = not DEBUG
 SESSION_COOKIE_HTTPONLY = True
 
 # Authentication URLs
-LOGIN_URL = '/users/login/'
+LOGIN_URL = '/app/login'  # the React sign-in page
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 

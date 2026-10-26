@@ -17,8 +17,15 @@ class AppShellTest(TestCase):
 
     def test_anonymous_redirects_to_login(self):
         response = self.client.get('/app/subjects/3')
-        self.assertEqual(response.status_code, 302)
-        self.assertIn('/users/login/?next=/app/subjects/3', response['Location'])
+        self.assertRedirects(response, '/app/login?next=/app/subjects/3', fetch_redirect_response=False)
+
+    def test_sign_in_register_and_landing_are_public(self):
+        with patch.object(views, 'APP_INDEX', self.index):
+            for url in ['/app/login', '/app/register', '/app/welcome']:
+                self.assertEqual(self.client.get(url).status_code, 200, url)
+        self.assertRedirects(self.client.get('/'), '/app/welcome', fetch_redirect_response=False)
+        self.assertRedirects(self.client.get('/users/login/?next=/app/review'), '/app/login?next=/app/review', fetch_redirect_response=False)
+        self.assertRedirects(self.client.get('/users/register/'), '/app/register', fetch_redirect_response=False)
 
     def test_serves_built_index_for_any_app_route_with_csrf_cookie(self):
         self.client.force_login(self.user)
@@ -34,14 +41,12 @@ class AppShellTest(TestCase):
         self.assertRedirects(self.client.get('/'), '/app', fetch_redirect_response=False)
 
     def test_login_lands_in_the_app_or_a_safe_next(self):
-        response = self.client.post('/users/login/', {'username': 's', 'password': 'p'})
-        self.assertRedirects(response, '/app', fetch_redirect_response=False)
-        self.client.logout()
-        response = self.client.post('/users/login/?next=/app/subjects/3', {'username': 's', 'password': 'p'})
-        self.assertRedirects(response, '/app/subjects/3', fetch_redirect_response=False)
-        self.client.logout()
-        response = self.client.post('/users/login/?next=https://evil.example/', {'username': 's', 'password': 'p'})
-        self.assertRedirects(response, '/app', fetch_redirect_response=False)
+        login = lambda **extra: self.client.post('/api/auth/login/', {'username': 's', 'password': 'p', **extra},
+                                                 content_type='application/json').json()
+        self.assertEqual(login(), {'ok': True, 'next': '/app/'})
+        self.assertEqual(login(next='/app/subjects/3')['next'], '/app/subjects/3')
+        for evil in ['https://evil.example/', '//evil.example/']:
+            self.assertEqual(login(next=evil)['next'], '/app/')
 
     def test_missing_build_is_503(self):
         self.client.force_login(self.user)

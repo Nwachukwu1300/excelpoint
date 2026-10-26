@@ -6,8 +6,9 @@ app_name = 'users'
 
 urlpatterns = [
     # Authentication endpoints
-    path('register/', views.register_user, name='register'),
-    path('login/', views.login_user, name='login'),
+    # Sign-in and registration are in the React app; ?next= is passed along
+    path('register/', RedirectView.as_view(url='/app/register', query_string=True), name='register'),
+    path('login/', RedirectView.as_view(url='/app/login', query_string=True), name='login'),
     path('logout/', views.logout_user, name='logout'),
     
     # Google OAuth endpoints

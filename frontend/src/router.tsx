@@ -2,6 +2,8 @@ import { createBrowserRouter } from 'react-router'
 import { ChangePassword } from './features/account/ChangePassword'
 import { NotificationsPage } from './features/account/NotificationsPage'
 import { SettingsPage } from './features/account/SettingsPage'
+import { AuthPage } from './features/auth/AuthPage'
+import { Landing } from './features/auth/Landing'
 import { ChatPage } from './features/chat/ChatPage'
 import { AnswerTrace } from './features/insights/AnswerTrace'
 import { Insights } from './features/insights/Insights'
@@ -46,6 +48,10 @@ export const routes = [
       { path: 'subjects/:subjectId/chat/:sessionId?', element: <ChatPage />, handle: { title: subjectTitle, fullBleed: true } satisfies RouteHandle },
     ],
   },
+  // Public pages, outside the signed-in shell
+  { path: 'login', element: <AuthPage mode="signin" /> },
+  { path: 'register', element: <AuthPage mode="register" /> },
+  { path: 'welcome', element: <Landing /> },
   { path: '*', element: <ErrorPage code="404" /> },
 ]
 

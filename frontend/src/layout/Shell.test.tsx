@@ -32,7 +32,7 @@ describe('Shell', () => {
     vi.stubGlobal('location', { ...location, assign, pathname: '/app/', search: '' })
     mockApi({ 'GET /api/me/': () => ({ status: 403, body: { detail: 'Authentication credentials were not provided.' } }) })
     renderApp('/')
-    await waitFor(() => expect(assign).toHaveBeenCalledWith('/users/login/?next=%2Fapp%2F'))
+    await waitFor(() => expect(assign).toHaveBeenCalledWith('/app/login?next=%2Fapp%2F'))
   })
 
   it('lists notifications and marks all read with the CSRF token', async () => {

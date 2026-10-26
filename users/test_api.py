@@ -144,3 +144,40 @@ class SettingsApiTest(TestCase):
         r = self.client.post('/api/me/password/', {'new_password1': 'Brand-new-456!', 'new_password2': 'Brand-new-456!'},
                              content_type='application/json')
         self.assertEqual(r.json(), {'ok': True})
+
+
+class AuthApiTest(TestCase):
+    def post(self, url, body, client=None):
+        return (client or self.client).post(url, body, content_type='application/json')
+
+    def test_sign_in_and_out(self):
+        User.objects.create_user('alex', password='Pass-word-123!')
+        self.assertEqual(self.post('/api/auth/login/', {'username': 'alex', 'password': 'nope'}).status_code, 400)
+        r = self.post('/api/auth/login/', {'username': ' alex ', 'password': 'Pass-word-123!'})
+        self.assertEqual(r.json()['ok'], True)
+        self.assertEqual(self.client.get('/api/me/').json()['username'], 'alex')
+        self.post('/api/auth/logout/', {})
+        self.assertEqual(self.client.get('/api/me/').status_code, 403)
+
+    def test_register_validates_then_signs_you_in(self):
+        r = self.post('/api/auth/register/', {'username': 'new', 'email': 'bad', 'password1': '123', 'password2': '456'})
+        self.assertEqual(r.status_code, 400)
+        self.assertIn('email', r.json())
+        self.assertIn('password2', r.json())
+        r = self.post('/api/auth/register/', {'username': 'new', 'email': 'new@x.com', 'password1': 'Brand-new-456!', 'password2': 'Brand-new-456!'})
+        self.assertEqual(r.status_code, 201)
+        self.assertEqual(self.client.get('/api/me/').json()['email'], 'new@x.com')
+        again = self.post('/api/auth/register/', {'username': 'new', 'email': 'n2@x.com', 'password1': 'Brand-new-456!', 'password2': 'Brand-new-456!'})
+        self.assertIn('username', again.json())  # taken
+
+    def test_auth_endpoints_require_the_csrf_token(self):
+        User.objects.create_user('alex', password='Pass-word-123!')
+        client = Client(enforce_csrf_checks=True)
+        body = {'username': 'alex', 'password': 'Pass-word-123!'}
+        self.assertEqual(self.post('/api/auth/login/', body, client).status_code, 403)  # no token: blocked even when signed out
+        client.get('/api/me/')  # sets csrftoken, as the app's first request does
+        r = client.post('/api/auth/login/', body, content_type='application/json', HTTP_X_CSRFTOKEN=client.cookies['csrftoken'].value)
+        self.assertEqual(r.status_code, 200)
+
+    def test_get_is_not_allowed(self):
+        self.assertEqual(self.client.get('/api/auth/login/').status_code, 405)

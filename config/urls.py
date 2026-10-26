@@ -22,7 +22,7 @@ from django.views.generic import RedirectView
 from subjects.views import create_subject, upload_material
 from subjects import app_api as subjects_app_api, quiz_api
 from reasoning import app_api as reasoning_app_api
-from users import api as users_api
+from users import api as users_api, auth_api
 from .views import home, app_shell
 
 urlpatterns = [
@@ -31,6 +31,9 @@ urlpatterns = [
     re_path(r'^app(?:/.*)?$', app_shell, name='app'),  # the new React app; its router handles the rest
     path('users/', include('users.urls')),
     path('learning/', include('learning.urls')),
+    path('api/auth/login/', auth_api.sign_in, name='api_login'),
+    path('api/auth/register/', auth_api.register, name='api_register'),
+    path('api/auth/logout/', auth_api.sign_out, name='api_logout'),
     path('api/me/', users_api.me, name='api_me'),
     path('api/me/password/', users_api.change_password, name='api_change_password'),
     path('api/home/', subjects_app_api.home, name='api_home'),

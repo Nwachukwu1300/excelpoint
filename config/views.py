@@ -3,6 +3,7 @@ from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.views import redirect_to_login
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.utils import timezone
 from datetime import timedelta
@@ -15,10 +16,14 @@ from subjects.models import Subject, SubjectMaterial, UserQuizAttempt
 APP_INDEX = settings.BASE_DIR / 'static' / 'app' / 'index.html'
 
 
-@login_required
+PUBLIC_APP_PAGES = {'/app/login', '/app/register', '/app/welcome'}  # everything else in the app needs a session
+
+
 @ensure_csrf_cookie
 def app_shell(request):
     """Serve the built React app's index.html for every /app/ route; React Router takes it from there."""
+    if not request.user.is_authenticated and request.path.rstrip('/') not in PUBLIC_APP_PAGES:
+        return redirect_to_login(request.get_full_path())  # → /app/login?next=…
     try:
         return HttpResponse(APP_INDEX.read_text())
     except FileNotFoundError:
@@ -33,8 +38,7 @@ def home(request):
     """
     if request.user.is_authenticated:
         return redirect('app')  # the new React "Today" page replaced the old dashboard
-    else:
-        return marketing_home(request)
+    return redirect('/app/welcome')  # the new landing page
 
 
 def authenticated_home(request):
@@ -80,11 +84,6 @@ def authenticated_home(request):
     }
     
     return render(request, 'home.html', context)
-
-
-def marketing_home(request):
-    """Marketing home page for non-authenticated users."""
-    return render(request, 'home.html', {})
 
 
 def get_recent_activity(user):
