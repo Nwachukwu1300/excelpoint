@@ -309,7 +309,7 @@ class TraceCaptureTest(TestCase):
         fallback_cls.return_value.search.assert_called_once()
 
 
-class InsightPagesTest(TestCase):
+class InsightsFixture:
     def setUp(self):
         User = get_user_model()
         self.user = User.objects.create_user('ip', password='p')
@@ -327,22 +327,16 @@ class InsightPagesTest(TestCase):
         self.session = ReasoningSession.create_from_result(r)
         self.client.force_login(self.user)
 
-    def test_dashboard_lists_answers_and_failures(self):
-        html = self.client.get(reverse('insights:dashboard')).content.decode()
-        self.assertIn('What is DDL?', html)
-        self.assertIn('50% unsupported claims', html)
-        self.assertIn(reverse('insights:session', args=[self.session.session_id]), html)
 
-    def test_debug_page_shows_every_stage(self):
-        html = self.client.get(reverse('insights:session', args=[self.session.session_id])).content.decode()
-        for expected in ['DDL definition', 'db.pdf', '0.810', 'USER-PROMPT-TEXT', 'It was invented in 1970', 'embedding', '60 ms']:
-            self.assertIn(expected, html)
 
-    def test_other_users_and_anonymous_are_blocked(self):
-        self.client.force_login(get_user_model().objects.create_user('x', password='p'))
-        self.assertEqual(self.client.get(reverse('insights:session', args=[self.session.session_id])).status_code, 404)
-        self.client.logout()
-        self.assertEqual(self.client.get(reverse('insights:dashboard')).status_code, 302)
+class InsightPagesTest(InsightsFixture, TestCase):
+    def test_old_pages_open_the_app(self):
+        # Their content (failures, prompts, claims, stages) is covered by InsightsApiTest
+        self.assertRedirects(self.client.get(reverse('insights:dashboard')), '/app/insights', fetch_redirect_response=False)
+        self.assertRedirects(self.client.get(reverse('insights:session', args=[self.session.session_id])),
+                             f'/app/insights/{self.session.session_id}', fetch_redirect_response=False)
+
+    # Ownership (other users get 404, anonymous 403) is enforced by the API: InsightsApiTest.test_other_users_cannot_see_traces
 
 
 class StreamingPipelineTest(TestCase):
@@ -478,3 +472,43 @@ class RetryWinnerChunksTest(TestCase):
         prompt = client.chat.completions.create.call_args.kwargs['messages'][0]['content']
         self.assertIn('strong', prompt)
         self.assertNotIn('weak', prompt)
+
+
+class InsightsApiTest(InsightsFixture, TestCase):
+    """The React app's Insights and Answer trace endpoints (same data as the old pages)."""
+
+    def test_insights_summary_attention_and_recent(self):
+        data = self.client.get('/api/reasoning/insights/?days=7').json()
+        self.assertEqual(data['summary']['days'], 7)
+        self.assertEqual(data['summary']['totals']['sessions'], 1)
+        self.assertEqual(data['summary']['failures'][0]['reasons'], ['50% unsupported claims'])
+        self.assertEqual(data['recent'][0]['question'], 'What is DDL?')
+        self.assertEqual(data['recent'][0]['category'], 'Follow-up')  # it was rewritten
+        self.assertEqual(data['recent'][0]['subject_name'], 'DB')
+        self.assertEqual(self.client.get('/api/reasoning/insights/?days=1000').json()['summary']['days'], 30)  # only 7/30/90
+
+    def test_trace_has_every_stage(self):
+        data = self.client.get(f'/api/reasoning/sessions/{self.session.session_id}/trace/').json()
+        self.assertEqual(data['rewritten_query'], 'DDL definition')
+        self.assertEqual(data['chunks'][0]['material_name'], 'db.pdf')
+        self.assertAlmostEqual(data['chunks'][0]['similarity'], 0.81)
+        self.assertEqual(data['prompts']['generation'][1]['content'], 'USER-PROMPT-TEXT')
+        self.assertEqual(data['verification']['unsupported_claims'], ['It was invented in 1970'])
+        self.assertEqual([s['name'] for s in data['stages']], ['classification', 'embedding', 'search', 'generation'])
+        self.assertEqual(data['stages'][-1]['ms'], 60.0)
+        self.assertEqual(data['evaluations'][0]['evaluator'], 'heuristic')
+        self.assertIsNone(data['chat'])  # not linked to a chat message in this test
+        self.assertTrue(data['follow_up'])
+
+    def test_an_unchanged_rewrite_is_not_a_follow_up(self):
+        self.session.rewritten_query = self.session.original_query
+        self.session.save()
+        self.assertEqual(self.client.get('/api/reasoning/insights/').json()['recent'][0]['category'], 'Standalone')
+
+    def test_other_users_cannot_see_traces(self):
+        other = get_user_model().objects.create_user('nosy', password='p')
+        self.client.force_login(other)
+        self.assertEqual(self.client.get(f'/api/reasoning/sessions/{self.session.session_id}/trace/').status_code, 404)
+        self.assertEqual(self.client.get('/api/reasoning/insights/').json()['summary']['totals']['sessions'], 0)
+        self.client.logout()
+        self.assertEqual(self.client.get('/api/reasoning/insights/').status_code, 403)

@@ -43,7 +43,7 @@ describe('XP chat', () => {
     expect(screen.getByText('B-tree', { selector: 'strong' })).toBeInTheDocument()
     expect(screen.getByText('Leaves are linked')).toBeInTheDocument()
     expect(screen.getByText('Verified')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'How was this answered?' })).toHaveAttribute('href', '/insights/abc/')
+    expect(screen.getByRole('link', { name: 'How was this answered?' })).toHaveAttribute('href', '/insights/abc')
     expect(screen.getByRole('link', { name: /B-tree indexes explained/ })).toHaveAttribute('aria-current', 'page')
 
     await userEvent.click(screen.getByRole('button', { name: /Show sources/ }))

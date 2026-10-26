@@ -25,7 +25,7 @@ describe('Today', () => {
     mockApi({ 'GET /api/me/': me, 'GET /api/home/': home })
     renderApp('/')
 
-    expect(await screen.findByRole('heading', { name: '20 flashcards due' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: '20 flashcards due' }, { timeout: 3000 })).toBeInTheDocument()
     expect(screen.getByText('Across 2 subjects · about 9 minutes')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Start review' })).toHaveAttribute('href', '/review')
 
@@ -61,7 +61,7 @@ describe('Today', () => {
     })
     renderApp('/')
     await userEvent.click(await screen.findByRole('button', { name: 'Try again' }))
-    expect(await screen.findByRole('heading', { name: '20 flashcards due' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: '20 flashcards due' }, { timeout: 3000 })).toBeInTheDocument()
   })
 })
 

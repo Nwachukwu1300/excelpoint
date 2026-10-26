@@ -1,10 +1,10 @@
 from django.urls import path
-
-from . import pages
+from django.views.generic import RedirectView
 
 app_name = 'insights'
 
+# The Insights pages are in the React app; old links (and chat trace_url values) land there.
 urlpatterns = [
-    path('', pages.insights, name='dashboard'),
-    path('<uuid:session_id>/', pages.session_debug, name='session'),
+    path('', RedirectView.as_view(url='/app/insights'), name='dashboard'),
+    path('<uuid:session_id>/', RedirectView.as_view(url='/app/insights/%(session_id)s'), name='session'),
 ]

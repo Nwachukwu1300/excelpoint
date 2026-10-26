@@ -78,7 +78,7 @@ export function Answer({ message, subjectId, selected, onCite, animate }: {
           {citations(a.chunks).map(c => <CitationChip key={chunkLabel(c)} label={chunkLabel(c)} onClick={() => onCite(c)} />)}
           {a.verified !== undefined && <VerificationBadge verified={a.verified} />}
           <span>{time(message.timestamp)}</span>
-          {message.trace_url && <a href={message.trace_url}>How was this answered?</a>}
+          {message.trace_url && <Link to={message.trace_url.replace(/\/$/, '')}>How was this answered?</Link>}
         </div>
       </div>
     </motion.div>

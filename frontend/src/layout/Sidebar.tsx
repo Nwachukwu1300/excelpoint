@@ -32,7 +32,7 @@ export function Sidebar({ me, collapsed, onToggle }: { me?: Me; collapsed: boole
     { icon: 'home', label: 'Home', to: '/', active: pathname === '/' },
     { icon: 'book', label: 'Subjects', to: '/subjects', active: pathname.startsWith('/subjects') },
     { icon: 'repeat', label: 'Review', to: '/review', badge: me?.due_count, active: pathname.startsWith('/review') },
-    { icon: 'chart', label: 'Insights', href: oldPages.insights, active: pathname.startsWith('/insights') },
+    { icon: 'chart', label: 'Insights', to: '/insights', active: pathname.startsWith('/insights') },
   ]
   const name = me ? displayName(me) : ''
 

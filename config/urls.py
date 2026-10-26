@@ -21,6 +21,7 @@ from django.conf.urls.static import static
 from django.views.generic import RedirectView
 from subjects.views import create_subject, upload_material
 from subjects import app_api as subjects_app_api, quiz_api
+from reasoning import app_api as reasoning_app_api
 from users import api as users_api
 from .views import home, app_shell
 
@@ -43,6 +44,8 @@ urlpatterns = [
     path('api/notifications/read/', users_api.mark_notifications_read, name='api_notifications_read'),
     path('api/', include('subjects.urls')),
     path('api/retrieval/', include('retrieval.urls')),  # Stage 1: Retrieval System Optimization
+    path('api/reasoning/insights/', reasoning_app_api.insights, name='api_insights'),
+    path('api/reasoning/sessions/<uuid:session_id>/trace/', reasoning_app_api.trace, name='api_trace'),
     path('api/reasoning/', include('reasoning.urls')),  # Stage 2: Agentic Reasoning Pipeline
     path('insights/', include('reasoning.page_urls')),  # Stage 3/4: quality dashboard + debug panel
     path('subjects/', RedirectView.as_view(url='/app/subjects'), name='subjects'),  # rebuilt in the React app

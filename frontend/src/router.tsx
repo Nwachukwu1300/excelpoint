@@ -1,5 +1,7 @@
 import { createBrowserRouter } from 'react-router'
 import { ChatPage } from './features/chat/ChatPage'
+import { AnswerTrace } from './features/insights/AnswerTrace'
+import { Insights } from './features/insights/Insights'
 import { QuizHistory } from './features/quizzes/QuizHistory'
 import { QuizResults } from './features/quizzes/QuizResults'
 import { StartQuiz } from './features/quizzes/StartQuiz'
@@ -30,6 +32,8 @@ export const routes = [
       // XP chat fills the window: no top bar or mobile tab bar (the design's full chat page)
       { path: 'review', element: <ReviewSession />, handle: { title: 'Review', focus: true } satisfies RouteHandle },
       { path: 'quizzes/history', element: <QuizHistory />, handle: { title: 'Quiz history' } },
+      { path: 'insights', element: <Insights />, handle: { title: 'Insights' } },
+      { path: 'insights/:sessionId', element: <AnswerTrace />, handle: { title: 'Answer trace' } },
       { path: 'quizzes/:quizId/start', element: <StartQuiz />, handle: { title: 'Quiz', focus: true } satisfies RouteHandle },
       { path: 'quiz-attempts/:attemptId', element: <TakeQuiz />, handle: { title: 'Quiz', focus: true } satisfies RouteHandle },
       { path: 'quiz-attempts/:attemptId/results', element: <QuizResults />, handle: { title: 'Quiz results' } },
