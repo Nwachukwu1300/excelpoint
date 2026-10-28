@@ -15,6 +15,15 @@
   html .chat-top span, html .field-error, html .field-hint, html .form-field label, html .auth-switch,
   html .toast strong, html .toast p, html .chat-empty button, html .failure-copy, html .history-row strong { font-size: 13px; }
   html .mobile-nav a { font-size: 11px; }
+  html .material-primary > span, html .material-actions button, html .answer-footer, html .citation-chip, html .verification,
+  html .confidence, html .source-excerpt p, html .source-excerpt div > div strong, html .source-excerpt div > div span,
+  html .how-section article p, html .feature-grid p, html .overline, html .eyebrow, html .auth-card > div:first-child p,
+  html .workspace-breadcrumb, html .workspace-header p { font-size: 13px; }
+  html .source-excerpt .file-type { font-size: 9px; }
+
+  /* Small links and chips get a 44px-tall touch area */
+  html .citation-chip, html .material-actions button, html .answer-footer > a, html .auth-switch a,
+  html .workspace-breadcrumb a, html .dropdown-head button { display: inline-flex; min-height: 44px; align-items: center; }
 
   /* Toasts at the top, so they never cover a bottom sheet's buttons */
   html .toast-stack { top: calc(12px + env(safe-area-inset-top)); bottom: auto; }
