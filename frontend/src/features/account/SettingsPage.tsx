@@ -6,7 +6,7 @@ import { useTheme, type Theme } from '../../lib/theme'
 import { useOneAtATime } from '../../lib/useOneAtATime'
 import { Icon, type IconName } from '../../ui/Icon'
 import { ConfirmDialog } from '../../ui/ConfirmDialog'
-import { Button, Skeleton } from '../../ui/primitives'
+import { Button, Skeleton, buttonClass } from '../../ui/primitives'
 import { toast } from '../../ui/Toast'
 import '../../styles/account.css'
 
@@ -110,6 +110,13 @@ export function SettingsPage() {
           <Button type="submit" disabled={save.isPending}>{save.isPending ? 'Saving…' : 'Save changes'}</Button>
         </div>
       </form>
+      <section className="settings-card danger-zone" aria-labelledby="export-title">
+        <div className="settings-section-head">
+          <h2 id="export-title">Download your data</h2>
+          <p>A zip with your files, their text and summaries, flashcards, quiz results and XP conversations.</p>
+        </div>
+        <a className={buttonClass('secondary')} href="/api/me/export/" download><Icon name="file" />Download my data</a>
+      </section>
       <DeleteAccount hasPassword={me.data.has_password} username={me.data.username} />
     </div>
   )

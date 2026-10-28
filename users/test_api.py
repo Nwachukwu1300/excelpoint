@@ -364,3 +364,41 @@ class DeleteAccountTest(TestCase):
         self.assertEqual(self.client.delete(f'/api/subjects/{self.subject.id}/').status_code, 204)
         self.assertFalse(os.path.exists(path))
         self.assertEqual(ReasoningSession.objects.count(), 1)
+
+
+@override_settings(MEDIA_ROOT=MEDIA)
+class ExportDataTest(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user('s', email='s@x.com', password='Pass-word-123!')
+        other = User.objects.create_user('o', password='p')
+        subject = Subject.objects.create(user=self.user, name='Bio/../Logy')
+        material = SubjectMaterial(subject=subject, file_type='PDF', status='COMPLETED', original_name='../notes.pdf')
+        material.file.save('notes.pdf', ContentFile(b'%PDF-my-notes'))
+        from subjects.models import ChatMessage, ContentChunk, Flashcard
+        ContentChunk.objects.create(material=material, content='Chlorophyll absorbs red light.', chunk_index=0)
+        Flashcard.objects.create(subject=subject, material=material, question='What does chlorophyll absorb?', answer='Red and blue light.')
+        chat = ChatSession.objects.create(user=self.user, subject=subject, title='Light')
+        ChatMessage.objects.create(session=chat, role='user', content='What does chlorophyll absorb?')
+        Subject.objects.create(user=other, name='Not mine')
+
+    def test_zip_has_my_data_and_files_only(self):
+        import io
+        import json as _json
+        import zipfile
+        self.client.force_login(self.user)
+        response = self.client.get('/api/me/export/')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('attachment', response['Content-Disposition'])
+        zf = zipfile.ZipFile(io.BytesIO(b''.join(response.streaming_content)))
+        data = _json.loads(zf.read('data.json'))
+        self.assertEqual(data['account']['email'], 's@x.com')
+        self.assertEqual([s['name'] for s in data['subjects']], ['Bio/../Logy'])
+        exported = data['subjects'][0]['files'][0]
+        self.assertEqual(exported['text'], 'Chlorophyll absorbs red light.')
+        self.assertEqual(zf.read(exported['file_in_zip']), b'%PDF-my-notes')
+        self.assertTrue(all('..' not in n.split('/') and not n.startswith('/') for n in zf.namelist()))
+        self.assertEqual(data['subjects'][0]['flashcards'][0]['question'], 'What does chlorophyll absorb?')
+        self.assertEqual(data['conversations'][0]['messages'][0]['text'], 'What does chlorophyll absorb?')
+
+    def test_signed_out_cannot_export(self):
+        self.assertEqual(self.client.get('/api/me/export/').status_code, 403)

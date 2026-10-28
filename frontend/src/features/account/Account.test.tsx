@@ -43,6 +43,7 @@ describe('Settings', () => {
       'POST /api/me/delete/': () => (++calls === 1 ? { status: 400, body: { confirm: ['That password isn’t right.'] } } : { status: 204, body: null }),
     })
     renderApp('/settings')
+    expect(await screen.findByRole('link', { name: 'Download my data' })).toHaveAttribute('href', '/api/me/export/')
     await userEvent.click(await screen.findByRole('button', { name: 'Delete my account' }))
     const dialog = screen.getByRole('dialog', { name: 'Delete your account?' })
     await userEvent.type(within(dialog).getByLabelText('Enter your password to confirm'), 'wrong')

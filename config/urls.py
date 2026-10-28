@@ -37,6 +37,7 @@ urlpatterns = [
     path('api/me/', users_api.me, name='api_me'),
     path('api/me/password/', users_api.change_password, name='api_change_password'),
     path('api/me/delete/', users_api.delete_account, name='api_delete_account'),
+    path('api/me/export/', users_api.export_data, name='api_export_data'),
     path('api/home/', subjects_app_api.home, name='api_home'),
     path('api/review/queue/', subjects_app_api.review_queue, name='api_review_queue'),
     path('api/review/grade/', subjects_app_api.review_grade, name='api_review_grade'),

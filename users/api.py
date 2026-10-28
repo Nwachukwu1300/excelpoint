@@ -126,3 +126,13 @@ def delete_account(request):
     logout(request)
     user.delete()  # cascades to notifications, reviews, quiz attempts and chats
     return Response(status=204)
+
+
+@api_view(['GET'])
+def export_data(request):
+    """A zip of everything this user has: data.json plus their uploaded files."""
+    from django.http import FileResponse
+    from django.utils import timezone
+    from .export import build_export
+    name = f"excelpoint-{request.user.username}-{timezone.localdate():%Y-%m-%d}.zip"
+    return FileResponse(build_export(request.user), as_attachment=True, filename=name, content_type='application/zip')
