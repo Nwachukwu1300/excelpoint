@@ -33,7 +33,7 @@ class ReviewApiTest(TestCase):
         self.assertEqual(set(cards), {'What is a B-tree?', 'ACID?', '2+2'})
         self.assertEqual(data['cards'][0]['question'], 'ACID?')  # overdue first, then new
         self.assertEqual(cards['What is a B-tree?']['material_name'], 'notes.pdf')
-        self.assertEqual(cards['What is a B-tree?']['next_days'], {'1': 1, '3': 1, '4': 1, '5': 1})  # SM-2's first step
+        self.assertEqual(cards['What is a B-tree?']['next_days'], {'1': 1, '3': 1, '4': 3, '5': 7})  # first-review gaps
         self.assertEqual(cards['ACID?']['next_days'], {'1': 1, '3': 15, '4': 15, '5': 15})  # 6 × ease 2.5 for a pass
         self.assertEqual([g['label'] for g in data['grades']], ['Again', 'Hard', 'Good', 'Easy'])
 

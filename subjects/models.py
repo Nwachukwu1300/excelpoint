@@ -729,6 +729,9 @@ class CachedResponse(models.Model):
 
 
 
+FIRST_INTERVALS = {3: 1, 4: 3, 5: 7}  # Hard, Good, Easy on a new card, in days
+
+
 class FlashcardReview(models.Model):
     """Spaced-repetition state for one user's flashcard, scheduled with SM-2.
 
@@ -754,9 +757,10 @@ class FlashcardReview(models.Model):
             raise ValueError("grade must be 0-5")
         if grade >= 3:
             if self.repetitions == 0:
-                self.interval_days = 1
+                # First review: each button means something (classic SM-2 gives 1 day for all three)
+                self.interval_days = FIRST_INTERVALS[grade]
             elif self.repetitions == 1:
-                self.interval_days = 6
+                self.interval_days = max(6, round(self.interval_days * self.ease))  # never shorter than the first gap
             else:
                 self.interval_days = round(self.interval_days * self.ease)
             self.repetitions += 1

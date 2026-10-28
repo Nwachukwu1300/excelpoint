@@ -17,15 +17,22 @@ class SM2Test(TestCase):
 
     def test_intervals_grow_on_recall_and_reset_on_lapse(self):
         r = record_review(self.user, self.card, 4)
-        self.assertEqual((r.repetitions, r.interval_days), (1, 1))
+        self.assertEqual((r.repetitions, r.interval_days), (1, 3))  # Good on a new card
         r = record_review(self.user, self.card, 4)
-        self.assertEqual((r.repetitions, r.interval_days), (2, 6))
+        self.assertEqual((r.repetitions, r.interval_days), (2, 8))  # 3 days x ease 2.5, at least 6
         r = record_review(self.user, self.card, 5)
-        self.assertEqual(r.interval_days, 15)  # 6 days x ease 2.5 (the ease before this grade updates it)
+        self.assertEqual(r.interval_days, 20)  # 8 days x ease 2.5 (the ease before this grade updates it)
         self.assertAlmostEqual(r.ease, 2.6)  # an "easy" grade raises ease for next time
         r = record_review(self.user, self.card, 1)
         self.assertEqual((r.repetitions, r.interval_days), (0, 1))
         self.assertAlmostEqual(r.due_at - timezone.now(), timedelta(days=1), delta=timedelta(seconds=5))
+
+    def test_first_review_gaps_differ_by_button(self):
+        from subjects.services.spaced_repetition import preview_intervals
+        self.assertEqual(preview_intervals(FlashcardReview()), {1: 1, 3: 1, 4: 3, 5: 7})
+        hard_first = FlashcardReview(repetitions=1, interval_days=1, ease=2.36)
+        hard_first.apply_grade(4)
+        self.assertEqual(hard_first.interval_days, 6)  # the second gap is never under 6 days
 
     def test_ease_never_drops_below_floor(self):
         for _ in range(10):
