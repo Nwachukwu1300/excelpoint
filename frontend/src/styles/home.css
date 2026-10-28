@@ -27,10 +27,10 @@
 .home-subject:hover { border-color: var(--primary); translate: 0 -2px; } /* lift added (prototype subject-card hover) */
 .home-subject > div strong, .home-subject > div span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .home-subject > div strong { font-size: 11px; }
-.home-subject > div span { margin-top: 3px; color: var(--muted); font-size: 9px; }
+.home-subject > div span { margin-top: 3px; color: var(--muted); font-size: 10px; }
 .home-subject dl { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; margin: 3px 0 0; padding-top: 12px; border-top: 1px solid var(--border); }
 .home-subject dl div + div { border-left: 1px solid var(--border); padding-left: 14px; }
-.home-subject dt { color: var(--muted); font-size: 8px; text-transform: uppercase; }
+.home-subject dt { color: var(--muted); font-size: 10px; text-transform: uppercase; }
 .home-subject dd { margin: 2px 0 0; font-size: 12px; font-weight: 650; }
 .conversations-card { padding: 18px; }
 .conversations-card .section-heading { margin-bottom: 8px; }
@@ -39,7 +39,7 @@
 .conversation-row > div { flex: 1; min-width: 0; }
 .conversation-row strong, .conversation-row div > span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .conversation-row strong { font-size: 11px; transition: color .15s ease; }
-.conversation-row div > span { margin-top: 3px; color: var(--muted); font-size: 9px; }
+.conversation-row div > span { margin-top: 3px; color: var(--muted); font-size: 10px; }
 .conversation-row > .icon { color: var(--muted); }
 .new-user-preview { padding: 24px; text-align: center; }
 .new-user-preview .empty-icon { margin: 0 auto; }

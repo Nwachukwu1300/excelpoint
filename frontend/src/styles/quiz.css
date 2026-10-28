@@ -4,18 +4,18 @@
 .focus-header > div:not(.logo) { text-align: center; } /* :not(.logo): the prototype rules also shrank the logo */
 .focus-header > div:not(.logo) strong, .focus-header > div:not(.logo) span { display: block; }
 .focus-header > div:not(.logo) strong { font-size: 11px; }
-.focus-header > div:not(.logo) span { margin-top: 2px; color: var(--muted); font-size: 8px; }
+.focus-header > div:not(.logo) span { margin-top: 2px; color: var(--muted); font-size: 10px; }
 .focus-header > a { display: flex; align-items: center; justify-self: end; gap: 6px; border: 0; color: var(--muted); background: transparent; font-size: 10px; }
 .quiz-stage { max-width: 760px; min-height: calc(100vh - 64px); margin: 0 auto; padding: 38px 24px; }
 .quiz-progress-head { display: flex; justify-content: space-between; margin-bottom: 8px; color: var(--muted); font-size: 10px; }
 .quiz-progress-head span:last-child { display: flex; align-items: center; gap: 5px; }
 .question-card { margin-top: 28px; padding: 32px; border: 1px solid var(--border); border-radius: 12px; background: var(--card); box-shadow: var(--shadow); }
-.question-meta { display: flex; align-items: center; justify-content: space-between; color: var(--muted); font-size: 9px; }
+.question-meta { display: flex; align-items: center; justify-content: space-between; color: var(--muted); font-size: 10px; }
 .question-card h1 { margin: 22px 0 28px; font-size: 20px; font-weight: 600; line-height: 1.45; }
 .answer-options { display: flex; flex-direction: column; gap: 9px; }
 .answer-options button { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); background: var(--card); font-size: 11px; text-align: left; }
 .answer-options button:hover, .answer-options button.is-selected { border-color: var(--primary); background: var(--primary-soft); }
-.answer-options button > span { display: grid; width: 26px; height: 26px; flex: 0 0 auto; place-items: center; border: 1px solid var(--border); border-radius: 50%; color: var(--muted); font-size: 9px; font-weight: 600; }
+.answer-options button > span { display: grid; width: 26px; height: 26px; flex: 0 0 auto; place-items: center; border: 1px solid var(--border); border-radius: 50%; color: var(--muted); font-size: 10px; font-weight: 600; }
 .answer-options button.is-selected > span { border-color: var(--primary); color: white; background: var(--primary); }
 .short-answer { width: 100%; resize: vertical; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); outline: none; color: var(--text); background: var(--background); font-size: 11px; }
 .quiz-navigation { display: flex; align-items: center; justify-content: space-between; margin-top: 18px; }
@@ -30,7 +30,7 @@
 .generation-state p { max-width: 420px; margin: 0; color: var(--muted); font-size: 11px; line-height: 1.6; }
 .generation-progress { width: min(360px, 80vw); height: 6px; margin: 24px 0 8px; overflow: hidden; border-radius: 6px; background: var(--border); }
 .generation-progress span { display: block; width: 42%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--ai-one), var(--ai-two)); animation: generating 1.7s ease-in-out infinite; }
-.generation-state small { color: var(--muted); font-size: 8px; }
+.generation-state small { color: var(--muted); font-size: 10px; }
 .generation-state > .button { margin-top: 20px; }
 .generation-state > div:last-child { display: flex; gap: 8px; margin-top: 20px; }
 .warning-icon { color: var(--warning); background: var(--warning-soft); }
@@ -52,20 +52,20 @@
 .is-correct .result-number > span { color: var(--success); background: var(--success-soft); }
 .is-incorrect .result-number > span { color: var(--danger); background: var(--danger-soft); }
 .result-number strong { font-size: 10px; }
-.result-number small { margin-left: auto; color: var(--muted); font-size: 8px; }
+.result-number small { margin-left: auto; color: var(--muted); font-size: 10px; }
 .result-question h3 { margin: 14px 0; font-size: 12px; }
 .answer-review { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .answer-review > div { padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--background); }
 .answer-review span, .answer-review strong { display: block; }
-.answer-review span { color: var(--muted); font-size: 8px; }
+.answer-review span { color: var(--muted); font-size: 10px; }
 .answer-review strong { margin-top: 3px; font-size: 10px; }
 .explanation { margin-top: 12px; padding: 11px; border-radius: 6px; background: var(--primary-soft); }
-.explanation strong { font-size: 9px; }
-.explanation p { margin: 4px 0 0; color: var(--muted); font-size: 9px; line-height: 1.55; }
+.explanation strong { font-size: 10px; }
+.explanation p { margin: 4px 0 0; color: var(--muted); font-size: 10px; line-height: 1.55; }
 .performance-card { max-width: 720px; margin-bottom: 24px; padding: 20px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow); }
 .performance-card > div:first-child { margin-bottom: 18px; }
 .performance-card h2 { margin: 0; font-size: 15px; }
-.performance-card p { margin: 4px 0 0; color: var(--muted); font-size: 9px; }
+.performance-card p { margin: 4px 0 0; color: var(--muted); font-size: 10px; }
 .performance-row { display: grid; grid-template-columns: 150px 1fr 40px; align-items: center; gap: 12px; margin-top: 12px; }
 .performance-row > span, .performance-row > strong { font-size: 10px; }
 .table-link { border: 0; color: var(--primary); background: transparent; font-size: 10px; font-weight: 600; }
@@ -83,7 +83,7 @@ td:last-child, th:last-child { width: 36px; padding-left: 0; }
 .progress-ring > div { z-index: 1; text-align: center; }
 .progress-ring strong, .progress-ring span { display: block; }
 .progress-ring strong { font-size: 13px; font-variant-numeric: tabular-nums; }
-.progress-ring span { margin-top: 1px; color: var(--muted); font-size: 7px; text-transform: uppercase; }
+.progress-ring span { margin-top: 1px; color: var(--muted); font-size: 10px; text-transform: uppercase; }
 
 /* added */
 .focus-header > .logo { justify-self: start; }

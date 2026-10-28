@@ -42,7 +42,7 @@
 .breadcrumb strong { font-weight: 600; }
 .top-actions { display: flex; align-items: center; gap: 6px; }
 .menu-wrap { position: relative; }
-.unread { position: absolute; top: -2px; right: -1px; display: grid; min-width: 16px; height: 16px; padding: 0 3px; place-items: center; border: 2px solid var(--card); border-radius: 8px; color: white; background: var(--danger); font-size: 9px; font-weight: 700; pointer-events: none; }
+.unread { position: absolute; top: -2px; right: -1px; display: grid; min-width: 16px; height: 16px; padding: 0 3px; place-items: center; border: 2px solid var(--card); border-radius: 8px; color: white; background: var(--danger); font-size: 10px; font-weight: 700; pointer-events: none; }
 .avatar-button { display: flex; align-items: center; gap: 4px; margin-left: 4px; padding: 2px 4px; border: 0; border-radius: 20px; color: var(--muted); background: transparent; }
 .avatar-button:hover { background: var(--hover); }
 .theme-icon { display: grid; place-items: center; } /* added: sun/moon swap */
@@ -92,10 +92,10 @@
   .breadcrumb span, .breadcrumb .icon, .avatar-button > .icon { display: none; }
   .breadcrumb strong { font-size: 15px; }
   .mobile-nav { position: fixed; inset: auto 0 0; z-index: 30; display: grid; height: 68px; grid-template-columns: repeat(5, 1fr); border-top: 1px solid var(--border); background: color-mix(in srgb, var(--card) 94%, transparent); backdrop-filter: blur(12px); padding-bottom: env(safe-area-inset-bottom); }
-  .mobile-nav a { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 0; color: var(--muted); background: transparent; font-size: 9px; font-weight: 500; }
+  .mobile-nav a { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 0; color: var(--muted); background: transparent; font-size: 10px; font-weight: 500; }
   .mobile-nav a.is-active { color: var(--primary); }
   .mobile-nav .nav-dot { position: absolute; top: 0; width: 24px; height: 2px; border-radius: 2px; background: var(--primary); } /* was ::before; now slides (layoutId) */
-  .mobile-nav small { position: absolute; top: 6px; left: calc(50% + 7px); display: grid; min-width: 16px; height: 16px; padding: 0 3px; place-items: center; border-radius: 8px; color: white; background: var(--danger); font-size: 8px; }
+  .mobile-nav small { position: absolute; top: 6px; left: calc(50% + 7px); display: grid; min-width: 16px; height: 16px; padding: 0 3px; place-items: center; border-radius: 8px; color: white; background: var(--danger); font-size: 10px; }
   .dropdown { position: fixed; top: 62px; right: 12px; left: 12px; width: auto; }
   .dropdown--account { left: auto; width: 250px; }
 }

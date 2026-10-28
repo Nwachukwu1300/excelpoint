@@ -99,7 +99,7 @@
 .upload-icon { display: grid; width: 42px; height: 42px; margin-bottom: 4px; place-items: center; border-radius: 50%; color: var(--primary); background: var(--primary-soft); }
 .upload-icon.success { color: var(--success); background: var(--success-soft); }
 .modal-note { display: flex; gap: 7px; margin: 14px 0 20px; color: var(--muted); font-size: 10px; line-height: 1.5; }
-.upload-file-error { display: flex; align-items: center; gap: 7px; margin-top: 8px; padding: 9px 10px; border-radius: 6px; color: var(--danger); background: var(--danger-soft); font-size: 9px; }
+.upload-file-error { display: flex; align-items: center; gap: 7px; margin-top: 8px; padding: 9px 10px; border-radius: 6px; color: var(--danger); background: var(--danger-soft); font-size: 10px; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
 .confirm-dialog { text-align: center; }
 .danger-icon { display: grid; width: 48px; height: 48px; margin: 0 auto 16px; place-items: center; border-radius: 50%; color: var(--danger); background: var(--danger-soft); }
@@ -118,8 +118,8 @@
 .toast--success > span { color: var(--success); background: var(--success-soft); }
 .toast--error > span { color: var(--danger); background: var(--danger-soft); }
 .toast > div { flex: 1; min-width: 0; }
-.toast strong { font-size: 9px; }
-.toast p { margin: 3px 0 0; color: var(--muted); font-size: 8px; }
+.toast strong { font-size: 10px; }
+.toast p { margin: 3px 0 0; color: var(--muted); font-size: 10px; }
 
 @media (max-width: 640px) {
   .modal-backdrop { align-items: end; padding: 0; }

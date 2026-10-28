@@ -7,10 +7,10 @@
 .auth-card > div:first-child p { margin: 7px 0 0; color: var(--muted); font-size: 10px; }
 .google-button { width: 100%; }
 .google-mark { color: #4285f4; font-size: 15px; font-weight: 700; }
-.auth-divider { display: flex; align-items: center; gap: 10px; margin: 18px 0; color: var(--muted); font-size: 8px; }
+.auth-divider { display: flex; align-items: center; gap: 10px; margin: 18px 0; color: var(--muted); font-size: 10px; }
 .auth-divider::before, .auth-divider::after { flex: 1; height: 1px; background: var(--border); content: ''; }
-.auth-error { display: flex; gap: 7px; margin-bottom: 12px; padding: 10px; border-radius: 6px; color: var(--danger); background: var(--danger-soft); font-size: 9px; }
-.auth-switch, .auth-legal { color: var(--muted); font-size: 9px; text-align: center; }
+.auth-error { display: flex; gap: 7px; margin-bottom: 12px; padding: 10px; border-radius: 6px; color: var(--danger); background: var(--danger-soft); font-size: 10px; }
+.auth-switch, .auth-legal { color: var(--muted); font-size: 10px; text-align: center; }
 .auth-switch { margin: 16px 0 0; }
 .auth-switch a { border: 0; color: var(--primary); background: transparent; font-weight: 600; }
 .auth-legal { margin-top: 18px; }
@@ -28,7 +28,7 @@
 .product-sidebar { display: flex; flex-direction: column; gap: 18px; padding: 18px; border-right: 1px solid var(--border); background: var(--card); }
 .product-sidebar .skeleton { margin-top: 16px; }
 .product-main { padding: 34px 46px; }
-.product-main > span { color: var(--muted); font-size: 9px; font-weight: 600; }
+.product-main > span { color: var(--muted); font-size: 10px; font-weight: 600; }
 .mock-question { max-width: 430px; margin: 44px 0 24px auto; padding: 12px 15px; border-radius: 10px 10px 2px 10px; background: var(--hover); font-size: 11px; }
 .mock-answer { display: flex; max-width: 540px; gap: 10px; padding: 18px; border: 1px solid var(--border); border-left: 3px solid var(--ai-one); border-radius: var(--radius); background: var(--card); }
 .mock-answer strong { font-size: 10px; }
@@ -50,7 +50,7 @@
 .landing-cta { margin: 20px 24px 80px; padding: 72px 24px; border-radius: 16px; color: white; background: #172554; text-align: center; }
 .landing-cta h2 { margin: 0; font-size: 30px; letter-spacing: -.04em; }
 .landing-cta p { margin: 8px 0 22px; color: #bfdbfe; font-size: 11px; }
-.landing-footer { display: flex; max-width: 1120px; align-items: center; gap: 24px; margin: 0 auto; padding: 30px 28px; border-top: 1px solid var(--border); color: var(--muted); font-size: 9px; }
+.landing-footer { display: flex; max-width: 1120px; align-items: center; gap: 24px; margin: 0 auto; padding: 30px 28px; border-top: 1px solid var(--border); color: var(--muted); font-size: 10px; }
 
 
 /* added */

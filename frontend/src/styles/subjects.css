@@ -8,12 +8,12 @@
 .subject-card-stats div + div { padding-left: 16px; border-left: 1px solid var(--border); }
 .subject-card-stats strong, .subject-card-stats span { display: block; }
 .subject-card-stats strong { font-size: 16px; }
-.subject-card-stats span { margin-top: 2px; color: var(--muted); font-size: 9px; }
+.subject-card-stats span { margin-top: 2px; color: var(--muted); font-size: 10px; }
 .add-subject-card { display: flex; min-height: 246px; flex-direction: column; align-items: center; justify-content: center; gap: 6px; border: 1px dashed #94a3b8; border-radius: var(--radius); color: var(--muted); background: transparent; }
 .add-subject-card:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-soft); }
 .add-subject-card > span { display: grid; width: 40px; height: 40px; margin-bottom: 5px; place-items: center; border-radius: 50%; background: var(--hover); }
 .add-subject-card strong { color: var(--text); font-size: 12px; }
-.add-subject-card small { font-size: 9px; }
+.add-subject-card small { font-size: 10px; }
 .workspace-page { padding-top: 28px; }
 .workspace-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 24px; }
 .workspace-breadcrumb { display: flex; align-items: center; gap: 4px; margin-bottom: 14px; color: var(--muted); font-size: 10px; }
@@ -24,7 +24,7 @@
 .tabs button { position: relative; min-width: 92px; padding: 12px 14px; border: 0; color: var(--muted); background: transparent; font-size: 12px; font-weight: 500; }
 .tabs button.is-active { color: var(--primary); font-weight: 650; }
 .tab-underline { position: absolute; right: 12px; bottom: -1px; left: 12px; height: 2px; background: var(--primary); } /* was ::after; now slides between tabs (layoutId) */
-.tabs small { margin-left: 6px; padding: 2px 5px; border-radius: 10px; color: var(--primary); background: var(--primary-soft); font-size: 8px; }
+.tabs small { margin-left: 6px; padding: 2px 5px; border-radius: 10px; color: var(--primary); background: var(--primary-soft); font-size: 10px; }
 .workspace-tab { padding-top: 24px; }
 .tab-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 16px; }
 .tab-toolbar h2 { margin: 0; font-size: 16px; }
@@ -35,13 +35,13 @@
 .material-primary { flex: 1; min-width: 0; }
 .material-primary > strong, .material-primary > span, .material-primary > small { display: block; }
 .material-primary > strong { overflow: hidden; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
-.material-primary > span { margin-top: 4px; color: var(--muted); font-size: 9px; }
-.failure-copy { margin-top: 5px; color: var(--danger); font-size: 9px; }
+.material-primary > span { margin-top: 4px; color: var(--muted); font-size: 10px; }
+.failure-copy { margin-top: 5px; color: var(--danger); font-size: 10px; }
 .material--failed { border-color: color-mix(in srgb, var(--danger) 30%, var(--border)); }
 .material-actions { display: flex; align-items: center; gap: 5px; }
-.material-actions > button:not(.icon-button) { display: flex; min-height: 30px; align-items: center; gap: 5px; padding: 0 9px; border: 1px solid var(--border); border-radius: 6px; color: var(--text); background: var(--card); font-size: 9px; font-weight: 600; }
+.material-actions > button:not(.icon-button) { display: flex; min-height: 30px; align-items: center; gap: 5px; padding: 0 9px; border: 1px solid var(--border); border-radius: 6px; color: var(--text); background: var(--card); font-size: 10px; font-weight: 600; }
 .inline-processing { max-width: 230px; margin-top: 8px; }
-.inline-processing small { display: block; margin-top: 4px; color: var(--muted); font-size: 8px; }
+.inline-processing small { display: block; margin-top: 4px; color: var(--muted); font-size: 10px; }
 .material-summary { margin: 0 16px 16px 64px; padding: 18px; border: 1px solid color-mix(in srgb, var(--ai-one) 22%, var(--border)); border-radius: var(--radius); background: var(--ai-soft); }
 .summary-heading { display: flex; align-items: center; gap: 10px; }
 .summary-heading h3 { margin: 3px 0 0; font-size: 12px; }
@@ -57,17 +57,17 @@
 .quiz-file-icon { display: grid; width: 40px; height: 40px; flex: 0 0 auto; place-items: center; border-radius: var(--radius); color: var(--primary); background: var(--primary-soft); }
 .quiz-title { min-width: 170px; flex: 1; }
 .quiz-title h3 { margin: 0; font-size: 12px; }
-.quiz-title p { margin: 4px 0 0; color: var(--muted); font-size: 9px; }
+.quiz-title p { margin: 4px 0 0; color: var(--muted); font-size: 10px; }
 .quiz-row dl { display: flex; min-width: 260px; margin: 0; }
 .quiz-row dl div { min-width: 80px; padding: 0 14px; border-left: 1px solid var(--border); }
-.quiz-row dt { color: var(--muted); font-size: 8px; }
+.quiz-row dt { color: var(--muted); font-size: 10px; }
 .quiz-row dd { margin: 3px 0 0; font-size: 11px; font-weight: 650; }
 .quiz-actions { display: flex; gap: 6px; }
 .quiz-actions .button { min-height: 34px; font-size: 10px; }
 .flashcard-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .flashcard-preview { min-height: 190px; padding: 18px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow); }
 .flashcard-preview > div { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.flashcard-preview > div > span { overflow: hidden; color: var(--muted); font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
+.flashcard-preview > div > span { overflow: hidden; color: var(--muted); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
 .flashcard-preview h3 { margin: 38px 0 9px; font-size: 15px; }
 .flashcard-preview p { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.6; }
 
@@ -81,7 +81,7 @@
 .summary-wrap { overflow: hidden; } /* added: lets the summary animate its height */
 .material-summary ul { margin-top: 10px; }
 .summary-link { display: inline-flex; align-items: center; gap: 5px; margin-top: 12px; color: var(--primary); font-size: 10px; font-weight: 600; }
-.file-type { display: grid; width: 34px; height: 38px; flex: 0 0 auto; place-items: end center; padding-bottom: 5px; border-radius: 4px; color: var(--primary); background: var(--primary-soft); font-size: 7px; font-weight: 800; }
+.file-type { display: grid; width: 34px; height: 38px; flex: 0 0 auto; place-items: end center; padding-bottom: 5px; border-radius: 4px; color: var(--primary); background: var(--primary-soft); font-size: 10px; font-weight: 800; }
 .empty-state--compact { min-height: 280px; } /* added */
 
 @media (max-width: 1100px) {

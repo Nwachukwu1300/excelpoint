@@ -6,12 +6,12 @@
 .notification-page-item.is-unread { background: var(--primary-soft); }
 .notification-page-item > div { flex: 1; }
 .notification-page-item strong { font-size: 11px; }
-.notification-page-item p { margin: 4px 0; color: var(--muted); font-size: 9px; }
-.notification-page-item small { color: var(--muted); font-size: 8px; }
+.notification-page-item p { margin: 4px 0; color: var(--muted); font-size: 10px; }
+.notification-page-item small { color: var(--muted); font-size: 10px; }
 .notification-page-item > i { width: 7px; height: 7px; border-radius: 50%; background: var(--primary); }
 .settings-card { padding: 24px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow); }
 .settings-section-head h2 { margin: 0; font-size: 14px; }
-.settings-section-head p { margin: 4px 0 0; color: var(--muted); font-size: 9px; }
+.settings-section-head p { margin: 4px 0 0; color: var(--muted); font-size: 10px; }
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; margin-top: 6px; }
 .full-field { grid-column: 1 / -1; }
 .settings-divider { height: 1px; margin: 24px 0; background: var(--border); }
@@ -20,15 +20,15 @@
 .theme-options button.is-active { border-color: var(--primary); background: var(--primary-soft); box-shadow: inset 0 0 0 1px var(--primary); }
 .theme-options .icon { grid-row: span 2; color: var(--primary); }
 .theme-options strong { font-size: 10px; }
-.theme-options span { color: var(--muted); font-size: 8px; }
+.theme-options span { color: var(--muted); font-size: 10px; }
 .password-link { display: flex; width: 100%; align-items: center; gap: 12px; border: 0; color: var(--text); background: transparent; text-align: left; }
 .password-link > div { flex: 1; }
 .password-link strong { font-size: 10px; }
-.password-link p { margin: 3px 0 0; color: var(--muted); font-size: 8px; }
+.password-link p { margin: 3px 0 0; color: var(--muted); font-size: 10px; }
 .password-link > .icon { color: var(--muted); }
 .settings-save { display: flex; justify-content: flex-end; margin-top: 24px; }
 .password-card { max-width: 520px; }
-.password-requirements { display: flex; flex-direction: column; gap: 6px; margin: 16px 0; padding: 12px; border-radius: 6px; color: var(--muted); background: var(--background); font-size: 8px; }
+.password-requirements { display: flex; flex-direction: column; gap: 6px; margin: 16px 0; padding: 12px; border-radius: 6px; color: var(--muted); background: var(--background); font-size: 10px; }
 .password-requirements strong { color: var(--text); }
 .password-requirements span { display: flex; align-items: center; gap: 5px; }
 

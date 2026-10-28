@@ -7,44 +7,44 @@
 .metric-card > div { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .metric-card > div > span { color: var(--muted); font-size: 10px; font-weight: 600; }
 .metric-card > strong { display: block; margin-top: 16px; font-size: 25px; letter-spacing: -.04em; }
-.metric-card > p { margin: 5px 0 0; color: var(--muted); font-size: 9px; }
+.metric-card > p { margin: 5px 0 0; color: var(--muted); font-size: 10px; }
 .insights-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; margin-bottom: 16px; }
 .trend-card, .retrieval-card, .attention-card, .recent-answers, .latency-card, .evaluation-card, .confidence-card { border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow); }
 .trend-card, .retrieval-card, .attention-card, .recent-answers, .latency-card, .evaluation-card, .confidence-card { padding: 18px; }
 .card-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
 .card-heading h2 { margin: 0; font-size: 14px; }
-.card-heading p { margin: 4px 0 0; color: var(--muted); font-size: 9px; }
+.card-heading p { margin: 4px 0 0; color: var(--muted); font-size: 10px; }
 .card-heading > strong { color: var(--muted); font-size: 10px; }
-.chart-legend { display: flex; gap: 12px; color: var(--muted); font-size: 8px; }
+.chart-legend { display: flex; gap: 12px; color: var(--muted); font-size: 10px; }
 .chart-legend span { display: flex; align-items: center; gap: 5px; }
 .chart-legend span::before { width: 12px; height: 3px; border-radius: 3px; background: var(--primary); content: ''; }
 .chart-legend .bar-key::before { height: 8px; background: var(--primary-soft); }
 .chart-legend .dot-key::before { width: 6px; height: 6px; border-radius: 50%; background: var(--warning); }
 .quality-chart { position: relative; padding-left: 30px; }
-.chart-axis { position: absolute; top: 0; bottom: 20px; left: 0; display: flex; flex-direction: column; justify-content: space-between; color: var(--muted); font-size: 7px; }
+.chart-axis { position: absolute; top: 0; bottom: 20px; left: 0; display: flex; flex-direction: column; justify-content: space-between; color: var(--muted); font-size: 10px; }
 .chart-plot { position: relative; display: flex; height: 180px; align-items: flex-end; justify-content: space-around; gap: 8px; border-bottom: 1px solid var(--border); background: linear-gradient(to bottom, transparent 32%, var(--border) 33%, transparent 34%, transparent 65%, var(--border) 66%, transparent 67%); }
 .chart-day { position: relative; display: flex; height: 100%; flex: 1; align-items: flex-end; justify-content: center; }
 .chart-day > span { width: min(20px, 62%); border-radius: 3px 3px 0 0; background: var(--primary-soft); }
 .chart-day > i { position: absolute; top: 16px; z-index: 2; width: 7px; height: 7px; border: 2px solid var(--card); border-radius: 50%; background: var(--warning); }
 .chart-plot svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
 .chart-plot polyline { fill: none; stroke: var(--primary); stroke-width: 3; vector-effect: non-scaling-stroke; }
-.chart-labels { display: flex; justify-content: space-between; margin-top: 7px; color: var(--muted); font-size: 7px; }
+.chart-labels { display: flex; justify-content: space-between; margin-top: 7px; color: var(--muted); font-size: 10px; }
 .retrieval-list { margin: 0; }
 .retrieval-list div { display: flex; align-items: center; justify-content: space-between; padding: 11px 0; border-top: 1px solid var(--border); }
-.retrieval-list dt { color: var(--muted); font-size: 9px; }
+.retrieval-list dt { color: var(--muted); font-size: 10px; }
 .retrieval-list dd { margin: 0; font-size: 10px; font-weight: 650; }
 .attention-card { margin-bottom: 16px; }
 .attention-row { display: grid; transition: background .15s ease; width: 100%; grid-template-columns: auto minmax(180px, 1fr) minmax(220px, 1fr) auto; align-items: center; gap: 10px; padding: 12px 0; border: 0; border-top: 1px solid var(--border); color: var(--text); background: transparent; text-align: left; }
 .warning-marker { display: grid; width: 28px; height: 28px; place-items: center; border-radius: 50%; color: var(--warning); background: var(--warning-soft); }
 .attention-row > strong { overflow: hidden; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
 .reason-chips { display: flex; flex-wrap: wrap; gap: 5px; }
-.trace-link { display: flex; align-items: center; gap: 5px; color: var(--primary); font-size: 9px; font-weight: 600; }
+.trace-link { display: flex; align-items: center; gap: 5px; color: var(--primary); font-size: 10px; font-weight: 600; }
 .recent-answers { padding: 0; overflow: hidden; }
 .recent-answers > .card-heading { padding: 18px 18px 0; }
 .recent-answers .table-wrap { border: 0; border-top: 1px solid var(--border); border-radius: 0; box-shadow: none; }
 .recent-answers td:first-child { max-width: 250px; color: var(--text); }
-.recent-answers .button { min-height: 28px; padding: 0 9px; font-size: 9px; }
-.back-link { display: inline-flex; align-items: center; gap: 5px; margin-bottom: 18px; border: 0; color: var(--muted); background: transparent; font-size: 9px; }
+.recent-answers .button { min-height: 28px; padding: 0 9px; font-size: 10px; }
+.back-link { display: inline-flex; align-items: center; gap: 5px; margin-bottom: 18px; border: 0; color: var(--muted); background: transparent; font-size: 10px; }
 .trace-page { max-width: 1100px; }
 .trace-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; }
 .trace-header h1 { max-width: 780px; margin: 0; font-size: 24px; letter-spacing: -.03em; }
@@ -52,50 +52,50 @@
 .trace-chips { display: flex; flex-wrap: wrap; gap: 7px; margin: 18px 0 24px; padding-bottom: 22px; border-bottom: 1px solid var(--border); }
 .latency-card { margin-bottom: 16px; }
 .latency-row { display: grid; grid-template-columns: 90px 1fr 58px; align-items: center; gap: 12px; margin-top: 9px; }
-.latency-row > span, .latency-row > strong { font-size: 9px; }
+.latency-row > span, .latency-row > strong { font-size: 10px; }
 .latency-row > strong { text-align: right; }
 .latency-row > div { height: 8px; overflow: hidden; border-radius: 4px; background: var(--hover); }
 .latency-row i { display: block; height: 100%; min-width: 2px; border-radius: inherit; background: var(--primary); }
 .trace-stack { display: flex; flex-direction: column; gap: 12px; }
 .trace-section { border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow); }
 .trace-section-title { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--border); }
-.trace-section-title > span { display: grid; width: 24px; height: 24px; place-items: center; border-radius: 50%; color: var(--primary); background: var(--primary-soft); font-size: 9px; font-weight: 700; }
+.trace-section-title > span { display: grid; width: 24px; height: 24px; place-items: center; border-radius: 50%; color: var(--primary); background: var(--primary-soft); font-size: 10px; font-weight: 700; }
 .trace-section-title h2 { margin: 0; font-size: 13px; }
 .trace-section-body { padding: 16px; }
 .trace-grid { display: grid; gap: 10px; }
 .trace-grid.three { grid-template-columns: repeat(3, 1fr); }
 .trace-grid > div { padding: 11px; border-radius: 6px; background: var(--background); }
 .trace-grid span, .trace-grid strong { display: block; }
-.trace-grid span { color: var(--muted); font-size: 8px; }
-.trace-grid strong { margin-top: 4px; font-size: 9px; }
+.trace-grid span { color: var(--muted); font-size: 10px; }
+.trace-grid strong { margin-top: 4px; font-size: 10px; }
 .trace-chunk { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; }
 .trace-chunk + .trace-chunk { border-top: 1px solid var(--border); }
-.chunk-number { display: grid; width: 24px; height: 24px; flex: 0 0 auto; place-items: center; border-radius: 50%; color: var(--muted); background: var(--hover); font-size: 8px; font-weight: 700; }
+.chunk-number { display: grid; width: 24px; height: 24px; flex: 0 0 auto; place-items: center; border-radius: 50%; color: var(--muted); background: var(--hover); font-size: 10px; font-weight: 700; }
 .chunk-main { flex: 1; min-width: 0; }
 .chunk-main > div { display: flex; gap: 8px; }
-.chunk-main strong, .chunk-main span { font-size: 9px; }
+.chunk-main strong, .chunk-main span { font-size: 10px; }
 .chunk-main span { color: var(--muted); }
-.chunk-main p { margin: 7px 0 0; color: var(--muted); font-size: 9px; line-height: 1.55; }
+.chunk-main p { margin: 7px 0 0; color: var(--muted); font-size: 10px; line-height: 1.55; }
 .trace-chunk dl { display: flex; margin: 0; }
 .trace-chunk dl div { padding: 0 12px; border-left: 1px solid var(--border); }
-.trace-chunk dt { color: var(--muted); font-size: 7px; }
-.trace-chunk dd { margin: 3px 0 0; font-size: 9px; font-weight: 650; }
+.trace-chunk dt { color: var(--muted); font-size: 10px; }
+.trace-chunk dd { margin: 3px 0 0; font-size: 10px; font-weight: 650; }
 .prompt-block + .prompt-block { margin-top: 8px; }
-.prompt-block > button { display: flex; width: 100%; align-items: center; justify-content: space-between; padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px; color: var(--text); background: var(--background); font-size: 9px; font-weight: 600; }
+.prompt-block > button { display: flex; width: 100%; align-items: center; justify-content: space-between; padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px; color: var(--text); background: var(--background); font-size: 10px; font-weight: 600; }
 .prompt-block pre { overflow-x: auto; margin: 0; padding: 14px; border: 1px solid var(--border); border-top: 0; border-radius: 0 0 6px 6px; color: var(--text); background: #111827; }
-.prompt-block code { color: #d1d5db; font-size: 9px; line-height: 1.6; white-space: pre-wrap; }
+.prompt-block code { color: #d1d5db; font-size: 10px; line-height: 1.6; white-space: pre-wrap; }
 .trace-answer > p { font-size: 10px; line-height: 1.7; }
-.trace-answer details { padding: 10px; border-radius: 6px; background: var(--background); color: var(--muted); font-size: 9px; }
-.verification-head { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; color: var(--muted); font-size: 9px; }
+.trace-answer details { padding: 10px; border-radius: 6px; background: var(--background); color: var(--muted); font-size: 10px; }
+.verification-head { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; color: var(--muted); font-size: 10px; }
 .claims-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .claims-grid > div { padding: 12px; border: 1px solid var(--border); border-radius: 6px; }
 .claims-grid h3 { margin: 0 0 10px; font-size: 10px; }
-.claims-grid p { display: flex; align-items: center; gap: 6px; margin: 7px 0; color: var(--muted); font-size: 9px; }
+.claims-grid p { display: flex; align-items: center; gap: 6px; margin: 7px 0; color: var(--muted); font-size: 10px; }
 .claims-grid p .icon { color: var(--success); }
-.no-claims { display: grid; min-height: 80px; place-items: center; color: var(--muted); background: var(--background); font-size: 9px; }
+.no-claims { display: grid; min-height: 80px; place-items: center; color: var(--muted); background: var(--background); font-size: 10px; }
 .evaluation-card, .confidence-card { margin-top: 16px; }
 .confidence-row { display: grid; grid-template-columns: 140px 1fr 36px; align-items: center; gap: 12px; margin-top: 12px; }
-.confidence-row > span, .confidence-row > strong { font-size: 9px; }
+.confidence-row > span, .confidence-row > strong { font-size: 10px; }
 
 
 /* added */
@@ -108,22 +108,22 @@
 .attention-row:hover { background: var(--hover); }
 .attention-row:hover .trace-link { text-decoration: underline; }
 .attention-card .list-empty { padding: 4px 0 0; }
-.row-subject { display: block; margin-top: 2px; color: var(--muted); font-size: 9px; }
+.row-subject { display: block; margin-top: 2px; color: var(--muted); font-size: 10px; }
 .back-link { color: var(--muted); }
 .back-link:hover { color: var(--text); }
 .back-link .icon { transform: rotate(180deg); }
 .empty-inline { display: flex; align-items: center; gap: 10px; color: var(--success); }
-.empty-inline > div strong, .empty-inline > div p { display: block; margin: 0; color: var(--text); font-size: 9px; }
+.empty-inline > div strong, .empty-inline > div p { display: block; margin: 0; color: var(--text); font-size: 10px; }
 .empty-inline > div p { margin-top: 3px; color: var(--muted); }
 .prompt-wrap { overflow: hidden; }
 .trace-answer .answer-body { margin: 10px 0; font-size: 10px; line-height: 1.7; }
 .trace-answer details summary { cursor: pointer; }
 .trace-answer details .answer-body { margin: 8px 0 0; }
-.verification-reason { margin: 0 0 14px; color: var(--muted); font-size: 9px; line-height: 1.6; }
+.verification-reason { margin: 0 0 14px; color: var(--muted); font-size: 10px; line-height: 1.6; }
 .claims-grid p.is-unsupported .icon { color: var(--danger); }
 .retry-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--border); }
 .retry-row:first-child { border-top: 0; padding-top: 0; }
-.retry-row p { margin: 0; font-size: 9px; }
+.retry-row p { margin: 0; font-size: 10px; }
 .retry-row p span { color: var(--muted); }
 .retry-chunks-title { margin: 16px 0 4px; font-size: 10px; }
 .recent-answers td:last-child { width: auto; padding-right: 14px; }
