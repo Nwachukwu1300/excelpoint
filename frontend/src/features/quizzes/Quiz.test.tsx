@@ -59,7 +59,9 @@ describe('Quizzes', () => {
     await userEvent.click(await screen.findByRole('radio', { name: /Heap/ }))
     first.unmount()
     renderApp('/quiz-attempts/41')
-    expect(await screen.findByRole('radio', { name: /Heap/ })).toHaveAttribute('aria-checked', 'true')
+    expect(await screen.findByText('Name the index for ranges')).toBeInTheDocument() // back where you left off
+    await userEvent.click(screen.getByRole('button', { name: 'Previous' }))
+    expect(screen.getByRole('radio', { name: /Heap/ })).toHaveAttribute('aria-checked', 'true')
     expect(screen.getByRole('link', { name: 'Save and exit' })).toHaveAttribute('href', '/subjects/3?tab=quizzes')
   })
 

@@ -31,6 +31,7 @@ from .services.session_manager import SessionManager
 from .tasks import process_material
 from .utils import material_file_type, short_answer_matches, upload_problem
 from .app_api import due_by_subject, subject_summaries
+from .quiz_api import _unfinished_attempts
 import json
 import os
 
@@ -273,6 +274,7 @@ class SubjectViewSet(viewsets.ModelViewSet):
                 'attempts': len(scores),
                 'last_score': round(scores[0]) if scores else None,
                 'best_score': round(max(scores)) if scores else None,
+                'has_unfinished_attempt': _unfinished_attempts(request.user, quiz).exists(),
                 'id': quiz.id,
                 'title': quiz.title,
                 'description': quiz.description,

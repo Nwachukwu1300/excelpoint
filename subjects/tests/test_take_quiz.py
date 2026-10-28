@@ -128,6 +128,17 @@ class QuizApiTest(TestCase):
         self.assertEqual(intruder.post(f'/api/quiz/attempts/{attempt}/submit/', {}, content_type='application/json').status_code, 404)
         self.assertEqual(intruder.get('/api/quiz/attempts/').json()['attempts'], [])
 
+    def test_starting_again_resumes_an_unfinished_attempt(self):
+        first = self.start()
+        self.assertEqual(first.status_code, 201)
+        quizzes = self.client.get(f'/api/subjects/{self.quiz.subject_id}/quizzes/').json()
+        self.assertIs(quizzes[0]['has_unfinished_attempt'], True)
+        again = self.start()
+        self.assertEqual((again.status_code, again.json()['id']), (200, first.json()['id']))
+        self.client.post(f"/api/quiz/attempts/{first.json()['id']}/submit/", {'answers': {}}, content_type='application/json')
+        self.assertEqual(self.start().status_code, 201)  # finished: a new attempt
+        self.assertTrue(self.client.get(f'/api/subjects/{self.quiz.subject_id}/quizzes/').json()[0]['has_unfinished_attempt'])  # the new one
+
     def test_a_missing_quiz_says_so_plainly(self):
         for response in [self.client.get('/api/quiz/attempts/999999/'),
                          self.client.post('/api/quiz/999999/attempts/', {}, content_type='application/json')]:

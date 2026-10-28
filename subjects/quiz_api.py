@@ -35,6 +35,11 @@ def _attempt_payload(attempt):
     }
 
 
+def _unfinished_attempts(user, quiz):
+    return UserQuizAttempt.objects.filter(user=user, quiz=quiz, uses_dynamic_questions=False,
+                                          is_completed=False, end_time__isnull=True)
+
+
 MISSING_QUIZ = "This quiz doesn't exist, or it was deleted."
 
 
@@ -53,6 +58,10 @@ def start_attempt(request, quiz_id):
     if quiz is None:
         raise NotFound(MISSING_QUIZ)
     fresh = request.data.get('fresh') is True
+    if not fresh:  # "Save & exit" left one open: carry on with it instead of starting again
+        unfinished = _unfinished_attempts(request.user, quiz).order_by('-id').first()
+        if unfinished:
+            return Response(_attempt_payload(unfinished))
     if fresh:
         # Unfinished fresh attempts on this quiz are left behind for good
         UserQuizAttempt.objects.filter(user=request.user, quiz=quiz, uses_dynamic_questions=True,

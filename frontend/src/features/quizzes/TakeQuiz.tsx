@@ -75,6 +75,14 @@ export function TakeQuiz() {
   const [submitting, setSubmitting] = useState(false)
 
   const data = attempt.data
+  // Coming back (resume, Back then Forward, reload): open at the first question not yet answered
+  const resumed = useRef(false)
+  useEffect(() => {
+    if (resumed.current || !data?.questions.length) return
+    resumed.current = true
+    const next = data.questions.findIndex(q => !answers[String(q.id)])
+    if (next > 0) setIndex(next)
+  }, [data, answers])
   useEffect(() => { if (data?.status === 'completed') navigate(`/quiz-attempts/${attemptId}/results`, { replace: true }) }, [data?.status, attemptId, navigate])
   useEffect(() => { if ((location.state as { fellBack?: boolean } | null)?.fellBack) toast('error', 'Fresh questions are unavailable', 'XP couldn’t start writing new questions, so here’s the standard quiz.') }, [location.state])
 

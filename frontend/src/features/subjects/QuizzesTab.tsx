@@ -15,9 +15,9 @@ export function QuizzesTab({ subjectId }: { subjectId: number }) {
       <div className="tab-toolbar">
         <div>
           <h2>Quizzes</h2>
-          <p>Test what you remember with questions made from each file.</p>
+          <p>Test what you remember with questions made from each file. “New questions” makes a fresh set (about a minute).</p>
         </div>
-        <Link className={buttonClass('secondary')} to={`/quizzes/history?subject=${subjectId}`}>Quiz history</Link>
+        <Link className={buttonClass('secondary')} to={`/quizzes/history?subject=${subjectId}`}>Past results</Link>
       </div>
       {quizzes.isPending && (
         <div className="quiz-list" aria-busy="true" aria-label="Loading quizzes">
@@ -52,8 +52,10 @@ export function QuizzesTab({ subjectId }: { subjectId: number }) {
                 <div><dt>Attempts</dt><dd>{q.attempts ? plural(q.attempts, 'attempt') : 'No attempts'}</dd></div>
               </dl>
               <div className="quiz-actions">
-                <Link className={buttonClass('secondary')} to={`/quizzes/${q.id}/start`}>Start</Link>
-                <Link className={buttonClass('ai')} to={`/quizzes/${q.id}/start?fresh=1`}><Icon name="sparkles" size={14} /> New questions</Link>
+                <Link className={buttonClass('secondary')} to={`/quizzes/${q.id}/start`}>{q.has_unfinished_attempt ? 'Resume quiz' : 'Start quiz'}</Link>
+                <Link className={buttonClass('ai')} to={`/quizzes/${q.id}/start?fresh=1`} title="XP writes a new set of questions from the same file. This takes about a minute.">
+                  <Icon name="sparkles" size={14} /> New questions
+                </Link>
               </div>
             </motion.article>
           ))}

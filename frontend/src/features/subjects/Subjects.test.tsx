@@ -118,7 +118,7 @@ describe('Subject workspace', () => {
   it('shows quizzes with this user’s scores and flashcards with due dates', async () => {
     mockApi({
       ...base,
-      'GET /api/subjects/3/quizzes/': [{ id: 9, title: 'Q', question_count: 10, material_name: 'lecture4.pdf', attempts: 3, last_score: 45, best_score: 72 }],
+      'GET /api/subjects/3/quizzes/': [{ id: 9, title: 'Q', question_count: 10, material_name: 'lecture4.pdf', attempts: 3, last_score: 45, best_score: 72, has_unfinished_attempt: true }],
       'GET /api/subjects/3/flashcards/': [
         { id: 1, question: 'B-tree index', answer: 'A balanced tree', material_name: 'lecture4.pdf', due_at: null },
         { id: 2, question: 'ACID', answer: 'Atomicity…', material_name: 'notes.pdf', due_at: new Date(Date.now() + 3 * 86_400_000).toISOString() },
@@ -128,6 +128,7 @@ describe('Subject workspace', () => {
     const row = (await screen.findByRole('heading', { name: 'lecture4.pdf' })).closest('article')!
     expect(within(row).getByText('3 attempts')).toBeInTheDocument()
     expect(within(row).getByRole('link', { name: /New questions/ })).toHaveAttribute('href', '/quizzes/9/start?fresh=1')
+    expect(within(row).getByRole('link', { name: 'Resume quiz' })).toHaveAttribute('href', '/quizzes/9/start')
 
     await userEvent.click(screen.getByRole('tab', { name: /Flashcards/ }))
     expect(await screen.findByText('B-tree index')).toBeInTheDocument()

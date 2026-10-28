@@ -12,7 +12,7 @@ export type Material = {
 export type Flashcard = { id: number; question: string; answer: string; material_name: string | null; due_at: string | null }
 export type QuizSummary = {
   id: number; title: string; question_count: number; material_name: string | null
-  attempts: number; last_score: number | null; best_score: number | null
+  attempts: number; last_score: number | null; best_score: number | null; has_unfinished_attempt?: boolean
 }
 
 export const useSubjects = () =>
