@@ -34,6 +34,13 @@ class WorkspaceApiTest(TestCase):
         self.assertEqual(r.status_code, 201)
         self.assertEqual(r.json()['name'], 'Secret')
 
+    def test_a_racing_duplicate_gets_the_same_message_not_a_500(self):
+        # Two quick clicks both pass the name check; the database constraint stops the second
+        with patch('subjects.serializers.SubjectSerializer.validate_name', side_effect=lambda name: name):
+            r = self.client.post('/api/subjects/', {'name': 'Database Systems'}, content_type='application/json')
+        self.assertEqual(r.status_code, 400)
+        self.assertEqual(r.json(), {'name': ['A subject named Database Systems already exists.']})
+
     def test_summary_lists_only_own_subjects(self):
         rows = self.client.get('/api/subjects/summary/').json()
         self.assertEqual([r['name'] for r in rows], ['Database Systems'])

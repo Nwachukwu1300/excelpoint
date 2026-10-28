@@ -2,6 +2,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { api, ApiError, initials } from './api'
 import { timeAgo } from './format'
 import { setTheme } from './theme'
+import { useOneAtATime } from './useOneAtATime'
+import { act, renderHook } from '@testing-library/react'
 
 afterEach(() => vi.unstubAllGlobals())
 
@@ -43,5 +45,19 @@ describe('helpers', () => {
     setTheme('system') // no matchMedia in jsdom, so system resolves to light
     expect(document.documentElement.dataset.theme).toBe('light')
     expect(localStorage.getItem('xp-theme')).toBeNull()
+  })
+})
+
+describe('useOneAtATime', () => {
+  it('ignores a second start until the first request settles', async () => {
+    const { result } = renderHook(() => useOneAtATime())
+    let finish!: () => void
+    const start = vi.fn(() => new Promise<void>(resolve => { finish = resolve }))
+    result.current(start)
+    result.current(start) // the double click
+    expect(start).toHaveBeenCalledTimes(1)
+    await act(async () => finish())
+    result.current(start)
+    expect(start).toHaveBeenCalledTimes(2)
   })
 })

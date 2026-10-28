@@ -1,6 +1,7 @@
 import { useState, type SyntheticEvent } from 'react'
 import { useNavigate } from 'react-router'
 import { ApiError, useMe } from '../../lib/api'
+import { useOneAtATime } from '../../lib/useOneAtATime'
 import { Modal } from '../../ui/Modal'
 import { Button, IconButton } from '../../ui/primitives'
 import { toast } from '../../ui/Toast'
@@ -11,6 +12,7 @@ export function NewSubjectModal({ open, onClose }: { open: boolean; onClose: () 
   const me = useMe()
   const create = useCreateSubject()
   const navigate = useNavigate()
+  const once = useOneAtATime()
 
   const trimmed = name.trim()
   const duplicate = me.data?.subjects.some(s => s.name.toLowerCase() === trimmed.toLowerCase())
@@ -23,13 +25,11 @@ export function NewSubjectModal({ open, onClose }: { open: boolean; onClose: () 
   const submit = (e: SyntheticEvent) => {
     e.preventDefault()
     if (!trimmed || duplicate) return
-    create.mutate(trimmed, {
-      onSuccess: subject => {
-        close()
-        toast('success', 'Subject created', `${subject.name} is ready for your first upload.`)
-        navigate(`/subjects/${subject.id}`)
-      },
-    })
+    once(() => create.mutateAsync(trimmed).then(subject => {
+      close()
+      toast('success', 'Subject created', `${subject.name} is ready for your first upload.`)
+      navigate(`/subjects/${subject.id}`)
+    }))
   }
 
   return (

@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { useMe } from '../../lib/api'
+import { useOneAtATime } from '../../lib/useOneAtATime'
 import { Icon } from '../../ui/Icon'
 import { Modal } from '../../ui/Modal'
 import { Button, IconButton } from '../../ui/primitives'
@@ -16,6 +17,7 @@ export function UploadModal({ open, onClose, subjectId }: { open: boolean; onClo
   const [dragging, setDragging] = useState(false)
   const input = useRef<HTMLInputElement>(null)
   const uploadMaterial = useUploadMaterial()
+  const once = useOneAtATime()
 
   const choose = (picked: File | undefined) => {
     if (!picked) return
@@ -30,13 +32,11 @@ export function UploadModal({ open, onClose, subjectId }: { open: boolean; onClo
   }
   const submit = () => {
     if (!file) return
-    uploadMaterial.mutate({ subjectId: target, file }, {
-      onSuccess: () => {
-        const name = file.name
-        setFile(null); setProblem(null); uploadMaterial.reset(); onClose()
-        toast('success', `${name} uploaded`, 'XP is preparing its summary, flashcards and quiz. We’ll notify you when they’re ready.')
-      },
-    })
+    once(() => uploadMaterial.mutateAsync({ subjectId: target, file }).then(() => {
+      const name = file.name
+      setFile(null); setProblem(null); uploadMaterial.reset(); onClose()
+      toast('success', `${name} uploaded`, 'XP is preparing its summary, flashcards and quiz. We’ll notify you when they’re ready.')
+    }))
   }
   const error = problem ?? uploadMaterial.error?.message ?? null
 

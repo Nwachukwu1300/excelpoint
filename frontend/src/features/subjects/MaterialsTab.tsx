@@ -8,6 +8,7 @@ import { MoreMenu } from '../../ui/Menu'
 import { Modal } from '../../ui/Modal'
 import { Badge, Button, ProgressBar, Skeleton, StatusChip } from '../../ui/primitives'
 import { toast } from '../../ui/Toast'
+import { useOneAtATime } from '../../lib/useOneAtATime'
 import { parseSummary, useDeleteMaterial, useMaterials, type Material } from './api'
 
 const typeLabel = (m: Material) => (m.filename.split('.').pop() ?? m.file_type).toUpperCase().slice(0, 4)
@@ -86,14 +87,15 @@ export function MaterialsTab({ subjectId, onUpload, onQuizzes }: { subjectId: nu
   const materials = useMaterials(subjectId)
   const remove = useDeleteMaterial(subjectId)
   const [deleting, setDeleting] = useState<Material | null>(null)
+  const once = useOneAtATime()
 
   const confirmDelete = () => {
     if (!deleting) return
     const name = deleting.filename
-    remove.mutate(deleting.id, {
-      onSuccess: () => { setDeleting(null); toast('success', 'File deleted', `${name} and its study tools were removed.`) },
-      onError: () => toast('error', 'Couldn’t delete the file', 'Try again in a moment.'),
-    })
+    once(() => remove.mutateAsync(deleting.id).then(
+      () => { setDeleting(null); toast('success', 'File deleted', `${name} and its study tools were removed.`) },
+      () => toast('error', 'Couldn’t delete the file', 'Try again in a moment.'),
+    ))
   }
 
   return (

@@ -3,6 +3,7 @@ import { useEffect, useState, type SyntheticEvent } from 'react'
 import { Link } from 'react-router'
 import { api, ApiError, useMe, type Me } from '../../lib/api'
 import { useTheme, type Theme } from '../../lib/theme'
+import { useOneAtATime } from '../../lib/useOneAtATime'
 import { Icon, type IconName } from '../../ui/Icon'
 import { Button, Skeleton } from '../../ui/primitives'
 import { toast } from '../../ui/Toast'
@@ -33,7 +34,8 @@ export function SettingsPage() {
   })
   const errors = save.error instanceof ApiError ? (save.error.data as Record<string, string[]> | undefined) ?? {} : {}
   const set = (key: keyof Form) => (e: { target: { value: string } }) => { setForm(f => f && { ...f, [key]: e.target.value }); save.reset() }
-  const submit = (e: SyntheticEvent) => { e.preventDefault(); if (form) save.mutate(form) }
+  const once = useOneAtATime()
+  const submit = (e: SyntheticEvent) => { e.preventDefault(); if (form) once(() => save.mutateAsync(form)) }
 
   if (!form || !me.data) {
     return <div className="page-content settings-page" aria-busy="true"><div className="settings-card"><div className="skeleton-stack"><Skeleton className="skeleton-label" /><Skeleton /><Skeleton /></div></div></div>
@@ -101,6 +103,9 @@ export function SettingsPage() {
           <Icon name="chevronRight" />
         </Link>
         <div className="settings-save">
+          {save.isError && !Object.keys(errors).some(k => k in form) && (
+            <span className="field-error" role="alert">Your changes weren’t saved. Check your connection and try again.</span>
+          )}
           <Button type="submit" disabled={save.isPending}>{save.isPending ? 'Saving…' : 'Save changes'}</Button>
         </div>
       </form>

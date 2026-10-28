@@ -269,6 +269,7 @@ if STORAGE_BACKEND == 's3':
         'CacheControl': 'max-age=86400',
     }
     AWS_DEFAULT_ACL = 'private'
+    AWS_S3_FILE_OVERWRITE = False  # same-named uploads get their own object, so deleting one can't remove another
     AWS_QUERYSTRING_AUTH = True  # objects are private, so URLs must be signed
     
     # Use S3 for media files

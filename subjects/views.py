@@ -5,11 +5,12 @@ from django.contrib import messages
 from django.conf import settings
 from rest_framework import viewsets, status, permissions, generics
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.renderers import BaseRenderer, JSONRenderer
 from rest_framework.throttling import ScopedRateThrottle
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.db.models import Prefetch
 from django.utils import timezone
 import logging
@@ -157,7 +158,12 @@ class SubjectViewSet(viewsets.ModelViewSet):
         return Subject.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        try:
+            with transaction.atomic():
+                serializer.save(user=self.request.user)
+        except IntegrityError:  # a second click raced the first past the name check
+            name = serializer.validated_data['name']
+            raise ValidationError({'name': [f'A subject named {name} already exists.']})
 
     @action(detail=True, methods=['post'])
     def upload_material(self, request, pk=None):
