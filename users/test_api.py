@@ -1,4 +1,5 @@
 import os
+from unittest.mock import patch
 from datetime import timedelta
 
 from django.contrib.auth import get_user_model
@@ -404,9 +405,13 @@ class ExportDataTest(TestCase):
         self.assertEqual(self.client.get('/api/me/export/').status_code, 403)
 
 
+@override_settings(CELERY_TASK_ALWAYS_EAGER=True)
 class PasswordResetTest(TestCase):
     def setUp(self):
         cache.clear()
+        from config.celery import app
+        app.conf.task_always_eager = True  # run the email task in the test, as the worker would
+        self.addCleanup(setattr, app.conf, 'task_always_eager', False)
         self.user = User.objects.create_user('alex', email='alex@example.com', password='Old-pass-123!')
 
     def post(self, url, body):
@@ -439,6 +444,11 @@ class PasswordResetTest(TestCase):
         unknown = self.post('/api/auth/password-reset/', {'email': 'nobody@example.com'}).json()
         self.assertEqual(known, unknown)
         self.assertEqual(len(mail.outbox), 1)
+
+    def test_a_mail_failure_gives_the_same_answer(self):
+        with patch('users.auth_api.send_password_reset.delay', side_effect=ConnectionError('broker down')):
+            r = self.post('/api/auth/password-reset/', {'email': 'alex@example.com'})
+        self.assertEqual((r.status_code, r.json()['ok']), (200, True))
 
     def test_requests_per_email_are_limited(self):
         from django.core import mail

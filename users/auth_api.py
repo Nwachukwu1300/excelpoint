@@ -5,13 +5,12 @@ login form must be CSRF-protected too (otherwise another site could sign a visit
 """
 
 import json
+import logging
 
-from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model, login, logout
 from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.tokens import default_token_generator
 from django.core.cache import cache
-from django.core.mail import send_mail
 from django.http import JsonResponse
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
@@ -22,6 +21,9 @@ from rest_framework.throttling import BaseThrottle
 
 from .backends import FAIL_WINDOW
 from .forms import RegistrationForm
+from .tasks import send_password_reset
+
+logger = logging.getLogger(__name__)
 
 
 def _body(request):
@@ -94,17 +96,13 @@ def password_reset(request):
     ip = BaseThrottle().get_ident(request)
     if not email or not _under_limit(f'reset:ip:{ip}', RESETS_PER_IP) or not _under_limit(f'reset:email:{email.lower()}', RESETS_PER_EMAIL):
         return JsonResponse(RESET_SENT)  # same answer when limited: nothing to learn, nothing sent
-    hours = settings.PASSWORD_RESET_TIMEOUT // 3600
     for user in get_user_model().objects.filter(email__iexact=email, is_active=True):
         link = request.build_absolute_uri(
             f'/app/reset-password/{urlsafe_base64_encode(force_bytes(user.pk))}/{default_token_generator.make_token(user)}')
-        send_mail(
-            'Set a new ExcelPoint password',
-            f'Hello {user.username},\n\nSomeone asked to set a new password for your ExcelPoint account '
-            f'(username: {user.username}). Open this link within {hours} hours:\n\n{link}\n\n'
-            'If it wasn’t you, ignore this email. Your password stays the same.\n',
-            None, [user.email], fail_silently=False,
-        )
+        try:
+            send_password_reset.delay(user.pk, link)  # queued: sending in the request would be slower only for real accounts
+        except Exception:
+            logger.exception('Could not queue a password reset email')  # same answer either way
     return JsonResponse(RESET_SENT)
 
 
