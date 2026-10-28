@@ -2,7 +2,7 @@ from datetime import timedelta
 
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
-from django.test import Client, TestCase
+from django.test import Client, TestCase, override_settings
 from django.utils import timezone
 
 from subjects.models import Flashcard, FlashcardReview, Subject
@@ -194,6 +194,26 @@ class AuthApiTest(TestCase):
         for i in range(25):
             User.objects.create_user(f'student{i}', password='Pass-word-123!')
             self.assertEqual(self.sign_in(f'student{i}', 'Pass-word-123!').status_code, 200)
+
+    def test_a_forged_forwarded_for_header_does_not_dodge_the_address_cap(self):
+        User.objects.create_user('alex', password='Pass-word-123!')
+        for i in range(20):  # no proxy configured: X-Forwarded-For must be ignored
+            self.client.post('/api/auth/login/', {'username': f'g{i}', 'password': 'x'}, content_type='application/json',
+                             HTTP_X_FORWARDED_FOR=f'10.0.0.{i}')
+        self.assertEqual(self.sign_in('alex', 'Pass-word-123!').status_code, 429)
+
+    @override_settings(REST_FRAMEWORK={'NUM_PROXIES': 1})
+    def test_behind_one_proxy_the_address_is_the_one_it_added(self):
+        User.objects.create_user('alex', password='Pass-word-123!')
+        for i in range(20):  # the client fakes the first entry; the proxy appends the real address
+            self.client.post('/api/auth/login/', {'username': f'g{i}', 'password': 'x'}, content_type='application/json',
+                             HTTP_X_FORWARDED_FOR=f'10.0.0.{i}, 203.0.113.7')
+        blocked = self.client.post('/api/auth/login/', {'username': 'alex', 'password': 'Pass-word-123!'},
+                                   content_type='application/json', HTTP_X_FORWARDED_FOR='203.0.113.7')
+        self.assertEqual(blocked.status_code, 429)
+        other = self.client.post('/api/auth/login/', {'username': 'alex', 'password': 'Pass-word-123!'},
+                                 content_type='application/json', HTTP_X_FORWARDED_FOR='198.51.100.2')
+        self.assertEqual(other.status_code, 200)
 
     def test_too_many_failures_from_one_address_lock_it(self):
         User.objects.create_user('alex', password='Pass-word-123!')

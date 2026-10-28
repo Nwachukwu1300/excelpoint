@@ -59,6 +59,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # serves /static/ (the built app) when DEBUG is off
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -143,6 +144,23 @@ STATIC_URL = 'static/'
 STATICFILES_DIRS = [
     BASE_DIR / 'static'
 ]
+STATIC_ROOT = BASE_DIR / 'staticfiles'  # collectstatic output, served by whitenoise
+STORAGES = {
+    'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+    'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedStaticFilesStorage'},  # gzip/brotli copies
+}
+
+# A shared Redis cache when one is configured (production), so rate limits hold across workers;
+# otherwise Django's per-process memory cache (local runs and tests)
+if os.getenv('CACHE_URL'):
+    CACHES = {'default': {'BACKEND': 'django.core.cache.backends.redis.RedisCache', 'LOCATION': os.getenv('CACHE_URL')}}
+
+# Behind a reverse proxy (Caddy in docker-compose.yml): how many proxies add to X-Forwarded-For.
+# 0 means none, so the header is ignored and nobody can fake their address
+NUM_PROXIES = int(os.getenv('NUM_PROXIES', '0'))
+if NUM_PROXIES:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')  # the proxy terminates HTTPS
+SECURE_HSTS_SECONDS = int(os.getenv('SECURE_HSTS_SECONDS', '0'))  # set once HTTPS is confirmed working
 
 # Media files configuration
 MEDIA_URL = '/media/'
@@ -158,6 +176,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTHENTICATION_BACKENDS = ['users.backends.RateLimitedModelBackend']
 
 REST_FRAMEWORK = {
+    'NUM_PROXIES': NUM_PROXIES,  # DRF's default (None) would trust a forged X-Forwarded-For
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.SessionAuthentication',  # the app signs in with sessions only
     ],
@@ -189,8 +208,8 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB
 
 # Celery Configuration
-CELERY_BROKER_URL = 'redis://localhost:6379/0'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_BROKER_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = CELERY_BROKER_URL
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
@@ -254,10 +273,7 @@ if STORAGE_BACKEND == 's3':
     
     # Use S3 for media files
     # DEFAULT_FILE_STORAGE was removed in Django 5.1
-    STORAGES = {
-        'default': {'BACKEND': 'storages.backends.s3boto3.S3Boto3Storage'},
-        'staticfiles': {'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'},
-    }
+    STORAGES['default'] = {'BACKEND': 'storages.backends.s3boto3.S3Boto3Storage'}
     MEDIA_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com/'
     
     # Ensure MEDIA_ROOT is not used when S3 is enabled

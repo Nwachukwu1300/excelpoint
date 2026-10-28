@@ -4,6 +4,7 @@ checks a password: the app's sign-in, the admin login and DRF."""
 from django.contrib.auth.backends import ModelBackend
 from django.core.cache import cache
 from django.core.exceptions import PermissionDenied
+from rest_framework.throttling import BaseThrottle
 
 # Failed sign-ins allowed per window, per username and per IP (higher: a campus network shares one address)
 FAILS_PER_USER, FAILS_PER_IP, FAIL_WINDOW = 5, 20, 15 * 60
@@ -18,8 +19,8 @@ class RateLimitedModelBackend(ModelBackend):
     def authenticate(self, request, username=None, password=None, **kwargs):
         if username is None or password is None:
             return super().authenticate(request, username, password, **kwargs)
-        # shortcut: behind a proxy REMOTE_ADDR is the proxy's address; read the client IP from it when deploying
-        ip = request.META.get('REMOTE_ADDR', '') if request is not None else ''
+        # The client's address, reading X-Forwarded-For only through the NUM_PROXIES trusted proxies
+        ip = BaseThrottle().get_ident(request) if request is not None else ''
         user_key, ip_key = f'signin-fail:user:{str(username).lower()}', f'signin-fail:ip:{ip}'
         # Counted before the password is checked, so parallel guesses can't all slip under the cap,
         # and a locked account can't be unlocked by guessing right
