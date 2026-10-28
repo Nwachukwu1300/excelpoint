@@ -208,7 +208,7 @@ export function ChatPage() {
               <p>{filesBusy
                 ? 'XP can answer as soon as it has finished. This usually takes under a minute.'
                 : `XP answers only from the files in ${subjectName || 'this subject'}, and none are ready yet.`}</p>
-              <Link className="button" to={`/subjects/${subjectId}${filesBusy ? '' : '?upload=1'}`}>
+              <Link className="button" to={`/subjects/${subjectId}${filesBusy ? '' : '?upload=1&then=chat'}`}>
                 <Icon name={filesBusy ? 'file' : 'upload'} />{filesBusy ? 'See your files' : 'Upload a file'}
               </Link>
             </div>

@@ -3,7 +3,7 @@
 import math
 from collections import Counter
 
-from django.db.models import Count, Max, OuterRef, Subquery
+from django.db.models import Count, Max, OuterRef, Q, Subquery
 
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view
@@ -30,10 +30,11 @@ def subject_summaries(user, due):
                   .order_by('-end_time', '-id').values('score')[:1])
     subjects = (user.subjects
                 .annotate(materials_count=Count('materials', distinct=True), last_quiz_score=Subquery(last_score),
+                          failed_count=Count('materials', filter=Q(materials__status='FAILED'), distinct=True),
                           latest_upload=Max('materials__created_at'))
                 .order_by('name'))
     rows = [
-        {'id': s.id, 'name': s.name, 'materials_count': s.materials_count, 'due_count': due.get(s.id, 0),
+        {'id': s.id, 'name': s.name, 'materials_count': s.materials_count, 'failed_count': s.failed_count, 'due_count': due.get(s.id, 0),
          'last_quiz_score': None if s.last_quiz_score is None else round(s.last_quiz_score),
          'updated_at': max(filter(None, [s.updated_at, s.latest_upload]))}
         for s in subjects

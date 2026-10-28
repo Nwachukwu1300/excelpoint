@@ -22,7 +22,7 @@ type Home = {
   due: { count: number; subjects: number; minutes: number }
   suggestions: Suggestion[]
   recent_chats: { id: number; title: string; subject_id: number; subject_name: string; last_activity: string }[]
-  subjects: { id: number; name: string; materials_count: number; due_count: number; last_quiz_score: number | null }[]
+  subjects: { id: number; name: string; materials_count: number; failed_count?: number; due_count: number; last_quiz_score: number | null }[]
 }
 
 const MotionLink = motion.create(Link)
@@ -170,6 +170,7 @@ export function Today() {
                       <div>
                         <strong>{s.name}</strong>
                         <span>{s.materials_count} file{s.materials_count === 1 ? '' : 's'}</span>
+                        {!!s.failed_count && <span className="failed-note">{s.failed_count === 1 ? '1 file couldn’t be read' : `${s.failed_count} files couldn’t be read`}</span>}
                       </div>
                       <dl>
                         <div><dt>To review</dt><dd>{s.due_count}</dd></div>

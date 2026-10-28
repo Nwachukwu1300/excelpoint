@@ -169,7 +169,7 @@ describe('XP chat before any file is ready', () => {
     mockApi({ 'GET /api/me/': me, 'GET /api/subjects/3/chat/sessions/?limit=30': { sessions: [] }, 'GET /api/subjects/3/materials/': [material('FAILED')] })
     renderApp('/subjects/3/chat')
     expect(await screen.findByRole('heading', { name: 'Upload a file first' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Upload a file/ })).toHaveAttribute('href', '/subjects/3?upload=1')
+    expect(screen.getByRole('link', { name: /Upload a file/ })).toHaveAttribute('href', '/subjects/3?upload=1&then=chat')
     expect(screen.queryByRole('button', { name: 'Summarise the key ideas' })).not.toBeInTheDocument()
   })
 

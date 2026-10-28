@@ -1,3 +1,4 @@
+import os
 import shutil
 import tempfile
 from unittest.mock import patch
@@ -133,6 +134,19 @@ class ProcessingFailureTest(TestCase):
         self.assertEqual(self.material.status, 'FAILED')
         self.assertIn('No text found', self.material.error)
         self.assertEqual((note.kind, note.title, note.body), ('material_failed', "Couldn't read scan.pdf", self.material.error))
+
+    def test_a_blank_pdf_says_no_text_was_found(self):
+        from pypdf import PdfWriter
+        writer = PdfWriter()
+        writer.add_blank_page(width=612, height=792)
+        with tempfile.TemporaryDirectory() as media, self.settings(MEDIA_ROOT=media):
+            with open(f'{media}/blank.pdf', 'wb') as f:
+                writer.write(f)
+            self.material.file.name = 'blank.pdf'
+            self.material.save()
+            with patch('subjects.utils.ContentProcessor._should_use_batch_processing', return_value=True):  # the path that crashed
+                self.run_task()
+        self.assertIn('No text found', self.material.error)
 
     @patch('subjects.utils.ContentProcessor.process_file', side_effect=Exception('Error processing file: EOF marker not found'))
     def test_unexpected_errors_get_a_plain_reason_not_the_raw_one(self, _):

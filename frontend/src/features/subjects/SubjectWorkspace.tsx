@@ -114,7 +114,8 @@ export function SubjectWorkspace() {
         {tab === 'flashcards' && <FlashcardsTab subjectId={id} dueCount={subject?.due_count ?? 0} />}
       </motion.section>
 
-      <UploadModal open={uploading} onClose={() => setUploading(false)} subjectId={id} />
+      <UploadModal open={uploading} onClose={() => setUploading(false)} subjectId={id}
+        onUploaded={() => params.get('then') === 'chat' && navigate(`/subjects/${id}/chat`)} />
       <ConfirmDialog open={deleting} title={`Delete ${subject?.name ?? 'this subject'}?`} confirmLabel="Delete subject" icon="book"
         busy={remove.isPending} onCancel={() => setDeleting(false)} onConfirm={confirmDelete}>
         <p>All its files, summaries, flashcards, quizzes and XP conversations will be removed. This can’t be undone.</p>

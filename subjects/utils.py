@@ -357,6 +357,8 @@ class ContentProcessor:
             # Split into chunks
             chunks = self.text_splitter.split_text(cleaned_text)
             logger.info(f"Split file into {len(chunks)} chunks")
+            if not chunks:
+                return []  # no text (e.g. a scan); the caller says so. Batching 0 chunks would crash.
             
             # Determine if batch processing should be used
             if use_batch_processing is None:

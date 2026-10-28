@@ -10,7 +10,7 @@ import { ACCEPTED, checkFile, useUploadMaterial } from './api'
 
 const sizeLabel = (bytes: number) => (bytes >= 1_048_576 ? `${(bytes / 1_048_576).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`)
 
-export function UploadModal({ open, onClose, subjectId }: { open: boolean; onClose: () => void; subjectId: number }) {
+export function UploadModal({ open, onClose, subjectId, onUploaded }: { open: boolean; onClose: () => void; subjectId: number; onUploaded?: () => void }) {
   const me = useMe()
   const [target, setTarget] = useState(subjectId)
   const [file, setFile] = useState<File | null>(null)
@@ -35,7 +35,7 @@ export function UploadModal({ open, onClose, subjectId }: { open: boolean; onClo
     if (!file) return
     once(() => uploadMaterial.mutateAsync({ subjectId: target, file }).then(() => {
       const name = file.name
-      setFile(null); setProblem(null); uploadMaterial.reset(); onClose()
+      setFile(null); setProblem(null); uploadMaterial.reset(); onClose(); onUploaded?.()
       toast('success', `${name} uploaded`, 'XP is preparing its summary, flashcards and quiz. We’ll notify you when they’re ready.')
     }))
   }
@@ -81,6 +81,12 @@ export function UploadModal({ open, onClose, subjectId }: { open: boolean; onClo
             <strong>Uploading {file?.name}…</strong>
             <span>Keep this open until the upload finishes.</span>
           </>
+        ) : file && uploadMaterial.isError ? (
+          <>
+            <span className="upload-icon failed"><Icon name="close" /></span>
+            <strong>{file.name}</strong>
+            <span>This file can’t be uploaded · Choose a different file</span>
+          </>
         ) : file ? (
           <>
             <span className="upload-icon success"><Icon name="check" /></span>
@@ -90,7 +96,7 @@ export function UploadModal({ open, onClose, subjectId }: { open: boolean; onClo
         ) : (
           <>
             <span className="upload-icon"><Icon name="upload" /></span>
-            <strong>Drag a file here, or click to choose one</strong>
+            <strong>Choose a file, or drag one here</strong>
             <span>PDF or Word (.docx) · up to 100 MB</span>
           </>
         )}
@@ -107,7 +113,7 @@ export function UploadModal({ open, onClose, subjectId }: { open: boolean; onClo
       </div>
       <div className="modal-actions">
         <Button variant="secondary" onClick={close} disabled={uploadMaterial.isPending}>Cancel</Button>
-        <Button icon="upload" disabled={!file || uploadMaterial.isPending} onClick={submit}>
+        <Button icon="upload" disabled={!file || uploadMaterial.isPending || uploadMaterial.isError} onClick={submit}>
           {uploadMaterial.isPending ? 'Uploading…' : 'Upload material'}
         </Button>
       </div>

@@ -96,6 +96,28 @@ describe('Subject workspace', () => {
     expect(fetchMock.mock.calls.filter(([u, i]) => u === '/api/subjects/3/' && i?.method === 'DELETE')).toHaveLength(1)
   })
 
+  it('a file the server refuses shows as refused, not ready', async () => {
+    mockApi({ ...base, 'POST /api/subjects/3/upload_material/': reply(400, { file: ['This isn’t a readable PDF file.'] }) })
+    renderApp('/subjects/3?upload=1')
+    const dialog = await screen.findByRole('dialog', { name: 'Add study material' })
+    await userEvent.upload(dialog.querySelector('input[type=file]') as HTMLInputElement, new File(['junk'], 'junk.pdf', { type: 'application/pdf' }))
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Upload material' }))
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent('This isn’t a readable PDF file.')
+    expect(within(dialog).queryByText(/Ready to upload/)).not.toBeInTheDocument()
+    expect(within(dialog).getByText(/This file can’t be uploaded/)).toBeInTheDocument()
+    expect(within(dialog).getByRole('button', { name: 'Upload material' })).toBeDisabled()
+  })
+
+  it('goes back to the chat after uploading from it', async () => {
+    mockApi({ ...base, 'POST /api/subjects/3/upload_material/': reply(201, materials[1]),
+      'GET /api/subjects/3/chat/sessions/?limit=30': { sessions: [] } })
+    renderApp('/subjects/3?upload=1&then=chat')
+    const dialog = await screen.findByRole('dialog', { name: 'Add study material' })
+    await userEvent.upload(dialog.querySelector('input[type=file]') as HTMLInputElement, new File(['%PDF'], 'from-chat.pdf', { type: 'application/pdf' }))
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Upload material' }))
+    expect(await screen.findByLabelText('Ask XP')).toBeInTheDocument()
+  })
+
   it('rejects unsupported files and uploads a valid one with the CSRF token', async () => {
     document.cookie = 'csrftoken=tok'
     const fetchMock = mockApi({ ...base, 'POST /api/subjects/3/upload_material/': reply(201, materials[1]) })

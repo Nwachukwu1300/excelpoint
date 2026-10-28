@@ -45,9 +45,12 @@ class HomeApiTest(TestCase):
         self.assertEqual([s['name'] for s in data['subjects']], ['Databases', 'Maths'])  # most due first
         subjects = {s['name']: s for s in data['subjects']}
         self.assertTrue(subjects['Databases'].pop('updated_at'))
-        self.assertEqual(subjects['Databases'], {'id': self.db.id, 'name': 'Databases', 'materials_count': 1,
+        self.assertEqual(subjects['Databases'], {'id': self.db.id, 'name': 'Databases', 'materials_count': 1, 'failed_count': 0,
                                                  'due_count': 3, 'last_quiz_score': 45})  # latest attempt, not best
         self.assertIsNone(subjects['Maths']['last_quiz_score'])
+        SubjectMaterial.objects.create(subject=self.db, file='subject_materials/scan.pdf', file_type='PDF', status='FAILED')
+        failed = {s['name']: s for s in self.client.get('/api/home/').json()['subjects']}['Databases']
+        self.assertEqual((failed['materials_count'], failed['failed_count']), (2, 1))
 
         kinds = {s['kind']: s for s in data['suggestions']}
         self.assertEqual(kinds['weak_quiz']['subject_id'], self.db.id)

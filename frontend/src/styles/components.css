@@ -99,6 +99,7 @@
 .dropzone > strong { max-width: 90%; overflow: hidden; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
 .upload-icon { display: grid; width: 42px; height: 42px; margin-bottom: 4px; place-items: center; border-radius: 50%; color: var(--primary); background: var(--primary-soft); }
 .upload-icon.success { color: var(--success); background: var(--success-soft); }
+.upload-icon.failed { color: var(--danger); background: var(--danger-soft); }
 .modal-note { display: flex; gap: 7px; margin: 14px 0 20px; color: var(--muted); font-size: 10px; line-height: 1.5; }
 .upload-file-error { display: flex; align-items: center; gap: 7px; margin-top: 8px; padding: 9px 10px; border-radius: 6px; color: var(--danger); background: var(--danger-soft); font-size: 10px; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
