@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.test import Client, TestCase
 from django.utils import timezone
 
@@ -147,8 +148,39 @@ class SettingsApiTest(TestCase):
 
 
 class AuthApiTest(TestCase):
+    def setUp(self):
+        cache.clear()  # failed sign-in counts live in the cache, which outlives each test
+
     def post(self, url, body, client=None):
         return (client or self.client).post(url, body, content_type='application/json')
+
+    def sign_in(self, username, password):
+        return self.post('/api/auth/login/', {'username': username, 'password': password})
+
+    def test_too_many_wrong_passwords_lock_that_username_only(self):
+        User.objects.create_user('alex', password='Pass-word-123!')
+        User.objects.create_user('sam', password='Pass-word-123!')
+        for _ in range(5):
+            self.assertEqual(self.sign_in('alex', 'nope').status_code, 400)
+        locked = self.sign_in('ALEX', 'Pass-word-123!')  # right password, other casing: still locked
+        self.assertEqual(locked.status_code, 429)
+        self.assertEqual(locked['Retry-After'], '900')
+        self.assertIn('Too many', locked.json()['detail'])
+        self.assertEqual(self.sign_in('sam', 'Pass-word-123!').status_code, 200)
+
+    def test_signing_in_clears_the_username_count(self):
+        User.objects.create_user('alex', password='Pass-word-123!')
+        for _ in range(4):
+            self.sign_in('alex', 'nope')
+        self.assertEqual(self.sign_in('alex', 'Pass-word-123!').status_code, 200)
+        for _ in range(4):
+            self.assertEqual(self.sign_in('alex', 'nope').status_code, 400)
+
+    def test_too_many_failures_from_one_address_lock_it(self):
+        User.objects.create_user('alex', password='Pass-word-123!')
+        for i in range(20):
+            self.sign_in(f'guess{i}', 'nope')
+        self.assertEqual(self.sign_in('alex', 'Pass-word-123!').status_code, 429)
 
     def test_sign_in_and_out(self):
         User.objects.create_user('alex', password='Pass-word-123!')
