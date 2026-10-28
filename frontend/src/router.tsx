@@ -4,6 +4,7 @@ import { NotificationsPage } from './features/account/NotificationsPage'
 import { SettingsPage } from './features/account/SettingsPage'
 import { AuthPage } from './features/auth/AuthPage'
 import { Landing } from './features/auth/Landing'
+import { Privacy } from './features/auth/Privacy'
 import { ChatPage } from './features/chat/ChatPage'
 import { AnswerTrace } from './features/insights/AnswerTrace'
 import { Insights } from './features/insights/Insights'
@@ -52,6 +53,7 @@ export const routes = [
   { path: 'login', element: <AuthPage mode="signin" /> },
   { path: 'register', element: <AuthPage mode="register" /> },
   { path: 'welcome', element: <Landing /> },
+  { path: 'privacy', element: <Privacy /> },
   { path: '*', element: <ErrorPage code="404" /> },
 ]
 

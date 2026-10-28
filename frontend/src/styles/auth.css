@@ -12,6 +12,15 @@
 .auth-error { display: flex; gap: 7px; margin-bottom: 12px; padding: 10px; border-radius: 6px; color: var(--danger); background: var(--danger-soft); font-size: 10px; }
 .auth-switch, .auth-legal { color: var(--muted); font-size: 10px; text-align: center; }
 .auth-switch { margin: 16px 0 0; }
+.auth-privacy { margin: 14px 0 0; color: var(--muted); font-size: 12px; text-align: center; }
+.auth-privacy a, .landing-note a, .landing-footer a { color: var(--primary); font-weight: 600; }
+.landing-note { margin: 14px 0 0; color: var(--muted); font-size: 12px; }
+.privacy-card { width: min(680px, 100%); }
+.privacy-card h1 { margin: 0; font-size: 24px; }
+.privacy-updated { margin: 6px 0 8px; color: var(--muted); font-size: 13px; }
+.privacy-card h2 { margin: 22px 0 6px; font-size: 15px; }
+.privacy-card ul { margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.65; }
+.privacy-card li + li { margin-top: 6px; }
 .auth-switch a { border: 0; color: var(--primary); background: transparent; font-weight: 600; }
 .auth-legal { margin-top: 18px; }
 
@@ -50,7 +59,7 @@
 .landing-cta { margin: 20px 24px 80px; padding: 72px 24px; border-radius: 16px; color: white; background: #172554; text-align: center; }
 .landing-cta h2 { margin: 0; font-size: 30px; letter-spacing: -.04em; }
 .landing-cta p { margin: 8px 0 22px; color: #bfdbfe; font-size: 11px; }
-.landing-footer { display: flex; max-width: 1120px; align-items: center; gap: 24px; margin: 0 auto; padding: 30px 28px; border-top: 1px solid var(--border); color: var(--muted); font-size: 10px; }
+.landing-footer { display: flex; max-width: 1120px; align-items: center; gap: 24px; margin: 0 auto; padding: 30px 28px; border-top: 1px solid var(--border); color: var(--muted); font-size: 12px; }
 
 
 /* added */

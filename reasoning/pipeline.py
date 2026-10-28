@@ -283,7 +283,7 @@ class ReasoningPipeline:
         )
 
         try:
-            logger.info(f"Starting reasoning pipeline for query: '{query[:50]}...'")
+            logger.info("Starting reasoning pipeline")  # no question text in logs
 
             # Step 1: Rewrite only follow-ups ("the second one"), which need the history to search well.
             # Standalone questions search fine as typed, so they skip this LLM call.

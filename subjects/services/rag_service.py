@@ -83,7 +83,7 @@ class RAGService:
             query = query.strip()
             chat_history = chat_history or []
             
-            logger.info(f"Generating response for query: '{query[:50]}...' (subject: {subject_id}, user: {user_id})")
+            logger.info(f"Generating response (subject: {subject_id}, user: {user_id})")  # no question text in logs
             
             # Step 1: Check cache for existing response (only for non-followup queries)
             if user_id and not self._is_followup_request(query, chat_history):

@@ -98,4 +98,14 @@ describe('Landing', () => {
     renderApp('/welcome')
     expect(await screen.findByRole('link', { name: 'Open ExcelPoint' })).toHaveAttribute('href', '/app/')
   })
+
+  it('links to a privacy page that says where files go and that it is free in beta', async () => {
+    mockApi(signedOut)
+    renderApp('/welcome')
+    expect(await screen.findAllByText(/Free while in beta/)).not.toHaveLength(0)
+    await userEvent.click(screen.getByRole('link', { name: 'Privacy' }))
+    expect(await screen.findByRole('heading', { name: 'Privacy', level: 1 })).toBeInTheDocument()
+    expect(screen.getByText(/sent to OpenAI/)).toBeInTheDocument()
+    expect(screen.getByText(/Delete account removes your account/)).toBeInTheDocument()
+  })
 })

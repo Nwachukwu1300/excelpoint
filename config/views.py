@@ -8,7 +8,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 APP_INDEX = settings.BASE_DIR / 'static' / 'app' / 'index.html'
 
 
-PUBLIC_APP_PAGES = {'/app/login', '/app/register', '/app/welcome'}  # everything else in the app needs a session
+PUBLIC_APP_PAGES = {'/app/login', '/app/register', '/app/welcome', '/app/privacy'}  # everything else in the app needs a session
 
 
 @ensure_csrf_cookie

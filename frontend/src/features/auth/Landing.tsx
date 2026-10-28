@@ -90,11 +90,13 @@ export function Landing() {
           <h2>Your materials already contain the answers.</h2>
           <p>Let ExcelPoint help you find and remember them.</p>
           <Link className={buttonClass()} to="/register">Create your free account</Link>
+          <p className="landing-note">Free while in beta. No card needed. <Link to="/privacy">How we handle your data</Link></p>
         </section>
       </main>
       <footer className="landing-footer">
         <Logo />
-        <span>© {new Date().getFullYear()} ExcelPoint</span>
+        <Link to="/privacy">Privacy</Link>
+        <span>Free while in beta · © {new Date().getFullYear()} ExcelPoint</span>
       </footer>
     </div>
   )

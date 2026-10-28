@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { Link } from 'react-router'
 import { useMe } from '../../lib/api'
 import { useOneAtATime } from '../../lib/useOneAtATime'
 import { Icon } from '../../ui/Icon'
@@ -102,7 +103,7 @@ export function UploadModal({ open, onClose, subjectId }: { open: boolean; onClo
       )}
       <div className="modal-note">
         <Icon name="lock" size={15} />
-        <span>Your materials are private. XP never uses information outside your uploads.</span>
+        <span>Only you can see your files. To write answers and study aids, their text is sent to OpenAI. <Link to="/privacy">Privacy</Link></span>
       </div>
       <div className="modal-actions">
         <Button variant="secondary" onClick={close} disabled={uploadMaterial.isPending}>Cancel</Button>
