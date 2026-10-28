@@ -52,6 +52,7 @@ numpy==2.4.6
 # unstructured - install separately if needed: pip install unstructured
 python-magic==0.4.27
 pydub==0.25.1
+audioop-lts==0.2.2; python_version >= "3.13"  # pydub needs audioop, which Python 3.13 removed
 
 # Video/Audio Transcription
 # openai-whisper has build issues on Python 3.13 - install separately if needed

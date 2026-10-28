@@ -9,6 +9,7 @@ from langchain_community.document_loaders import (
 )
 import PyPDF2
 import docx
+import importlib.util
 import os
 from functools import cached_property, lru_cache
 from typing import List, Dict, Any
@@ -66,15 +67,15 @@ SUPPORTED_UPLOADS = 'Upload a PDF or Word (.docx) file.'
 
 def upload_problem(uploaded_file):
     """Why this upload can't be turned into study material, or None if it can."""
-    from .services.transcription_service import WHISPER_AVAILABLE
-
     file_type = material_file_type(uploaded_file.name)
     if not file_type:
         return f'This file type isn\'t supported. {SUPPORTED_UPLOADS}'
     if file_type == 'DOC':
         return 'Old .doc files can\'t be read. Save it as .docx or PDF, then upload that.'
     if file_type in ('AUDIO', 'VIDEO'):
-        return None if WHISPER_AVAILABLE else f'Audio and video aren\'t supported yet. {SUPPORTED_UPLOADS}'
+        # Not via transcription_service: importing it pulls in pydub, which breaks on Python 3.13 without audioop
+        whisper_installed = importlib.util.find_spec('whisper') is not None
+        return None if whisper_installed else f'Audio and video aren\'t supported yet. {SUPPORTED_UPLOADS}'
     signature, label = FILE_SIGNATURES[file_type]
     head = uploaded_file.read(len(signature))
     uploaded_file.seek(0)

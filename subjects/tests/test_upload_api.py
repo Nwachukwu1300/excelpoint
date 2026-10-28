@@ -83,6 +83,12 @@ class UploadChecksTest(TestCase):
         self.assertFalse(SubjectMaterial.objects.exists())
         process.delay.assert_not_called()
 
+    def test_checks_work_where_pydub_cannot_import(self, process):
+        import sys
+        with patch.dict(sys.modules, {'pydub': None, 'subjects.services.transcription_service': None}):
+            response = self.upload('talk.mp4', b'\x00\x00\x00\x18ftyp')
+        self.assertEqual(response.status_code, 400)  # CI has no audioop: this was a 500
+
     def test_shows_the_uploaded_name_not_the_stored_one(self, process):
         first = self.upload('notes.pdf', b'%PDF-1.4').json()
         second = self.upload('notes.pdf', b'%PDF-1.4').json()
