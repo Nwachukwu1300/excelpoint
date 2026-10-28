@@ -21,7 +21,7 @@ from openai import OpenAI
 import logging
 import json
 from django.conf import settings
-from .utils import extract_text_from_pdf, chunk_text, local_file_path
+from .utils import extract_text_from_pdf, chunk_text, local_file_path, UnreadableFile
 from django.utils import timezone
 from django.db import models, transaction
 
@@ -43,6 +43,8 @@ def process_material(material_id: int):
         # Process the file using the unified processor with automatic batch processing
         with local_file_path(material.file) as file_path:
             chunks_data = processor.process_file(file_path)
+        if not chunks_data:
+            raise UnreadableFile("No text found in this file. Scanned pages (pictures of text) can't be read yet.")
         
         # Replace any chunks from an earlier run so reprocessing doesn't hit unique(material, chunk_index)
         with transaction.atomic():
@@ -74,12 +76,16 @@ def process_material(material_id: int):
         
     except Exception as e:
         logger.exception(f"Error processing material {material_id}: {str(e)}")
-        try:
-            material = SubjectMaterial.objects.get(id=material_id)
-            material.status = 'FAILED'
-            material.save()
-        except:
-            pass
+        reason = str(e) if isinstance(e, UnreadableFile) else (
+            "We couldn't read this file. It may be damaged or password-protected. "
+            "Try saving it again as PDF or .docx.")
+        material = SubjectMaterial.objects.select_related('subject__user').filter(id=material_id).first()
+        if material:
+            material.status, material.error = 'FAILED', reason
+            material.save(update_fields=['status', 'error', 'updated_at'])
+            from users.models import Notification
+            Notification.notify(material.subject.user, 'material_failed', f"Couldn't read {material.display_name}",
+                                body=reason, url=f"/subjects/{material.subject_id}/")
         raise e
 
 @shared_task
@@ -195,7 +201,7 @@ def material_ready(results, material_id: int):
     body = f"Generated {', '.join(made)}." if made else "Nothing could be generated."
     if failed:
         body += f" Couldn't create {', '.join(failed)}."
-    name = os.path.basename(material.file.name)
+    name = material.display_name
     Notification.notify(
         material.subject.user, 'material_ready',
         f"{name} is ready to study" if made else f"Couldn't prepare study aids for {name}",

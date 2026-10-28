@@ -4,7 +4,6 @@ import math
 from collections import Counter
 
 from django.db.models import Count, Max, OuterRef, Subquery
-import os
 
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view
@@ -86,7 +85,7 @@ def review_queue(request):
             {
                 'id': c.id, 'question': c.question, 'answer': c.answer,
                 'subject_id': c.subject_id, 'subject_name': c.subject.name,
-                'material_name': os.path.basename(c.material.file.name) if c.material and c.material.file else None,
+                'material_name': c.material.display_name if c.material else None,
                 'next_days': preview_intervals(reviews.get(c.id) or FlashcardReview()),
             }
             for c in cards

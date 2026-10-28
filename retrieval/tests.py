@@ -24,7 +24,7 @@ class SearchChunksTest(TestCase):
         results, _ = pipeline._search_chunks(vec(1.0, 0.0), subject.id)
 
         self.assertEqual(len(results), 1)
-        self.assertEqual(results[0].material_name, material.file.name)
+        self.assertEqual(results[0].material_name, material.display_name)  # the name users see, not the storage path
 
 
 import json

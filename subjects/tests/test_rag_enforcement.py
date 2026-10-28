@@ -9,7 +9,7 @@ import unittest
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from unittest.mock import patch, MagicMock
-from subjects.models import Subject
+from subjects.models import Subject, SubjectMaterial
 from subjects.services.rag_service import RAGService
 
 User = get_user_model()
@@ -40,6 +40,8 @@ class RAGEnforcementTestCase(TestCase):
             user=self.user,
             name='Mathematics'
         )
+        for subject in (self.comp_sci_subject, self.math_subject):  # a processed file, so 'nothing matched' means not in the materials
+            SubjectMaterial.objects.create(subject=subject, file='subject_materials/n.pdf', file_type='PDF', status='COMPLETED')
         
         # Initialize RAG service
         self.rag_service = RAGService()

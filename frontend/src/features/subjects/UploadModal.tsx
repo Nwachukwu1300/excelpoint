@@ -89,8 +89,8 @@ export function UploadModal({ open, onClose, subjectId }: { open: boolean; onClo
         ) : (
           <>
             <span className="upload-icon"><Icon name="upload" /></span>
-            <strong>Drop files here or choose files</strong>
-            <span>PDF, DOC/DOCX, MP4/MOV/AVI, MP3/WAV/M4A · up to 100 MB</span>
+            <strong>Drag a file here, or click to choose one</strong>
+            <span>PDF or Word (.docx) · up to 100 MB</span>
           </>
         )}
       </button>

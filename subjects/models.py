@@ -13,6 +13,7 @@ Key features:
 - AI chatbot session management with caching
 - Legacy model support for backward compatibility
 """
+import os
 
 from django.db import models
 from django.db.models.signals import post_delete, post_save
@@ -86,8 +87,15 @@ class SubjectMaterial(models.Model):
     file_type = models.CharField(max_length=10, choices=FILE_TYPES)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PENDING')
     summary = models.TextField(blank=True, default='', help_text="AI summary built only from this material")
+    original_name = models.CharField(max_length=255, blank=True, default='', help_text="The uploaded file's own name")
+    error = models.CharField(max_length=300, blank=True, default='', help_text="Why processing failed, in words the user can act on")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    @property
+    def display_name(self):
+        # Storage adds a random suffix when a name is taken, so show the name the user uploaded
+        return self.original_name or (os.path.basename(self.file.name) if self.file else '')
 
     def __str__(self):
         return f"{self.file.name} - {self.subject.name}"

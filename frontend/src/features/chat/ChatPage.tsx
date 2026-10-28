@@ -10,6 +10,7 @@ import {
   createSession, messagesKey, RateLimitError, sendMessage, sessionsKey, streamMessage, StreamUnavailableError,
   useMessages, useSessions, type ChatMessage, type Exchange, type SourceChunk,
 } from './api'
+import { useMaterials } from '../subjects/api'
 import { Answer, StreamingAnswer, Thinking, UserBubble } from './Thread'
 import { SourcesPanel } from './SourcesPanel'
 import '../../styles/chat.css'
@@ -29,6 +30,9 @@ export function ChatPage() {
   const subjectName = me.data?.subjects.find(s => s.id === subjectId)?.name ?? ''
   const sessions = useSessions(subjectId)
   const messages = useMessages(subjectId, sessionId)
+  const materials = useMaterials(subjectId)
+  const filesReady = !materials.data || materials.data.some(m => m.status === 'COMPLETED')
+  const filesBusy = materials.data?.some(m => m.status === 'PENDING' || m.status === 'PROCESSING')
 
   const [draft, setDraft] = useState('')
   const [pending, setPending] = useState<Pending | null>(null)
@@ -157,14 +161,25 @@ export function ChatPage() {
         </header>
 
         <div className="messages" ref={scroller}>
-          {empty ? (
+          {empty && !filesReady ? (
+            <div className="chat-empty">
+              <span className="xp-avatar"><Icon name="file" /></span>
+              <h1>{filesBusy ? 'Your file is still being read' : 'Upload a file first'}</h1>
+              <p>{filesBusy
+                ? 'XP can answer as soon as it has finished. This usually takes under a minute.'
+                : `XP answers only from the files in ${subjectName || 'this subject'}, and none are ready yet.`}</p>
+              <Link className="button" to={`/subjects/${subjectId}${filesBusy ? '' : '?upload=1'}`}>
+                <Icon name={filesBusy ? 'file' : 'upload'} />{filesBusy ? 'See your files' : 'Upload a file'}
+              </Link>
+            </div>
+          ) : empty ? (
             <div className="chat-empty">
               <span className="xp-avatar"><Icon name="sparkles" /></span>
               <h1>Ask anything about your {subjectName} materials</h1>
               <p>Every answer is grounded in your files and includes its sources.</p>
               <div>
                 {['Summarise the key ideas', 'Explain the hardest concept simply', 'What are the most important definitions?'].map(q => (
-                  <button type="button" key={q} onClick={() => { setDraft(q); composer.current?.focus() }}>{q}</button>
+                  <button type="button" key={q} onClick={() => send(q)}>{q}</button>
                 ))}
               </div>
             </div>

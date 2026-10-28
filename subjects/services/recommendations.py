@@ -17,7 +17,7 @@ GAP_WINDOW_DAYS = 14
 
 
 def _material_name(material):
-    return material.file.name.rsplit('/', 1)[-1] if material else 'this material'
+    return material.display_name if material else 'this material'
 
 
 def recommend(user, limit=6):
@@ -70,6 +70,8 @@ def recommend(user, limit=6):
                  .select_related('session__subject').order_by('-timestamp')[:20])
     gaps = {}
     for answer in fallbacks:
+        if (answer.metadata.get('model_info') or {}).get('files_ready') is False:
+            continue  # asked before any file was ready: not a gap in the files
         question = (ChatMessage.objects.filter(session=answer.session, role='user', timestamp__lte=answer.timestamp)
                     .order_by('-timestamp').values_list('content', flat=True).first())
         gaps.setdefault(answer.session.subject, []).append(question)

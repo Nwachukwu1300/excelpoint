@@ -7,7 +7,7 @@ from reasoning.confidence import ConfidenceScore
 from reasoning.models import ReasoningSession
 from reasoning.pipeline import ReasoningError, ReasoningResult
 from retrieval.reranking import RankedChunk
-from subjects.models import Subject
+from subjects.models import Subject, SubjectMaterial
 from subjects.services.rag_service import RAGService
 
 CHUNK = {'chunk_id': 1, 'content': 'DDL stands for Data Definition Language.', 'material_name': 'db.pdf', 'similarity_score': 0.8}
@@ -29,6 +29,7 @@ class ReasoningChatTest(TestCase):
     def setUp(self):
         user = get_user_model().objects.create_user('u', password='p')
         self.subject = Subject.objects.create(user=user, name='Databases')
+        SubjectMaterial.objects.create(subject=self.subject, file='subject_materials/n.pdf', file_type='PDF', status='COMPLETED')  # a processed file, so 'nothing matched' means not in the materials
         self.rag = RAGService()
 
     def ask(self, query, chunks=(CHUNK,), history=None):
@@ -142,3 +143,28 @@ class RetrySourcesTest(TestCase):
         with patch.object(rag, '_retrieve_relevant_chunks', return_value=[CHUNK]):
             response = rag.generate_response('What is DDL?', subject.id)
         self.assertEqual([c['material_name'] for c in response['retrieved_chunks']], ['other.pdf'])
+
+
+class NoReadyFilesTest(TestCase):
+    def setUp(self):
+        user = get_user_model().objects.create_user('n', password='p')
+        self.subject = Subject.objects.create(user=user, name='Biology')
+        self.rag = RAGService()
+
+    def ask(self):
+        with patch.object(self.rag, '_retrieve_relevant_chunks', return_value=[]):
+            return self.rag.generate_response('What does chlorophyll absorb?', self.subject.id)
+
+    def test_says_no_file_is_ready_instead_of_not_found(self):
+        from subjects.models import SubjectMaterial
+        SubjectMaterial.objects.create(subject=self.subject, file='subject_materials/a.pdf', file_type='PDF', status='FAILED')
+        result = self.ask()
+        self.assertIn('None of your files in Biology are ready yet', result['response'])
+        self.assertIs(result['metadata']['files_ready'], False)
+
+    def test_ready_files_keep_the_not_found_reply(self):
+        from subjects.models import SubjectMaterial
+        SubjectMaterial.objects.create(subject=self.subject, file='subject_materials/a.pdf', file_type='PDF', status='COMPLETED')
+        result = self.ask()
+        self.assertIn("couldn't find information", result['response'])
+        self.assertIs(result['metadata']['files_ready'], True)

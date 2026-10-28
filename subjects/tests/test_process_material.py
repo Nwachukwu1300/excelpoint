@@ -109,3 +109,34 @@ class WordFileTest(TestCase):
             text = ' '.join(ContentProcessor().process_file(f'{folder}/notes.docx', use_batch_processing=False))
         self.assertIn('Chlorophyll absorbs red and blue light.', text)
         self.assertIn('Calvin cycle fixes carbon.', text)
+
+
+@override_settings(MEDIA_ROOT=MEDIA)
+class ProcessingFailureTest(TestCase):
+    """A failed file says why, in the app and as a notification."""
+
+    def setUp(self):
+        user = get_user_model().objects.create_user('f', password='p')
+        self.material = SubjectMaterial.objects.create(subject=Subject.objects.create(user=user, name='S'),
+                                                       file='subject_materials/scan_Ab12Cd3.pdf', original_name='scan.pdf',
+                                                       file_type='PDF')
+
+    def run_task(self):
+        with self.assertRaises(Exception):
+            process_material(self.material.id)
+        self.material.refresh_from_db()
+        return Notification.objects.get()
+
+    @patch('subjects.utils.ContentProcessor.process_file', return_value=[])
+    def test_no_text_fails_with_a_reason(self, _):
+        note = self.run_task()
+        self.assertEqual(self.material.status, 'FAILED')
+        self.assertIn('No text found', self.material.error)
+        self.assertEqual((note.kind, note.title, note.body), ('material_failed', "Couldn't read scan.pdf", self.material.error))
+
+    @patch('subjects.utils.ContentProcessor.process_file', side_effect=Exception('Error processing file: EOF marker not found'))
+    def test_unexpected_errors_get_a_plain_reason_not_the_raw_one(self, _):
+        self.run_task()
+        self.assertEqual(self.material.status, 'FAILED')
+        self.assertIn("couldn't read this file", self.material.error)
+        self.assertNotIn('EOF', self.material.error)

@@ -72,7 +72,7 @@ class WorkspaceApiTest(TestCase):
     @patch('subjects.views.process_material.delay')
     @patch('subjects.views.MAX_UPLOAD_BYTES', 10)
     def test_upload_rejects_files_over_the_limit(self, delay):
-        big = SimpleUploadedFile('big.pdf', b'x' * 11, content_type='application/pdf')
+        big = SimpleUploadedFile('big.pdf', b'%PDF' + b'x' * 7, content_type='application/pdf')
         r = self.client.post(f'/api/subjects/{self.db.id}/upload_material/', {'file': big})
         self.assertEqual(r.status_code, 400)
         self.assertEqual(r.json(), {'file': ['Files can be up to 100 MB.']})

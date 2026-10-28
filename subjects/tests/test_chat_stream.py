@@ -8,7 +8,7 @@ from rest_framework.test import APIClient
 
 from reasoning.pipeline import ReasoningResult
 from retrieval.reranking import RankedChunk
-from subjects.models import ChatMessage, Subject
+from subjects.models import ChatMessage, Subject, SubjectMaterial
 from subjects.services.rag_service import RAGService
 
 CHUNK = {'chunk_id': 1, 'content': 'DML includes INSERT.', 'material_name': 'db.pdf', 'similarity_score': 0.8}
@@ -39,6 +39,7 @@ class ChatStreamTest(TestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user('s', password='p')
         self.subject = Subject.objects.create(user=self.user, name='Databases')
+        SubjectMaterial.objects.create(subject=self.subject, file='subject_materials/n.pdf', file_type='PDF', status='COMPLETED')  # a processed file, so 'nothing matched' means not in the materials
         self.client = APIClient()
         self.client.force_authenticate(self.user)
         self.url = reverse('chat-stream', args=[self.subject.id])

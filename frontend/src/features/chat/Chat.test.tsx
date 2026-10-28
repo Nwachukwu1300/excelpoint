@@ -161,3 +161,41 @@ describe('chat helpers', () => {
     expect(parts.filter(p => typeof p === 'string').join('')).toContain('<img src=x onerror=alert(1)>') // stays text, never HTML
   })
 })
+
+describe('XP chat before any file is ready', () => {
+  const material = (status: string) => ({ id: 1, filename: 'notes.docx', file_type: 'DOCX', status, error: '', created_at: at, summary: '', quiz_id: null })
+
+  it('asks for a file first instead of offering questions', async () => {
+    mockApi({ 'GET /api/me/': me, 'GET /api/subjects/3/chat/sessions/?limit=30': { sessions: [] }, 'GET /api/subjects/3/materials/': [material('FAILED')] })
+    renderApp('/subjects/3/chat')
+    expect(await screen.findByRole('heading', { name: 'Upload a file first' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Upload a file/ })).toHaveAttribute('href', '/subjects/3?upload=1')
+    expect(screen.queryByRole('button', { name: 'Summarise the key ideas' })).not.toBeInTheDocument()
+  })
+
+  it('says a file is still being read while it processes', async () => {
+    mockApi({ 'GET /api/me/': me, 'GET /api/subjects/3/chat/sessions/?limit=30': { sessions: [] }, 'GET /api/subjects/3/materials/': [material('PROCESSING')] })
+    renderApp('/subjects/3/chat')
+    expect(await screen.findByRole('heading', { name: 'Your file is still being read' })).toBeInTheDocument()
+  })
+
+  it('a suggested question is sent straight away', async () => {
+    document.cookie = 'csrftoken=tok'
+    const fetchMock = mockApi({
+      'GET /api/me/': me, 'GET /api/subjects/3/chat/sessions/?limit=30': { sessions: [] }, 'GET /api/subjects/3/materials/': [material('COMPLETED')],
+      'POST /api/subjects/3/chat/session/': reply(201, { id: 9, title: null, last_activity: at, message_count: 0, is_active: true }),
+    })
+    const base = fetchMock.getMockImplementation()!
+    fetchMock.mockImplementation(async (input, init) => (String(input) === '/api/subjects/3/chat/stream/' ? new Promise<Response>(() => {}) : base(input, init)))
+    renderApp('/subjects/3/chat')
+    await userEvent.click(await screen.findByRole('button', { name: 'Summarise the key ideas' }))
+    expect(await screen.findByText('XP is thinking…')).toBeInTheDocument()
+    const streamCall = fetchMock.mock.calls.find(([url]) => String(url) === '/api/subjects/3/chat/stream/')
+    expect(JSON.parse(String(streamCall?.[1]?.body))).toMatchObject({ message: 'Summarise the key ideas', session_id: 9 })
+  })
+
+  it('a reply with no ready files points to the files, not to uploading more', () => {
+    const a = describeAnswer({ id: 3, role: 'assistant', timestamp: at, content: 'None of your files are ready yet.', metadata: { context_used: false, retrieved_chunks: [], model_info: { pipeline: 'fallback', files_ready: false } } })
+    expect(a.notFound && a.noFilesReady).toBe(true)
+  })
+})

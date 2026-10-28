@@ -50,3 +50,42 @@ class UploadApiTest(TestCase):
     def test_material_file_type(self):
         self.assertEqual(material_file_type('Lecture.MP4'), 'VIDEO')
         self.assertIsNone(material_file_type('noext'))
+
+
+@override_settings(MEDIA_ROOT=MEDIA)
+@patch('subjects.views.process_material')
+class UploadChecksTest(TestCase):
+    """Files the server can't read are refused at upload with a reason, not left to fail later."""
+
+    def setUp(self):
+        user = get_user_model().objects.create_user('c', password='p')
+        self.subject = Subject.objects.create(user=user, name='S')
+        self.client = APIClient()
+        self.client.force_authenticate(user)
+        self.url = f'/api/subjects/{self.subject.id}/upload_material/'
+
+    def upload(self, name, content):
+        return self.client.post(self.url, {'file': SimpleUploadedFile(name, content)})
+
+    def test_refusals_say_why(self, process):
+        cases = [
+            ('junk.pdf', b'just some text', "isn't a readable PDF"),
+            ('notes.docx', b'plain text', "isn't a readable Word (.docx)"),
+            ('old.doc', b'\xd0\xcf\x11\xe0', 'Save it as .docx or PDF'),
+            ('talk.mp4', b'\x00\x00\x00\x18ftyp', "Audio and video aren't supported yet"),
+            ('run.exe', b'MZ', "isn't supported"),
+        ]
+        for name, content, reason in cases:
+            with self.subTest(name=name):
+                response = self.upload(name, content)
+                self.assertEqual(response.status_code, 400)
+                self.assertIn(reason, response.json()['file'][0])
+        self.assertFalse(SubjectMaterial.objects.exists())
+        process.delay.assert_not_called()
+
+    def test_shows_the_uploaded_name_not_the_stored_one(self, process):
+        first = self.upload('notes.pdf', b'%PDF-1.4').json()
+        second = self.upload('notes.pdf', b'%PDF-1.4').json()
+        self.assertEqual([first['filename'], second['filename']], ['notes.pdf', 'notes.pdf'])
+        stored = list(SubjectMaterial.objects.values_list('file', flat=True))
+        self.assertEqual(len(set(stored)), 2)  # storage still keeps two separate files

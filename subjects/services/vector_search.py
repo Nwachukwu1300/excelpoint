@@ -294,7 +294,7 @@ class VectorSearchService:
                         'content': chunk.content,
                         'chunk_index': chunk.chunk_index,
                         'material_id': chunk.material.id,
-                        'material_name': chunk.material.file.name,
+                        'material_name': chunk.material.display_name,
                         'similarity_score': float(similarity),
                         'metadata': {
                             'material_type': chunk.material.file_type,

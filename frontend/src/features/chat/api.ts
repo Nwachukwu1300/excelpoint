@@ -11,7 +11,7 @@ export type ChatMessage = {
   metadata?: {
     retrieved_chunks?: SourceChunk[]
     context_used?: boolean
-    model_info?: { pipeline?: string; verified?: boolean; confidence?: number | null }
+    model_info?: { pipeline?: string; verified?: boolean; confidence?: number | null; files_ready?: boolean }
   }
 }
 export type ChatSession = { id: number; title: string | null; last_activity: string; message_count: number; is_active: boolean }
@@ -139,6 +139,7 @@ export function describeAnswer(m: ChatMessage) {
   const chunks = m.metadata?.retrieved_chunks ?? []
   return {
     notFound: info.pipeline === 'fallback' || (m.metadata?.context_used === false && chunks.length === 0 && info.pipeline !== 'single_call'),
+    noFilesReady: info.files_ready === false,
     verified: info.verified,
     confidence: info.confidence ?? null,
     chunks,

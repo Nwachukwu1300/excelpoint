@@ -1,4 +1,3 @@
-import os
 
 from django.urls import reverse
 from rest_framework import serializers
@@ -31,11 +30,11 @@ class SubjectMaterialSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SubjectMaterial
-        fields = ['id', 'file', 'file_type', 'status', 'created_at', 'updated_at', 'filename', 'summary', 'quiz_id']
-        read_only_fields = ['file_type', 'status', 'created_at', 'updated_at', 'summary']
+        fields = ['id', 'file', 'file_type', 'status', 'error', 'created_at', 'updated_at', 'filename', 'summary', 'quiz_id']
+        read_only_fields = ['file_type', 'status', 'error', 'created_at', 'updated_at', 'summary']
 
     def get_filename(self, obj):
-        return os.path.basename(obj.file.name) if obj.file else ''
+        return obj.display_name
 
     def get_quiz_id(self, obj):
         quiz = next(iter(obj.quizzes.all()), None)  # .all() so a prefetch is used
@@ -57,7 +56,7 @@ class FlashcardSerializer(serializers.ModelSerializer):
         read_only_fields = ['created_at']
 
     def get_material_name(self, obj):
-        return os.path.basename(obj.material.file.name) if obj.material and obj.material.file else None
+        return obj.material.display_name if obj.material else None
 
     def get_due_at(self, obj):
         """Next review time for the requesting user; None means never reviewed (due now).

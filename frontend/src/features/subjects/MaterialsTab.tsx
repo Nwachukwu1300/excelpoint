@@ -44,7 +44,7 @@ function MaterialRow({ material, index, onDelete, onQuizzes }: { material: Mater
         <div className="material-primary">
           <strong title={material.filename}>{material.filename}</strong>
           <span>Uploaded {shortDate(material.created_at)}</span>
-          {material.status === 'FAILED' && <small className="failure-copy">Processing failed. Delete this file and upload it again.</small>}
+          {material.status === 'FAILED' && <small className="failure-copy">{material.error || "We couldn't read this file."}</small>}
           {busy && (
             <div className="inline-processing">
               <ProgressBar label={`Processing ${material.filename}`} />

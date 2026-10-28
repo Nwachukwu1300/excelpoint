@@ -57,9 +57,11 @@ export function Answer({ message, subjectId, selected, onCite, animate }: {
       <motion.div className="not-found-answer" {...(animate ? enter : {})}>
         <span className="info-icon" aria-hidden="true">i</span>
         <div>
-          <strong>Not in your materials</strong>
+          <strong>{a.noFilesReady ? 'No files ready yet' : 'Not in your materials'}</strong>
           <p>{a.body}</p>
-          <Link className="button button--secondary" to={`/subjects/${subjectId}?upload=1`}><Icon name="upload" />Upload materials</Link>
+          {a.noFilesReady
+            ? <Link className="button button--secondary" to={`/subjects/${subjectId}`}><Icon name="file" />Check your files</Link>
+            : <Link className="button button--secondary" to={`/subjects/${subjectId}?upload=1`}><Icon name="upload" />Upload materials</Link>}
         </div>
       </motion.div>
     )

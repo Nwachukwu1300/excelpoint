@@ -55,6 +55,34 @@ UPLOAD_FILE_TYPES = {
     'MP3': 'AUDIO', 'WAV': 'AUDIO', 'M4A': 'AUDIO',
 }
 
+class UnreadableFile(Exception):
+    """Processing failed for a reason the user can act on; the message is shown to them."""
+
+
+# First bytes each readable type starts with (a .docx is a zip file)
+FILE_SIGNATURES = {'PDF': (b'%PDF', 'PDF'), 'DOCX': (b'PK', 'Word (.docx)')}
+SUPPORTED_UPLOADS = 'Upload a PDF or Word (.docx) file.'
+
+
+def upload_problem(uploaded_file):
+    """Why this upload can't be turned into study material, or None if it can."""
+    from .services.transcription_service import WHISPER_AVAILABLE
+
+    file_type = material_file_type(uploaded_file.name)
+    if not file_type:
+        return f'This file type isn\'t supported. {SUPPORTED_UPLOADS}'
+    if file_type == 'DOC':
+        return 'Old .doc files can\'t be read. Save it as .docx or PDF, then upload that.'
+    if file_type in ('AUDIO', 'VIDEO'):
+        return None if WHISPER_AVAILABLE else f'Audio and video aren\'t supported yet. {SUPPORTED_UPLOADS}'
+    signature, label = FILE_SIGNATURES[file_type]
+    head = uploaded_file.read(len(signature))
+    uploaded_file.seek(0)
+    if head != signature:
+        return f'This isn\'t a readable {label} file. It may be damaged or renamed from another type.'
+    return None
+
+
 def material_file_type(filename):
     """Map an uploaded file's extension to a SubjectMaterial.file_type, or None if unsupported."""
     return UPLOAD_FILE_TYPES.get(os.path.splitext(filename)[1][1:].upper())

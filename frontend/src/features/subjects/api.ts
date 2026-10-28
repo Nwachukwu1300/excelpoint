@@ -7,7 +7,7 @@ export type SubjectSummary = {
   id: number; name: string; materials_count: number; due_count: number; last_quiz_score: number | null; updated_at: string
 }
 export type Material = {
-  id: number; filename: string; file_type: string; status: MaterialStatus; created_at: string; summary: string; quiz_id: number | null
+  id: number; filename: string; file_type: string; status: MaterialStatus; error?: string; created_at: string; summary: string; quiz_id: number | null
 }
 export type Flashcard = { id: number; question: string; answer: string; material_name: string | null; due_at: string | null }
 export type QuizSummary = {
@@ -81,12 +81,13 @@ export function useDeleteMaterial(subjectId: number) {
 }
 
 /** Accepted uploads, mirroring the backend's UPLOAD_FILE_TYPES and its 100 MB limit. */
-export const ACCEPTED = ['pdf', 'doc', 'docx', 'mp4', 'mov', 'avi', 'mp3', 'wav', 'm4a']
+export const ACCEPTED = ['pdf', 'docx'] // the server can read these; audio and video need transcription, which isn't installed
 export const MAX_BYTES = 100 * 1024 * 1024
 
 export function checkFile(file: File): string | null {
   const ext = file.name.split('.').pop()?.toLowerCase() ?? ''
-  if (!ACCEPTED.includes(ext)) return 'Unsupported file type. Choose a PDF, Word, video, or audio file.'
+  if (ext === 'doc') return 'Old .doc files can’t be read. Save it as .docx or PDF, then upload that.'
+  if (!ACCEPTED.includes(ext)) return 'This file type isn’t supported. Upload a PDF or Word (.docx) file.'
   if (file.size > MAX_BYTES) return 'That file is over 100 MB. Try a smaller or compressed version.'
   return null
 }

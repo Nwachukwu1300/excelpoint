@@ -28,7 +28,7 @@ from .permissions import IsSubjectOwner, ChatAPIPermission, IsChatSessionOwner
 from .services.rag_service import RAGService
 from .services.session_manager import SessionManager
 from .tasks import process_material
-from .utils import material_file_type, short_answer_matches
+from .utils import material_file_type, short_answer_matches, upload_problem
 from .app_api import due_by_subject, subject_summaries
 import json
 import os
@@ -111,7 +111,7 @@ def delete_material(request, pk, material_id):
     
     if request.method == 'POST':
         # Store filename for success message
-        filename = os.path.basename(material.file.name) if material.file else 'Unknown file'
+        filename = material.display_name or 'Unknown file'
         
         # Delete the stored file through its storage backend (local or S3)
         if material.file:
@@ -131,7 +131,7 @@ def material_status(request, material_id):
     
     return JsonResponse({
         'id': material.id,
-        'filename': os.path.basename(material.file.name) if material.file else 'Unknown',
+        'filename': material.display_name or 'Unknown',
         'status': material.status,
         'created_at': material.created_at.isoformat(),
         'updated_at': material.updated_at.isoformat(),
@@ -164,14 +164,15 @@ class SubjectViewSet(viewsets.ModelViewSet):
         subject = self.get_object()
         serializer = SubjectMaterialSerializer(data=request.data)
         uploaded_file = request.FILES.get('file')
-        file_type = material_file_type(uploaded_file.name) if uploaded_file else None
-        if uploaded_file and not file_type:
-            return Response({'file': ['Unsupported file type.']}, status=status.HTTP_400_BAD_REQUEST)
+        problem = upload_problem(uploaded_file) if uploaded_file else None
+        if problem:
+            return Response({'file': [problem]}, status=status.HTTP_400_BAD_REQUEST)
         if uploaded_file and uploaded_file.size > MAX_UPLOAD_BYTES:
             return Response({'file': ['Files can be up to 100 MB.']}, status=status.HTTP_400_BAD_REQUEST)
 
         if serializer.is_valid():
-            material = serializer.save(subject=subject, file_type=file_type)
+            material = serializer.save(subject=subject, file_type=material_file_type(uploaded_file.name),
+                                       original_name=os.path.basename(uploaded_file.name)[:255])
             # process_material queues flashcard and quiz generation itself
             process_material.delay(material.id)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -259,7 +260,7 @@ class SubjectViewSet(viewsets.ModelViewSet):
                           .order_by('-end_time', '-id').values_list('score', flat=True))
             quiz_data.append({
                 'material_id': quiz.material_id,
-                'material_name': os.path.basename(quiz.material.file.name) if quiz.material and quiz.material.file else None,
+                'material_name': quiz.material.display_name if quiz.material else None,
                 'attempts': len(scores),
                 'last_score': round(scores[0]) if scores else None,
                 'best_score': round(max(scores)) if scores else None,

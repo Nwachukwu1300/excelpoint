@@ -1,7 +1,6 @@
 """Quiz endpoints for the React app. Every lookup is scoped to request.user."""
 
 import logging
-import os
 from collections import defaultdict
 
 from django.shortcuts import get_object_or_404
@@ -20,7 +19,7 @@ FRESH_QUESTIONS = 10
 
 
 def _material_name(quiz):
-    return os.path.basename(quiz.material.file.name) if quiz.material and quiz.material.file else None
+    return quiz.material.display_name if quiz.material else None
 
 
 def _quiz_info(quiz):

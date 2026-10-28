@@ -7,7 +7,7 @@ from django.conf import settings
 
 from .vector_search import VectorSearchService
 from .cache_service import ChatbotCacheService
-from ..models import Subject
+from ..models import Subject, SubjectMaterial
 
 logger = logging.getLogger(__name__)
 
@@ -113,8 +113,11 @@ class RAGService:
             # Strict RAG: nothing relevant retrieved means nothing to answer from, so skip the LLM.
             # Follow-ups ("tell me more") pass through: the reasoning rewriter resolves them from history.
             if not context.strip() and not is_small_talk and not is_followup:
+                files_ready = SubjectMaterial.objects.filter(subject_id=subject_id, status='COMPLETED').exists()
                 result = {
-                    'response': self._get_subject_specific_fallback(subject_name),
+                    'response': self._get_subject_specific_fallback(subject_name) if files_ready else (
+                        f"None of your files in {subject_name} are ready yet, so I have nothing to answer from. "
+                        f"Open the subject's Files tab: a file may still be processing, or it may have failed."),
                     'retrieved_chunks': [],
                     'context_used': False,
                     'response_time': time.time() - start_time,
@@ -125,6 +128,7 @@ class RAGService:
                         'model_used': None,
                         'tokens_used': {},
                         'pipeline': 'fallback',
+                        'files_ready': files_ready,
                         'timestamp': time.time(),
                     },
                 }

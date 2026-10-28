@@ -92,7 +92,7 @@ describe('Subject workspace', () => {
     const input = dialog.querySelector('input[type=file]') as HTMLInputElement
 
     await userEvent.upload(input, new File(['x'], 'notes.txt', { type: 'text/plain' }), { applyAccept: false })
-    expect(within(dialog).getByRole('alert')).toHaveTextContent('Unsupported file type')
+    expect(within(dialog).getByRole('alert')).toHaveTextContent('This file type isn’t supported')
 
     await userEvent.upload(input, new File(['%PDF'], 'week8.pdf', { type: 'application/pdf' }))
     expect(within(dialog).getByText('week8.pdf')).toBeInTheDocument()
@@ -139,8 +139,10 @@ describe('subject helpers', () => {
 
   it('checks type and size before uploading', () => {
     expect(checkFile(new File(['x'], 'a.PDF'))).toBeNull()
-    expect(checkFile(new File(['x'], 'a.exe'))).toMatch(/Unsupported/)
-    const big = new File(['x'], 'big.mp4')
+    expect(checkFile(new File(['x'], 'a.exe'))).toMatch(/isn’t supported/)
+    expect(checkFile(new File(['x'], 'old.doc'))).toMatch(/Save it as .docx or PDF/)
+    expect(checkFile(new File(['x'], 'talk.mp4'))).toMatch(/isn’t supported/)
+    const big = new File(['x'], 'big.pdf')
     Object.defineProperty(big, 'size', { value: 101 * 1024 * 1024 })
     expect(checkFile(big)).toMatch(/over 100 MB/)
   })
