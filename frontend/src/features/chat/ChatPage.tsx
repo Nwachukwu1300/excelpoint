@@ -51,6 +51,8 @@ export function ChatPage() {
   const removeChat = useDeleteSession(subjectId)
   const once = useOneAtATime()
   const [deletingChat, setDeletingChat] = useState<ChatSession | null>(null)
+  const [historyOpen, setHistoryOpen] = useState(false) // phones: the list opens over the chat
+  useEffect(() => setHistoryOpen(false), [sessionId])
   const confirmDeleteChat = () => deletingChat && once(() => removeChat.mutateAsync(deletingChat.id).then(
     () => {
       if (deletingChat.id === sessionId) navigate(`/subjects/${subjectId}/chat`, { replace: true })
@@ -94,6 +96,10 @@ export function ChatPage() {
     })
     setJustArrived(ids => [...ids, exchange.user_message.id, exchange.assistant_message.id])
     setSelectedId(null)
+    // Show the conversation in the list now; the refetch below then brings the server's title
+    queryClient.setQueryData<{ sessions: ChatSession[] }>(sessionsKey(subjectId), old => old && {
+      sessions: [{ ...exchange.session, message_count: Math.max(exchange.session.message_count, 2) }, ...old.sessions.filter(s => s.id !== exchange.session.id)],
+    })
     for (const key of [sessionsKey(subjectId), ['home']]) queryClient.invalidateQueries({ queryKey: key })
   }
 
@@ -147,9 +153,23 @@ export function ChatPage() {
   const empty = !sessionId && !pending
   const minutes = rateLimit?.retryInSeconds ? Math.ceil(rateLimit.retryInSeconds / 60) : null
 
+  if (me.data && !me.data.subjects.some(s => s.id === subjectId)) {
+    return (
+      <div className="page-content">
+        <div className="empty-state">
+          <span className="empty-icon"><Icon name="book" /></span>
+          <h2>Subject not found</h2>
+          <p>It may have been deleted, or the link is out of date.</p>
+          <Link className="button button--secondary" to="/subjects">Back to subjects</Link>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className={`chat-layout ${sourcesOpen ? '' : 'sources-closed'}`}>
-      <aside className="chat-history" aria-label="Conversations">
+      {historyOpen && <div className="history-scrim" onClick={() => setHistoryOpen(false)} aria-hidden="true" />}
+      <aside className={`chat-history ${historyOpen ? 'is-open' : ''}`} aria-label="Conversations">
         <Link className="button button--secondary full-width" to={`/subjects/${subjectId}/chat`}><Icon name="plus" />New chat</Link>
         <span className="history-label">RECENT</span>
         {sessions.isPending && <div className="skeleton-stack history-loading"><Skeleton /><Skeleton /><Skeleton /></div>}
@@ -174,7 +194,10 @@ export function ChatPage() {
               <span>{subjectName}</span>
             </div>
           </div>
-          <IconButton icon="panel" label={sourcesOpen ? 'Hide sources' : 'Show sources'} aria-pressed={sourcesOpen} onClick={() => setSourcesOpen(o => !o)} />
+          <div className="chat-top-actions">
+            <IconButton icon="clock" label="Past conversations" className="history-toggle" aria-expanded={historyOpen} onClick={() => setHistoryOpen(o => !o)} />
+            <IconButton icon="panel" label={sourcesOpen ? 'Hide sources' : 'Show sources'} aria-pressed={sourcesOpen} onClick={() => setSourcesOpen(o => !o)} />
+          </div>
         </header>
 
         <div className="messages" ref={scroller}>

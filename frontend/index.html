@@ -17,9 +17,20 @@
         document.documentElement.dataset.theme = dark ? 'dark' : 'light'
       })()
     </script>
+    <style>
+      /* Shown until the app has loaded (seconds on a slow phone connection); React replaces it. */
+      body { margin: 0; background: #f8fafc; }
+      [data-theme='dark'] body { background: #0f172a; }
+      .boot { display: grid; min-height: 100vh; place-content: center; justify-items: center; gap: 14px;
+        font: 500 15px/1.4 Inter, system-ui, sans-serif; color: #64748b; }
+      .boot b { display: grid; width: 44px; height: 44px; place-items: center; border-radius: 8px;
+        color: #fff; background: #2563eb; font-size: 15px; letter-spacing: -.04em; animation: boot 1.2s ease-in-out infinite; }
+      @keyframes boot { 50% { opacity: .55; } }
+      @media (prefers-reduced-motion: reduce) { .boot b { animation: none; } }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"><div class="boot" role="status"><b>XP</b>Loading ExcelPoint…</div></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

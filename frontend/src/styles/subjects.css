@@ -2,7 +2,8 @@
 .subjects-list-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
 .subject-list-card { padding: 20px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow); }
 .subject-list-top { display: flex; align-items: center; justify-content: space-between; }
-.subject-list-card h2 { margin: 18px 0 5px; font-size: 15px; }
+.subject-list-card { min-width: 0; }
+.subject-list-card h2 { margin: 18px 0 5px; overflow: hidden; font-size: 15px; text-overflow: ellipsis; white-space: nowrap; }
 .subject-list-card > p { margin: 0; color: var(--muted); font-size: 10px; }
 .subject-card-stats { display: grid; grid-template-columns: 1fr 1fr; margin: 18px 0; padding: 14px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
 .subject-card-stats div + div { padding-left: 16px; border-left: 1px solid var(--border); }
@@ -16,8 +17,9 @@
 .add-subject-card small { font-size: 10px; }
 .workspace-page { padding-top: 28px; }
 .workspace-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 24px; }
-.workspace-breadcrumb { display: flex; align-items: center; gap: 4px; margin-bottom: 14px; color: var(--muted); font-size: 10px; }
-.workspace-header h1 { margin: 0; font-size: 26px; font-weight: 650; letter-spacing: -.03em; }
+.workspace-header > div:first-child { min-width: 0; }
+.workspace-breadcrumb { display: flex; align-items: center; gap: 4px; margin-bottom: 14px; overflow: hidden; color: var(--muted); font-size: 10px; white-space: nowrap; }
+.workspace-header h1 { margin: 0; font-size: 26px; font-weight: 650; letter-spacing: -.03em; overflow-wrap: anywhere; }
 .workspace-header p { margin: 5px 0 0; color: var(--muted); font-size: 11px; }
 .workspace-actions, .toolbar-actions { display: flex; align-items: center; gap: 8px; }
 .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); }

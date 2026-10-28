@@ -1,0 +1,21 @@
+/* Phone fixes, loaded after every page's CSS (main.tsx). `html` in front outranks the page rules. */
+@media (max-width: 640px) {
+  /* 16px stops iOS zooming into a field when it gets focus */
+  html input, html textarea, html select, html .text-input, html .select-wrap select, html .chat-composer textarea { font-size: 16px; }
+
+  /* Touch targets at least 44px */
+  html .icon-button, html .chat-composer > button { min-width: 44px; min-height: 44px; }
+  html .chat-composer { padding-right: 58px; }
+  html .chat-composer > span { display: none; }
+  html .chat-top > div > a { display: grid; width: 44px; height: 44px; place-items: center; }
+
+  /* Text people read on a phone: nothing under 13px */
+  html .answer-body, html .not-found-answer p, html .chat-empty p, html .user-message { font-size: 15px; }
+  html .chat-top strong { font-size: 14px; }
+  html .chat-top span, html .field-error, html .field-hint, html .form-field label, html .auth-switch,
+  html .toast strong, html .toast p, html .chat-empty button, html .failure-copy, html .history-row strong { font-size: 13px; }
+  html .mobile-nav a { font-size: 11px; }
+
+  /* Toasts at the top, so they never cover a bottom sheet's buttons */
+  html .toast-stack { top: calc(12px + env(safe-area-inset-top)); bottom: auto; }
+}

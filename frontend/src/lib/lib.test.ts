@@ -27,6 +27,7 @@ describe('api', () => {
 describe('helpers', () => {
   it('builds initials', () => {
     expect(initials('Alex Morgan')).toBe('AM')
+    expect(initials('😀 Sam')).toBe('😀S')
     expect(initials('sam')).toBe('S')
     expect(initials('')).toBe('?')
   })

@@ -10,7 +10,7 @@
 .review-hero h2 { margin: 0; font-size: 23px; font-weight: 650; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
 .review-hero p { margin: 5px 0 0; color: var(--muted); font-size: 12px; }
 .dashboard-section { min-width: 0; }
-.next-list, .conversations-card, .new-user-preview { overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow); }
+.next-list, .conversations-card, .first-run { overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow); }
 .next-item { display: flex; align-items: center; gap: 14px; padding: 14px 16px; }
 .next-item + .next-item { border-top: 1px solid var(--border); }
 .next-item > div { flex: 1; min-width: 0; }
@@ -41,10 +41,9 @@
 .conversation-row strong { font-size: 11px; transition: color .15s ease; }
 .conversation-row div > span { margin-top: 3px; color: var(--muted); font-size: 10px; }
 .conversation-row > .icon { color: var(--muted); }
-.new-user-preview { padding: 24px; text-align: center; }
-.new-user-preview .empty-icon { margin: 0 auto; }
-.new-user-preview h3 { margin: 14px 0 5px; font-size: 13px; }
-.new-user-preview p { margin: 0 0 16px; color: var(--muted); font-size: 10px; line-height: 1.5; }
+.first-run { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 24px; padding: 24px; }
+.first-run h2 { margin: 0 0 6px; font-size: 18px; }
+.first-run p { margin: 0 0 16px; color: var(--muted); font-size: 13px; line-height: 1.55; }
 
 @media (max-width: 1100px) {
   .today-grid { grid-template-columns: 1fr; }

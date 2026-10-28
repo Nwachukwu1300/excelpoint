@@ -2,6 +2,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { motion } from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router'
+import { ApiError } from '../../lib/api'
 import { plural } from '../../lib/format'
 import { Icon } from '../../ui/Icon'
 import { Badge, Button, Logo, ProgressBar, buttonClass } from '../../ui/primitives'
@@ -108,7 +109,9 @@ export function TakeQuiz() {
       <div className="generation-state">
         <h1>We couldn’t open this quiz</h1>
         <p>{attempt.error.message}</p>
-        <div><Button variant="secondary" onClick={() => attempt.refetch()}>Try again</Button><Link className={buttonClass()} to="/">Back to Home</Link></div>
+        {attempt.error instanceof ApiError && attempt.error.status === 404
+          ? <div><Link className={buttonClass()} to="/quizzes/history">See your quizzes</Link></div>
+          : <div><Button variant="secondary" onClick={() => attempt.refetch()}>Try again</Button><Link className={buttonClass()} to="/">Back to Home</Link></div>}
       </div>
     )
   }

@@ -218,3 +218,38 @@ describe('Deleting a conversation', () => {
     expect(fetchMock).toHaveBeenCalledWith('/api/chat/sessions/5/', expect.objectContaining({ method: 'DELETE' }))
   })
 })
+
+describe('Chat edge cases', () => {
+  it('shows "Subject not found" for a subject that isn’t yours', async () => {
+    mockApi({ 'GET /api/me/': me, 'GET /api/subjects/99/chat/sessions/?limit=30': reply(404, { detail: 'Not found.' }), 'GET /api/subjects/99/materials/': reply(404, { detail: 'Not found.' }) })
+    renderApp('/subjects/99/chat')
+    expect(await screen.findByRole('heading', { name: 'Subject not found' })).toBeInTheDocument()
+    expect(screen.queryByLabelText('Ask XP')).not.toBeInTheDocument()
+  })
+
+  it('lists a new conversation as soon as its first answer arrives', async () => {
+    document.cookie = 'csrftoken=tok'
+    const stream = controlledStream()
+    const saved = { id: 9, title: 'B-tree basics', last_activity: at, message_count: 2, is_active: true }
+    let listed = 0
+    const fetchMock = mockApi({
+      'GET /api/me/': me,
+      'GET /api/subjects/3/chat/sessions/?limit=30': () => ({ body: { sessions: listed++ ? [saved] : [] } }),
+      'POST /api/subjects/3/chat/session/': reply(201, { id: 9, title: null, last_activity: at, message_count: 0, is_active: true }),
+      'GET /api/subjects/3/chat/messages/?session_id=9': { messages: [] },
+    })
+    const base = fetchMock.getMockImplementation()!
+    fetchMock.mockImplementation(async (input, init) => (String(input) === '/api/subjects/3/chat/stream/' ? stream.response : base(input, init)))
+    renderApp('/subjects/3/chat')
+    await userEvent.type(await screen.findByLabelText('Ask XP'), 'What is a B-tree?{Enter}')
+    await act(async () => {
+      stream.push(sse('done', {
+        user_message: { id: 11, role: 'user', content: 'What is a B-tree?', timestamp: at },
+        assistant_message: answer({ id: 12 }),
+        session: saved,
+      }))
+      stream.end()
+    })
+    expect(await screen.findByRole('link', { name: /B-tree basics/ })).toHaveAttribute('aria-current', 'page')
+  })
+})

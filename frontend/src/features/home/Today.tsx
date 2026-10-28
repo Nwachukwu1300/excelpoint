@@ -114,7 +114,16 @@ export function Today() {
       {data && (
         <div className="today-grid">
           <div className="today-main">
-            <ReviewHero due={data.due} />
+            {data.subjects.length === 0 ? (
+              <section className="first-run">
+                <span className="empty-icon"><Icon name="book" /></span>
+                <div>
+                  <h2>Start with your first subject</h2>
+                  <p>A subject holds the files for one class, like Biology. Then upload a PDF or Word file and ask XP about it.</p>
+                  <Link className={buttonClass()} to="/subjects?new=1"><Icon name="plus" />Create your first subject</Link>
+                </div>
+              </section>
+            ) : <ReviewHero due={data.due} />}
 
             <section className="dashboard-section">
               <div className="section-heading">
@@ -197,14 +206,6 @@ export function Today() {
                 </Link>
               ))}
             </section>
-            {data.subjects.length === 0 && (
-              <section className="new-user-preview">
-                <span className="empty-icon"><Icon name="book" /></span>
-                <h3>New to ExcelPoint?</h3>
-                <p>Create your first subject to organise materials and start learning.</p>
-                <Link className={buttonClass('secondary')} to="/subjects?new=1">Create your first subject</Link>
-              </section>
-            )}
           </aside>
         </div>
       )}

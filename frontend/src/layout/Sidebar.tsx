@@ -51,7 +51,7 @@ export function Sidebar({ me, collapsed, onToggle }: { me?: Me; collapsed: boole
             {me.subjects.map(s => (
               <Link key={s.id} to={`/subjects/${s.id}`} className={pathname === `/subjects/${s.id}` ? 'is-active' : ''}>
                 <span>{s.name}</span>
-                <small>{s.due_count}</small>
+                {s.due_count > 0 && <small title={`${s.due_count} card${s.due_count === 1 ? '' : 's'} to review`}>{s.due_count}</small>}
               </Link>
             ))}
             <Link className="new-subject" to="/subjects?new=1">

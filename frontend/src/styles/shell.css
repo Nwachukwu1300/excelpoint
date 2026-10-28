@@ -36,7 +36,8 @@
 .app-main.sidebar-collapsed { margin-left: 72px; }
 
 .topbar { position: sticky; top: 0; z-index: 15; display: flex; height: var(--topbar-height); align-items: center; justify-content: space-between; padding: 0 32px; border-bottom: 1px solid var(--border); background: color-mix(in srgb, var(--card) 92%, transparent); backdrop-filter: blur(12px); }
-.breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+.breadcrumb { display: flex; min-width: 0; align-items: center; gap: 6px; font-size: 13px; }
+.breadcrumb strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .breadcrumb span { color: var(--muted); }
 .breadcrumb .icon { color: var(--muted); }
 .breadcrumb strong { font-weight: 600; }

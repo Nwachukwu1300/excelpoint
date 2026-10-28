@@ -128,6 +128,12 @@ class QuizApiTest(TestCase):
         self.assertEqual(intruder.post(f'/api/quiz/attempts/{attempt}/submit/', {}, content_type='application/json').status_code, 404)
         self.assertEqual(intruder.get('/api/quiz/attempts/').json()['attempts'], [])
 
+    def test_a_missing_quiz_says_so_plainly(self):
+        for response in [self.client.get('/api/quiz/attempts/999999/'),
+                         self.client.post('/api/quiz/999999/attempts/', {}, content_type='application/json')]:
+            self.assertEqual(response.status_code, 404)
+            self.assertEqual(response.json()['detail'], "This quiz doesn't exist, or it was deleted.")
+
     def test_the_generation_job_marks_its_own_failure(self):
         from subjects.tasks import generate_dynamic_quiz_questions
         orphan = Quiz.objects.create(subject=self.quiz.subject, title='No material')  # nothing to write questions from

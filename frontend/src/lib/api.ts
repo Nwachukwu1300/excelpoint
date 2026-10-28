@@ -89,4 +89,4 @@ export const googleSignIn = (me: ReturnType<typeof useMe>) =>
 export const displayName = (me: Me) => [me.first_name, me.last_name].filter(Boolean).join(' ') || me.username
 
 export const initials = (name: string) =>
-  name.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]!.toUpperCase()).join('') || '?'
+  name.split(/\s+/).filter(Boolean).slice(0, 2).map(w => [...w][0]!.toUpperCase()).join('') || '?' // [...w]: whole characters, not UTF-16 halves

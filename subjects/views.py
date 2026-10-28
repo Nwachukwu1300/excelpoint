@@ -812,6 +812,7 @@ Generate a title that is:
 - Maximum 50 characters
 - Clear and descriptive
 - No quotes or special formatting
+- In the same language as the user's question (the subject name may be in another language)
 
 Title:"""
             

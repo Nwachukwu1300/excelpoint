@@ -3,11 +3,10 @@
 import logging
 from collections import defaultdict
 
-from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import api_view
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.response import Response
 
 from .models import Quiz, UserQuizAttempt
@@ -36,15 +35,23 @@ def _attempt_payload(attempt):
     }
 
 
+MISSING_QUIZ = "This quiz doesn't exist, or it was deleted."
+
+
 def _own_attempt(request, attempt_id):
-    return get_object_or_404(UserQuizAttempt.objects.select_related('quiz__subject', 'quiz__material'),
-                             id=attempt_id, user=request.user)
+    attempt = (UserQuizAttempt.objects.select_related('quiz__subject', 'quiz__material')
+               .filter(id=attempt_id, user=request.user).first())
+    if attempt is None:
+        raise NotFound(MISSING_QUIZ)  # not Django's "No UserQuizAttempt matches the given query."
+    return attempt
 
 
 @api_view(['POST'])
 def start_attempt(request, quiz_id):
     """Start a quiz: the standard questions, or {"fresh": true} for new ones written by XP in the background."""
-    quiz = get_object_or_404(Quiz.objects.select_related('subject', 'material'), id=quiz_id, subject__user=request.user)
+    quiz = Quiz.objects.select_related('subject', 'material').filter(id=quiz_id, subject__user=request.user).first()
+    if quiz is None:
+        raise NotFound(MISSING_QUIZ)
     fresh = request.data.get('fresh') is True
     if fresh:
         # Unfinished fresh attempts on this quiz are left behind for good

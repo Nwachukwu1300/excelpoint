@@ -46,9 +46,9 @@ describe('Today', () => {
   it('welcomes a brand-new user instead of showing empty numbers', async () => {
     mockApi({ 'GET /api/me/': { ...me, subjects: [], due_count: 0 }, 'GET /api/home/': emptyHome })
     renderApp('/')
-    expect(await screen.findByRole('heading', { name: 'Nothing to review now' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Start with your first subject' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Create your first subject' })).toHaveAttribute('href', '/subjects?new=1')
     expect(screen.queryByRole('link', { name: 'Start review' })).not.toBeInTheDocument()
-    expect(screen.getByText('New to ExcelPoint?')).toBeInTheDocument()
     expect(screen.getByText(/No conversations yet/)).toBeInTheDocument()
     expect(screen.getByText(/Nothing to suggest yet/)).toBeInTheDocument()
   })
@@ -73,6 +73,9 @@ describe('Today helpers', () => {
     expect(todayLabel(new Date(2026, 2, 18))).toBe('WEDNESDAY, 18 MARCH')
     expect(subjectInitials('Computer Networks')).toBe('CN')
     expect(subjectInitials('Database Systems')).toBe('DS') // the mock-up's "DB" was hand-picked
+    expect(subjectInitials('  📚 علم الأحياء Biology 🌱  ')).toBe('عا')
+    expect(subjectInitials('📚')).toBe('?')
+    expect(subjectInitials('maths')).toBe('MA')
     expect(subjectInitials('Maths')).toBe('MA')
   })
 })

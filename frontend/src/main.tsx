@@ -10,6 +10,7 @@ import './styles/components.css'
 import './styles/shell.css'
 import { ApiError } from './lib/api'
 import { router } from './router'
+import './styles/phone.css' // after the pages' CSS (imported via the router), so it wins on phones
 
 const queryClient = new QueryClient({
   defaultOptions: {
