@@ -102,7 +102,7 @@ export function MaterialsTab({ subjectId, onUpload, onQuizzes }: { subjectId: nu
     <>
       <div className="tab-toolbar">
         <div>
-          <h2>Course materials</h2>
+          <h2>Files</h2>
           <p>{materials.data ? `${plural(materials.data.length, 'file')} · summaries and study tools stay linked to their source.` : 'Loading files…'}</p>
         </div>
         <Button icon="upload" onClick={onUpload}>Upload material</Button>
@@ -125,7 +125,7 @@ export function MaterialsTab({ subjectId, onUpload, onQuizzes }: { subjectId: nu
         <div className="empty-state empty-state--compact">
           <span className="empty-icon"><Icon name="upload" /></span>
           <h2>No files yet</h2>
-          <p>Upload lecture notes, slides or recordings. XP will turn each one into a summary, flashcards and a quiz.</p>
+          <p>Upload class notes as PDF or Word (.docx). XP will turn each one into a summary, flashcards and a quiz.</p>
           <Button icon="upload" onClick={onUpload}>Upload material</Button>
         </div>
       )}

@@ -32,7 +32,7 @@ def recommend(user, limit=6):
         recs.append({
             'kind': 'review', 'priority': 50 + min(row['n'], 40),
             'title': f"Review {row['n']} flashcard{'s' if row['n'] != 1 else ''} in {row['subject__name']}",
-            'reason': "They're due now; reviewing on schedule is what makes them stick.",
+            'reason': "They're ready to review now. Reviewing on time helps you remember them.",
             'url': reverse('review_flashcards', args=[row['subject_id']]),
             'subject_id': row['subject_id'], 'quiz_id': None,
         })
@@ -79,9 +79,9 @@ def recommend(user, limit=6):
         example = next((q for q in questions if q), '')
         recs.append({
             'kind': 'knowledge_gap', 'priority': 35 + len(questions),
-            'title': f"Add materials to {subject.name}",
-            'reason': (f"{len(questions)} recent question{'s weren’t' if len(questions) != 1 else ' wasn’t'} covered by your notes"
-                       + (f", e.g. “{example[:80]}”." if example else ".")),
+            'title': f"Add files to {subject.name}",
+            'reason': (f"XP found nothing in your files for {len(questions)} recent question{'s' if len(questions) != 1 else ''}"
+                       + (f", for example “{example[:80]}”." if example else ".")),
             'url': reverse('subject_detail', args=[subject.id]),
             'subject_id': subject.id, 'quiz_id': None,
         })

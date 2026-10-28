@@ -8,15 +8,15 @@ import { Badge, Logo, Skeleton, buttonClass } from '../../ui/primitives'
 import '../../styles/auth.css'
 
 const STEPS: [IconName, string, string][] = [
-  ['upload', 'Upload', 'Add PDFs, Word documents, recordings, and videos.'],
-  ['sparkles', 'Ask XP', 'Get focused answers that cite your own notes.'],
-  ['repeat', 'Review', 'Practise with quizzes and spaced-repetition flashcards.'],
+  ['upload', 'Upload', 'Add your class notes as PDF or Word (.docx) files.'],
+  ['sparkles', 'Ask XP', 'XP is your AI study assistant. It answers from your files and shows where each answer came from.'],
+  ['repeat', 'Review', 'Practise with quizzes, and flashcards that come back just before you would forget them.'],
 ]
 const FEATURES: [IconName, string, string][] = [
-  ['sparkles', 'Grounded answers', 'XP answers only from your materials, with citations and confidence on every response.'],
+  ['sparkles', 'Answers only from your files', 'XP uses nothing but the files you upload, and shows the source of every answer and how sure it is.'],
   ['file', 'Quizzes, cards, and summaries', 'Generate useful study aids from every upload without copying and pasting.'],
-  ['repeat', 'Spaced repetition', 'Review cards on a schedule that stretches as your memory gets stronger.'],
-  ['chart', 'Answer quality insights', 'Track faithfulness, unsupported claims, retrieval quality, and full answer traces.'],
+  ['repeat', 'Flashcards at the right time', 'Each card comes back just before you would forget it, with longer gaps as you learn it.'],
+  ['chart', 'Check every answer', 'See how closely each answer matches your files, and which parts of your files XP used.'],
 ]
 
 export function Landing() {
@@ -33,9 +33,9 @@ export function Landing() {
       </header>
       <main>
         <section className="landing-hero">
-          <motion.div {...reveal(0)}><Badge tone="ai"><Icon name="sparkles" size={12} /> GROUNDED AI STUDY TOOLS</Badge></motion.div>
+          <motion.div {...reveal(0)}><Badge tone="ai"><Icon name="sparkles" size={12} /> AI STUDY ASSISTANT</Badge></motion.div>
           <motion.h1 {...reveal(1)}>Learn faster from your own materials</motion.h1>
-          <motion.p {...reveal(2)}>Upload your notes and lectures. Ask XP questions with cited answers, then turn every file into summaries, quizzes, and flashcards.</motion.p>
+          <motion.p {...reveal(2)}>Upload your class notes. Ask XP, your AI study assistant, and get answers that show where they came from. Every file also becomes a summary, a quiz and flashcards.</motion.p>
           <motion.div className="landing-actions" {...reveal(3)}>
             <Link className={buttonClass()} to="/register">Start studying free <Icon name="arrow" size={15} /></Link>
             <Link className={buttonClass('secondary')} to="/login">Sign in</Link>
@@ -58,7 +58,7 @@ export function Landing() {
         </section>
         <section className="how-section">
           <p className="overline">HOW IT WORKS</p>
-          <h2>From upload to understanding</h2>
+          <h2>Three simple steps</h2>
           <div>
             {STEPS.map(([icon, title, text], i) => (
               <article key={title}>
@@ -73,7 +73,7 @@ export function Landing() {
         <section className="features-section">
           <div>
             <p className="overline">BUILT FOR TRUSTED LEARNING</p>
-            <h2>Know more. Guess less.</h2>
+            <h2>Answers you can check</h2>
             <p>ExcelPoint turns the materials you already trust into an active study system, and shows you exactly where every answer came from.</p>
           </div>
           <div className="feature-grid">

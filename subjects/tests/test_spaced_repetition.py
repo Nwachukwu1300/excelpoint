@@ -81,7 +81,7 @@ class ReviewReminderTest(TestCase):
 
         self.assertEqual(send_review_reminders(), {'reminders_sent': 1})
         note = Notification.objects.get()
-        self.assertEqual((note.user, note.title, note.url), (user, '3 flashcards due for review', f'/subjects/{heavy.id}/review/'))
+        self.assertEqual((note.user, note.title, note.url), (user, '3 flashcards ready to review', f'/subjects/{heavy.id}/review/'))
         self.assertEqual(send_review_reminders(), {'reminders_sent': 0})  # already reminded today
 
     def test_beat_schedule_points_at_real_task(self):

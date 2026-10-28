@@ -80,7 +80,7 @@ export function AnswerTrace() {
       <div className="page-content trace-page">
         <Link className="back-link" to="/insights"><Icon name="chevronRight" size={14} /> Back to Insights</Link>
         <div className="empty-state">
-          <h2>{trace.error.message.includes('404') || trace.error.message === 'Not found.' ? 'This answer isn’t available' : 'We couldn’t load this trace'}</h2>
+          <h2>{trace.error.message.includes('404') || trace.error.message === 'Not found.' ? 'This answer isn’t available' : 'We couldn’t load this answer’s details'}</h2>
           <p>It may belong to a subject that was deleted.</p>
           <Button variant="secondary" onClick={() => trace.refetch()}>Try again</Button>
         </div>
@@ -107,7 +107,7 @@ export function AnswerTrace() {
       <Link className="back-link" to="/insights"><Icon name="chevronRight" size={14} /> Back to Insights</Link>
       <div className="trace-header">
         <div>
-          <p className="overline">ANSWER TRACE · {when.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase()}, {when.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</p>
+          <p className="overline">HOW THIS ANSWER WAS MADE · {when.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase()}, {when.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</p>
           <h1>{t.question}</h1>
           <p>Total response time: {ms(t.total_ms)}{t.subject ? ` · ${t.subject.name}` : ''}</p>
         </div>
@@ -116,7 +116,7 @@ export function AnswerTrace() {
       <div className="trace-chips">
         <Badge>{t.follow_up ? 'Follow-up' : 'Standalone'}</Badge>
         {t.confidence.score != null && <ConfidencePill value={t.confidence.score} />}
-        {heuristic?.faithfulness != null && <Badge tone={heuristic.faithfulness >= 0.8 ? 'success' : 'warning'}>Faithfulness {num(heuristic.faithfulness)}</Badge>}
+        {heuristic?.faithfulness != null && <Badge tone={heuristic.faithfulness >= 0.8 ? 'success' : 'warning'}>Match {num(heuristic.faithfulness)}</Badge>}
         {t.chunks.length > 0 && <VerificationBadge verified={!t.unverified} />}
         <Badge>{plural(t.retry_count, 'retry', 'retries')}</Badge>
       </div>
@@ -160,7 +160,7 @@ export function AnswerTrace() {
         <Section n={5} title="Verification">
           <div className="verification-head">
             {t.chunks.length > 0 && <VerificationBadge verified={!t.unverified} />}
-            <span>{claims ? `${t.verification.supported_claims.length} of ${plural(claims, 'claim')} grounded in retrieved chunks` : 'No claims were checked for this answer'}</span>
+            <span>{claims ? `${t.verification.supported_claims.length} of ${plural(claims, 'statement')} backed by your files` : 'No statements were checked for this answer'}</span>
           </div>
           {t.verification.reasoning && <p className="verification-reason">{t.verification.reasoning}</p>}
           <div className="claims-grid">
@@ -171,10 +171,10 @@ export function AnswerTrace() {
                 : <div className="no-claims">None recorded.</div>}
             </div>
             <div>
-              <h3>Unsupported claims</h3>
+              <h3>Statements not backed by your files</h3>
               {t.verification.unsupported_claims.length
                 ? t.verification.unsupported_claims.map(c => <p className="is-unsupported" key={c}><Icon name="close" size={14} />{c}</p>)
-                : <div className="no-claims">No unsupported claims detected.</div>}
+                : <div className="no-claims">Every statement is backed by your files.</div>}
             </div>
           </div>
         </Section>

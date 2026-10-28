@@ -60,11 +60,11 @@ function ReviewHero({ due }: { due: Home['due'] }) {
       <div>
         <span className="review-symbol"><Icon name="repeat" /></span>
         <div>
-          <span className="eyebrow">TODAY’S REVIEW</span>
-          {caughtUp ? <h2>All caught up</h2> : <h2><CountUp value={due.count} /> flashcard{due.count === 1 ? '' : 's'} due</h2>}
+          <span className="eyebrow">CARDS TO REVIEW</span>
+          {caughtUp ? <h2>Nothing to review now</h2> : <h2><CountUp value={due.count} /> flashcard{due.count === 1 ? '' : 's'} to review</h2>}
           <p>
             {caughtUp
-              ? 'Nothing is due right now. New cards appear when you upload materials.'
+              ? 'New cards appear when you upload files. Cards you have reviewed come back when it’s time.'
               : `Across ${due.subjects} subject${due.subjects === 1 ? '' : 's'} · about ${due.minutes} minute${due.minutes === 1 ? '' : 's'}`}
           </p>
         </div>
@@ -150,7 +150,7 @@ export function Today() {
                 <div className="section-heading">
                   <div>
                     <h2>Your subjects</h2>
-                    <p>Progress across your current courses.</p>
+                    <p>Cards to review and your latest quiz score in each subject.</p>
                   </div>
                   <Link to="/subjects">View all <Icon name="arrow" size={15} /></Link>
                 </div>
@@ -160,10 +160,10 @@ export function Today() {
                       <SubjectIcon id={s.id} name={s.name} />
                       <div>
                         <strong>{s.name}</strong>
-                        <span>{s.materials_count} material{s.materials_count === 1 ? '' : 's'}</span>
+                        <span>{s.materials_count} file{s.materials_count === 1 ? '' : 's'}</span>
                       </div>
                       <dl>
-                        <div><dt>Due</dt><dd>{s.due_count}</dd></div>
+                        <div><dt>To review</dt><dd>{s.due_count}</dd></div>
                         <div><dt>Last quiz</dt><dd>{s.last_quiz_score === null ? '—' : `${s.last_quiz_score}%`}</dd></div>
                       </dl>
                       <Icon name="chevronRight" size={16} />

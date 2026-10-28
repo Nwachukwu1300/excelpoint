@@ -25,7 +25,7 @@ describe('Today', () => {
     mockApi({ 'GET /api/me/': me, 'GET /api/home/': home })
     renderApp('/')
 
-    expect(await screen.findByRole('heading', { name: '20 flashcards due' }, { timeout: 3000 })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: '20 flashcards to review' }, { timeout: 3000 })).toBeInTheDocument()
     expect(screen.getByText('Across 2 subjects · about 9 minutes')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Start review' })).toHaveAttribute('href', '/review')
 
@@ -35,9 +35,9 @@ describe('Today', () => {
     expect(within(steps[1]!).getByRole('link', { name: 'Review' })).toHaveClass('button--secondary')
     expect(within(steps[1]!).getByRole('link', { name: 'Review' })).toHaveAttribute('href', '/review?subject=3')
 
-    const db = screen.getByRole('link', { name: /Database Systems\s*8 materials/ })
+    const db = screen.getByRole('link', { name: /Database Systems\s*8 files/ })
     expect(within(db).getByText('45%')).toBeInTheDocument()
-    expect(within(screen.getByRole('link', { name: /Maths\s*0 materials/ })).getByText('—')).toBeInTheDocument()
+    expect(within(screen.getByRole('link', { name: /Maths\s*0 files/ })).getByText('—')).toBeInTheDocument()
 
     expect(screen.getByRole('link', { name: /B-tree indexes explained/ })).toHaveAttribute('href', '/subjects/3/chat/5')
     expect(screen.queryByText('New to ExcelPoint?')).not.toBeInTheDocument()
@@ -46,7 +46,7 @@ describe('Today', () => {
   it('welcomes a brand-new user instead of showing empty numbers', async () => {
     mockApi({ 'GET /api/me/': { ...me, subjects: [], due_count: 0 }, 'GET /api/home/': emptyHome })
     renderApp('/')
-    expect(await screen.findByRole('heading', { name: 'All caught up' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Nothing to review now' })).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'Start review' })).not.toBeInTheDocument()
     expect(screen.getByText('New to ExcelPoint?')).toBeInTheDocument()
     expect(screen.getByText(/No conversations yet/)).toBeInTheDocument()
@@ -61,7 +61,7 @@ describe('Today', () => {
     })
     renderApp('/')
     await userEvent.click(await screen.findByRole('button', { name: 'Try again' }))
-    expect(await screen.findByRole('heading', { name: '20 flashcards due' }, { timeout: 3000 })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: '20 flashcards to review' }, { timeout: 3000 })).toBeInTheDocument()
   })
 })
 

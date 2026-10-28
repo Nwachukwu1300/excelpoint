@@ -66,11 +66,11 @@ export function Sidebar({ me, collapsed, onToggle }: { me?: Me; collapsed: boole
       <div className="sidebar-help">
         {!collapsed && me && (
           <>
-            <Badge tone="ai">AI study tip</Badge>
+            <Badge tone="ai">Study tip</Badge>
             <p>
               {me.due_count > 0
                 ? `Review ${me.due_count} card${me.due_count === 1 ? '' : 's'} today to stay on track.`
-                : me.subjects.length ? 'You’re all caught up. Ask XP about anything in your materials.' : 'Create a subject and upload a file to get started.'}
+                : me.subjects.length ? 'No cards to review now. Ask XP about anything in your files.' : 'Create a subject and upload a file to get started.'}
             </p>
           </>
         )}

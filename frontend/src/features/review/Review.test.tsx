@@ -20,7 +20,7 @@ describe('Review session', () => {
     renderApp('/review')
 
     expect(await screen.findByRole('heading', { name: 'What is a B-tree?' })).toBeInTheDocument()
-    expect(screen.getByText('1 of 2 due')).toBeInTheDocument()
+    expect(screen.getByText('Card 1 of 2')).toBeInTheDocument()
     expect(screen.queryByRole('navigation', { name: 'Primary navigation' })).not.toBeInTheDocument() // focus mode: no sidebar
 
     await userEvent.click(screen.getByRole('button', { name: 'Show answer' }))
@@ -31,7 +31,7 @@ describe('Review session', () => {
     expect(await screen.findByRole('heading', { name: 'What is ACID?' })).toBeInTheDocument()
     await userEvent.keyboard(' ')
     await userEvent.keyboard('4') // 4th button = Easy
-    expect(await screen.findByRole('heading', { name: 'All caught up' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Nothing to review now' })).toBeInTheDocument()
     expect(screen.getByText(/You reviewed 2 cards/)).toBeInTheDocument()
 
     const grades = fetchMock.mock.calls.filter(([url]) => url === '/api/review/grade/').map(([, init]) => JSON.parse(init!.body as string))
@@ -44,7 +44,7 @@ describe('Review session', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Show answer' }))
     expect(screen.getByRole('button', { name: /Again\s*This session/ })).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: /Again/ }))
-    expect(await screen.findByText('2 of 2 due')).toBeInTheDocument()
+    expect(await screen.findByText('Card 2 of 2')).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'What is a B-tree?' })).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Show answer' }))
     await userEvent.click(screen.getByRole('button', { name: /Good/ }))
@@ -64,8 +64,8 @@ describe('Review session', () => {
   it('says when nothing is due', async () => {
     mockApi({ 'GET /api/me/': me, 'GET /api/review/queue/?subject=4': { ...queue, due_count: 0, cards: [] } })
     renderApp('/review?subject=4')
-    expect(await screen.findByRole('heading', { name: 'All caught up' })).toBeInTheDocument()
-    expect(screen.getByText(/Nothing is due right now/)).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Nothing to review now' })).toBeInTheDocument()
+    expect(screen.getByText(/New cards appear when you upload files/)).toBeInTheDocument()
   })
 
   it('labels intervals', () => {

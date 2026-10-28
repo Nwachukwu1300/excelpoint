@@ -193,7 +193,7 @@ export function ChatPage() {
             <div className="chat-empty">
               <span className="xp-avatar"><Icon name="sparkles" /></span>
               <h1>Ask anything about your {subjectName} materials</h1>
-              <p>Every answer is grounded in your files and includes its sources.</p>
+              <p>XP answers only from your files and shows where each answer came from.</p>
               <div>
                 {['Summarise the key ideas', 'Explain the hardest concept simply', 'What are the most important definitions?'].map(q => (
                   <button type="button" key={q} onClick={() => send(q)}>{q}</button>

@@ -24,7 +24,7 @@ function TrendChart({ summary }: { summary: InsightsData['summary'] }) {
   return (
     <div className="quality-chart">
       <div className="chart-axis" aria-hidden="true"><span>1.0</span><span>0.5</span><span>0</span></div>
-      <div className="chart-plot" role="img" aria-label={`Questions and faithfulness per day for the last ${summary.days} days`}>
+      <div className="chart-plot" role="img" aria-label={`Questions and match with your files per day for the last ${summary.days} days`}>
         {series.map((s, i) => (
           <div className="chart-day" key={i} title={s.day ? `${s.date.toLocaleDateString('en-GB')}: ${plural(s.day.sessions, 'question')}` : undefined}>
             <motion.span initial={{ height: 0 }} animate={{ height: `${((s.day?.sessions ?? 0) / most) * 72}%` }} transition={{ ...spring.gentle, delay: Math.min(i, 30) * 0.01 }} />
@@ -99,7 +99,7 @@ export function Insights() {
         <div className="empty-state">
           <span className="empty-icon"><Icon name="chart" /></span>
           <h2>No insights yet</h2>
-          <p>Ask XP a question about your materials. Every answer is scored here for faithfulness, sources and speed.</p>
+          <p>Ask XP a question about your files. Each answer is checked here: how well it matches your files, which parts it used, and how fast it was.</p>
           <Link className={buttonClass('secondary')} to="/subjects">Go to subjects</Link>
         </div>
       )}
@@ -107,9 +107,9 @@ export function Insights() {
         <>
           <div className="stats-grid">
             <Metric label="Questions asked" value={<CountUp value={t.sessions} />} note={`In the last ${days} days`} badge={`${days}d`} tone="primary" />
-            <Metric label="Faithfulness" value={num(t.faithfulness)} note="How closely answers stick to your sources"
+            <Metric label="Match with your files" value={num(t.faithfulness)} note="How closely answers stick to your files (1 is best)"
               badge={t.faithfulness == null ? '—' : confidenceLevel(t.faithfulness)} tone={t.faithfulness == null ? 'neutral' : t.faithfulness >= 0.8 ? 'success' : 'warning'} />
-            <Metric label="Unsupported claims" value={pct(t.hallucination_rate)} note={`${plural(t.unverified, 'answer')} not fully verified`} badge={`${days}d`} tone="warning" />
+            <Metric label="Not backed by your files" value={pct(t.hallucination_rate)} note={`${plural(t.unverified, 'answer')} not fully verified`} badge={`${days}d`} tone="warning" />
             <Metric label="Not in materials" value={pct(t.sessions ? t.no_context / t.sessions : null)} note={`${plural(t.no_context, 'question')} found nothing in your files`} badge={`${days}d`} tone="neutral" />
           </div>
           <div className="insights-layout">
@@ -117,10 +117,10 @@ export function Insights() {
               <div className="card-heading">
                 <div>
                   <h2>Daily trend</h2>
-                  <p>Faithfulness and questions per day</p>
+                  <p>Questions and match with your files, per day</p>
                 </div>
                 <div className="chart-legend" aria-hidden="true">
-                  <span className="line-key">Faithfulness</span>
+                  <span className="line-key">Match</span>
                   <span className="bar-key">Questions</span>
                   <span className="dot-key">Nothing found</span>
                 </div>
@@ -128,11 +128,11 @@ export function Insights() {
               <TrendChart summary={data.summary} />
             </section>
             <section className="retrieval-card">
-              <div className="card-heading"><div><h2>Retrieval performance</h2><p>Average across selected period</p></div></div>
+              <div className="card-heading"><div><h2>Finding the right parts</h2><p>How XP searched your files, on average</p></div></div>
               <dl className="retrieval-list">
                 {[
                   ['Top similarity', num(data.summary.retrieval.avg_top_similarity)],
-                  ['Chunks retrieved', num(data.summary.retrieval.avg_chunks, 1)],
+                  ['Parts of files used', num(data.summary.retrieval.avg_chunks, 1)],
                   ['Search time', ms(data.summary.retrieval.avg_retrieval_ms)],
                   ['Total time', ms(data.summary.retrieval.avg_total_ms)],
                   ['Unverified answers', String(t.unverified)],
@@ -146,14 +146,14 @@ export function Insights() {
               <div><h2>Needs attention</h2><p>Answers with weak or incomplete evidence</p></div>
               <Badge tone={data.summary.failures.length ? 'warning' : 'success'}>{plural(data.summary.failures.length, 'answer')}</Badge>
             </div>
-            {data.summary.failures.length === 0 && <p className="list-empty">Nothing to look at: every answer in this period was grounded in your materials.</p>}
+            {data.summary.failures.length === 0 && <p className="list-empty">Nothing to look at: every answer in this period matched your files.</p>}
             {data.summary.failures.map((f, i) => (
               <motion.div key={f.session_id} {...reveal(i)}>
                 <Link className="attention-row" to={`/insights/${f.session_id}`}>
                   <span className="warning-marker"><Icon name="clock" size={15} /></span>
                   <strong>{f.query}</strong>
                   <span className="reason-chips">{f.reasons.map(r => <Badge tone="warning" key={r}>{r}</Badge>)}</span>
-                  <span className="trace-link">Inspect trace <Icon name="arrow" size={14} /></span>
+                  <span className="trace-link">See how this answer was made <Icon name="arrow" size={14} /></span>
                 </Link>
               </motion.div>
             ))}

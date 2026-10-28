@@ -11,7 +11,7 @@ const ALL = 'All materials'
 
 /** "Due today" or "In 3 days"; never-reviewed cards are due now. */
 export function dueLabel(card: Flashcard, now = Date.now()) {
-  if (!card.due_at) return { label: 'Due today', due: true }
+  if (!card.due_at) return { label: 'Review today', due: true }
   const days = Math.ceil((new Date(card.due_at).getTime() - now) / 86_400_000)
   if (days <= 0) return { label: 'Due today', due: true }
   return { label: days === 1 ? 'Tomorrow' : `In ${days} days`, due: false }
@@ -28,7 +28,7 @@ export function FlashcardsTab({ subjectId, dueCount }: { subjectId: number; dueC
       <div className="tab-toolbar">
         <div>
           <h2>Flashcards</h2>
-          <p>{cards.data ? `${dueCount} due today · ${plural(cards.data.length, 'card')} total` : 'Loading cards…'}</p>
+          <p>{cards.data ? `${dueCount} to review today · ${plural(cards.data.length, 'card')} in total` : 'Loading cards…'}</p>
         </div>
         <div className="toolbar-actions">
           {sources.length > 1 && (
@@ -41,8 +41,8 @@ export function FlashcardsTab({ subjectId, dueCount }: { subjectId: number; dueC
             </div>
           )}
           {dueCount > 0
-            ? <Link className={buttonClass()} to={`/review?subject=${subjectId}`}>Review {dueCount} due</Link>
-            : <Button disabled>Nothing due</Button>}
+            ? <Link className={buttonClass()} to={`/review?subject=${subjectId}`}>Review {plural(dueCount, 'card')}</Link>
+            : <Button disabled>No cards to review</Button>}
         </div>
       </div>
       {cards.isPending && (

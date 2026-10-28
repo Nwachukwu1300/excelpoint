@@ -51,7 +51,7 @@ export function NotificationsPage() {
         <div className="empty-state empty-state--compact">
           <span className="empty-icon"><Icon name="bell" /></span>
           <h2>No notifications yet</h2>
-          <p>You’ll hear from XP when a file is ready to study or cards are due for review.</p>
+          <p>You’ll hear from XP when a file is ready to study or cards are ready to review.</p>
         </div>
       )}
       {items.length > 0 && (

@@ -68,7 +68,7 @@ export function AuthPage({ mode }: { mode: 'signin' | 'register' }) {
       <form className="auth-card" onSubmit={submit}>
         <div>
           <h1>{register ? 'Create your account' : 'Welcome back'}</h1>
-          <p>{register ? 'Turn your course materials into a study system.' : 'Sign in to continue studying.'}</p>
+          <p>{register ? 'Turn your class notes into summaries, quizzes and flashcards.' : 'Sign in to continue studying.'}</p>
         </div>
         {googleSignIn(me) && (
           <>

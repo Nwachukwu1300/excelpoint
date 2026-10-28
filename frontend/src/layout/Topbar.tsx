@@ -56,7 +56,7 @@ function NotificationsMenu({ onClose }: { onClose: () => void }) {
           </div>
         )}
         {list.isError && <p className="dropdown-empty">Couldn’t load notifications. Try again in a moment.</p>}
-        {list.isSuccess && items.length === 0 && <p className="dropdown-empty">You’re all caught up.</p>}
+        {list.isSuccess && items.length === 0 && <p className="dropdown-empty">No new notifications.</p>}
         {items.map(n => {
           const look = notificationLook(n)
           return (
@@ -145,7 +145,7 @@ export function Topbar({ me }: { me?: Me }) {
   return (
     <header className="topbar">
       <div className="breadcrumb">
-        <span>Workspace</span>
+        <span>ExcelPoint</span>
         <Icon name="chevronRight" size={14} />
         <strong>{title}</strong>
       </div>

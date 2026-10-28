@@ -35,7 +35,7 @@ describe('Insights', () => {
     expect(await screen.findByText('0.87')).toBeInTheDocument()
     expect(screen.getByText('6.4%')).toBeInTheDocument() // unsupported claims
     expect(screen.getByText('25%')).toBeInTheDocument() // 1 of 4 found nothing
-    expect(screen.getByRole('link', { name: /What is horizontal sharding\?.*Inspect trace/ })).toHaveAttribute('href', '/insights/abc')
+    expect(screen.getByRole('link', { name: /What is horizontal sharding\?.*See how this answer was made/ })).toHaveAttribute('href', '/insights/abc')
     const row = screen.getByRole('cell', { name: /How do B-trees work\?/ }).closest('tr')!
     expect(within(row).getByText('High · 0.92')).toBeInTheDocument()
     expect(within(row).getByText('842 ms')).toBeInTheDocument()
@@ -59,8 +59,8 @@ describe('Insights', () => {
     expect(screen.getByText('lecture4.pdf')).toBeInTheDocument()
     expect(screen.getByText('Chunk 18')).toBeInTheDocument()
     expect(screen.getByText('638 ms')).toBeInTheDocument()
-    expect(screen.getByText('1 of 1 claim grounded in retrieved chunks')).toBeInTheDocument()
-    expect(screen.getByText('No unsupported claims detected.')).toBeInTheDocument()
+    expect(screen.getByText('1 of 1 statement backed by your files')).toBeInTheDocument()
+    expect(screen.getByText('Every statement is backed by your files.')).toBeInTheDocument()
     expect(screen.getByText('Passed on the first attempt')).toBeInTheDocument()
     expect(screen.getByText('B-tree', { selector: 'strong' })).toBeInTheDocument()
     expect(screen.getByText('View first attempt')).toBeInTheDocument()

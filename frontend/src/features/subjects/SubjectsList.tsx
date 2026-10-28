@@ -19,9 +19,8 @@ export function SubjectsList() {
     <div className="page-content">
       <div className="page-intro">
         <div>
-          <p className="overline">LIBRARY</p>
           <h1>Subjects</h1>
-          <p>Organise materials, quizzes, and flashcards by course.</p>
+          <p>Each subject keeps its files, quizzes and flashcards together.</p>
         </div>
         <Button icon="plus" onClick={() => setCreating(true)}>New subject</Button>
       </div>
@@ -46,7 +45,7 @@ export function SubjectsList() {
         <div className="empty-state">
           <span className="empty-icon"><Icon name="book" /></span>
           <h2>Create your first subject</h2>
-          <p>A subject keeps one course’s files together. XP turns each upload into a summary, flashcards and a quiz.</p>
+          <p>A subject holds the files for one class or topic. XP turns each file into a summary, flashcards and a quiz.</p>
           <Button icon="plus" onClick={() => setCreating(true)}>New subject</Button>
         </div>
       )}
@@ -58,9 +57,9 @@ export function SubjectsList() {
                 <SubjectIcon id={s.id} name={s.name} />
               </div>
               <h2>{s.name}</h2>
-              <p>{plural(s.materials_count, 'material')} · Updated {timeAgo(s.updated_at)}</p>
+              <p>{plural(s.materials_count, 'file')} · Updated {timeAgo(s.updated_at)}</p>
               <div className="subject-card-stats">
-                <div><strong>{s.due_count}</strong><span>cards due</span></div>
+                <div><strong>{s.due_count}</strong><span>to review</span></div>
                 <div><strong>{s.last_quiz_score === null ? '—' : `${s.last_quiz_score}%`}</strong><span>last quiz</span></div>
               </div>
               <Link className="button button--secondary full-width" to={`/subjects/${s.id}`}>

@@ -15,7 +15,7 @@ export function QuizzesTab({ subjectId }: { subjectId: number }) {
       <div className="tab-toolbar">
         <div>
           <h2>Quizzes</h2>
-          <p>Test your recall with questions grounded in each file.</p>
+          <p>Test what you remember with questions made from each file.</p>
         </div>
         <Link className={buttonClass('secondary')} to={`/quizzes/history?subject=${subjectId}`}>Quiz history</Link>
       </div>

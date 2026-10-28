@@ -82,13 +82,13 @@ export function ReviewSession() {
         <motion.span className="success-burst" initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 380, damping: 18 }}>
           <Icon name="check" />
         </motion.span>
-        <h1>All caught up</h1>
+        <h1>Nothing to review now</h1>
         <p>
           {reviewed
             ? `You reviewed ${plural(reviewed, 'card')}. Cards come back on a schedule that stretches each time you remember them.`
-            : 'Nothing is due right now. New cards appear when you upload materials, and reviewed ones return on their schedule.'}
+            : 'New cards appear when you upload files. Cards you have reviewed come back when it’s time to practise them again.'}
         </p>
-        <Link className={buttonClass()} to="/">Back to Today</Link>
+        <Link className={buttonClass()} to="/">Back to Home</Link>
       </div>
     )
   }
@@ -99,7 +99,7 @@ export function ReviewSession() {
       <header className="review-focus-head">
         <Logo />
         <div>
-          <strong>{card ? `${pos + 1} of ${total} due` : 'Loading cards…'}</strong>
+          <strong>{card ? `Card ${pos + 1} of ${total}` : 'Loading cards…'}</strong>
           <ProgressBar value={total ? (pos / total) * 100 : 0} label="Review progress" />
         </div>
         <Link className="icon-button" to={exitTo} aria-label="Exit review" title="Exit review"><Icon name="close" /></Link>

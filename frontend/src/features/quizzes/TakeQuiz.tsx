@@ -108,7 +108,7 @@ export function TakeQuiz() {
       <div className="generation-state">
         <h1>We couldn’t open this quiz</h1>
         <p>{attempt.error.message}</p>
-        <div><Button variant="secondary" onClick={() => attempt.refetch()}>Try again</Button><Link className={buttonClass()} to="/">Back to Today</Link></div>
+        <div><Button variant="secondary" onClick={() => attempt.refetch()}>Try again</Button><Link className={buttonClass()} to="/">Back to Home</Link></div>
       </div>
     )
   }

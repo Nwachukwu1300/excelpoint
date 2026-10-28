@@ -16,7 +16,7 @@ export function ErrorPage({ code }: { code: '404' | '500' }) {
       </p>
       <div>
         {/* reloadDocument: after a crash, start from a clean page rather than the broken app state */}
-        <Link to="/" className={buttonClass()} reloadDocument={!missing}>Back to Today</Link>
+        <Link to="/" className={buttonClass()} reloadDocument={!missing}>Back to Home</Link>
         {!missing && <Button variant="secondary" onClick={() => location.reload()}>Try again</Button>}
       </div>
     </div>

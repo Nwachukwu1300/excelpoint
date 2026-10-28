@@ -1025,8 +1025,8 @@ def send_review_reminders():
         if not total:
             continue
         Notification.notify(
-            user, 'review_due', f"{total} flashcard{'s' if total != 1 else ''} due for review",
-            body="A few minutes of review now keeps them in long-term memory.",
+            user, 'review_due', f"{total} flashcard{'s' if total != 1 else ''} ready to review",
+            body="A few minutes of practice now helps you remember them for longer.",
             url=f"/subjects/{per_subject[0]['subject_id']}/review/",
         )
         sent += 1

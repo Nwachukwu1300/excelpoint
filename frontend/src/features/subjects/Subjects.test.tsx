@@ -22,7 +22,7 @@ describe('Subjects list', () => {
     mockApi({ 'GET /api/me/': me, 'GET /api/subjects/summary/': summary })
     renderApp('/subjects')
     const card = (await screen.findByRole('heading', { name: 'Database Systems' })).closest('article')!
-    expect(within(card).getByText('2 materials · Updated just now')).toBeInTheDocument()
+    expect(within(card).getByText('2 files · Updated just now')).toBeInTheDocument()
     expect(within(card).getByText('45%')).toBeInTheDocument()
     expect(within(card).getByRole('link', { name: /Open subject/ })).toHaveAttribute('href', '/subjects/3')
   })
@@ -131,7 +131,7 @@ describe('Subject workspace', () => {
 
     await userEvent.click(screen.getByRole('tab', { name: /Flashcards/ }))
     expect(await screen.findByText('B-tree index')).toBeInTheDocument()
-    expect(screen.getByText('Due today')).toBeInTheDocument()
+    expect(screen.getByText('Review today')).toBeInTheDocument()
     expect(screen.getByText('In 3 days')).toBeInTheDocument()
     await userEvent.selectOptions(screen.getByLabelText('Filter by material'), 'notes.pdf')
     expect(screen.queryByText('B-tree index')).not.toBeInTheDocument()
@@ -161,7 +161,7 @@ describe('subject helpers', () => {
 
   it('labels due dates', () => {
     const at = Date.parse('2026-10-24T12:00:00Z')
-    expect(dueLabel({ id: 1, question: '', answer: '', material_name: null, due_at: null }, at).label).toBe('Due today')
+    expect(dueLabel({ id: 1, question: '', answer: '', material_name: null, due_at: null }, at).label).toBe('Review today')
     expect(dueLabel({ id: 1, question: '', answer: '', material_name: null, due_at: '2026-10-25T09:00:00Z' }, at).label).toBe('Tomorrow')
     expect(dueLabel({ id: 1, question: '', answer: '', material_name: null, due_at: '2026-10-20T09:00:00Z' }, at).due).toBe(true)
   })
