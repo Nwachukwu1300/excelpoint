@@ -98,6 +98,7 @@ export function Landing() {
       <footer className="landing-footer">
         <Logo />
         <Link to="/privacy">Privacy</Link>
+        <Link to="/terms">Terms</Link>
         <span>Free while in beta · © {new Date().getFullYear()} ExcelPoint</span>
       </footer>
     </div>

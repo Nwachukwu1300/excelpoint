@@ -21,7 +21,7 @@ class AppShellTest(TestCase):
 
     def test_sign_in_register_and_landing_are_public(self):
         with patch.object(views, 'APP_INDEX', self.index):
-            for url in ['/app/login', '/app/register', '/app/welcome', '/app/privacy']:
+            for url in ['/app/login', '/app/register', '/app/welcome', '/app/privacy', '/app/terms']:
                 self.assertEqual(self.client.get(url).status_code, 200, url)
         self.assertRedirects(self.client.get('/'), '/app/welcome', fetch_redirect_response=False)
         self.assertRedirects(self.client.get('/users/login/?next=/app/review'), '/app/login?next=/app/review', fetch_redirect_response=False)

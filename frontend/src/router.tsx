@@ -5,6 +5,7 @@ import { SettingsPage } from './features/account/SettingsPage'
 import { AuthPage } from './features/auth/AuthPage'
 import { Landing } from './features/auth/Landing'
 import { Privacy } from './features/auth/Privacy'
+import { Terms } from './features/auth/Terms'
 import { ChatPage } from './features/chat/ChatPage'
 import { AnswerTrace } from './features/insights/AnswerTrace'
 import { Insights } from './features/insights/Insights'
@@ -54,6 +55,7 @@ export const routes = [
   { path: 'register', element: <AuthPage mode="register" /> },
   { path: 'welcome', element: <Landing /> },
   { path: 'privacy', element: <Privacy /> },
+  { path: 'terms', element: <Terms /> },
   { path: '*', element: <ErrorPage code="404" /> },
 ]
 

@@ -87,7 +87,7 @@ export function AuthPage({ mode }: { mode: 'signin' | 'register' }) {
         <Button type="submit" className="full-width" disabled={busy}>
           {busy ? (register ? 'Creating account…' : 'Signing in…') : register ? 'Create account' : 'Sign in'}
         </Button>
-        {register && <p className="auth-privacy">Your files and questions stay private to you. <Link to="/privacy">Read how we handle your data</Link></p>}
+        {register && <p className="auth-privacy">By creating an account you agree to the <Link to="/terms">Terms</Link>. Your files and questions stay private to you: <Link to="/privacy">how we handle your data</Link>.</p>}
         <p className="auth-switch">
           {register ? 'Already have an account?' : 'New to ExcelPoint?'}{' '}
           <Link to={register ? '/login' : '/register'}>{register ? 'Sign in' : 'Create an account'}</Link>

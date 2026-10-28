@@ -14,7 +14,7 @@ Study-only app (the career features were removed on 2026-10-28): users upload co
 
 The UI is a **React app in `frontend/`** (React 19, React Router 7, TanStack Query 5, Motion, Vite 8; plain CSS ported from the Figma prototype, no Tailwind), served by Django at **`/app/`**:
 
-- `config/views.app_shell` serves the built `static/app/index.html` for every `/app/` route. Only `/app/login`, `/app/register` and `/app/welcome` are public; everything else redirects to `/app/login?next=…` (`LOGIN_URL`).
+- `config/views.app_shell` serves the built `static/app/index.html` for every `/app/` route. Only `/app/login`, `/app/register`, `/app/welcome`, `/app/privacy` and `/app/terms` are public; everything else redirects to `/app/login?next=…` (`LOGIN_URL`).
 - Auth is Django **session cookies + CSRF**: the app reads the `csrftoken` cookie (set by `/api/me/` and the shell) and sends `X-CSRFToken`. Sign-in/register/logout are plain Django views (`users/auth_api.py`) so CSRF is checked for signed-out visitors too.
 - Every old page that was rebuilt **redirects** into the app, keeping its URL name (`/`, subjects, review, quizzes, insights, notifications, settings, password, login, register). The removed career pages (`/learning/*`, `/users/profile/`, achievements, education, certifications) and the old `/users/logout/` page redirect to `/app/`.
 - Every app endpoint is owner-scoped and tested. Shared styles load first in `frontend/src/main.tsx`; each page imports its own CSS from `frontend/src/styles/`.
@@ -59,7 +59,7 @@ Motion should feel calm and fast: respect `prefers-reduced-motion`, and never an
 
 ### API used by the app
 
-- Shell and account: `GET/PATCH /api/me/`, `POST /api/me/password/`, `GET /api/notifications/`, `POST /api/notifications/read/`, `POST /api/auth/{login,register,logout}/` (Google stays `/users/google/login/`).
+- Shell and account: `GET/PATCH /api/me/` (signed out: 200 `{authenticated: false, google_sign_in}`), `POST /api/me/password/`, `POST /api/me/delete/ {confirm}`, `GET /api/me/export/` (zip), `GET /api/notifications/`, `POST /api/notifications/read/`, `POST /api/auth/{login,register,logout}/` (Google stays `/users/google/login/`).
 - Home: `GET /api/home/`. Subjects: `/api/subjects/` (+ `summary`, `materials`, `flashcards`, `quizzes`, `upload_material`), `DELETE /api/materials/<id>/`.
 - Chat: `/api/subjects/<id>/chat/{session,sessions,messages,stream}/`; `messages` (GET and POST) and `stream` take an optional `session_id` to open or continue a past conversation.
 - Review: `GET /api/review/queue/?subject=`, `POST /api/review/grade/`.
