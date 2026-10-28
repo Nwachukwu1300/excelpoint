@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { me, mockApi, renderApp, reply } from '../../test/render'
 
-const signedOut = { 'GET /api/me/': reply(403, { detail: 'Authentication credentials were not provided.' }) }
+const signedOut = { 'GET /api/me/': { authenticated: false, google_sign_in: true } }
 
 afterEach(() => vi.unstubAllGlobals())
 
@@ -34,7 +34,14 @@ describe('Sign in', () => {
     mockApi(signedOut)
     renderApp('/login?error=google')
     expect(await screen.findByRole('alert')).toHaveTextContent('Google sign-in didn’t work')
-    expect(screen.getByRole('link', { name: /Continue with Google/ })).toHaveAttribute('href', '/users/google/login/')
+    expect(await screen.findByRole('link', { name: /Continue with Google/ })).toHaveAttribute('href', '/users/google/login/')
+  })
+
+  it('hides Google sign-in when it isn’t set up', async () => {
+    mockApi({ 'GET /api/me/': { authenticated: false, google_sign_in: false } })
+    renderApp('/register')
+    expect(await screen.findByRole('heading', { name: 'Create your account' })).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Continue with Google/ })).not.toBeInTheDocument()
   })
 
   it('sends people who are already signed in straight into the app', async () => {

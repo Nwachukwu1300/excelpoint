@@ -2,11 +2,14 @@
 
 from collections import Counter
 
+from django.conf import settings
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm, SetPasswordForm
 from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.exceptions import NotAuthenticated
+from rest_framework.permissions import AllowAny
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
@@ -20,12 +23,21 @@ def _unread(user):
     return user.notifications.filter(read_at__isnull=True).count()
 
 
+def _google_sign_in():
+    return bool(settings.GOOGLE_OAUTH_CLIENT_ID and settings.GOOGLE_OAUTH_CLIENT_SECRET)
+
+
 @ensure_csrf_cookie  # the app reads the csrftoken cookie, so make sure it exists
 @api_view(['GET', 'PATCH'])
+@permission_classes([AllowAny])  # signed-out visitors get a 200 saying so, not a 403 logged as a console error
 def me(request):
     """Everything the app shell needs in one call: who you are, unread count, due cards per subject.
     PATCH saves the Settings page (names, email, education level) with the same rules as the old form."""
     user = request.user
+    if not user.is_authenticated:
+        if request.method != 'GET':
+            raise NotAuthenticated()
+        return Response({'authenticated': False, 'google_sign_in': _google_sign_in()})
     profile, _ = UserProfile.objects.get_or_create(user=user)
     if request.method == 'PATCH':
         current = {'first_name': user.first_name, 'last_name': user.last_name, 'email': user.email,
@@ -39,6 +51,8 @@ def me(request):
         user.save(update_fields=['first_name', 'last_name', 'email'])
     due = Counter(due_cards(user).order_by().values_list('subject_id', flat=True))
     return Response({
+        'authenticated': True,
+        'google_sign_in': _google_sign_in(),
         'id': user.id,
         'username': user.username,
         'first_name': user.first_name,

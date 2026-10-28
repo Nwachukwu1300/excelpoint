@@ -1,6 +1,6 @@
 import { useEffect, useState, type SyntheticEvent } from 'react'
 import { Link, useSearchParams } from 'react-router'
-import { csrfToken, useMe } from '../../lib/api'
+import { csrfToken, googleSignIn, useMe } from '../../lib/api'
 import { Icon } from '../../ui/Icon'
 import { Button, Logo } from '../../ui/primitives'
 import '../../styles/auth.css'
@@ -69,8 +69,12 @@ export function AuthPage({ mode }: { mode: 'signin' | 'register' }) {
           <h1>{register ? 'Create your account' : 'Welcome back'}</h1>
           <p>{register ? 'Turn your course materials into a study system.' : 'Sign in to continue studying.'}</p>
         </div>
-        <a className="button button--secondary google-button" href="/users/google/login/"><span className="google-mark" aria-hidden="true">G</span>Continue with Google</a>
-        <div className="auth-divider"><span>or continue with {register ? 'email' : 'your username'}</span></div>
+        {googleSignIn(me) && (
+          <>
+            <a className="button button--secondary google-button" href="/users/google/login/"><span className="google-mark" aria-hidden="true">G</span>Continue with Google</a>
+            <div className="auth-divider"><span>or continue with {register ? 'email' : 'your username'}</span></div>
+          </>
+        )}
         {errors.__all__ && (
           <div className="auth-error" role="alert"><Icon name="close" size={15} /><span>{errors.__all__[0]}</span></div>
         )}

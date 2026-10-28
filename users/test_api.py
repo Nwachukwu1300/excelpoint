@@ -38,10 +38,18 @@ class MeApiTest(TestCase):
             {'id': self.maths.id, 'name': 'Maths', 'due_count': 0},
         ])
 
-    def test_sets_csrf_cookie_even_when_anonymous(self):
+    def test_signed_out_gets_a_plain_answer_and_the_csrf_cookie(self):
         response = self.client.get('/api/me/')
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {'authenticated': False, 'google_sign_in': False})
         self.assertIn('csrftoken', response.cookies)
+        self.assertEqual(self.client.patch('/api/me/', {'first_name': 'X'}, content_type='application/json').status_code, 403)
+
+    def test_google_sign_in_shows_only_when_configured(self):
+        with self.settings(GOOGLE_OAUTH_CLIENT_ID='id', GOOGLE_OAUTH_CLIENT_SECRET='secret'):
+            self.assertTrue(self.client.get('/api/me/').json()['google_sign_in'])
+        self.client.force_login(self.user)
+        self.assertEqual(self.client.get('/api/me/').json()['authenticated'], True)
 
 
 class NotificationsApiTest(TestCase):
@@ -188,7 +196,7 @@ class AuthApiTest(TestCase):
         import base64
         User.objects.create_user('alex', password='Pass-word-123!')
         header = 'Basic ' + base64.b64encode(b'alex:Pass-word-123!').decode()
-        self.assertEqual(self.client.get('/api/me/', HTTP_AUTHORIZATION=header).status_code, 403)
+        self.assertEqual(self.client.get('/api/notifications/', HTTP_AUTHORIZATION=header).status_code, 403)
 
     def test_successful_sign_ins_do_not_count_against_the_address(self):
         for i in range(25):
@@ -228,7 +236,7 @@ class AuthApiTest(TestCase):
         self.assertEqual(r.json()['ok'], True)
         self.assertEqual(self.client.get('/api/me/').json()['username'], 'alex')
         self.post('/api/auth/logout/', {})
-        self.assertEqual(self.client.get('/api/me/').status_code, 403)
+        self.assertIs(self.client.get('/api/me/').json()['authenticated'], False)
 
     def test_register_validates_then_signs_you_in(self):
         r = self.post('/api/auth/register/', {'username': 'new', 'email': 'bad', 'password1': '123', 'password2': '456'})

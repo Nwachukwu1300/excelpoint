@@ -56,6 +56,8 @@ export async function upload<T>(path: string, form: FormData): Promise<T> {
 export const loginUrl = () => `/app/login?next=${encodeURIComponent(location.pathname + location.search)}`
 
 export type Me = {
+  authenticated: true
+  google_sign_in: boolean
   id: number
   username: string
   first_name: string
@@ -69,7 +71,20 @@ export type Me = {
   subjects: { id: number; name: string; due_count: number }[]
 }
 
-export const useMe = () => useQuery({ queryKey: ['me'], queryFn: () => api<Me>('/api/me/') })
+type SignedOut = { authenticated: false; google_sign_in: boolean }
+
+/** The signed-in user. Signed out, the query fails with a 403 ApiError whose data says whether Google sign-in is set up. */
+export const useMe = () => useQuery({
+  queryKey: ['me'],
+  queryFn: async () => {
+    const data = await api<Me | SignedOut>('/api/me/')
+    if (!data.authenticated) throw new ApiError(403, 'Signed out', data)
+    return data
+  },
+})
+
+export const googleSignIn = (me: ReturnType<typeof useMe>) =>
+  me.data?.google_sign_in ?? (me.error instanceof ApiError && (me.error.data as SignedOut | null)?.google_sign_in) ?? false
 
 export const displayName = (me: Me) => [me.first_name, me.last_name].filter(Boolean).join(' ') || me.username
 

@@ -6,6 +6,7 @@ import type { Me } from '../lib/api'
 import { routes } from '../router'
 
 export const me: Me = {
+  authenticated: true, google_sign_in: true,
   id: 1, username: 'alex', first_name: 'Alex', last_name: 'Morgan', email: 'alex@example.com',
   education_level: 'undergraduate', has_password: true,
   education_choices: [{ value: 'secondary', label: 'Secondary school' }, { value: 'undergraduate', label: 'Undergraduate' }],
