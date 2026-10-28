@@ -60,21 +60,15 @@ class GoogleEmailVerificationTest(TestCase):
         self.assertEqual(user.email, 'a@x.com')
 
 
-class EditProfileTest(TestCase):
-    def test_edit_saves_user_fields_and_redirects_to_profile(self):
-        from users.models import User
-        user = User.objects.create_user('p', 'old@x.com', 'pw')
-        self.client.force_login(user)
+class CareerPagesRedirectTest(TestCase):
+    """The career pages and the old logout page were removed; their old URLs land in the app."""
 
-        response = self.client.post(reverse('users:edit_profile'), {
-            'first_name': 'New', 'last_name': 'Name', 'email': 'new@x.com',
-            'current_role': 'Dev', 'experience_level': 'entry', 'bio': '',
-            'linkedin_profile': '', 'github_profile': '',
-        })
-
-        self.assertRedirects(response, reverse('users:profile'), fetch_redirect_response=False)
-        user.refresh_from_db()
-        self.assertEqual((user.first_name, user.email), ('New', 'new@x.com'))
+    def test_old_career_urls_redirect_to_the_app(self):
+        for url in ['/learning/dashboard/', '/learning/dream-path/', '/learning/course/1/detail/',
+                    '/users/profile/', '/users/profile/edit/', '/users/achievements/',
+                    '/users/education/edit/1/', '/users/certifications/', '/users/logout/']:
+            with self.subTest(url=url):
+                self.assertRedirects(self.client.get(url), '/app/', fetch_redirect_response=False)
 
 
 class OldAccountPagesTest(TestCase):

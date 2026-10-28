@@ -25,8 +25,6 @@ class Command(BaseCommand):
                 username=username,
                 email=email,
                 password=password,
-                current_role='Administrator',
-                experience_level='senior'
             )
             
             # Create or update related UserProfile
