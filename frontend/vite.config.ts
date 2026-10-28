@@ -11,7 +11,7 @@ export default defineConfig(({ command }) => ({
   server: {
     port: 5173,
     // Dev: Vite serves the app, Django answers the API and the old pages (cookies ignore the port).
-    proxy: Object.fromEntries(['/api', '/users', '/media', '/subjects', '/insights', '/learning'].map(p => [p, django])),
+    proxy: Object.fromEntries(['/api', '/users', '/media', '/subjects', '/insights'].map(p => [p, django])),
   },
   test: { environment: 'jsdom', globals: true, setupFiles: ['./src/test/setup.ts'] },
 }))

@@ -30,7 +30,7 @@ urlpatterns = [
     path('', home, name='home'),
     re_path(r'^app(?:/.*)?$', app_shell, name='app'),  # the new React app; its router handles the rest
     path('users/', include('users.urls')),
-    path('learning/', include('learning.urls')),
+    re_path(r'^learning/', RedirectView.as_view(url='/app/')),  # career pages were removed; ExcelPoint is study-only
     path('api/auth/login/', auth_api.sign_in, name='api_login'),
     path('api/auth/register/', auth_api.register, name='api_register'),
     path('api/auth/logout/', auth_api.sign_out, name='api_logout'),

@@ -50,10 +50,11 @@ class RecommendationTest(TestCase):
         Flashcard.objects.create(subject=Subject.objects.create(user=other, name='Theirs'), question='q', answer='a')
         self.assertEqual(self.kinds(), [])
 
-    def test_dashboard_shows_suggestions(self):
+    def test_home_api_shows_suggestions(self):
         Flashcard.objects.create(subject=self.db, question='q', answer='a')
         self.client.force_login(self.user)
-        self.assertContains(self.client.get(reverse('learning:dashboard')), 'Review 1 flashcard in Databases')
+        titles = [s['title'] for s in self.client.get('/api/home/').json()['suggestions']]
+        self.assertIn('Review 1 flashcard in Databases', titles)
 
     def test_due_cards_are_counted_per_subject_not_per_card(self):
         from subjects.services.spaced_repetition import record_review
