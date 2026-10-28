@@ -39,6 +39,12 @@ export function useDeleteSession(subjectId: number) {
   })
 }
 
+/** The last message is a question from the last two minutes with no answer yet. */
+export const awaitingAnswer = (messages: ChatMessage[] | undefined, now = Date.now()) => {
+  const last = messages?.at(-1)
+  return last?.role === 'user' && now - Date.parse(last.timestamp) < 120_000
+}
+
 export const useMessages = (subjectId: number, sessionId: number | undefined) =>
   useQuery({
     queryKey: messagesKey(subjectId, sessionId ?? 0),
@@ -48,6 +54,8 @@ export const useMessages = (subjectId: number, sessionId: number | undefined) =>
     // Loaded once; after that the page adds each exchange itself, so a refetch can't double a question mid-stream.
     staleTime: Infinity,
     refetchOnWindowFocus: false,
+    // Opened mid-answer (e.g. a reload): the question is saved but its answer isn't yet, so check back
+    refetchInterval: q => (awaitingAnswer(q.state.data?.messages) ? 2000 : false),
   })
 
 export const createSession = (subjectId: number) =>

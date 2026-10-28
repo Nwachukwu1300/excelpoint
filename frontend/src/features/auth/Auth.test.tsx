@@ -99,6 +99,12 @@ describe('Landing', () => {
     expect(await screen.findByRole('link', { name: 'Open ExcelPoint' })).toHaveAttribute('href', '/app/')
   })
 
+  it('confirms a deleted account', async () => {
+    mockApi(signedOut)
+    renderApp('/welcome?deleted=1')
+    expect(await screen.findByRole('status')).toHaveTextContent('Your account and everything in it were deleted.')
+  })
+
   it('links to a privacy page that says where files go and that it is free in beta', async () => {
     mockApi(signedOut)
     renderApp('/welcome')

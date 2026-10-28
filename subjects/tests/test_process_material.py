@@ -154,3 +154,17 @@ class ProcessingFailureTest(TestCase):
         self.assertEqual(self.material.status, 'FAILED')
         self.assertIn("couldn't read this file", self.material.error)
         self.assertNotIn('EOF', self.material.error)
+
+
+class FlashcardFormatTest(TestCase):
+    @patch('subjects.llm_utils.OpenAI')
+    def test_cards_have_a_question_on_the_front(self, openai):
+        from subjects.llm_utils import generate_flashcards
+        reply = ('QUESTION: What does chlorophyll absorb?\nANSWER: Mostly red and blue light.\n\n'
+                 'QUESTION: Where does photosynthesis happen?\nANSWER: In the chloroplasts.')
+        openai.return_value.chat.completions.create.return_value.choices = [MagicMock(message=MagicMock(content=reply))]
+        cards = generate_flashcards([{'content': 'notes'}], num_cards=2)
+        self.assertEqual(cards[0], {'question': 'What does chlorophyll absorb?', 'answer': 'Mostly red and blue light.'})
+        self.assertEqual(len(cards), 2)
+        prompt = openai.return_value.chat.completions.create.call_args.kwargs['messages'][1]['content']
+        self.assertIn('QUESTION:', prompt)

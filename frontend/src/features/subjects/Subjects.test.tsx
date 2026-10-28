@@ -99,22 +99,22 @@ describe('Subject workspace', () => {
   it('a file the server refuses shows as refused, not ready', async () => {
     mockApi({ ...base, 'POST /api/subjects/3/upload_material/': reply(400, { file: ['This isn’t a readable PDF file.'] }) })
     renderApp('/subjects/3?upload=1')
-    const dialog = await screen.findByRole('dialog', { name: 'Add study material' })
+    const dialog = await screen.findByRole('dialog', { name: 'Add a file' })
     await userEvent.upload(dialog.querySelector('input[type=file]') as HTMLInputElement, new File(['junk'], 'junk.pdf', { type: 'application/pdf' }))
-    await userEvent.click(within(dialog).getByRole('button', { name: 'Upload material' }))
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Upload file' }))
     expect(await within(dialog).findByRole('alert')).toHaveTextContent('This isn’t a readable PDF file.')
     expect(within(dialog).queryByText(/Ready to upload/)).not.toBeInTheDocument()
     expect(within(dialog).getByText(/This file can’t be uploaded/)).toBeInTheDocument()
-    expect(within(dialog).getByRole('button', { name: 'Upload material' })).toBeDisabled()
+    expect(within(dialog).getByRole('button', { name: 'Upload file' })).toBeDisabled()
   })
 
   it('goes back to the chat after uploading from it', async () => {
     mockApi({ ...base, 'POST /api/subjects/3/upload_material/': reply(201, materials[1]),
       'GET /api/subjects/3/chat/sessions/?limit=30': { sessions: [] } })
     renderApp('/subjects/3?upload=1&then=chat')
-    const dialog = await screen.findByRole('dialog', { name: 'Add study material' })
+    const dialog = await screen.findByRole('dialog', { name: 'Add a file' })
     await userEvent.upload(dialog.querySelector('input[type=file]') as HTMLInputElement, new File(['%PDF'], 'from-chat.pdf', { type: 'application/pdf' }))
-    await userEvent.click(within(dialog).getByRole('button', { name: 'Upload material' }))
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Upload file' }))
     expect(await screen.findByLabelText('Ask XP')).toBeInTheDocument()
   })
 
@@ -122,7 +122,7 @@ describe('Subject workspace', () => {
     document.cookie = 'csrftoken=tok'
     const fetchMock = mockApi({ ...base, 'POST /api/subjects/3/upload_material/': reply(201, materials[1]) })
     renderApp('/subjects/3?upload=1')
-    const dialog = await screen.findByRole('dialog', { name: 'Add study material' })
+    const dialog = await screen.findByRole('dialog', { name: 'Add a file' })
     const input = dialog.querySelector('input[type=file]') as HTMLInputElement
 
     await userEvent.upload(input, new File(['x'], 'notes.txt', { type: 'text/plain' }), { applyAccept: false })
@@ -130,7 +130,7 @@ describe('Subject workspace', () => {
 
     await userEvent.upload(input, new File(['%PDF'], 'week8.pdf', { type: 'application/pdf' }))
     expect(within(dialog).getByText('week8.pdf')).toBeInTheDocument()
-    await userEvent.click(within(dialog).getByRole('button', { name: 'Upload material' }))
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Upload file' }))
     expect(await screen.findByText('week8.pdf uploaded')).toBeInTheDocument()
     const [, init] = fetchMock.mock.calls.find(([url]) => url === '/api/subjects/3/upload_material/')!
     expect((init!.headers as Record<string, string>)['X-CSRFToken']).toBe('tok')

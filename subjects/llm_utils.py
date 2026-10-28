@@ -10,22 +10,21 @@ def generate_flashcards(chunks: List[Dict[str, Any]], num_cards: int = 5) -> Lis
         # Combine chunks into a single context
         context = "\n".join([chunk['content'] for chunk in chunks])
         
-        # Create the prompt for informational flashcards
-        prompt = f"""Based on the following content, create {num_cards} informational study cards.
+        # The front must be a question: a title alone ("Photosynthesis Overview") doesn't say what to recall
+        prompt = f"""Based on the following content, create {num_cards} flashcards for spaced-repetition review.
         Each card should:
-        1. Have a clear, descriptive title/topic
-        2. Contain exactly 2 sentences of key information about that topic
-        3. Focus on important concepts, definitions, or facts
-        4. Be educational and informative rather than question-based
-        
+        1. Ask one clear question about an important concept, definition or fact in the content
+        2. Give the answer in 1 or 2 short sentences, using only the content
+        3. Use plain words a student can answer from memory
+
         Content:
         {context}
-        
+
         Format each flashcard as:
-        TOPIC: [Descriptive title/concept name]
-        INFO: [First sentence with key information. Second sentence with additional important details.]
-        
-        Generate exactly {num_cards} informational study cards:"""
+        QUESTION: [A question, ending with a question mark]
+        ANSWER: [The answer in 1 or 2 sentences]
+
+        Generate exactly {num_cards} flashcards:"""
         
         # Create client dynamically to ensure fresh settings
         dynamic_client = OpenAI(api_key=settings.OPENAI_API_KEY)
@@ -34,7 +33,7 @@ def generate_flashcards(chunks: List[Dict[str, Any]], num_cards: int = 5) -> Lis
         response = dynamic_client.chat.completions.create(
             model=settings.OPENAI_MODEL,
             messages=[
-                {"role": "system", "content": "You are a helpful assistant that creates educational study cards with informative content. Focus on clear, concise explanations rather than questions."},
+                {"role": "system", "content": "You write clear study flashcards: a question on the front, a short answer on the back."},
                 {"role": "user", "content": prompt}
             ],
             temperature=0.7,
@@ -49,12 +48,13 @@ def generate_flashcards(chunks: List[Dict[str, Any]], num_cards: int = 5) -> Lis
         current_card = {}
         for line in flashcards_text.split('\n'):
             line = line.strip()
-            if line.startswith('TOPIC:'):
+            label, _, text = line.partition(':')
+            if label in ('QUESTION', 'TOPIC'):  # TOPIC/INFO: the old card format
                 if current_card:
                     flashcards.append(current_card)
-                current_card = {'question': line[6:].strip()}  # Keep 'question' field for compatibility
-            elif line.startswith('INFO:'):
-                current_card['answer'] = line[5:].strip()     # Keep 'answer' field for compatibility
+                current_card = {'question': text.strip()}
+            elif label in ('ANSWER', 'INFO') and current_card:
+                current_card['answer'] = text.strip()
         
         if current_card and 'question' in current_card and 'answer' in current_card:
             flashcards.append(current_card)

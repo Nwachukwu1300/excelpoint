@@ -61,7 +61,7 @@ export function Answer({ message, subjectId, selected, onCite, animate }: {
           <p>{a.body}</p>
           {a.noFilesReady
             ? <Link className="button button--secondary" to={`/subjects/${subjectId}`}><Icon name="file" />Check your files</Link>
-            : <Link className="button button--secondary" to={`/subjects/${subjectId}?upload=1`}><Icon name="upload" />Upload materials</Link>}
+            : <Link className="button button--secondary" to={`/subjects/${subjectId}?upload=1`}><Icon name="upload" />Upload files</Link>}
         </div>
       </motion.div>
     )

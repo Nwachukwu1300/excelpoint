@@ -96,6 +96,7 @@ function AccountMenu({ me, onClose }: { me?: Me; onClose: () => void }) {
       <div className="dropdown-links">
         <Link to="/settings" onClick={onClose}><Icon name="settings" />Settings</Link>
         <Link to="/settings/password" onClick={onClose}><Icon name="lock" />Change password</Link>
+        <Link to="/privacy" onClick={onClose}><Icon name="file" />Privacy</Link>
         <button type="button" className="logout" onClick={signOut}><Icon name="logout" />Log out</button>
       </div>
     </motion.div>

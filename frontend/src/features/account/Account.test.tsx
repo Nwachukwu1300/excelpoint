@@ -51,7 +51,7 @@ describe('Settings', () => {
     expect(assign).not.toHaveBeenCalled()
 
     await userEvent.click(within(dialog).getByRole('button', { name: 'Delete account' }))
-    await waitFor(() => expect(assign).toHaveBeenCalledWith('/app/welcome'))
+    await waitFor(() => expect(assign).toHaveBeenCalledWith('/app/welcome?deleted=1'))
     const [, init] = fetchMock.mock.calls.filter(([u]) => u === '/api/me/delete/').at(-1)!
     expect(JSON.parse(init!.body as string)).toEqual({ confirm: 'wrong' })
   })

@@ -52,7 +52,8 @@ export function Modal({ open, onClose, labelledBy, small = false, className = ''
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.15 }}
-          onMouseDown={e => { if (e.target === e.currentTarget) onClose() }}
+          // detail 2: the second click of the double click that opened it, not a request to close
+          onMouseDown={e => { if (e.target === e.currentTarget && e.detail <= 1) onClose() }}
         >
           <motion.section
             ref={panel}

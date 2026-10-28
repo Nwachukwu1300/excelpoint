@@ -45,7 +45,7 @@ export function UploadModal({ open, onClose, subjectId, onUploaded }: { open: bo
     <Modal open={open} onClose={close} labelledBy="upload-title">
       <div className="modal-head">
         <div>
-          <h2 id="upload-title">Add study material</h2>
+          <h2 id="upload-title">Add a file</h2>
           <p>XP will create a summary, flashcards, and a quiz.</p>
         </div>
         <IconButton icon="close" label="Close" onClick={close} />
@@ -114,7 +114,7 @@ export function UploadModal({ open, onClose, subjectId, onUploaded }: { open: bo
       <div className="modal-actions">
         <Button variant="secondary" onClick={close} disabled={uploadMaterial.isPending}>Cancel</Button>
         <Button icon="upload" disabled={!file || uploadMaterial.isPending || uploadMaterial.isError} onClick={submit}>
-          {uploadMaterial.isPending ? 'Uploading…' : 'Upload material'}
+          {uploadMaterial.isPending ? 'Uploading…' : 'Upload file'}
         </Button>
       </div>
     </Modal>

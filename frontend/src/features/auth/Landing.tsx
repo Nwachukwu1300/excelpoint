@@ -1,5 +1,5 @@
 import { motion } from 'motion/react'
-import { Link } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import { useMe } from '../../lib/api'
 import { reveal } from '../../lib/motion'
 import { CitationChip } from '../../ui/AnswerBadges'
@@ -20,9 +20,11 @@ const FEATURES: [IconName, string, string][] = [
 ]
 
 export function Landing() {
+  const deleted = useSearchParams()[0].has('deleted')
   const signedIn = !!useMe().data
   return (
     <div className="landing-page">
+      {deleted && <p className="landing-banner" role="status">Your account and everything in it were deleted.</p>}
       <header className="landing-nav">
         <Logo />
         <nav aria-label="Account">
@@ -90,7 +92,7 @@ export function Landing() {
           <h2>Your materials already contain the answers.</h2>
           <p>Let ExcelPoint help you find and remember them.</p>
           <Link className={buttonClass()} to="/register">Create your free account</Link>
-          <p className="landing-note">Free while in beta. No card needed. <Link to="/privacy">How we handle your data</Link></p>
+          <p className="landing-note">Free while in beta (early testing). No credit card needed. <Link to="/privacy">How we handle your data</Link></p>
         </section>
       </main>
       <footer className="landing-footer">

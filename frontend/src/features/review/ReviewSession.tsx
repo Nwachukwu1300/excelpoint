@@ -128,8 +128,9 @@ export function ReviewSession() {
               <h1>{revealed ? card.answer : card.question}</h1>
               {card.material_name && <span className="card-source">{card.material_name}</span>}
             </motion.div>
+            {/* In "Show answer", detail 2 is the second click of a double click on the grade before: not a request to reveal */}
             {!revealed ? (
-              <Button onClick={() => setRevealed(true)}>Show answer</Button>
+              <Button onClick={e => { if (e.detail <= 1) setRevealed(true) }}>Show answer</Button>
             ) : (
               <div className="grade-area">
                 <p>How well did you remember?</p>

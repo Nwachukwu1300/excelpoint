@@ -67,7 +67,7 @@ describe('XP chat', () => {
     fetchMock.mockImplementation(async (input, init) => (String(input) === '/api/subjects/3/chat/stream/' ? stream.response : base(input, init)))
     renderApp('/subjects/3/chat')
 
-    expect(await screen.findByRole('heading', { name: /Ask anything about your Database Systems materials/ })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: /Ask anything about your Database Systems files/ })).toBeInTheDocument()
     await userEvent.type(screen.getByLabelText('Ask XP'), 'How does a B-tree work?{Enter}')
     expect(await screen.findByText('XP is thinking…')).toBeInTheDocument()
 
@@ -131,7 +131,7 @@ describe('XP chat', () => {
     mockApi({ 'GET /api/me/': me, 'GET /api/subjects/3/chat/sessions/?limit=30': sessions, 'GET /api/subjects/3/chat/messages/?session_id=5': { messages: [fallback] } })
     renderApp('/subjects/3/chat/5')
     expect(await screen.findByText('Not in your materials')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Upload materials/ })).toHaveAttribute('href', '/subjects/3?upload=1')
+    expect(screen.getByRole('link', { name: /Upload files/ })).toHaveAttribute('href', '/subjects/3?upload=1')
   })
 })
 
@@ -251,5 +251,22 @@ describe('Chat edge cases', () => {
       stream.end()
     })
     expect(await screen.findByRole('link', { name: /B-tree basics/ })).toHaveAttribute('aria-current', 'page')
+  })
+})
+
+describe('Chat after a reload or a delete', () => {
+  it('shows that XP is still answering a question asked just before a reload', async () => {
+    const asked = { id: 1, role: 'user', content: 'What is the Calvin cycle?', timestamp: new Date().toISOString() }
+    mockApi({ 'GET /api/me/': me, 'GET /api/subjects/3/chat/sessions/?limit=30': sessions, 'GET /api/subjects/3/chat/messages/?session_id=5': { messages: [asked] } })
+    renderApp('/subjects/3/chat/5')
+    expect(await screen.findByText('What is the Calvin cycle?')).toBeInTheDocument()
+    expect(screen.getByText('XP is thinking…')).toBeInTheDocument()
+  })
+
+  it('says a deleted conversation was deleted', async () => {
+    mockApi({ 'GET /api/me/': me, 'GET /api/subjects/3/chat/sessions/?limit=30': sessions, 'GET /api/subjects/3/chat/messages/?session_id=7': reply(404, { detail: 'Not found.' }) })
+    renderApp('/subjects/3/chat/7')
+    expect(await screen.findByText('This conversation was deleted.')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Try again' })).not.toBeInTheDocument()
   })
 })

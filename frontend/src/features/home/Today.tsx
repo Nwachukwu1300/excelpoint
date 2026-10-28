@@ -194,7 +194,7 @@ export function Today() {
                 {data.recent_chats.length > 0 && <Link to="/subjects">View all</Link>}
               </div>
               {data.recent_chats.length === 0 && (
-                <p className="list-empty">No conversations yet. Open a subject and ask XP about your materials.</p>
+                <p className="list-empty">No conversations yet. Open a subject and ask XP about your files.</p>
               )}
               {data.recent_chats.map(c => (
                 <Link className="conversation-row" key={c.id} to={`/subjects/${c.subject_id}/chat/${c.id}`}>

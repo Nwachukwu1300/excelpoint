@@ -2,7 +2,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { AnimatePresence } from 'motion/react'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
-import { useMe } from '../../lib/api'
+import { ApiError, useMe } from '../../lib/api'
 import { shortDate } from '../../lib/format'
 import { Icon } from '../../ui/Icon'
 import { useOneAtATime } from '../../lib/useOneAtATime'
@@ -10,7 +10,7 @@ import { ConfirmDialog } from '../../ui/ConfirmDialog'
 import { Button, IconButton, Skeleton } from '../../ui/primitives'
 import { toast } from '../../ui/Toast'
 import {
-  createSession, messagesKey, RateLimitError, sendMessage, sessionsKey, streamMessage, StreamUnavailableError,
+  awaitingAnswer, createSession, messagesKey, RateLimitError, sendMessage, sessionsKey, streamMessage, StreamUnavailableError,
   useDeleteSession, useMessages, useSessions, type ChatMessage, type ChatSession, type Exchange, type SourceChunk,
 } from './api'
 import { useMaterials } from '../subjects/api'
@@ -215,7 +215,7 @@ export function ChatPage() {
           ) : empty ? (
             <div className="chat-empty">
               <span className="xp-avatar"><Icon name="sparkles" /></span>
-              <h1>Ask anything about your {subjectName} materials</h1>
+              <h1>Ask anything about your {subjectName} files</h1>
               <p>XP answers only from your files and shows where each answer came from.</p>
               <div>
                 {['Summarise the key ideas', 'Explain the hardest concept simply', 'What are the most important definitions?'].map(q => (
@@ -228,16 +228,22 @@ export function ChatPage() {
               {messages.isPending && sessionId && (
                 <div className="skeleton-chat" aria-label="Loading conversation"><Skeleton className="skeleton-avatar" /><div><Skeleton /><Skeleton /><Skeleton /></div></div>
               )}
-              {messages.isError && (
+              {messages.isError && (messages.error instanceof ApiError && messages.error.status === 404 ? (
+                <div className="inline-error" role="alert">
+                  <p>This conversation was deleted.</p>
+                  <Link className="button button--secondary" to={`/subjects/${subjectId}/chat`}>Start a new chat</Link>
+                </div>
+              ) : (
                 <div className="inline-error" role="alert">
                   <p>We couldn’t load this conversation.</p>
                   <Button variant="secondary" onClick={() => messages.refetch()}>Try again</Button>
                 </div>
-              )}
+              ))}
               {thread.map(m => m.role === 'user'
                 ? <UserBubble key={m.id} text={m.content} animate={justArrived.includes(m.id)} />
                 : <Answer key={m.id} message={m} subjectId={subjectId} selected={sourcesOpen && shown?.id === m.id}
                     onCite={c => cite(m, c)} animate={justArrived.includes(m.id)} />)}
+              {!pending && awaitingAnswer(thread) && <Thinking />}
               {pending && <UserBubble text={pending.question} animate />}
               {pending && !pending.text && <Thinking />}
               {pending?.text && <StreamingAnswer text={pending.text} />}
@@ -266,7 +272,7 @@ export function ChatPage() {
             maxLength={MAX}
             rows={1}
             aria-label="Ask XP"
-            placeholder="Ask XP about your materials…"
+            placeholder="Ask XP about your files…"
             onChange={e => {
               setDraft(e.target.value)
               e.target.style.height = 'auto'

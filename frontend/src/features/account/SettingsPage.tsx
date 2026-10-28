@@ -56,7 +56,7 @@ export function SettingsPage() {
         <div>
           <p className="overline">ACCOUNT</p>
           <h1>Settings</h1>
-          <p>Manage your profile and preferences.</p>
+          <p>Manage your profile and preferences. <Link to="/privacy">How we handle your data</Link></p>
         </div>
       </div>
       <form className="settings-card" onSubmit={submit}>
@@ -132,7 +132,7 @@ function DeleteAccount({ hasPassword, username }: { hasPassword: boolean; userna
       </div>
       <Button variant="danger" onClick={() => setOpen(true)}>Delete my account</Button>
       <ConfirmDialog open={open} title="Delete your account?" confirmLabel="Delete account" icon="user" busy={remove.isPending}
-        onCancel={cancel} onConfirm={() => confirm && once(() => remove.mutateAsync().then(() => location.assign('/app/welcome')), { final: true })}>
+        onCancel={cancel} onConfirm={() => confirm && once(() => remove.mutateAsync().then(() => location.assign('/app/welcome?deleted=1')), { final: true })}>
         <p>Everything in ExcelPoint that belongs to you will be removed. This can’t be undone.</p>
         <div className="form-field">
           <label htmlFor="delete-confirm">{hasPassword ? 'Enter your password to confirm' : `Type your username (${username}) to confirm`}</label>

@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react'
+import { fireEvent, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { me, mockApi, renderApp, reply } from '../../test/render'
@@ -36,6 +36,18 @@ describe('Review session', () => {
 
     const grades = fetchMock.mock.calls.filter(([url]) => url === '/api/review/grade/').map(([, init]) => JSON.parse(init!.body as string))
     expect(grades).toEqual([{ flashcard_id: 1, grade: 4 }, { flashcard_id: 2, grade: 5 }])
+  })
+
+  it('the second click of a double click on a grade does not reveal the next card', async () => {
+    mockApi({ 'GET /api/me/': me, 'GET /api/review/queue/?subject=3': queue, 'POST /api/review/grade/': { flashcard_id: 1, interval_days: 15 } })
+    renderApp('/review?subject=3')
+    await userEvent.click(await screen.findByRole('button', { name: 'Show answer' }))
+    await userEvent.click(screen.getByRole('button', { name: /Good/ }))
+    expect(await screen.findByText('Card 2 of 2')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Show answer' }), { detail: 2 })
+    expect(screen.queryByRole('button', { name: /Good/ })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Show answer' }), { detail: 1 })
+    expect(screen.getByRole('button', { name: /Good/ })).toBeInTheDocument()
   })
 
   it('shows a forgotten card again before the session ends', async () => {
