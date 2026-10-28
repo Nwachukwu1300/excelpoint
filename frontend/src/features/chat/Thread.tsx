@@ -10,7 +10,7 @@ const time = (iso: string) => new Date(iso).toLocaleTimeString([], { hour: 'nume
 /** Stored names include the upload folder (subject_materials/…); people only need the file name. */
 export const fileName = (path: string) => path.split('/').pop() || path
 
-export const chunkLabel = (c: SourceChunk) => `${fileName(c.material_name)}${c.chunk_index !== undefined ? ` · chunk ${c.chunk_index + 1}` : ''}`
+export const chunkLabel = (c: SourceChunk) => `${fileName(c.material_name)}${c.chunk_index !== undefined ? ` · part ${c.chunk_index + 1}` : ''}`
 
 /** One chip per distinct excerpt, at most three; the Sources panel lists the rest. */
 function citations(chunks: SourceChunk[]) {

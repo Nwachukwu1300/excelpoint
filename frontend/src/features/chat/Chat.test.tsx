@@ -47,7 +47,7 @@ describe('XP chat', () => {
     expect(screen.getByRole('link', { name: /B-tree indexes explained/ })).toHaveAttribute('aria-current', 'page')
 
     await userEvent.click(screen.getByRole('button', { name: /Show sources/ }))
-    await userEvent.click(screen.getByRole('button', { name: /lecture4.pdf · chunk 18/ }))
+    await userEvent.click(screen.getByRole('button', { name: /lecture4.pdf · part 18/ }))
     const panel = screen.getByRole('complementary', { name: 'Sources' })
     expect(within(panel).getByText('1 excerpt used')).toBeInTheDocument()
     expect(within(panel).getByText('94%')).toBeInTheDocument()

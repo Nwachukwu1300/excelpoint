@@ -162,7 +162,7 @@ export function Insights() {
             <div className="card-heading"><div><h2>Recent answers</h2><p>Most recent XP responses and quality signals</p></div></div>
             <div className="table-wrap">
               <table>
-                <thead><tr><th>Question</th><th>Type</th><th>Chunks</th><th>Confidence</th><th>Status</th><th>Time</th><th /></tr></thead>
+                <thead><tr><th>Question</th><th>Type</th><th>Parts used</th><th>Confidence</th><th>Status</th><th>Time</th><th /></tr></thead>
                 <tbody>
                   {data.recent.map(r => (
                     <tr key={r.session_id}>

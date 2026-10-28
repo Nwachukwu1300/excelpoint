@@ -52,7 +52,7 @@ export function SourcesPanel({ message, focus, onClose }: { message?: ChatMessag
                 <span className="file-type">{ext(c.material_name)}</span>
                 <div>
                   <strong>{fileName(c.material_name)}</strong>
-                  <span>{c.chunk_index !== undefined ? `Chunk ${c.chunk_index + 1}` : 'Excerpt'}</span>
+                  <span>{c.chunk_index !== undefined ? `Part ${c.chunk_index + 1}` : 'Excerpt'}</span>
                 </div>
               </div>
               <div className="similarity">

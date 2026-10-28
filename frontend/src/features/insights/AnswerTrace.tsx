@@ -7,7 +7,7 @@ import { fileName } from '../chat/Thread'
 import { ConfidencePill, VerificationBadge } from '../../ui/AnswerBadges'
 import { Icon } from '../../ui/Icon'
 import { Markdown } from '../../ui/Markdown'
-import { Badge, Button, ProgressBar, Skeleton, buttonClass } from '../../ui/primitives'
+import { Badge, Button, ProgressBar, Skeleton } from '../../ui/primitives'
 import { ms, num, pct, useTrace, type Trace } from './api'
 import '../../styles/insights.css'
 
@@ -28,7 +28,7 @@ function Chunks({ chunks }: { chunks: Trace['chunks'] }) {
         <article className="trace-chunk" key={`${c.material_name}-${c.chunk_index}-${i}`}>
           <span className="chunk-number">{i + 1}</span>
           <div className="chunk-main">
-            <div><strong>{fileName(c.material_name)}</strong><span>Chunk {c.chunk_index + 1}</span></div>
+            <div><strong>{fileName(c.material_name)}</strong><span>Part {c.chunk_index + 1}</span></div>
             <p>“{c.text.length > 320 ? `${c.text.slice(0, 317)}…` : c.text}”</p>
           </div>
           <dl>
@@ -104,15 +104,20 @@ export function AnswerTrace() {
 
   return (
     <div className="page-content trace-page">
-      <Link className="back-link" to="/insights"><Icon name="chevronRight" size={14} /> Back to Insights</Link>
+      {t.chat
+        ? <Link className="back-link" to={`/subjects/${t.chat.subject_id}/chat/${t.chat.session_id}`}><Icon name="chevronRight" size={14} /> Back to the conversation</Link>
+        : <Link className="back-link" to="/insights"><Icon name="chevronRight" size={14} /> Back to Insights</Link>}
       <div className="trace-header">
         <div>
           <p className="overline">HOW THIS ANSWER WAS MADE · {when.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase()}, {when.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</p>
           <h1>{t.question}</h1>
-          <p>Total response time: {ms(t.total_ms)}{t.subject ? ` · ${t.subject.name}` : ''}</p>
+          {t.subject && <p>{t.subject.name}</p>}
         </div>
-        {t.chat && <Link className={buttonClass('secondary')} to={`/subjects/${t.chat.subject_id}/chat/${t.chat.session_id}`}>Open conversation</Link>}
       </div>
+      <PlainSummary t={t} claims={claims} />
+
+      <details className="trace-technical">
+      <summary>Technical details: timings, search results, prompts and scores</summary>
       <div className="trace-chips">
         <Badge>{t.follow_up ? 'Follow-up' : 'Standalone'}</Badge>
         {t.confidence.score != null && <ConfidencePill value={t.confidence.score} />}
@@ -234,6 +239,28 @@ export function AnswerTrace() {
           ))}
         </section>
       )}
+      </details>
     </div>
+  )
+}
+
+/** What happened, in plain words, before any of the technical detail. */
+function PlainSummary({ t, claims }: { t: Trace; claims: number }) {
+  const files = [...new Set(t.chunks.map(c => fileName(c.material_name)))]
+  const backed = t.verification.supported_claims.length
+  return (
+    <section className="trace-plain" aria-label="In short">
+      <h2>In short</h2>
+      <ul>
+        <li>{files.length
+          ? `XP searched your files and used ${plural(t.chunks.length, 'part')} of ${files.join(', ')}.`
+          : 'XP found nothing in your files that matched this question, so it did not answer from outside them.'}</li>
+        {files.length > 0 && <li>It wrote the answer only from those parts.</li>}
+        {claims > 0 && <li>{backed === claims
+          ? `It then checked the answer: ${claims === 1 ? 'its statement is' : `all ${claims} statements are`} in your files.`
+          : `It then checked the answer: ${backed} of ${plural(claims, 'statement')} are in your files. Treat the rest with care.`}</li>}
+        <li>It took {(t.total_ms / 1000).toFixed(1)} seconds.</li>
+      </ul>
+    </section>
   )
 }
