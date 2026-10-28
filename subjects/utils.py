@@ -2,13 +2,13 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import (
     PyPDFLoader,
     TextLoader,
-    UnstructuredWordDocumentLoader,
     UnstructuredPowerPointLoader,
     UnstructuredExcelLoader,
     UnstructuredHTMLLoader,
     UnstructuredMarkdownLoader,
 )
 import PyPDF2
+import docx
 import os
 from functools import cached_property, lru_cache
 from typing import List, Dict, Any
@@ -105,6 +105,13 @@ def extract_text_from_pdf(file_path: str) -> str:
         return text.strip()
     except Exception as e:
         raise Exception(f"Error extracting text from PDF: {str(e)}")
+
+def extract_text_from_docx(file_path: str) -> str:
+    """Extract the paragraphs and table cells of a Word (.docx) file."""
+    document = docx.Document(file_path)
+    parts = [p.text for p in document.paragraphs]
+    parts += [cell.text for table in document.tables for row in table.rows for cell in row.cells]
+    return "\n".join(part for part in parts if part.strip())
 
 def chunk_text(text: str, chunk_size: int = 1000, chunk_overlap: int = 200) -> List[str]:
     """Split text into chunks with overlap."""
@@ -276,8 +283,7 @@ class ContentProcessor:
                 text = " ".join([page.page_content for page in pages])
             
             elif file_type == 'DOC':
-                loader = UnstructuredWordDocumentLoader(file_path)
-                text = loader.load()[0].page_content
+                text = extract_text_from_docx(file_path)
             
             elif file_type == 'PPT':
                 loader = UnstructuredPowerPointLoader(file_path)

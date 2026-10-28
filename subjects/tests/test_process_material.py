@@ -94,3 +94,18 @@ class StudyWorkflowTest(TestCase):
     def test_total_failure_is_not_announced_as_ready(self):
         material_ready([{'status': 'error'}] * 3, self.material.id)
         self.assertEqual(Notification.objects.get().title, "Couldn't prepare study aids for notes.pdf")
+
+
+class WordFileTest(TestCase):
+    @patch('subjects.utils.ContentProcessor.process_chunks_immediately', side_effect=lambda chunks: chunks)
+    def test_reads_a_docx_with_the_installed_packages(self, _):
+        import docx
+        from subjects.utils import ContentProcessor
+        document = docx.Document()
+        document.add_paragraph('Chlorophyll absorbs red and blue light.')
+        document.add_table(rows=1, cols=1).cell(0, 0).text = 'Calvin cycle fixes carbon.'
+        with tempfile.TemporaryDirectory() as folder:
+            document.save(f'{folder}/notes.docx')
+            text = ' '.join(ContentProcessor().process_file(f'{folder}/notes.docx', use_batch_processing=False))
+        self.assertIn('Chlorophyll absorbs red and blue light.', text)
+        self.assertIn('Calvin cycle fixes carbon.', text)
