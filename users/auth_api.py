@@ -6,11 +6,19 @@ login form must be CSRF-protected too (otherwise another site could sign a visit
 
 import json
 
-from django.contrib.auth import authenticate, login, logout
+from django.conf import settings
+from django.contrib.auth import authenticate, get_user_model, login, logout
+from django.contrib.auth.forms import SetPasswordForm
+from django.contrib.auth.tokens import default_token_generator
+from django.core.cache import cache
+from django.core.mail import send_mail
 from django.http import JsonResponse
+from django.utils.encoding import force_bytes, force_str
+from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_POST
+from rest_framework.throttling import BaseThrottle
 
 from .backends import FAIL_WINDOW
 from .forms import RegistrationForm
@@ -67,3 +75,56 @@ def register(request):
 def sign_out(request):
     logout(request)
     return JsonResponse({'ok': True})
+
+
+# Password reset. The request always answers the same way, so it never reveals whether an email has an account.
+RESETS_PER_EMAIL, RESETS_PER_IP, RESET_WINDOW = 3, 10, 60 * 60
+RESET_SENT = {'ok': True, 'detail': 'If an account uses that email, we’ve sent it a link to set a new password.'}
+
+
+def _under_limit(key, limit):
+    cache.add(key, 0, RESET_WINDOW)
+    return cache.incr(key) <= limit
+
+
+@require_POST
+@csrf_protect
+def password_reset(request):
+    email = str(_body(request).get('email', '')).strip()
+    ip = BaseThrottle().get_ident(request)
+    if not email or not _under_limit(f'reset:ip:{ip}', RESETS_PER_IP) or not _under_limit(f'reset:email:{email.lower()}', RESETS_PER_EMAIL):
+        return JsonResponse(RESET_SENT)  # same answer when limited: nothing to learn, nothing sent
+    hours = settings.PASSWORD_RESET_TIMEOUT // 3600
+    for user in get_user_model().objects.filter(email__iexact=email, is_active=True):
+        link = request.build_absolute_uri(
+            f'/app/reset-password/{urlsafe_base64_encode(force_bytes(user.pk))}/{default_token_generator.make_token(user)}')
+        send_mail(
+            'Set a new ExcelPoint password',
+            f'Hello {user.username},\n\nSomeone asked to set a new password for your ExcelPoint account '
+            f'(username: {user.username}). Open this link within {hours} hours:\n\n{link}\n\n'
+            'If it wasn’t you, ignore this email. Your password stays the same.\n',
+            None, [user.email], fail_silently=False,
+        )
+    return JsonResponse(RESET_SENT)
+
+
+@require_POST
+@csrf_protect
+def password_reset_confirm(request):
+    data = _body(request)
+    try:
+        user = get_user_model().objects.get(pk=force_str(urlsafe_base64_decode(str(data.get('uid', '')))), is_active=True)
+    except (ValueError, TypeError, OverflowError, get_user_model().DoesNotExist):
+        user = None
+    if user is None or not default_token_generator.check_token(user, str(data.get('token', ''))):
+        return JsonResponse({'detail': 'This link has expired or was already used. Ask for a new one.'}, status=400)
+    form = SetPasswordForm(user, {k: str(data.get(k, '')) for k in ('new_password1', 'new_password2')})
+    if not form.is_valid():
+        errors = dict(form.errors)
+        if 'new_password2' in errors and form.data['new_password1'] == form.data['new_password2']:
+            errors['new_password1'] = errors.pop('new_password2')  # "too short" is about the password itself
+        return JsonResponse(errors, status=400)
+    form.save()  # changes the password, which also makes this link unusable
+    cache.delete(f'signin-fail:user:{user.username.lower()}')  # a fresh password ends any lockout
+    login(request, user)
+    return JsonResponse({'ok': True, 'next': '/app/'})

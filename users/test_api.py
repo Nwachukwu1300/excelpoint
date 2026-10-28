@@ -402,3 +402,55 @@ class ExportDataTest(TestCase):
 
     def test_signed_out_cannot_export(self):
         self.assertEqual(self.client.get('/api/me/export/').status_code, 403)
+
+
+class PasswordResetTest(TestCase):
+    def setUp(self):
+        cache.clear()
+        self.user = User.objects.create_user('alex', email='alex@example.com', password='Old-pass-123!')
+
+    def post(self, url, body):
+        return self.client.post(url, body, content_type='application/json')
+
+    def link_parts(self):
+        from django.core import mail
+        import re as _re
+        uid, token = _re.search(r'/app/reset-password/([^/\s]+)/([^/\s]+)', mail.outbox[-1].body).groups()
+        return uid, token
+
+    def test_sends_a_working_link_that_signs_you_in_once(self):
+        from django.core import mail
+        r = self.post('/api/auth/password-reset/', {'email': 'ALEX@example.com'})
+        self.assertEqual(r.json()['ok'], True)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ['alex@example.com'])
+        self.assertIn('username: alex', mail.outbox[0].body)
+        uid, token = self.link_parts()
+        body = {'uid': uid, 'token': token, 'new_password1': 'Brand-new-456!', 'new_password2': 'Brand-new-456!'}
+        self.assertEqual(self.post('/api/auth/password-reset/confirm/', body).json()['ok'], True)
+        self.assertIs(self.client.get('/api/me/').json()['authenticated'], True)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password('Brand-new-456!'))
+        self.assertEqual(self.post('/api/auth/password-reset/confirm/', body).status_code, 400)  # used once
+
+    def test_unknown_email_gets_the_same_answer_and_no_email(self):
+        from django.core import mail
+        known = self.post('/api/auth/password-reset/', {'email': 'alex@example.com'}).json()
+        unknown = self.post('/api/auth/password-reset/', {'email': 'nobody@example.com'}).json()
+        self.assertEqual(known, unknown)
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_requests_per_email_are_limited(self):
+        from django.core import mail
+        for _ in range(5):
+            self.assertEqual(self.post('/api/auth/password-reset/', {'email': 'alex@example.com'}).status_code, 200)
+        self.assertEqual(len(mail.outbox), 3)
+
+    def test_bad_token_and_weak_password_are_refused(self):
+        self.post('/api/auth/password-reset/', {'email': 'alex@example.com'})
+        uid, token = self.link_parts()
+        bad = self.post('/api/auth/password-reset/confirm/', {'uid': uid, 'token': 'nope', 'new_password1': 'Brand-new-456!', 'new_password2': 'Brand-new-456!'})
+        self.assertIn('expired', bad.json()['detail'])
+        weak = self.post('/api/auth/password-reset/confirm/', {'uid': uid, 'token': token, 'new_password1': 'abc', 'new_password2': 'abc'})
+        self.assertIn('too short', weak.json()['new_password1'][0])
+        self.assertEqual(self.post('/api/auth/password-reset/confirm/', {'uid': '!!', 'token': token}).status_code, 400)

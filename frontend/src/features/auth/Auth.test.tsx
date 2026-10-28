@@ -120,3 +120,40 @@ describe('Landing', () => {
     expect(screen.getByText(/law of England and Wales/)).toBeInTheDocument()
   })
 })
+
+describe('Password reset', () => {
+  it('sign-in links to it, and asking for a link always gives the same calm answer', async () => {
+    document.cookie = 'csrftoken=tok'
+    const fetchMock = mockApi({ ...signedOut, 'POST /api/auth/password-reset/': { ok: true, detail: 'sent' } })
+    renderApp('/login')
+    await userEvent.click(await screen.findByRole('link', { name: 'Forgot your password?' }))
+    await userEvent.type(await screen.findByLabelText('Email'), 'alex@example.com')
+    await userEvent.click(screen.getByRole('button', { name: 'Send me a link' }))
+    expect(await screen.findByRole('heading', { name: 'Check your email' })).toBeInTheDocument()
+    expect(screen.getByText(/If an account uses alex@example.com/)).toBeInTheDocument()
+    const [, init] = fetchMock.mock.calls.find(([u]) => u === '/api/auth/password-reset/')!
+    expect(JSON.parse(init!.body as string)).toEqual({ email: 'alex@example.com' })
+  })
+
+  it('sets a new password from the emailed link, or offers a new link when it expired', async () => {
+    const assign = vi.fn()
+    vi.stubGlobal('location', { ...location, assign })
+    let calls = 0
+    const fetchMock = mockApi({
+      ...signedOut,
+      'POST /api/auth/password-reset/confirm/': () => (++calls === 1
+        ? { status: 400, body: { detail: 'This link has expired or was already used. Ask for a new one.' } }
+        : { body: { ok: true, next: '/app/' } }),
+    })
+    renderApp('/reset-password/MQ/abc-123')
+    await userEvent.type(await screen.findByLabelText('New password'), 'Brand-new-456!')
+    await userEvent.type(screen.getByLabelText('Confirm new password'), 'Brand-new-456!')
+    await userEvent.click(screen.getByRole('button', { name: 'Save and sign in' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('expired')
+    expect(screen.getByRole('link', { name: 'Send me a new link' })).toHaveAttribute('href', '/forgot-password')
+    await userEvent.click(screen.getByRole('button', { name: 'Save and sign in' }))
+    await waitFor(() => expect(assign).toHaveBeenCalledWith('/app/'))
+    const [, init] = fetchMock.mock.calls.filter(([u]) => u === '/api/auth/password-reset/confirm/').at(-1)!
+    expect(JSON.parse(init!.body as string)).toMatchObject({ uid: 'MQ', token: 'abc-123', new_password1: 'Brand-new-456!' })
+  })
+})

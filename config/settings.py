@@ -162,6 +162,20 @@ if NUM_PROXIES:
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')  # the proxy terminates HTTPS
 SECURE_HSTS_SECONDS = int(os.getenv('SECURE_HSTS_SECONDS', '0'))  # set once HTTPS is confirmed working
 
+# Email (password reset). Any SMTP service: Gmail with an app password now, Resend once there's a domain.
+# Without EMAIL_HOST, emails are printed to the console instead (local development).
+EMAIL_HOST = os.getenv('EMAIL_HOST', '')
+EMAIL_BACKEND = ('django.core.mail.backends.smtp.EmailBackend' if EMAIL_HOST
+                 else 'django.core.mail.backends.console.EmailBackend')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+EMAIL_USE_TLS = EMAIL_PORT == 587
+EMAIL_USE_SSL = EMAIL_PORT == 465
+EMAIL_TIMEOUT = 15
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL') or (f'ExcelPoint <{EMAIL_HOST_USER}>' if EMAIL_HOST_USER else 'ExcelPoint <noreply@localhost>')
+PASSWORD_RESET_TIMEOUT = 2 * 60 * 60  # reset links work for 2 hours
+
 # Media files configuration
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # Only used for local storage

@@ -8,13 +8,14 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 APP_INDEX = settings.BASE_DIR / 'static' / 'app' / 'index.html'
 
 
-PUBLIC_APP_PAGES = {'/app/login', '/app/register', '/app/welcome', '/app/privacy', '/app/terms'}  # everything else in the app needs a session
+PUBLIC_APP_PAGES = {'/app/login', '/app/register', '/app/welcome', '/app/privacy', '/app/terms', '/app/forgot-password'}  # everything else in the app needs a session
 
 
 @ensure_csrf_cookie
 def app_shell(request):
     """Serve the built React app's index.html for every /app/ route; React Router takes it from there."""
-    if not request.user.is_authenticated and request.path.rstrip('/') not in PUBLIC_APP_PAGES:
+    public = request.path.rstrip('/') in PUBLIC_APP_PAGES or request.path.startswith('/app/reset-password/')
+    if not request.user.is_authenticated and not public:
         return redirect_to_login(request.get_full_path())  # → /app/login?next=…
     try:
         return HttpResponse(APP_INDEX.read_text())

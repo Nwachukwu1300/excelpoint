@@ -8,7 +8,7 @@ import '../../styles/auth.css'
 type Errors = Record<string, string[]>
 
 /** Plain fetch: these endpoints are Django views (CSRF-protected for signed-out visitors too). */
-async function post(path: string, body: object): Promise<{ ok: true; next: string } | { ok: false; errors: Errors }> {
+export async function post(path: string, body: object): Promise<{ ok: true; next: string } | { ok: false; errors: Errors }> {
   const r = await fetch(path, {
     method: 'POST', credentials: 'same-origin',
     headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRFToken': csrfToken() },
@@ -84,6 +84,7 @@ export function AuthPage({ mode }: { mode: 'signin' | 'register' }) {
         {field('password1', 'Password', 'password', register ? 'new-password' : 'current-password', register ? 'At least 8 characters' : 'Your password',
           register ? 'At least 8 characters, not only numbers, and not a common password.' : undefined)}
         {register && field('password2', 'Confirm password', 'password', 'new-password', 'Repeat your password')}
+        {!register && <Link className="auth-forgot" to="/forgot-password">Forgot your password?</Link>}
         <Button type="submit" className="full-width" disabled={busy}>
           {busy ? (register ? 'Creating account…' : 'Signing in…') : register ? 'Create account' : 'Sign in'}
         </Button>

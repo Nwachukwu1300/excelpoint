@@ -6,6 +6,7 @@ import { AuthPage } from './features/auth/AuthPage'
 import { Landing } from './features/auth/Landing'
 import { Privacy } from './features/auth/Privacy'
 import { Terms } from './features/auth/Terms'
+import { ForgotPassword, ResetPassword } from './features/auth/PasswordReset'
 import { ChatPage } from './features/chat/ChatPage'
 import { AnswerTrace } from './features/insights/AnswerTrace'
 import { Insights } from './features/insights/Insights'
@@ -56,6 +57,8 @@ export const routes = [
   { path: 'welcome', element: <Landing /> },
   { path: 'privacy', element: <Privacy /> },
   { path: 'terms', element: <Terms /> },
+  { path: 'forgot-password', element: <ForgotPassword /> },
+  { path: 'reset-password/:uid/:token', element: <ResetPassword /> },
   { path: '*', element: <ErrorPage code="404" /> },
 ]
 
