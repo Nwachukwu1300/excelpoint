@@ -1,6 +1,6 @@
 # ExcelPoint
 
-Study app: users upload course materials (PDF, Word, audio/video), and **XP**, a chat assistant, answers **only from those materials** with citations (strict RAG). It also generates summaries, flashcards (SM-2 spaced repetition) and quizzes, and scores its own answer quality (AI Insights).
+Study-only app (the career features were removed on 2026-10-28): users upload course materials (PDF, Word, audio/video), and **XP**, a chat assistant, answers **only from those materials** with citations (strict RAG). It also generates summaries, flashcards (SM-2 spaced repetition) and quizzes, and scores its own answer quality (AI Insights).
 
 ## Working with Lord Soma
 
@@ -16,9 +16,9 @@ The UI is a **React app in `frontend/`** (React 19, React Router 7, TanStack Que
 
 - `config/views.app_shell` serves the built `static/app/index.html` for every `/app/` route. Only `/app/login`, `/app/register` and `/app/welcome` are public; everything else redirects to `/app/login?next=…` (`LOGIN_URL`).
 - Auth is Django **session cookies + CSRF**: the app reads the `csrftoken` cookie (set by `/api/me/` and the shell) and sends `X-CSRFToken`. Sign-in/register/logout are plain Django views (`users/auth_api.py`) so CSRF is checked for signed-out visitors too.
-- Every old page that was rebuilt **redirects** into the app, keeping its URL name (`/`, subjects, review, quizzes, insights, notifications, settings, password, login, register). Career pages (`/learning/`, profile, achievements, education, certs) are unchanged.
+- Every old page that was rebuilt **redirects** into the app, keeping its URL name (`/`, subjects, review, quizzes, insights, notifications, settings, password, login, register). The removed career pages (`/learning/*`, `/users/profile/`, achievements, education, certifications) and the old `/users/logout/` page redirect to `/app/`.
 - Every app endpoint is owner-scoped and tested. Shared styles load first in `frontend/src/main.tsx`; each page imports its own CSS from `frontend/src/styles/`.
-- The old chat widget (`src/`, root `package.json`), the old templates for rebuilt pages and the old dashboard code were deleted on 2026-10-26. The old `users/logout.html` page stays because the career pages' `base.html` still links to it.
+- The old chat widget (`src/`, root `package.json`), the old templates for rebuilt pages and the old dashboard code were deleted on 2026-10-26. The career pages, `base.html`, Bootstrap and `static/css/` went on 2026-10-28; no Django templates are left (only the admin's).
 
 ### Design source (Figma Make)
 
@@ -33,7 +33,7 @@ The UI is a **React app in `frontend/`** (React 19, React Router 7, TanStack Que
 - Clean and focused (Linear/Notion-like), Inter, 8px radius, subtle shadows. Collapsible **left sidebar**, which becomes a bottom tab bar on mobile.
 - **XP is a full chat page** per subject, with conversation history on the left and a collapsible Sources panel on the right.
 - Home is a **"Today" study queue** (due cards, suggestions, continue chatting, subjects).
-- **Career pages are out of the redesign** (Study Plan / dream path, courses, resource library, achievements, profile education/certs): leave them on the old look.
+- **ExcelPoint is study-only.** Career ideas (study plan, courses, achievements) are not coming back; study features such as streaks or an exam-date goal replace them.
 - Desktop 1440 + mobile 390.
 
 ### Components and motion inspiration
@@ -52,7 +52,7 @@ Motion should feel calm and fast: respect `prefers-reduced-motion`, and never an
 | `reasoning/` | Answer pipeline: rewrite (follow-ups only), retrieve, generate (streamable), verify, retry, confidence; traces (`ReasoningSession`), evaluations, judge, Insights + trace API (`app_api.py`) |
 | `retrieval/` | Retrieval pipeline, embeddings, reranking, metrics, benchmark (`benchmark.py`) |
 | `users/` | Custom User, Google OAuth, notifications (`Notification`), settings, change password |
-| `learning/` | Career features (out of redesign scope) |
+| `learning/` | Leftover career models and migrations only, waiting for their tables to be dropped |
 | `config/` | Settings, URLs, Celery (`celery.py`, beat schedule in settings) |
 | `frontend/` | The React app at `/app/` (its own package.json, tests and build to `static/app/`) |
 
@@ -96,7 +96,7 @@ venv/bin/python manage.py judge_answers    # optional LLM judge backlog
 
 - Fixed the original bugs: quiz FK, Whisper import, OAuth (state check, open redirect, verified email), IDOR in the APIs, S3 handling, secrets moved to env, test discovery.
 - Completed all 5 stages of `docs/stages.md`: retrieval (pgvector + HNSW, benchmark); reasoning pipeline; evaluation (heuristic + optional judge, quality API); observability (AI Insights pages, traces, JSON logs); workflows (upload chord → flashcards, quiz and summary + notification, SM-2 review, reminders, suggestions).
-- Streaming answers, LLM rate limit, consistent verifier, confidence fixes, background dynamic quizzes, change-password fix, ~1,300 lines of dead code removed, frontend tests repaired (108 passing).
+- Streaming answers, LLM rate limit, consistent verifier, confidence fixes, background dynamic quizzes, change-password fix, ~1,300 lines of dead code removed, frontend tests repaired (108 then; the new app has 59).
 
 ## Backlog
 

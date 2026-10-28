@@ -16,7 +16,7 @@ To bridge the gap between traditional learning methods and modern educational ne
 - **XP, the chat assistant:** answers only from your uploaded materials, cites the file it used, and says plainly when your notes don't cover a question. Answers stream in as they're written.
 - **Quizzes:** generated from your materials, including fresh questions on each retake, with scores and history.
 - **Flashcards with spaced repetition:** SM-2 scheduling (the method Anki uses), a review page, and a daily reminder when cards are due.
-- **Suggestions:** the Study Dashboard ranks next steps from your quiz scores, due cards, questions your notes couldn't answer, and untried quizzes.
+- **Suggestions:** the Today page ranks next steps from your quiz scores, due cards, questions your notes couldn't answer, and untried quizzes.
 
 ### Quality and transparency
 - **Verified answers:** a second model call checks each claim against your materials; unverified answers are marked.
@@ -33,7 +33,7 @@ To bridge the gap between traditional learning methods and modern educational ne
 - **Backend:** Django 5.2 and Django REST Framework on Python 3.13, Celery + Redis for background work and scheduled jobs.
 - **Database:** PostgreSQL with pgvector (HNSW index) for semantic search.
 - **AI:** OpenAI chat models (default `gpt-5.4-mini`, set with `OPENAI_MODEL`), `all-MiniLM-L6-v2` sentence-transformers embeddings, LangChain/Unstructured document loaders.
-- **Frontend:** a React 19 + TypeScript app in `frontend/` (React Router, TanStack Query, Motion, Vite), served by Django at `/app/`; answers stream over Server-Sent Events. The career pages still use Django templates with Bootstrap.
+- **Frontend:** a React 19 + TypeScript app in `frontend/` (React Router, TanStack Query, Motion, Vite), served by Django at `/app/`; answers stream over Server-Sent Events.
 
 ## Running the tests
 
@@ -70,7 +70,7 @@ XP answers **only from your uploaded materials**:
 
 ### Study workflows
 
-After an upload is processed, a Celery chord generates flashcards, a quiz and a summary in parallel, then sends a notification (bell icon). Flashcards are scheduled with SM-2 spaced repetition (`/subjects/<id>/review/`), a daily beat job reminds you when cards are due, and the Study Dashboard suggests next steps from your quiz scores, due cards and questions your notes couldn't answer.
+After an upload is processed, a Celery chord generates flashcards, a quiz and a summary in parallel, then sends a notification (bell icon). Flashcards are scheduled with SM-2 spaced repetition (`/app/review`), a daily beat job reminds you when cards are due, and the Today page suggests next steps from your quiz scores, due cards and questions your notes couldn't answer.
 
 Each answer also logs one JSON line (`"event": "chat_answer"`) with its path, chunk count, verification and per-stage timings.
 
