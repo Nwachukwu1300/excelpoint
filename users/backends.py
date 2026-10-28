@@ -1,6 +1,7 @@
 """Password sign-in with a cap on failed attempts. As the only auth backend, it covers every path that
 checks a password: the app's sign-in, the admin login and DRF."""
 
+from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
 from django.core.cache import cache
 from django.core.exceptions import PermissionDenied
@@ -28,6 +29,9 @@ class RateLimitedModelBackend(ModelBackend):
             if request is not None:
                 request.signin_locked = True
             raise PermissionDenied  # stops authenticate() without trying the password
+        UserModel = get_user_model()
+        if not UserModel.objects.filter(username=username).exists():  # sign-up treats "Sam" and "sam" as one name
+            username = UserModel.objects.filter(username__iexact=username).values_list('username', flat=True).first() or username
         user = super().authenticate(request, username, password, **kwargs)
         if user is not None:
             cache.delete(user_key)

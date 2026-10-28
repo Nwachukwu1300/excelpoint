@@ -124,6 +124,17 @@ class SettingsApiTest(TestCase):
         self.assertIn('email', r.json())
         self.assertIn('education_level', self.patch({'education_level': 'wizard'}).json())
 
+    def test_email_cannot_be_blank_or_someone_elses(self):
+        User.objects.create_user('o', email='taken@x.com', password='p')
+        self.assertEqual(self.patch({'email': '   '}).json(), {'email': ['Enter an email address.']})
+        self.assertEqual(self.patch({'email': 'TAKEN@x.com'}).json(), {'email': ['An account with this email already exists.']})
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.email, 'old@x.com')
+
+    def test_an_account_already_sharing_an_email_can_still_save(self):
+        User.objects.create_user('twin', email='OLD@x.com', password='p')
+        self.assertEqual(self.patch({'first_name': 'Sami'}).status_code, 200)
+
     def test_change_password_keeps_you_signed_in(self):
         r = self.client.post('/api/me/password/', {'old_password': 'Old-pass-123!', 'new_password1': 'Brand-new-456!',
                                                    'new_password2': 'Brand-new-456!'}, content_type='application/json')
@@ -237,6 +248,23 @@ class AuthApiTest(TestCase):
         self.assertEqual(self.client.get('/api/me/').json()['username'], 'alex')
         self.post('/api/auth/logout/', {})
         self.assertIs(self.client.get('/api/me/').json()['authenticated'], False)
+
+    def test_register_refuses_an_email_already_in_use(self):
+        User.objects.create_user('alex', email='alex@example.com', password='Pass-word-123!')
+        r = self.post('/api/auth/register/', {'username': 'alex2', 'email': 'ALEX@example.com',
+                                              'password1': 'Pass-word-123!', 'password2': 'Pass-word-123!'})
+        self.assertEqual(r.json(), {'email': ['An account with this email already exists.']})
+
+    def test_weak_password_errors_are_shown_under_the_password(self):
+        r = self.post('/api/auth/register/', {'username': 'new', 'email': 'n@example.com', 'password1': 'abc', 'password2': 'abc'}).json()
+        self.assertIn('too short', r['password1'][0])
+        self.assertNotIn('password2', r)
+        r = self.post('/api/auth/register/', {'username': 'new', 'email': 'n@example.com', 'password1': 'Pass-word-123!', 'password2': 'other'}).json()
+        self.assertIn('password2', r)  # a mismatch stays on the repeat field
+
+    def test_sign_in_ignores_username_case(self):
+        User.objects.create_user('QA_Breaker', password='Pass-word-123!')
+        self.assertEqual(self.sign_in('qa_breaker', 'Pass-word-123!').status_code, 200)
 
     def test_register_validates_then_signs_you_in(self):
         r = self.post('/api/auth/register/', {'username': 'new', 'email': 'bad', 'password1': '123', 'password2': '456'})

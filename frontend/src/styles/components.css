@@ -91,7 +91,8 @@
 .text-input { width: 100%; height: 42px; padding: 0 12px; border: 1px solid var(--border); border-radius: var(--radius); outline: none; color: var(--text); background: var(--card); font-size: 13px; }
 .text-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgb(37 99 235 / .1); }
 .text-input.is-invalid { border-color: var(--danger); }
-.field-error { display: block; margin-top: 6px; color: var(--danger); font-size: 10px; }
+.field-error { display: block; margin-top: 6px; color: var(--danger); font-size: 12px; }
+.field-hint { display: block; margin-top: 6px; color: var(--muted); font-size: 12px; }
 .dropzone { display: flex; width: 100%; min-height: 180px; flex-direction: column; align-items: center; justify-content: center; gap: 7px; border: 1px dashed #94a3b8; border-radius: var(--radius); color: var(--text); background: var(--background); transition: border-color .15s ease, background .15s ease; }
 .dropzone:hover, .dropzone.is-dragging { border-color: var(--primary); background: var(--primary-soft); }
 .dropzone > span:last-child { color: var(--muted); font-size: 10px; }

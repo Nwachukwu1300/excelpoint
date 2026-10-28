@@ -51,12 +51,13 @@ export function AuthPage({ mode }: { mode: 'signin' | 'register' }) {
     setBusy(false)
   }
   const set = (key: keyof typeof form) => (e: { target: { value: string } }) => { setForm(f => ({ ...f, [key]: e.target.value })); setErrors({}) }
-  const field = (key: keyof typeof form, label: string, type: string, autoComplete: string, placeholder: string) => (
+  const field = (key: keyof typeof form, label: string, type: string, autoComplete: string, placeholder: string, hint?: string) => (
     <div className="form-field">
       <label htmlFor={`auth-${key}`}>{label}</label>
       <input id={`auth-${key}`} className={`text-input ${errors[key] ? 'is-invalid' : ''}`} type={type} autoComplete={autoComplete}
         placeholder={placeholder} value={form[key]} onChange={set(key)} required aria-invalid={!!errors[key]}
-        aria-describedby={errors[key] ? `auth-${key}-error` : undefined} />
+        aria-describedby={[hint && `auth-${key}-hint`, errors[key] && `auth-${key}-error`].filter(Boolean).join(' ') || undefined} />
+      {hint && <span className="field-hint" id={`auth-${key}-hint`}>{hint}</span>}
       {errors[key]?.map(m => <span className="field-error" id={`auth-${key}-error`} key={m}>{m}</span>)}
     </div>
   )
@@ -79,8 +80,9 @@ export function AuthPage({ mode }: { mode: 'signin' | 'register' }) {
           <div className="auth-error" role="alert"><Icon name="close" size={15} /><span>{errors.__all__[0]}</span></div>
         )}
         {field('username', 'Username', 'text', 'username', 'alexmorgan')}
-        {register && field('email', 'Email', 'email', 'email', 'alex@example.com')}
-        {field('password1', 'Password', 'password', register ? 'new-password' : 'current-password', register ? 'At least 8 characters' : 'Your password')}
+        {register && field('email', 'Email', 'email', 'email', 'alex@example.com', 'Only for your account. We don’t send marketing email.')}
+        {field('password1', 'Password', 'password', register ? 'new-password' : 'current-password', register ? 'At least 8 characters' : 'Your password',
+          register ? 'At least 8 characters, not only numbers, and not a common password.' : undefined)}
         {register && field('password2', 'Confirm password', 'password', 'new-password', 'Repeat your password')}
         <Button type="submit" className="full-width" disabled={busy}>
           {busy ? (register ? 'Creating account…' : 'Signing in…') : register ? 'Create account' : 'Sign in'}

@@ -53,7 +53,10 @@ def register(request):
     data = _body(request)
     form = RegistrationForm({k: str(data.get(k, '')) for k in ('username', 'email', 'password1', 'password2')})
     if not form.is_valid():
-        return JsonResponse(form.errors, status=400)
+        errors = dict(form.errors)
+        if 'password2' in errors and form.data['password1'] == form.data['password2']:
+            errors['password1'] = errors.pop('password2')  # "too short" is about the password, not the repeat of it
+        return JsonResponse(errors, status=400)
     user = form.save()
     login(request, user)  # the one configured backend
     return JsonResponse({'ok': True, 'next': '/app/'}, status=201)

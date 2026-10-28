@@ -77,6 +77,13 @@ describe('Register', () => {
     expect(screen.getByText('The two password fields didn’t match.')).toBeInTheDocument()
     expect(screen.getByLabelText('Username')).toHaveAttribute('aria-invalid', 'true')
   })
+
+  it('states the password and email rules before submitting', async () => {
+    mockApi(signedOut)
+    renderApp('/register')
+    expect(await screen.findByLabelText('Password')).toHaveAccessibleDescription(/At least 8 characters/)
+    expect(screen.getByLabelText('Email')).toHaveAccessibleDescription(/Only for your account/)
+  })
 })
 
 describe('Landing', () => {
