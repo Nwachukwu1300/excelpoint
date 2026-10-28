@@ -148,16 +148,14 @@ class GoogleOAuthService:
         
         try:
             with transaction.atomic():
-                # Try to find existing user by email
-                user = User.objects.filter(email=email).first()
-                
+                user = User.objects.filter(google_id=google_id).first()
                 if user:
-                    # Update user's Google ID if not set
-                    if not hasattr(user, 'google_id') or not user.google_id:
-                        user.google_id = google_id
-                        user.save(update_fields=['google_id'])
                     return user
-                
+                # Never link by email: emails here are unverified, so anyone could register (or switch their
+                # account to) a victim's address and catch the victim's Google sign-in
+                if User.objects.filter(email__iexact=email).exists():
+                    raise ValueError("This email belongs to an account that signs in with a password")
+
                 # Create new user
                 username = self._generate_unique_username(user_info.get('given_name', ''), user_info.get('family_name', ''))
                 

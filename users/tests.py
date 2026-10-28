@@ -53,6 +53,24 @@ class GoogleEmailVerificationTest(TestCase):
         with self.assertRaisesMessage(ValueError, 'not verified'):
             GoogleOAuthService().authenticate_or_create_user({'email': 'a@x.com', 'sub': '1', 'given_name': 'A'})
 
+    def test_signs_in_by_google_id_not_email(self):
+        from users.models import User
+        google_user = GoogleOAuthService().authenticate_or_create_user(
+            {'email': 'a@x.com', 'sub': '1', 'email_verified': True, 'given_name': 'A'})
+        google_user.email = 'changed@x.com'  # they changed their email in Settings
+        google_user.save()
+        again = GoogleOAuthService().authenticate_or_create_user({'email': 'a@x.com', 'sub': '1', 'email_verified': True})
+        self.assertEqual(again, google_user)
+        self.assertEqual(User.objects.count(), 1)
+
+    def test_never_links_to_an_account_that_claims_the_same_email(self):
+        from users.models import User
+        User.objects.create_user('attacker', 'Victim@gmail.com', 'pw')  # emails are not verified
+        with self.assertRaisesMessage(ValueError, 'belongs to an account'):
+            GoogleOAuthService().authenticate_or_create_user(
+                {'email': 'victim@gmail.com', 'sub': '9', 'email_verified': True, 'given_name': 'V'})
+        self.assertFalse(User.objects.filter(google_id='9').exists())
+
     def test_verified_email_creates_user(self):
         user = GoogleOAuthService().authenticate_or_create_user(
             {'email': 'a@x.com', 'sub': '1', 'email_verified': True, 'given_name': 'A'}

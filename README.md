@@ -24,7 +24,7 @@ To bridge the gap between traditional learning methods and modern educational ne
 - **Evaluation tools:** an optional LLM judge for answer relevance, and a retrieval benchmark (hit@k, MRR) on your own question set.
 
 ### Accounts and safety
-- Email/password and Google sign-in (with state checks and verified-email matching).
+- Email/password and Google sign-in (with state checks; Google accounts are matched by Google ID, never by email).
 - Every query is limited to your own subjects; per-user rate limit on questions that call the LLM.
 - Local or S3 file storage.
 
