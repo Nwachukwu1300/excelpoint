@@ -39,12 +39,12 @@ PyPDF2==3.0.1
 python-docx==1.1.2
 
 # Content Processing and AI
-langchain>=0.3.0
-langchain-community>=0.3.0
+langchain==0.3.30
+langchain-community==0.3.27
 # langchain-core is auto-installed by langchain
-sentence-transformers>=3.0.0
+sentence-transformers==5.5.0
 torch==2.6.0
-numpy>=2.0.2
+numpy==2.4.6
 # unstructured - install separately if needed: pip install unstructured
 python-magic==0.4.27
 pydub==0.25.1
