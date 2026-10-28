@@ -430,6 +430,9 @@ class PasswordResetTest(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].to, ['alex@example.com'])
         self.assertIn('username: alex', mail.outbox[0].body)
+        with patch('users.auth_api.send_password_reset.delay') as queued:
+            self.post('/api/auth/password-reset/', {'email': 'alex@example.com'})
+        self.assertEqual(queued.call_args.args, (self.user.pk, 'http://testserver/'))  # no token in the job queue
         uid, token = self.link_parts()
         body = {'uid': uid, 'token': token, 'new_password1': 'Brand-new-456!', 'new_password2': 'Brand-new-456!'}
         self.assertEqual(self.post('/api/auth/password-reset/confirm/', body).json()['ok'], True)

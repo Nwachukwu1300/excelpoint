@@ -12,8 +12,8 @@ from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.tokens import default_token_generator
 from django.core.cache import cache
 from django.http import JsonResponse
-from django.utils.encoding import force_bytes, force_str
-from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
+from django.utils.encoding import force_str
+from django.utils.http import urlsafe_base64_decode
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_POST
@@ -96,11 +96,10 @@ def password_reset(request):
     ip = BaseThrottle().get_ident(request)
     if not email or not _under_limit(f'reset:ip:{ip}', RESETS_PER_IP) or not _under_limit(f'reset:email:{email.lower()}', RESETS_PER_EMAIL):
         return JsonResponse(RESET_SENT)  # same answer when limited: nothing to learn, nothing sent
+    site = request.build_absolute_uri('/')  # scheme and host the link needs; the worker makes the token
     for user in get_user_model().objects.filter(email__iexact=email, is_active=True):
-        link = request.build_absolute_uri(
-            f'/app/reset-password/{urlsafe_base64_encode(force_bytes(user.pk))}/{default_token_generator.make_token(user)}')
         try:
-            send_password_reset.delay(user.pk, link)  # queued: sending in the request would be slower only for real accounts
+            send_password_reset.delay(user.pk, site)  # queued: sending in the request would be slower only for real accounts
         except Exception:
             logger.exception('Could not queue a password reset email')  # same answer either way
     return JsonResponse(RESET_SENT)
