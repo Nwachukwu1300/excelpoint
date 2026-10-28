@@ -18,7 +18,7 @@ The UI is a **React app in `frontend/`** (React 19, React Router 7, TanStack Que
 - Auth is Django **session cookies + CSRF**: the app reads the `csrftoken` cookie (set by `/api/me/` and the shell) and sends `X-CSRFToken`. Sign-in/register/logout are plain Django views (`users/auth_api.py`) so CSRF is checked for signed-out visitors too.
 - Every old page that was rebuilt **redirects** into the app, keeping its URL name (`/`, subjects, review, quizzes, insights, notifications, settings, password, login, register). The removed career pages (`/learning/*`, `/users/profile/`, achievements, education, certifications) and the old `/users/logout/` page redirect to `/app/`.
 - Every app endpoint is owner-scoped and tested. Shared styles load first in `frontend/src/main.tsx`; each page imports its own CSS from `frontend/src/styles/`.
-- The old chat widget (`src/`, root `package.json`), the old templates for rebuilt pages and the old dashboard code were deleted on 2026-10-26. The career pages, `base.html`, Bootstrap and `static/css/` went on 2026-10-28; no Django templates are left (only the admin's).
+- The old chat widget (`src/`, root `package.json`), the old templates for rebuilt pages and the old dashboard code were deleted on 2026-10-26. The career features (the `learning/` app, profile/education/certification/achievement pages and models, the career fields on `User`) and `base.html`, Bootstrap and `static/css/` went on 2026-10-28; `UserProfile` keeps only `education_level`; no Django templates are left (only the admin's).
 
 ### Design source (Figma Make)
 
@@ -52,7 +52,6 @@ Motion should feel calm and fast: respect `prefers-reduced-motion`, and never an
 | `reasoning/` | Answer pipeline: rewrite (follow-ups only), retrieve, generate (streamable), verify, retry, confidence; traces (`ReasoningSession`), evaluations, judge, Insights + trace API (`app_api.py`) |
 | `retrieval/` | Retrieval pipeline, embeddings, reranking, metrics, benchmark (`benchmark.py`) |
 | `users/` | Custom User, Google OAuth, notifications (`Notification`), settings, change password |
-| `learning/` | Leftover career models and migrations only, waiting for their tables to be dropped |
 | `config/` | Settings, URLs, Celery (`celery.py`, beat schedule in settings) |
 | `frontend/` | The React app at `/app/` (its own package.json, tests and build to `static/app/`) |
 

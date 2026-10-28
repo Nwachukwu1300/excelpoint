@@ -50,7 +50,6 @@ INSTALLED_APPS = [
     'storages',  # Required for S3 storage
     # our apps
     'users',
-    'learning',
     'subjects',
     'retrieval',  # Stage 1: Retrieval System Optimization
     'reasoning',  # Stage 2: Agentic Reasoning Pipeline
@@ -305,6 +304,6 @@ LOGGING = {
     'root': {'handlers': ['console'], 'level': 'WARNING'},
     'loggers': {
         app: {'handlers': ['console'], 'level': LOG_LEVEL, 'propagate': False}
-        for app in ('subjects', 'retrieval', 'reasoning', 'users', 'learning')
+        for app in ('subjects', 'retrieval', 'reasoning', 'users')
     },
 }
