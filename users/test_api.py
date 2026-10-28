@@ -176,6 +176,25 @@ class AuthApiTest(TestCase):
         for _ in range(4):
             self.assertEqual(self.sign_in('alex', 'nope').status_code, 400)
 
+    def test_the_admin_login_shares_the_cap(self):
+        User.objects.create_user('boss', password='Pass-word-123!', is_staff=True)
+        for _ in range(5):
+            self.client.post('/admin/login/', {'username': 'boss', 'password': 'nope'})
+        self.client.post('/admin/login/', {'username': 'boss', 'password': 'Pass-word-123!'})
+        self.assertNotIn('_auth_user_id', self.client.session)  # right password, still locked
+        self.assertEqual(self.sign_in('boss', 'Pass-word-123!').status_code, 429)
+
+    def test_the_api_ignores_basic_auth(self):
+        import base64
+        User.objects.create_user('alex', password='Pass-word-123!')
+        header = 'Basic ' + base64.b64encode(b'alex:Pass-word-123!').decode()
+        self.assertEqual(self.client.get('/api/me/', HTTP_AUTHORIZATION=header).status_code, 403)
+
+    def test_successful_sign_ins_do_not_count_against_the_address(self):
+        for i in range(25):
+            User.objects.create_user(f'student{i}', password='Pass-word-123!')
+            self.assertEqual(self.sign_in(f'student{i}', 'Pass-word-123!').status_code, 200)
+
     def test_too_many_failures_from_one_address_lock_it(self):
         User.objects.create_user('alex', password='Pass-word-123!')
         for i in range(20):

@@ -1,0 +1,37 @@
+"""Password sign-in with a cap on failed attempts. As the only auth backend, it covers every path that
+checks a password: the app's sign-in, the admin login and DRF."""
+
+from django.contrib.auth.backends import ModelBackend
+from django.core.cache import cache
+from django.core.exceptions import PermissionDenied
+
+# Failed sign-ins allowed per window, per username and per IP (higher: a campus network shares one address)
+FAILS_PER_USER, FAILS_PER_IP, FAIL_WINDOW = 5, 20, 15 * 60
+
+
+def _bump(key):
+    cache.add(key, 0, FAIL_WINDOW)  # starts the window on the first attempt; a no-op after that
+    return cache.incr(key)
+
+
+class RateLimitedModelBackend(ModelBackend):
+    def authenticate(self, request, username=None, password=None, **kwargs):
+        if username is None or password is None:
+            return super().authenticate(request, username, password, **kwargs)
+        # shortcut: behind a proxy REMOTE_ADDR is the proxy's address; read the client IP from it when deploying
+        ip = request.META.get('REMOTE_ADDR', '') if request is not None else ''
+        user_key, ip_key = f'signin-fail:user:{str(username).lower()}', f'signin-fail:ip:{ip}'
+        # Counted before the password is checked, so parallel guesses can't all slip under the cap,
+        # and a locked account can't be unlocked by guessing right
+        if _bump(user_key) > FAILS_PER_USER or _bump(ip_key) > FAILS_PER_IP:
+            if request is not None:
+                request.signin_locked = True
+            raise PermissionDenied  # stops authenticate() without trying the password
+        user = super().authenticate(request, username, password, **kwargs)
+        if user is not None:
+            cache.delete(user_key)
+            try:
+                cache.decr(ip_key)  # only failures count against the address
+            except ValueError:  # the window just expired
+                pass
+        return user

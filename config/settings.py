@@ -154,10 +154,12 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # Only used for local storage
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
+# The only backend, so every password check (app sign-in, admin, DRF) shares the failed-attempt cap
+AUTHENTICATION_BACKENDS = ['users.backends.RateLimitedModelBackend']
+
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.BasicAuthentication',
+        'rest_framework.authentication.SessionAuthentication',  # the app signs in with sessions only
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
