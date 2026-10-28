@@ -79,9 +79,10 @@ def recommend(user, limit=6):
         example = next((q for q in questions if q), '')
         recs.append({
             'kind': 'knowledge_gap', 'priority': 35 + len(questions),
-            'title': f"Add files to {subject.name}",
+            'title': f"Add files to {subject.name}?",
             'reason': (f"XP found nothing in your files for {len(questions)} recent question{'s' if len(questions) != 1 else ''}"
-                       + (f", for example “{example[:80]}”." if example else ".")),
+                       + (f", for example “{example[:80]}”" if example else "")
+                       + ". If that's part of this subject, upload notes that cover it."),
             'url': reverse('subject_detail', args=[subject.id]),
             'subject_id': subject.id, 'quiz_id': None,
         })

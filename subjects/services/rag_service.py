@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 import time
 from typing import List, Dict, Any, Optional
 from openai import OpenAI
@@ -110,6 +111,13 @@ class RAGService:
             is_small_talk = self._is_conversational_query(query)
             is_followup = self._is_followup_request(query, chat_history)
 
+            # "Summarise the key ideas" is about the whole file, so no single passage scores as similar:
+            # take the closest passages anyway (still only the user's files), answered in one call
+            broad = not context.strip() and self._is_broad_request(query)
+            if broad:
+                search_results = self._closest_chunks(query, subject_id)
+                context = self._prepare_context(search_results)
+
             # Strict RAG: nothing relevant retrieved means nothing to answer from, so skip the LLM.
             # Follow-ups ("tell me more") pass through: the reasoning rewriter resolves them from history.
             if not context.strip() and not is_small_talk and not is_followup:
@@ -140,7 +148,7 @@ class RAGService:
             # Step 4: Questions go through the reasoning pipeline (rewrite, retrieve, generate,
             # verify, retry); small talk, or a pipeline failure, uses a single grounded LLM call
             result = None
-            if not is_small_talk:
+            if not is_small_talk and not broad:  # the pipeline would search again with the cut-off
                 result = yield from self._reasoning_events(
                     query, subject_id, chat_history, user_id, subject_name, start_time, stream)
 
@@ -322,6 +330,22 @@ class RAGService:
             logger.warning(f"Vector search failed for subject {subject_id}: {str(e)}")
             return []  # Return empty list instead of failing
     
+    BROAD_REQUEST = re.compile(
+        r'\b(summar(y|ise|ize|ising|izing)|overview|key (ideas|points|terms|concepts)|main (ideas|points|topics)'
+        r'|most important|important (definitions|terms|ideas)|hardest concept|what (is|are) (this|these) (file|files|notes|document)s? about)\b',
+        re.IGNORECASE)
+
+    def _is_broad_request(self, query: str) -> bool:
+        return bool(self.BROAD_REQUEST.search(query))
+
+    def _closest_chunks(self, query: str, subject_id: int) -> List[Dict[str, Any]]:
+        try:
+            return self.vector_service.search_by_query(query_text=query, subject_id=subject_id,
+                                                       top_k=self.search_top_k, threshold=0.0)
+        except Exception as e:
+            logger.warning(f"Vector search failed for subject {subject_id}: {str(e)}")
+            return []
+
     def _prepare_context(self, search_results: List[Dict[str, Any]]) -> str:
         """
         Prepare context from search results for the LLM.

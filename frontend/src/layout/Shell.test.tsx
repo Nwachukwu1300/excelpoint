@@ -24,7 +24,7 @@ describe('Shell', () => {
     expect(within(nav).getByRole('link', { name: /Home/ })).toHaveAttribute('aria-current', 'page')
     expect(screen.getByRole('button', { name: 'Notifications, 2 unread' })).toBeInTheDocument()
     expect(screen.getByText('Alex Morgan')).toBeInTheDocument()
-    expect(screen.getByText('Review 20 cards today to stay on track.')).toBeInTheDocument()
+    expect(screen.getByText('You have 20 flashcards to review today.')).toBeInTheDocument()
   })
 
   it('sends signed-out users to the Django login with a return path', async () => {

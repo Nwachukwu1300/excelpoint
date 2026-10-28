@@ -802,7 +802,8 @@ class ChatMessageListCreateAPIView(generics.ListCreateAPIView):
             from openai import OpenAI
             client = OpenAI(api_key=settings.OPENAI_API_KEY)
             
-            prompt = f"""Based on this conversation about {subject_name}, create a concise, descriptive title (max 50 characters) that captures the main topic:
+            # The subject name is left out: a Spanish subject name pulled English questions' titles into Spanish
+            prompt = f"""Based on this conversation, create a concise, descriptive title (max 50 characters) that captures the main topic:
 
 User: {user_message[:200]}
 Assistant: {assistant_response[:200]}
@@ -812,7 +813,7 @@ Generate a title that is:
 - Maximum 50 characters
 - Clear and descriptive
 - No quotes or special formatting
-- In the same language as the user's question (the subject name may be in another language)
+- Written in the same language as the User line above
 
 Title:"""
             

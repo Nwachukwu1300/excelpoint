@@ -168,3 +168,40 @@ class NoReadyFilesTest(TestCase):
         result = self.ask()
         self.assertIn("couldn't find information", result['response'])
         self.assertIs(result['metadata']['files_ready'], True)
+
+
+class BroadRequestTest(TestCase):
+    """'Summarise the key ideas' matches no single passage, but must still be answered from the files."""
+
+    def setUp(self):
+        user = get_user_model().objects.create_user('b', password='p')
+        self.subject = Subject.objects.create(user=user, name='Biology')
+        SubjectMaterial.objects.create(subject=self.subject, file='subject_materials/n.docx', file_type='DOCX', status='COMPLETED')
+        self.rag = RAGService()
+
+    @patch('reasoning.pipeline.ReasoningPipeline.run')
+    def test_summary_request_uses_the_closest_passages(self, run):
+        from unittest.mock import MagicMock
+        client = MagicMock()
+        client.chat.completions.create.return_value.choices = [MagicMock(message=MagicMock(content='Photosynthesis turns light into sugar (Source: db.pdf).'))]
+        client.chat.completions.create.return_value.usage = None
+        with patch.object(self.rag, '_retrieve_relevant_chunks', return_value=[]), \
+                patch.object(self.rag.vector_service, 'search_by_query', return_value=[CHUNK]) as search, \
+                patch.object(self.rag, 'openai_client', client):
+            result = self.rag.generate_response('Summarise the key ideas', self.subject.id)
+        self.assertEqual(search.call_args.kwargs['threshold'], 0.0)
+        self.assertEqual(result['metadata']['pipeline'], 'single_call')
+        self.assertEqual(result['retrieved_chunks'], [CHUNK])
+        self.assertIn('Photosynthesis', result['response'])
+        run.assert_not_called()
+
+    def test_off_topic_questions_still_get_the_not_found_reply(self):
+        with patch.object(self.rag, '_retrieve_relevant_chunks', return_value=[]):
+            result = self.rag.generate_response('Who won the 2018 World Cup?', self.subject.id)
+        self.assertEqual(result['metadata']['pipeline'], 'fallback')
+
+    def test_broad_request_detection(self):
+        for q in ['Summarise the key ideas', 'Explain the hardest concept simply', 'What are the most important definitions?',
+                  'give me an overview', 'what is this document about']:
+            self.assertTrue(self.rag._is_broad_request(q), q)
+        self.assertFalse(self.rag._is_broad_request('What does chlorophyll absorb?'))
