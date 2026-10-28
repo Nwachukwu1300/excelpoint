@@ -1,3 +1,4 @@
+import os
 from datetime import timedelta
 
 from django.contrib.auth import get_user_model
@@ -294,3 +295,72 @@ class AuthApiTest(TestCase):
 
     def test_get_is_not_allowed(self):
         self.assertEqual(self.client.get('/api/auth/login/').status_code, 405)
+
+
+import shutil
+import tempfile
+
+from django.core.files.base import ContentFile
+from django.test import override_settings
+
+from reasoning.models import ReasoningSession
+from subjects.models import ChatSession, Subject, SubjectMaterial
+
+MEDIA = tempfile.mkdtemp()
+
+
+@override_settings(MEDIA_ROOT=MEDIA)
+class DeleteAccountTest(TestCase):
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(MEDIA, ignore_errors=True)
+        super().tearDownClass()
+
+    def setUp(self):
+        self.user = User.objects.create_user('s', password='Pass-word-123!')
+        self.other = User.objects.create_user('o', password='Pass-word-123!')
+        self.subject = Subject.objects.create(user=self.user, name='Bio')
+        self.material = SubjectMaterial(subject=self.subject, file_type='PDF', status='COMPLETED')
+        self.material.file.save('notes.pdf', ContentFile(b'%PDF'))
+        ChatSession.objects.create(user=self.user, subject=self.subject)
+        ReasoningSession.objects.create(subject_id=self.subject.id, original_query='What is DNA?', pipeline_name='p', total_latency=1)
+        kept = Subject.objects.create(user=self.other, name='Kept')
+        ReasoningSession.objects.create(subject_id=kept.id, original_query='other', pipeline_name='p', total_latency=1)
+        self.client.force_login(self.user)
+
+    def delete(self, confirm):
+        return self.client.post('/api/me/delete/', {'confirm': confirm}, content_type='application/json')
+
+    def test_wrong_password_deletes_nothing(self):
+        self.assertEqual(self.delete('nope').json(), {'confirm': ['That password isn’t right.']})
+        self.assertTrue(User.objects.filter(pk=self.user.pk).exists())
+
+    def test_deletes_the_account_files_and_traces_then_signs_out(self):
+        path = self.material.file.path
+        self.assertEqual(self.delete('Pass-word-123!').status_code, 204)
+        self.assertFalse(User.objects.filter(pk=self.user.pk).exists())
+        self.assertFalse(Subject.objects.filter(pk=self.subject.pk).exists())
+        self.assertFalse(os.path.exists(path))
+        self.assertEqual(list(ReasoningSession.objects.values_list('original_query', flat=True)), ['other'])
+        self.assertIs(self.client.get('/api/me/').json()['authenticated'], False)
+        self.assertTrue(User.objects.filter(pk=self.other.pk).exists())
+
+    def test_google_only_accounts_confirm_with_their_username(self):
+        self.user.set_unusable_password()
+        self.user.save()
+        self.client.force_login(self.user)
+        self.assertEqual(self.delete('wrong').status_code, 400)
+        self.assertEqual(self.delete('S').status_code, 204)
+
+    def test_signed_out_cannot_delete(self):
+        self.client.logout()
+        self.assertEqual(self.delete('Pass-word-123!').status_code, 403)
+
+    def test_deleting_a_subject_removes_its_files_and_traces_but_only_yours(self):
+        path = self.material.file.path
+        self.client.force_login(self.other)
+        self.assertEqual(self.client.delete(f'/api/subjects/{self.subject.id}/').status_code, 404)
+        self.client.force_login(self.user)
+        self.assertEqual(self.client.delete(f'/api/subjects/{self.subject.id}/').status_code, 204)
+        self.assertFalse(os.path.exists(path))
+        self.assertEqual(ReasoningSession.objects.count(), 1)

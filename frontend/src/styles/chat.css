@@ -3,8 +3,12 @@
 .chat-layout.sources-closed { grid-template-columns: 220px minmax(420px, 1fr); }
 .chat-history { padding: 16px 10px; border-right: 1px solid var(--border); background: var(--background); }
 .history-label { display: block; margin: 22px 9px 8px; color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: .12em; }
-.chat-history > a:not(.button) { display: block; width: 100%; padding: 10px; border: 0; border-radius: 6px; color: var(--text); background: transparent; text-align: left; }
-.chat-history > a:not(.button):hover, .chat-history > a.is-active { background: var(--primary-soft); }
+.history-row { display: flex; align-items: center; border-radius: 6px; }
+.history-row:hover, .history-row.is-active { background: var(--primary-soft); }
+.history-row > a { display: block; flex: 1; min-width: 0; padding: 10px; color: var(--text); text-align: left; }
+.history-row .icon-button { flex: none; opacity: 0; }
+.history-row:hover .icon-button, .history-row .icon-button:focus-visible, .history-row.is-active .icon-button { opacity: 1; }
+@media (hover: none) { .history-row .icon-button { opacity: 1; } }
 .chat-history strong, .chat-history span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .chat-history strong { font-size: 10px; }
 .chat-history a > span { margin-top: 3px; color: var(--muted); font-size: 10px; }

@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { me, mockApi, renderApp, reply } from '../../test/render'
@@ -32,6 +32,28 @@ describe('Settings', () => {
     expect(await screen.findByText('Changes saved')).toBeInTheDocument()
     const [, init] = fetchMock.mock.calls.filter(([u, i]) => u === '/api/me/' && i?.method === 'PATCH').at(-1)!
     expect(JSON.parse(init!.body as string)).toMatchObject({ first_name: 'Alexa', education_level: 'undergraduate' })
+  })
+
+  it('deletes the account only with the right password', async () => {
+    const assign = vi.fn()
+    vi.stubGlobal('location', { ...location, assign })
+    let calls = 0
+    const fetchMock = mockApi({
+      'GET /api/me/': me,
+      'POST /api/me/delete/': () => (++calls === 1 ? { status: 400, body: { confirm: ['That password isn’t right.'] } } : { status: 204, body: null }),
+    })
+    renderApp('/settings')
+    await userEvent.click(await screen.findByRole('button', { name: 'Delete my account' }))
+    const dialog = screen.getByRole('dialog', { name: 'Delete your account?' })
+    await userEvent.type(within(dialog).getByLabelText('Enter your password to confirm'), 'wrong')
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Delete account' }))
+    expect(await within(dialog).findByText('That password isn’t right.')).toBeInTheDocument()
+    expect(assign).not.toHaveBeenCalled()
+
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Delete account' }))
+    await waitFor(() => expect(assign).toHaveBeenCalledWith('/app/welcome'))
+    const [, init] = fetchMock.mock.calls.filter(([u]) => u === '/api/me/delete/').at(-1)!
+    expect(JSON.parse(init!.body as string)).toEqual({ confirm: 'wrong' })
   })
 
   it('switches theme straight away', async () => {

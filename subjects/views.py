@@ -18,7 +18,7 @@ import logging
 from .models import (
     Subject, SubjectMaterial, Flashcard, FlashcardReview, QuizQuestion, QuizAttempt,
     Quiz, Choice, UserQuizAttempt, UserAnswer,
-    ChatSession, ChatMessage
+    ChatSession, ChatMessage, delete_subjects
 )
 from .serializers import (
     SubjectSerializer, SubjectMaterialSerializer, FlashcardSerializer,
@@ -164,6 +164,9 @@ class SubjectViewSet(viewsets.ModelViewSet):
         except IntegrityError:  # a second click raced the first past the name check
             name = serializer.validated_data['name']
             raise ValidationError({'name': [f'A subject named {name} already exists.']})
+
+    def perform_destroy(self, instance):
+        delete_subjects(Subject.objects.filter(pk=instance.pk))
 
     @action(detail=True, methods=['post'])
     def upload_material(self, request, pk=None):

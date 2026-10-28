@@ -773,3 +773,15 @@ class FlashcardReview(models.Model):
 def clear_subject_answer_cache(sender, instance, **kwargs):
     # Cached answers were built from the old materials, so any change invalidates them
     CachedResponse.objects.filter(subject_id=instance.subject_id).delete()
+
+
+def delete_subjects(subjects):
+    """Delete subjects with everything in them, including what the database can't cascade to:
+    the stored files, and answer traces, which keep subject_id as a plain number."""
+    from reasoning.models import ReasoningSession
+
+    ids = list(subjects.values_list('id', flat=True))
+    for material in SubjectMaterial.objects.filter(subject_id__in=ids).exclude(file=''):
+        material.file.delete(save=False)
+    ReasoningSession.objects.filter(subject_id__in=ids).delete()
+    Subject.objects.filter(id__in=ids).delete()

@@ -9,6 +9,7 @@
 .notification-page-item p { margin: 4px 0; color: var(--muted); font-size: 10px; }
 .notification-page-item small { color: var(--muted); font-size: 10px; }
 .notification-page-item > i { width: 7px; height: 7px; border-radius: 50%; background: var(--primary); }
+.danger-zone { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-top: 16px; }
 .settings-card { padding: 24px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow); }
 .settings-section-head h2 { margin: 0; font-size: 14px; }
 .settings-section-head p { margin: 4px 0 0; color: var(--muted); font-size: 10px; }

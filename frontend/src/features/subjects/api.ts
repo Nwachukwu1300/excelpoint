@@ -60,6 +60,14 @@ export function useCreateSubject() {
   })
 }
 
+export function useDeleteSubject() {
+  const refresh = useRefreshAfter()
+  return useMutation({
+    mutationFn: (id: number) => api(`/api/subjects/${id}/`, { method: 'DELETE' }),
+    onSuccess: () => refresh(['subjects'], ['me'], ['home'], ['notifications']),
+  })
+}
+
 export function useUploadMaterial() {
   const refresh = useRefreshAfter()
   return useMutation({

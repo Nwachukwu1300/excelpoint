@@ -3,7 +3,7 @@
 from collections import Counter
 
 from django.conf import settings
-from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth import logout, update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm, SetPasswordForm
 from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -13,6 +13,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
+from subjects.models import delete_subjects
 from subjects.services.spaced_repetition import due_cards
 
 from .forms import SettingsForm
@@ -109,3 +110,19 @@ def change_password(request):
     form.save()
     update_session_auth_hash(request, form.user)  # otherwise changing the password would end this session
     return Response({'ok': True})
+
+
+@api_view(['POST'])
+def delete_account(request):
+    """Delete the account and everything in it. Confirmed with the password, or the username for Google-only accounts."""
+    user = request.user
+    confirm = str(request.data.get('confirm', ''))
+    if user.has_usable_password():
+        if not user.check_password(confirm):
+            raise ValidationError({'confirm': ['That password isn’t right.']})
+    elif confirm.strip().lower() != user.username.lower():
+        raise ValidationError({'confirm': ['Type your username exactly to confirm.']})
+    delete_subjects(user.subjects.all())
+    logout(request)
+    user.delete()  # cascades to notifications, reviews, quiz attempts and chats
+    return Response(status=204)

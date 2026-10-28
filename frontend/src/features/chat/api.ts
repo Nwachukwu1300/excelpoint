@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, ApiError, csrfToken } from '../../lib/api'
 
 export type SourceChunk = { chunk_id?: number; content: string; chunk_index?: number; material_id?: number; material_name: string; similarity_score: number }
@@ -26,6 +26,18 @@ export const useSessions = (subjectId: number) =>
     queryFn: () => api<{ sessions: ChatSession[] }>(`/api/subjects/${subjectId}/chat/sessions/?limit=30`),
     select: d => d.sessions.filter(s => s.message_count > 0),
   })
+
+export function useDeleteSession(subjectId: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    // Already gone (a second click raced the first) counts as deleted
+    mutationFn: (id: number) => api(`/api/chat/sessions/${id}/`, { method: 'DELETE' })
+      .catch(e => { if (!(e instanceof ApiError && e.status === 404)) throw e }),
+    onSuccess: () => {
+      for (const key of [sessionsKey(subjectId), ['home']]) queryClient.invalidateQueries({ queryKey: key })
+    },
+  })
+}
 
 export const useMessages = (subjectId: number, sessionId: number | undefined) =>
   useQuery({

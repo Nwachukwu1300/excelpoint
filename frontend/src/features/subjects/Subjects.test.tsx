@@ -1,7 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { me, mockApi, renderApp, reply } from '../../test/render'
+import { emptyHome, me, mockApi, renderApp, reply } from '../../test/render'
 import { checkFile, parseSummary } from './api'
 import { dueLabel } from './FlashcardsTab'
 
@@ -82,6 +82,18 @@ describe('Subject workspace', () => {
     await userEvent.click(within(dialog).getByRole('button', { name: 'Delete file' }))
     await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/materials/10/', expect.objectContaining({ method: 'DELETE' })))
     expect(await screen.findByText('File deleted')).toBeInTheDocument()
+  })
+
+  it('deletes a subject after confirming, then goes back to Subjects', async () => {
+    const fetchMock = mockApi({ ...base, 'DELETE /api/subjects/3/': reply(204, null), 'GET /api/home/': emptyHome })
+    renderApp('/subjects/3')
+    await userEvent.click(await screen.findByRole('button', { name: 'More actions for Database Systems' }))
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Delete subject' }))
+    const dialog = screen.getByRole('dialog', { name: 'Delete Database Systems?' })
+    expect(dialog).toHaveTextContent('XP conversations will be removed')
+    await userEvent.dblClick(within(dialog).getByRole('button', { name: 'Delete subject' }))
+    expect(await screen.findByText('Subject deleted')).toBeInTheDocument()
+    expect(fetchMock.mock.calls.filter(([u, i]) => u === '/api/subjects/3/' && i?.method === 'DELETE')).toHaveLength(1)
   })
 
   it('rejects unsupported files and uploads a valid one with the CSRF token', async () => {

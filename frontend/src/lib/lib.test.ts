@@ -60,4 +60,17 @@ describe('useOneAtATime', () => {
     result.current(start)
     expect(start).toHaveBeenCalledTimes(2)
   })
+
+  it('stays locked after a final success, but not after a failure', async () => {
+    const { result } = renderHook(() => useOneAtATime())
+    const fail = vi.fn(() => Promise.reject(new Error('no')))
+    result.current(fail, { final: true })
+    await act(async () => {})
+    result.current(fail, { final: true })
+    expect(fail).toHaveBeenCalledTimes(2)
+    const ok = vi.fn(() => Promise.resolve())
+    await act(async () => result.current(ok, { final: true }))
+    result.current(ok, { final: true })
+    expect(ok).toHaveBeenCalledTimes(1)
+  })
 })

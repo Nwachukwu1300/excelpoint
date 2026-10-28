@@ -1,10 +1,15 @@
 import { motion } from 'motion/react'
-import { Link, useParams, useSearchParams } from 'react-router'
+import { useState } from 'react'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import { plural, timeAgo } from '../../lib/format'
 import { spring } from '../../lib/motion'
+import { useOneAtATime } from '../../lib/useOneAtATime'
+import { ConfirmDialog } from '../../ui/ConfirmDialog'
+import { MoreMenu } from '../../ui/Menu'
+import { toast } from '../../ui/Toast'
 import { Icon } from '../../ui/Icon'
 import { Skeleton, buttonClass } from '../../ui/primitives'
-import { useSubjects } from './api'
+import { useDeleteSubject, useSubjects } from './api'
 import { FlashcardsTab } from './FlashcardsTab'
 import { MaterialsTab } from './MaterialsTab'
 import { QuizzesTab } from './QuizzesTab'
@@ -20,6 +25,10 @@ export function SubjectWorkspace() {
   const [params, setParams] = useSearchParams()
   const tab: Tab = TABS.find(t => t === params.get('tab')) ?? 'materials'
   const uploading = params.get('upload') === '1'
+  const navigate = useNavigate()
+  const remove = useDeleteSubject()
+  const once = useOneAtATime()
+  const [deleting, setDeleting] = useState(false)
 
   // Tab and upload live in the URL so links (e.g. Home's "Upload") can open them directly.
   const update = (changes: Record<string, string | null>) => {
@@ -34,7 +43,11 @@ export function SubjectWorkspace() {
   const setUploading = (on: boolean) => update({ upload: on ? '1' : null })
 
   const subject = subjects.data?.find(s => s.id === id)
-  if (subjects.isSuccess && !subject) {
+  const confirmDelete = () => once(() => remove.mutateAsync(id).then(
+    () => { setDeleting(false); navigate('/subjects'); toast('success', 'Subject deleted', `${subject?.name ?? 'The subject'} and everything in it were removed.`) },
+    () => { toast('error', 'Couldn’t delete the subject', 'Try again in a moment.'); throw new Error('not deleted') },
+  ), { final: true })
+  if (subjects.isSuccess && !subject && !remove.isPending && !remove.isSuccess) {
     return (
       <div className="page-content">
         <div className="empty-state">
@@ -77,6 +90,7 @@ export function SubjectWorkspace() {
             ? <Link className={buttonClass('secondary')} to={`/review?subject=${id}`}><Icon name="repeat" />Review {subject.due_count} due</Link>
             : <button type="button" className={buttonClass('secondary')} disabled><Icon name="repeat" />Nothing due</button>}
           <Link className={buttonClass('ai')} to={`/subjects/${id}/chat`}><Icon name="sparkles" />Ask XP</Link>
+          {subject && <MoreMenu label={`More actions for ${subject.name}`} items={[{ label: 'Delete subject', danger: true, onSelect: () => setDeleting(true) }]} />}
         </div>
       </div>
 
@@ -101,6 +115,10 @@ export function SubjectWorkspace() {
       </motion.section>
 
       <UploadModal open={uploading} onClose={() => setUploading(false)} subjectId={id} />
+      <ConfirmDialog open={deleting} title={`Delete ${subject?.name ?? 'this subject'}?`} confirmLabel="Delete subject" icon="book"
+        busy={remove.isPending} onCancel={() => setDeleting(false)} onConfirm={confirmDelete}>
+        <p>All its files, summaries, flashcards, quizzes and XP conversations will be removed. This can’t be undone.</p>
+      </ConfirmDialog>
     </div>
   )
 }

@@ -5,6 +5,7 @@ import { api, ApiError, useMe, type Me } from '../../lib/api'
 import { useTheme, type Theme } from '../../lib/theme'
 import { useOneAtATime } from '../../lib/useOneAtATime'
 import { Icon, type IconName } from '../../ui/Icon'
+import { ConfirmDialog } from '../../ui/ConfirmDialog'
 import { Button, Skeleton } from '../../ui/primitives'
 import { toast } from '../../ui/Toast'
 import '../../styles/account.css'
@@ -109,6 +110,38 @@ export function SettingsPage() {
           <Button type="submit" disabled={save.isPending}>{save.isPending ? 'Saving…' : 'Save changes'}</Button>
         </div>
       </form>
+      <DeleteAccount hasPassword={me.data.has_password} username={me.data.username} />
     </div>
+  )
+}
+
+function DeleteAccount({ hasPassword, username }: { hasPassword: boolean; username: string }) {
+  const [open, setOpen] = useState(false)
+  const [confirm, setConfirm] = useState('')
+  const once = useOneAtATime()
+  const remove = useMutation({ mutationFn: () => api('/api/me/delete/', { method: 'POST', body: { confirm } }) })
+  const error = remove.error instanceof ApiError
+    ? (remove.error.data as { confirm?: string[] } | null)?.confirm?.[0] ?? 'Your account wasn’t deleted. Try again.'
+    : null
+  const cancel = () => { setOpen(false); setConfirm(''); remove.reset() }
+  return (
+    <section className="settings-card danger-zone" aria-labelledby="delete-account-title">
+      <div className="settings-section-head">
+        <h2 id="delete-account-title">Delete account</h2>
+        <p>Removes your account and everything in it: files, summaries, flashcards, quizzes and XP conversations.</p>
+      </div>
+      <Button variant="danger" onClick={() => setOpen(true)}>Delete my account</Button>
+      <ConfirmDialog open={open} title="Delete your account?" confirmLabel="Delete account" icon="user" busy={remove.isPending}
+        onCancel={cancel} onConfirm={() => confirm && once(() => remove.mutateAsync().then(() => location.assign('/app/welcome')), { final: true })}>
+        <p>Everything in ExcelPoint that belongs to you will be removed. This can’t be undone.</p>
+        <div className="form-field">
+          <label htmlFor="delete-confirm">{hasPassword ? 'Enter your password to confirm' : `Type your username (${username}) to confirm`}</label>
+          <input id="delete-confirm" className={`text-input ${error ? 'is-invalid' : ''}`} type={hasPassword ? 'password' : 'text'}
+            autoComplete={hasPassword ? 'current-password' : 'off'} value={confirm} onChange={e => { setConfirm(e.target.value); remove.reset() }}
+            aria-invalid={!!error} aria-describedby={error ? 'delete-confirm-error' : undefined} />
+          {error && <span className="field-error" id="delete-confirm-error" role="alert">{error}</span>}
+        </div>
+      </ConfirmDialog>
+    </section>
   )
 }

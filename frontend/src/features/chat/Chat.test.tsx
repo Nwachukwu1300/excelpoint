@@ -199,3 +199,22 @@ describe('XP chat before any file is ready', () => {
     expect(a.notFound && a.noFilesReady).toBe(true)
   })
 })
+
+describe('Deleting a conversation', () => {
+  it('confirms, deletes and leaves the deleted conversation', async () => {
+    let deleted = false
+    const fetchMock = mockApi({
+      'GET /api/me/': me,
+      'GET /api/subjects/3/chat/sessions/?limit=30': () => ({ body: deleted ? { sessions: [] } : sessions }),
+      'GET /api/subjects/3/chat/messages/?session_id=5': history,
+      'DELETE /api/chat/sessions/5/': () => { deleted = true; return { body: { session_id: 5 } } },
+    })
+    renderApp('/subjects/3/chat/5')
+    await userEvent.click(await screen.findByRole('button', { name: 'Delete conversation: B-tree indexes explained' }))
+    const dialog = screen.getByRole('dialog', { name: 'Delete this conversation?' })
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Delete conversation' }))
+    expect(await screen.findByText('Conversation deleted')).toBeInTheDocument()
+    expect(await screen.findByText('Your conversations will be listed here.')).toBeInTheDocument()
+    expect(fetchMock).toHaveBeenCalledWith('/api/chat/sessions/5/', expect.objectContaining({ method: 'DELETE' }))
+  })
+})

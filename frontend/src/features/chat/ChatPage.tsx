@@ -5,10 +5,13 @@ import { Link, useNavigate, useParams } from 'react-router'
 import { useMe } from '../../lib/api'
 import { shortDate } from '../../lib/format'
 import { Icon } from '../../ui/Icon'
+import { useOneAtATime } from '../../lib/useOneAtATime'
+import { ConfirmDialog } from '../../ui/ConfirmDialog'
 import { Button, IconButton, Skeleton } from '../../ui/primitives'
+import { toast } from '../../ui/Toast'
 import {
   createSession, messagesKey, RateLimitError, sendMessage, sessionsKey, streamMessage, StreamUnavailableError,
-  useMessages, useSessions, type ChatMessage, type Exchange, type SourceChunk,
+  useDeleteSession, useMessages, useSessions, type ChatMessage, type ChatSession, type Exchange, type SourceChunk,
 } from './api'
 import { useMaterials } from '../subjects/api'
 import { Answer, StreamingAnswer, Thinking, UserBubble } from './Thread'
@@ -45,6 +48,17 @@ export function ChatPage() {
   const inflight = useRef<{ sid: number; controller: AbortController } | null>(null)
   const scroller = useRef<HTMLDivElement>(null)
   const composer = useRef<HTMLTextAreaElement>(null)
+  const removeChat = useDeleteSession(subjectId)
+  const once = useOneAtATime()
+  const [deletingChat, setDeletingChat] = useState<ChatSession | null>(null)
+  const confirmDeleteChat = () => deletingChat && once(() => removeChat.mutateAsync(deletingChat.id).then(
+    () => {
+      if (deletingChat.id === sessionId) navigate(`/subjects/${subjectId}/chat`, { replace: true })
+      setDeletingChat(null)
+      toast('success', 'Conversation deleted')
+    },
+    () => toast('error', 'Couldn’t delete the conversation', 'Try again in a moment.'),
+  ))
 
   // Opening another conversation drops a half-finished answer from view (the server still saves it).
   // A new chat moving to its own URL is the same conversation, so its stream keeps going.
@@ -141,10 +155,13 @@ export function ChatPage() {
         {sessions.isPending && <div className="skeleton-stack history-loading"><Skeleton /><Skeleton /><Skeleton /></div>}
         {sessions.data?.length === 0 && <p className="history-empty">Your conversations will be listed here.</p>}
         {sessions.data?.map(s => (
-          <Link key={s.id} to={`/subjects/${subjectId}/chat/${s.id}`} className={s.id === sessionId ? 'is-active' : ''} aria-current={s.id === sessionId ? 'page' : undefined}>
-            <strong>{s.title || 'Untitled conversation'}</strong>
-            <span>{shortDate(s.last_activity)}</span>
-          </Link>
+          <div key={s.id} className={`history-row ${s.id === sessionId ? 'is-active' : ''}`}>
+            <Link to={`/subjects/${subjectId}/chat/${s.id}`} aria-current={s.id === sessionId ? 'page' : undefined}>
+              <strong>{s.title || 'Untitled conversation'}</strong>
+              <span>{shortDate(s.last_activity)}</span>
+            </Link>
+            <IconButton icon="close" label={`Delete conversation: ${s.title || 'Untitled'}`} onClick={() => setDeletingChat(s)} />
+          </div>
         ))}
       </aside>
 
@@ -250,6 +267,10 @@ export function ChatPage() {
           </>
         )}
       </AnimatePresence>
+      <ConfirmDialog open={!!deletingChat} title="Delete this conversation?" confirmLabel="Delete conversation" icon="sparkles"
+        busy={removeChat.isPending} onCancel={() => setDeletingChat(null)} onConfirm={confirmDeleteChat}>
+        <p>“{deletingChat?.title || 'Untitled conversation'}” and all its messages will be removed. This can’t be undone.</p>
+      </ConfirmDialog>
     </div>
   )
 }
