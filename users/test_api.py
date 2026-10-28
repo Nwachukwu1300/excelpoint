@@ -262,6 +262,12 @@ class AuthApiTest(TestCase):
         r = self.post('/api/auth/register/', {'username': 'new', 'email': 'n@example.com', 'password1': 'Pass-word-123!', 'password2': 'other'}).json()
         self.assertIn('password2', r)  # a mismatch stays on the repeat field
 
+    def test_spelling_variants_share_one_lockout(self):
+        User.objects.create_user('Alex', password='Pass-word-123!')
+        for variant in ['alex', 'ALEX', 'aLeX', 'AlEx', 'alEX']:
+            self.assertEqual(self.sign_in(variant, 'nope').status_code, 400)
+        self.assertEqual(self.sign_in('Alex', 'Pass-word-123!').status_code, 429)
+
     def test_sign_in_ignores_username_case(self):
         User.objects.create_user('QA_Breaker', password='Pass-word-123!')
         self.assertEqual(self.sign_in('qa_breaker', 'Pass-word-123!').status_code, 200)
