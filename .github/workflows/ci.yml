@@ -72,3 +72,12 @@ jobs:
       - run: npx tsc --noEmit
       - run: npm test
       - run: npm run build
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check docker-compose.yml
+        run: cp .env.example .env && docker compose config --quiet
+      - name: Build the image
+        run: docker build -t excelpoint .

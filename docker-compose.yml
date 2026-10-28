@@ -1,0 +1,82 @@
+# Production on one server: `docker compose up -d --build` (needs .env, see .env.example).
+# Caddy gets an HTTPS certificate for $DOMAIN automatically and proxies to gunicorn.
+
+x-app: &app
+  build: .
+  env_file: .env
+  environment:  # these override .env, so its local-dev values don't leak in
+    DB_HOST: db
+    DB_PORT: '5432'
+    REDIS_URL: redis://redis:6379/0
+    CACHE_URL: redis://redis:6379/1  # shared cache, so rate limits hold across workers
+    NUM_PROXIES: '1'  # Caddy
+  volumes:
+    - media:/app/media  # uploads: saved by web, processed by the worker
+  restart: unless-stopped
+
+x-after-migrate: &after-migrate
+  db: {condition: service_healthy}
+  redis: {condition: service_started}
+  migrate: {condition: service_completed_successfully}
+
+services:
+  db:
+    image: pgvector/pgvector:0.8.0-pg15
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 5s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7
+    volumes:
+      - redisdata:/data
+    restart: unless-stopped
+
+  migrate:
+    <<: *app
+    command: python manage.py migrate --noinput
+    depends_on:
+      db: {condition: service_healthy}
+    restart: 'no'
+
+  web:
+    <<: *app
+    command: gunicorn config.wsgi
+    depends_on: *after-migrate
+
+  worker:
+    <<: *app
+    command: celery -A config.celery.app worker -l INFO --concurrency 2
+    depends_on: *after-migrate
+
+  beat:
+    <<: *app
+    command: celery -A config.celery.app beat -l INFO --schedule /tmp/celerybeat-schedule
+    depends_on: *after-migrate
+
+  caddy:
+    image: caddy:2
+    ports: ['80:80', '443:443']
+    environment:
+      DOMAIN: ${DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on: [web]
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  redisdata:
+  media:
+  caddy_data:
+  caddy_config:

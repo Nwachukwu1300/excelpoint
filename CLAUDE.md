@@ -66,6 +66,10 @@ Motion should feel calm and fast: respect `prefers-reduced-motion`, and never an
 - Quizzes: `POST /api/quiz/<id>/attempts/ {fresh}`, `GET /api/quiz/attempts/` (history), `GET /api/quiz/attempts/<id>/` (status + questions without answers), `POST …/submit/`, `GET …/results/` (`subjects/quiz_api.py`). A failed fresh-question job stores `dynamic_questions = []`.
 - Insights: `GET /api/reasoning/insights/?days=7|30|90`, `GET /api/reasoning/sessions/<uuid>/trace/`.
 
+## Deployment
+
+`Dockerfile` (builds the app, bakes in the embedding model, `collectstatic`), `docker-compose.yml` (db, redis, migrate, web, worker, beat, caddy), `Caddyfile` (HTTPS), `gunicorn.conf.py` (threaded workers, model preload). whitenoise serves `/static/`; `/media/` is never served when `DEBUG` is off. Production-only settings come from env: `CACHE_URL` (shared Redis cache for rate limits), `REDIS_URL` (Celery), `NUM_PROXIES` (trusted proxies for the client IP and HTTPS; keep 0 without a proxy), `SECURE_HSTS_SECONDS`.
+
 ## Commands
 
 CI (`.github/workflows/ci.yml`) runs the backend checks and tests on Postgres 15 + pgvector and Redis, and the app's typecheck, tests and build, on every push to `main` and every PR.
@@ -101,7 +105,7 @@ venv/bin/python manage.py judge_answers    # optional LLM judge backlog
 
 ## Backlog
 
-- Deployability: `STATIC_ROOT`, Docker compose, Redis cache for the rate limits (LLM and sign-in), the client IP behind a proxy (`users/backends.py`), model warm-up, HTTPS settings, stop serving `/media/` publicly.
+- First real deploy (README "Deploying"): `docker-compose.yml` + `Dockerfile` + `Caddyfile` are written and CI builds the image, but nothing has run on a server yet.
 - Email verification (unverified emails can block a Google sign-up, though no longer take over an account).
 - Tune the 0.3 similarity threshold with real questions (`benchmark_retrieval`).
 - Hybrid keyword + vector search.

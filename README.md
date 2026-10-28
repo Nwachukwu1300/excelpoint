@@ -44,9 +44,8 @@ npm --prefix frontend test        # the React app (Vitest)
 
 ## Known limitations
 
-- No Docker setup yet; run the services as described below.
-- The rate limit is counted per server process. Point Django's cache at Redis before running several workers.
-- The first question after a server start takes a few extra seconds while the embedding model loads.
+- Without `CACHE_URL` (local runs), rate limits are counted per server process; docker compose sets a shared Redis cache.
+- Emails are not verified yet.
 - Audio/video uploads need Whisper installed and may hit `pydub` issues on Python 3.13.
 
 ## How XP answers (RAG pipeline)
@@ -133,6 +132,17 @@ Each answer also logs one JSON line (`"event": "chat_answer"`) with its path, ch
    # Terminal 4: Celery beat (daily flashcard review reminders)
    celery -A config.celery.app beat --loglevel=INFO
    ```
+
+## Deploying
+
+One server with Docker runs everything: gunicorn, a Celery worker and beat, Postgres with pgvector, Redis, and Caddy for HTTPS.
+
+1. Point your domain's DNS at the server and open ports 80 and 443.
+2. `cp .env.example .env`, then set `DOMAIN`, `ALLOWED_HOSTS` (your domain), `DEBUG=False`, a fresh `DJANGO_SECRET_KEY`, `DB_USER`/`DB_PASSWORD`, `OPENAI_API_KEY`, and Google OAuth if you use it (`GOOGLE_OAUTH_REDIRECT_URI=https://<domain>/users/google/callback/`).
+3. `docker compose up -d --build`. Migrations run first; Caddy fetches the certificate.
+4. Once the site works over HTTPS, set `SECURE_HSTS_SECONDS=31536000` and run `docker compose up -d` again.
+
+Uploads live in the `media` volume and the database in `pgdata`; back both up. The image bakes in the embedding model, and each gunicorn worker loads it at start, so the first question isn't slow.
 
 ## Demo & Screenshots
 
