@@ -74,7 +74,11 @@ jobs:
       - run: npm run build
 
   docker:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # arm: the free Oracle Cloud server is ARM (Ampere A1), so the image must build there too
+        runner: [ubuntu-latest, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
       - name: Check docker-compose.yml

@@ -68,7 +68,7 @@ Motion should feel calm and fast: respect `prefers-reduced-motion`, and never an
 
 ## Deployment
 
-`Dockerfile` (builds the app, bakes in the embedding model, `collectstatic`), `docker-compose.yml` (db, redis, migrate, web, worker, beat, caddy), `Caddyfile` (HTTPS), `gunicorn.conf.py` (threaded workers, model preload). whitenoise serves `/static/`; `/media/` is never served when `DEBUG` is off. Production-only settings come from env: `CACHE_URL` (shared Redis cache for rate limits), `REDIS_URL` (Celery), `NUM_PROXIES` (trusted proxies for the client IP and HTTPS; keep 0 without a proxy), `SECURE_HSTS_SECONDS`.
+`Dockerfile` (builds the app, bakes in the embedding model, `collectstatic`), `docker-compose.yml` (db, redis, migrate, web, worker, beat, caddy), `Caddyfile` (HTTPS), `gunicorn.conf.py` (threaded workers, model preload), a `backup` service (nightly `pg_dump`, last 7 kept). Email (password reset, sent by Celery `users.tasks`) is any SMTP service from `EMAIL_*` env; without `EMAIL_HOST` it prints to the console. whitenoise serves `/static/`; `/media/` is never served when `DEBUG` is off. Production-only settings come from env: `CACHE_URL` (shared Redis cache for rate limits), `REDIS_URL` (Celery), `NUM_PROXIES` (trusted proxies for the client IP and HTTPS; keep 0 without a proxy), `SECURE_HSTS_SECONDS`.
 
 ## Commands
 
@@ -105,7 +105,7 @@ venv/bin/python manage.py judge_answers    # optional LLM judge backlog
 
 ## Backlog
 
-- First real deploy (README "Deploying"): `docker-compose.yml` + `Dockerfile` + `Caddyfile` are written and CI builds the image, but nothing has run on a server yet.
+- First real deploy: `docs/deploy-oracle.md` + `deploy/setup-server.sh` (Oracle Cloud Always Free ARM, DuckDNS, Gmail SMTP) are ready and CI builds the image for amd64 and arm64, but nothing has run on a server yet.
 - Email verification (unverified emails can block a Google sign-up, though no longer take over an account).
 - Tune the 0.3 similarity threshold with real questions (`benchmark_retrieval`).
 - Hybrid keyword + vector search.

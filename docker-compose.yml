@@ -62,6 +62,20 @@ services:
     command: celery -A config.celery.app beat -l INFO --schedule /tmp/celerybeat-schedule
     depends_on: *after-migrate
 
+  backup:  # a database dump every night; the last 7 are kept in the backups volume (docs/deploy-oracle.md: restoring)
+    image: pgvector/pgvector:0.8.0-pg15
+    environment:
+      PGHOST: db
+      PGUSER: ${DB_USER}
+      PGPASSWORD: ${DB_PASSWORD}
+      PGDATABASE: ${DB_NAME}
+    volumes:
+      - backups:/backups
+    entrypoint: ['sh', '-c', 'while true; do pg_dump -Fc -f /backups/excelpoint-$$(date +%F).dump && find /backups -name "*.dump" -mtime +6 -delete; sleep 86400; done']
+    depends_on:
+      db: {condition: service_healthy}
+    restart: unless-stopped
+
   caddy:
     image: caddy:2
     ports: ['80:80', '443:443']
@@ -75,6 +89,7 @@ services:
     restart: unless-stopped
 
 volumes:
+  backups:
   pgdata:
   redisdata:
   media:

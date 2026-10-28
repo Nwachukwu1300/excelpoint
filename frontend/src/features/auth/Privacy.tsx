@@ -51,6 +51,7 @@ const PRIVACY: Sections = [
   ['How long we keep it', [
     'Everything stays until you delete it, or until you delete your account.',
     'Deleting a file, subject, conversation or your account removes it from our database and file storage straight away.',
+    'We keep a backup copy of the database each night for 7 days, so anything you delete is gone from the backups within 7 days.',
   ]],
   ['What we don’t do', [
     'No ads, no selling your data, and no marketing email.',

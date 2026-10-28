@@ -135,14 +135,18 @@ Each answer also logs one JSON line (`"event": "chat_answer"`) with its path, ch
 
 ## Deploying
 
-One server with Docker runs everything: gunicorn, a Celery worker and beat, Postgres with pgvector, Redis, and Caddy for HTTPS.
+One server with Docker runs everything: gunicorn, a Celery worker and beat, Postgres with pgvector, Redis, Caddy for HTTPS, and a nightly database backup.
+
+**Free setup, step by step:** [docs/deploy-oracle.md](docs/deploy-oracle.md) (Oracle Cloud Always Free + a DuckDNS address + Gmail for password emails), with a one-command installer, `deploy/setup-server.sh`.
+
+Any other server:
 
 1. Point your domain's DNS at the server and open ports 80 and 443.
 2. `cp .env.example .env`, then set `DOMAIN`, `ALLOWED_HOSTS` (your domain), `DEBUG=False`, a fresh `DJANGO_SECRET_KEY`, `DB_USER`/`DB_PASSWORD`, `OPENAI_API_KEY`, and Google OAuth if you use it (`GOOGLE_OAUTH_REDIRECT_URI=https://<domain>/users/google/callback/`).
 3. `docker compose up -d --build`. Migrations run first; Caddy fetches the certificate.
 4. Once the site works over HTTPS, set `SECURE_HSTS_SECONDS=31536000` and run `docker compose up -d` again.
 
-Uploads live in the `media` volume and the database in `pgdata`; back both up. The image bakes in the embedding model, and each gunicorn worker loads it at start, so the first question isn't slow.
+Uploads live in the `media` volume and the database in `pgdata`. The `backup` service keeps the last 7 nightly database dumps in the `backups` volume; copy them and `media` off the server too. The image bakes in the embedding model, and each gunicorn worker loads it at start, so the first question isn't slow.
 
 ## Demo & Screenshots
 
