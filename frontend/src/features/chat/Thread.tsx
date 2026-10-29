@@ -1,3 +1,4 @@
+import { XpAvatar } from '../../ui/primitives'
 import { motion } from 'motion/react'
 import { Link } from 'react-router'
 import { CitationChip, VerificationBadge } from '../../ui/AnswerBadges'
@@ -27,7 +28,7 @@ export function UserBubble({ text, animate }: { text: string; animate?: boolean 
 export function Thinking() {
   return (
     <motion.div className="thinking" role="status" {...enter}>
-      <span className="xp-avatar xp-avatar--small"><Icon name="sparkles" size={14} /></span>
+      <XpAvatar small />
       <span className="shimmer-text">XP is thinking…</span>
       <i /><i /><i />
     </motion.div>
@@ -38,7 +39,7 @@ export function Thinking() {
 export function StreamingAnswer({ text }: { text: string }) {
   return (
     <div className="xp-message" aria-live="polite" aria-busy="true">
-      <span className="xp-avatar xp-avatar--small"><Icon name="sparkles" size={14} /></span>
+      <XpAvatar small />
       <div><div className="answer-body"><Markdown text={text} caret={<span className="caret" aria-hidden="true" />} /></div></div>
     </div>
   )
@@ -68,7 +69,7 @@ export function Answer({ message, subjectId, selected, onCite, animate }: {
   }
   return (
     <motion.div className={`xp-message ${selected ? 'is-selected' : ''}`} {...(animate ? enter : {})}>
-      <span className="xp-avatar xp-avatar--small"><Icon name="sparkles" size={14} /></span>
+      <XpAvatar small />
       <div>
         <div className="answer-body">
           <Markdown text={a.body} />

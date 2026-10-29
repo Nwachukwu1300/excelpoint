@@ -6,7 +6,7 @@ import { Link } from 'react-router'
 import { Icon } from '../../ui/Icon'
 import { MoreMenu } from '../../ui/Menu'
 import { Modal } from '../../ui/Modal'
-import { Badge, Button, ProgressBar, Skeleton, StatusChip } from '../../ui/primitives'
+import { Badge, Button, ProgressBar, Skeleton, StatusChip, XpAvatar } from '../../ui/primitives'
 import { toast } from '../../ui/Toast'
 import { useOneAtATime } from '../../lib/useOneAtATime'
 import { parseSummary, useDeleteMaterial, useMaterials, type Material } from './api'
@@ -18,7 +18,7 @@ function Summary({ material }: { material: Material }) {
   return (
     <div className="material-summary">
       <div className="summary-heading">
-        <span className="xp-avatar xp-avatar--small"><Icon name="sparkles" size={14} /></span>
+        <XpAvatar small />
         <div>
           <Badge tone="ai">AI SUMMARY</Badge>
           <h3>Core concepts from this material</h3>

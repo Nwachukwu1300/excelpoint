@@ -1,3 +1,5 @@
+import excelpointIcon from '../assets/excelpoint-icon.webp'
+import xpIcon from '../assets/xp-icon.webp'
 import type { ButtonHTMLAttributes, CSSProperties, ReactNode } from 'react'
 import { CountUp } from './CountUp'
 import { Icon, type IconName } from './Icon'
@@ -38,11 +40,16 @@ export function Avatar({ initials, small = false }: { initials: string; small?: 
   return <span className={`avatar ${small ? 'avatar--small' : ''}`} aria-hidden="true">{initials}</span>
 }
 
+/** XP, the AI study assistant: its 3D icon wherever XP speaks or works. */
+export function XpAvatar({ small = false }: { small?: boolean }) {
+  return <span className={`xp-avatar ${small ? 'xp-avatar--small' : ''}`.trim()}><img src={xpIcon} alt="" /></span>
+}
+
 export function Logo({ compact = false }: { compact?: boolean }) {
   return (
     <div className="logo">
-      <span className="logo-mark"><span>XP</span></span>
-      {!compact && <span className="logo-word">ExcelPoint</span>}
+      <img className="logo-mark" src={excelpointIcon} alt="" width={32} height={32} />
+      {!compact && <span className="logo-word">Excel<b>P</b>oint</span>}
     </div>
   )
 }

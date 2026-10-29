@@ -7,7 +7,7 @@ import { SubjectIcon } from '../../ui/SubjectIcon'
 import { timeAgo } from '../../lib/format'
 import { CountUp } from '../../ui/CountUp'
 import { Icon } from '../../ui/Icon'
-import { Button, Skeleton, buttonClass, type Tone } from '../../ui/primitives'
+import { Button, Skeleton, buttonClass, type Tone, XpAvatar } from '../../ui/primitives'
 import '../../styles/home.css'
 
 type Suggestion = {
@@ -198,7 +198,7 @@ export function Today() {
               )}
               {data.recent_chats.map(c => (
                 <Link className="conversation-row" key={c.id} to={`/subjects/${c.subject_id}/chat/${c.id}`}>
-                  <span className="xp-avatar xp-avatar--small"><Icon name="sparkles" size={14} /></span>
+                  <XpAvatar small />
                   <div>
                     <strong>{c.title}</strong>
                     <span>{c.subject_name} · {timeAgo(c.last_activity)}</span>

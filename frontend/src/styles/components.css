@@ -27,12 +27,15 @@
 .avatar--small { width: 32px; height: 32px; font-size: 10px; }
 
 .logo { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.logo-mark { display: grid; width: 32px; height: 32px; flex: 0 0 auto; place-items: center; border-radius: var(--radius); color: white; background: var(--primary); box-shadow: 0 5px 10px rgb(37 99 235 / .22); }
-.logo-mark span { font-size: 12px; font-weight: 700; letter-spacing: -.04em; }
-.logo-word { font-size: 16px; font-weight: 700; letter-spacing: -.025em; }
+/* The 3D "E" app icon (branding/) and the wordmark: extra bold, tight, the P in brand blue */
+.logo-mark { display: block; width: 32px; height: 32px; flex: 0 0 auto; border-radius: var(--radius); background: #0b1a4a; box-shadow: 0 5px 12px rgb(37 99 235 / .28); }
+.logo-word { font-size: 17px; font-weight: 800; letter-spacing: -.045em; color: var(--text); }
+.logo-word b { color: var(--primary); font-weight: inherit; }
 
-.xp-avatar { display: grid; width: 40px; height: 40px; flex: 0 0 auto; place-items: center; border-radius: 10px; color: white; background: linear-gradient(135deg, var(--ai-one), var(--ai-two)); box-shadow: 0 5px 12px rgb(102 126 234 / .25); }
-.xp-avatar--small { width: 32px; height: 32px; border-radius: 8px; }
+/* XP's 3D icon. 30% rounding follows the icon's own tile, so its dark corners don't show. */
+.xp-avatar { display: grid; width: 40px; height: 40px; flex: 0 0 auto; place-items: center; overflow: hidden; border-radius: 30%; color: white; background: linear-gradient(135deg, var(--ai-one), var(--ai-two)); box-shadow: 0 5px 12px rgb(102 126 234 / .25); }
+.xp-avatar img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.xp-avatar--small { width: 32px; height: 32px; }
 
 .progress-track { height: 5px; overflow: hidden; border-radius: 5px; background: var(--hover); }
 .progress-track span { display: block; height: 100%; border-radius: inherit; background: var(--primary); }

@@ -4,10 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>ExcelPoint</title>
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="theme-color" content="#2563EB" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=swap" rel="stylesheet" />
     <script>
       // Apply the saved theme before first paint so dark mode never flashes white.
       (function () {
@@ -23,14 +25,13 @@
       [data-theme='dark'] body { background: #0f172a; }
       .boot { display: grid; min-height: 100vh; place-content: center; justify-items: center; gap: 14px;
         font: 500 15px/1.4 Inter, system-ui, sans-serif; color: #64748b; }
-      .boot b { display: grid; width: 44px; height: 44px; place-items: center; border-radius: 8px;
-        color: #fff; background: #2563eb; font-size: 15px; letter-spacing: -.04em; animation: boot 1.2s ease-in-out infinite; }
+      .boot img { width: 44px; height: 44px; border-radius: 10px; animation: boot 1.2s ease-in-out infinite; }
       @keyframes boot { 50% { opacity: .55; } }
-      @media (prefers-reduced-motion: reduce) { .boot b { animation: none; } }
+      @media (prefers-reduced-motion: reduce) { .boot img { animation: none; } }
     </style>
   </head>
   <body>
-    <div id="root"><div class="boot" role="status"><b>XP</b>Loading ExcelPoint…</div></div>
+    <div id="root"><div class="boot" role="status"><img src="/favicon.png" alt="" width="44" height="44" />Loading ExcelPoint…</div></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

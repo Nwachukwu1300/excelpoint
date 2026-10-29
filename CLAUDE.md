@@ -30,6 +30,7 @@ The UI is a **React app in `frontend/`** (React 19, React Router 7, TanStack Que
 ### Agreed design decisions
 
 - Colours: brand blue `#2563EB` (hover `#1D4ED8`); **AI gradient `#667EEA → #764BA2` only on XP/AI surfaces**; success mint (`#06A77F` light, `#06D6A0` dark); warning `#F59E0B`; error `#EF4444`; text `#1E293B`, muted `#64748B`, border `#E2E8F0`, background `#F8FAFC`. Full **light + dark** themes (tokens in the Make `index.css`).
+- **Brand assets** (originals in `branding/`): ExcelPoint is the 3D glass "E" icon (`frontend/src/assets/excelpoint-icon.webp`, favicon and apple-touch icon in `frontend/public/`) plus the wordmark "Excel**P**oint" (Inter 800, tight tracking, the P in brand blue), both in `Logo` (`ui/primitives.tsx`). XP is the purple 3D "XP" icon, shown by `XpAvatar`. The lockup picture with the stacked-layers icon is not used.
 - Clean and focused (Linear/Notion-like), Inter, 8px radius, subtle shadows. Collapsible **left sidebar**, which becomes a bottom tab bar on mobile.
 - **XP is a full chat page** per subject, with conversation history on the left and a collapsible Sources panel on the right.
 - Home is a **"Today" study queue** (due cards, suggestions, continue chatting, subjects).

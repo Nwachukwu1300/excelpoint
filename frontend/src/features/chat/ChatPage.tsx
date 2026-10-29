@@ -7,7 +7,7 @@ import { shortDate } from '../../lib/format'
 import { Icon } from '../../ui/Icon'
 import { useOneAtATime } from '../../lib/useOneAtATime'
 import { ConfirmDialog } from '../../ui/ConfirmDialog'
-import { Button, IconButton, Skeleton } from '../../ui/primitives'
+import { Button, IconButton, Skeleton, XpAvatar } from '../../ui/primitives'
 import { toast } from '../../ui/Toast'
 import {
   awaitingAnswer, createSession, messagesKey, RateLimitError, sendMessage, sessionsKey, streamMessage, StreamUnavailableError,
@@ -214,7 +214,7 @@ export function ChatPage() {
             </div>
           ) : empty ? (
             <div className="chat-empty">
-              <span className="xp-avatar"><Icon name="sparkles" /></span>
+              <XpAvatar />
               <h1>Ask anything about your {subjectName} files</h1>
               <p>XP answers only from your files and shows where each answer came from.</p>
               <div>

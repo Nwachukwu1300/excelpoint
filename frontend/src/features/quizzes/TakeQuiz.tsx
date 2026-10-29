@@ -5,7 +5,7 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router'
 import { ApiError } from '../../lib/api'
 import { plural } from '../../lib/format'
 import { Icon } from '../../ui/Icon'
-import { Badge, Button, Logo, ProgressBar, buttonClass } from '../../ui/primitives'
+import { Badge, Button, Logo, ProgressBar, buttonClass, XpAvatar } from '../../ui/primitives'
 import { toast } from '../../ui/Toast'
 import { loadDraft, saveDraft, startAttempt, submitAttempt, typeLabel, useAttempt, type Attempt } from './api'
 import '../../styles/quiz.css'
@@ -35,7 +35,7 @@ function Generating({ attempt, onStandard }: { attempt: Attempt; onStandard: () 
   }
   return (
     <div className="generation-state" role="status">
-      <span className="xp-avatar"><Icon name="sparkles" /></span>
+      <XpAvatar />
       <Badge tone="ai">GENERATING WITH XP</Badge>
       <h1>Writing fresh questions</h1>
       <p>Reading {attempt.quiz.material_name ?? 'your material'} and balancing question difficulty…</p>

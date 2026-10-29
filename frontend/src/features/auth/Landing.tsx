@@ -4,7 +4,7 @@ import { useMe } from '../../lib/api'
 import { reveal } from '../../lib/motion'
 import { CitationChip } from '../../ui/AnswerBadges'
 import { Icon, type IconName } from '../../ui/Icon'
-import { Badge, Logo, Skeleton, buttonClass } from '../../ui/primitives'
+import { Badge, Logo, Skeleton, buttonClass, XpAvatar } from '../../ui/primitives'
 import '../../styles/auth.css'
 
 const STEPS: [IconName, string, string][] = [
@@ -48,7 +48,7 @@ export function Landing() {
               <span>Database Systems</span>
               <div className="mock-question">How does a B-tree index improve search performance?</div>
               <div className="mock-answer">
-                <span className="xp-avatar xp-avatar--small"><Icon name="sparkles" size={14} /></span>
+                <XpAvatar small />
                 <div>
                   <strong>XP</strong>
                   <p>A B-tree keeps keys sorted in a balanced hierarchy, reducing how many disk pages must be read.</p>
