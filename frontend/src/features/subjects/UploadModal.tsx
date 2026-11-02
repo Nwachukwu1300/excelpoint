@@ -97,7 +97,7 @@ export function UploadModal({ open, onClose, subjectId, onUploaded }: { open: bo
           <>
             <span className="upload-icon"><Icon name="upload" /></span>
             <strong>Choose a file, or drag one here</strong>
-            <span>PDF, Word (.docx), audio (MP3, WAV, M4A) or video (MP4, MOV, AVI) · up to 100 MB</span>
+            <span>PDF, Word (.docx), audio (MP3, WAV, M4A) or video (MP4, MOV, AVI) · up to 100 MB, recordings up to 3 hours</span>
           </>
         )}
       </button>

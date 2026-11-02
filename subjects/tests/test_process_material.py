@@ -206,6 +206,15 @@ class TranscriptionTest(TestCase):
             with self.assertRaisesRegex(UnreadableFile, 'No speech'):
                 transcribe(self.recording(folder, 1))
 
+    @patch('subjects.services.transcription_service.OpenAI')
+    def test_recordings_over_3_hours_are_refused_before_any_cost(self, openai):
+        from subjects.services import transcription_service as ts
+        from subjects.utils import UnreadableFile
+        with tempfile.TemporaryDirectory() as folder, patch.object(ts, 'MAX_SECONDS', 2):
+            with self.assertRaisesRegex(UnreadableFile, 'Recordings can be up to 3 hours'):
+                ts.transcribe(self.recording(folder, 4))
+        openai.return_value.audio.transcriptions.create.assert_not_called()
+
     @patch('subjects.utils.ContentProcessor.process_chunks_immediately', side_effect=lambda chunks: chunks)
     @patch('subjects.utils.transcribe', return_value='The Calvin cycle fixes carbon dioxide into sugar.')
     def test_recordings_go_through_transcription(self, transcribe, _):

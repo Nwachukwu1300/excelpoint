@@ -14,19 +14,30 @@ from openai import OpenAI
 
 MODEL = 'gpt-transcribe'
 CHUNK_SECONDS = 20 * 60  # 20 minutes of 32 kbps mono MP3 is about 5 MB, well under the 25 MB limit
+MAX_SECONDS = 3 * 60 * 60  # caps the cost of one upload (about $0.80); 100 MB of low-bitrate audio could be 20+ hours
 
 
 def transcription_available():
-    return bool(settings.OPENAI_API_KEY) and shutil.which('ffmpeg') is not None
+    return bool(settings.OPENAI_API_KEY) and shutil.which('ffmpeg') is not None and shutil.which('ffprobe') is not None
 
 
 def transcribe(path: str) -> str:
     from ..utils import UnreadableFile  # utils imports this module
 
+    probe = subprocess.run(['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', path],
+                           capture_output=True, text=True, timeout=60)
+    try:
+        seconds = float(probe.stdout.strip())
+    except ValueError:
+        raise UnreadableFile("We couldn't find any sound in this file. Check that it plays, then upload it again.")
+    if seconds > MAX_SECONDS:
+        raise UnreadableFile(f'This recording is {seconds / 3600:.1f} hours long. Recordings can be up to 3 hours; '
+                             'split it into parts and upload each one.')
+
     with tempfile.TemporaryDirectory() as folder:
         # shortcut: fixed 20-minute cuts can split a sentence; switch to silence-based cuts if accuracy suffers
         result = subprocess.run(
-            ['ffmpeg', '-nostdin', '-loglevel', 'error', '-i', path, '-vn', '-ac', '1', '-ar', '16000', '-b:a', '32k',
+            ['ffmpeg', '-nostdin', '-loglevel', 'error', '-i', path, '-t', str(MAX_SECONDS), '-vn', '-ac', '1', '-ar', '16000', '-b:a', '32k',
              '-f', 'segment', '-segment_time', str(CHUNK_SECONDS), f'{folder}/part%03d.mp3'],
             capture_output=True, text=True, timeout=30 * 60,
         )
