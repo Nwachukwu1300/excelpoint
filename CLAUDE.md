@@ -69,7 +69,7 @@ Motion should feel calm and fast: respect `prefers-reduced-motion`, and never an
 
 ## Deployment
 
-`Dockerfile` (builds the app, bakes in the embedding model, `collectstatic`), `docker-compose.yml` (db, redis, migrate, web, worker, beat, caddy), `Caddyfile` (HTTPS), `gunicorn.conf.py` (threaded workers, model preload), a `backup` service (nightly `pg_dump`, last 7 kept). Email (password reset, sent by Celery `users.tasks`) is any SMTP service from `EMAIL_*` env; without `EMAIL_HOST` it prints to the console. whitenoise serves `/static/`; `/media/` is never served when `DEBUG` is off. Production-only settings come from env: `CACHE_URL` (shared Redis cache for rate limits), `REDIS_URL` (Celery), `NUM_PROXIES` (trusted proxies for the client IP and HTTPS; keep 0 without a proxy), `SECURE_HSTS_SECONDS`.
+`Dockerfile` (builds the app, bakes in the embedding model, `collectstatic`), `docker-compose.yml` (db, redis, migrate, web, worker, beat, caddy), `Caddyfile` (HTTPS), `gunicorn.conf.py` (threaded workers, model preload), a `backup` service (nightly `pg_dump`, last 7 kept). Audio and video uploads are transcribed by OpenAI `gpt-transcribe` (`subjects/services/transcription_service.py`): ffmpeg (in the image, and needed locally) first cuts any recording into 20-minute mono MP3 chunks, since the API takes up to 25 MB. Email (password reset, sent by Celery `users.tasks`) is any SMTP service from `EMAIL_*` env; without `EMAIL_HOST` it prints to the console. whitenoise serves `/static/`; `/media/` is never served when `DEBUG` is off. Production-only settings come from env: `CACHE_URL` (shared Redis cache for rate limits), `REDIS_URL` (Celery), `NUM_PROXIES` (trusted proxies for the client IP and HTTPS; keep 0 without a proxy), `SECURE_HSTS_SECONDS`.
 
 ## Commands
 
@@ -111,4 +111,3 @@ venv/bin/python manage.py judge_answers    # optional LLM judge backlog
 - Tune the 0.3 similarity threshold with real questions (`benchmark_retrieval`).
 - Hybrid keyword + vector search.
 - Remove the legacy `QuizQuestion` / `QuizAttempt` models (needs a migration).
-- Audio/video uploads need Whisper; `pydub` may break on Python 3.13.

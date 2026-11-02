@@ -89,13 +89,13 @@ export function useDeleteMaterial(subjectId: number) {
 }
 
 /** Accepted uploads, mirroring the backend's UPLOAD_FILE_TYPES and its 100 MB limit. */
-export const ACCEPTED = ['pdf', 'docx'] // the server can read these; audio and video need transcription, which isn't installed
+export const ACCEPTED = ['pdf', 'docx', 'mp3', 'wav', 'm4a', 'mp4', 'mov', 'avi'] // what the server can read; recordings are transcribed
 export const MAX_BYTES = 100 * 1024 * 1024
 
 export function checkFile(file: File): string | null {
   const ext = file.name.split('.').pop()?.toLowerCase() ?? ''
   if (ext === 'doc') return 'Old .doc files can’t be read. Save it as .docx or PDF, then upload that.'
-  if (!ACCEPTED.includes(ext)) return 'This file type isn’t supported. Upload a PDF or Word (.docx) file.'
+  if (!ACCEPTED.includes(ext)) return 'This file type isn’t supported. Upload a PDF, a Word (.docx) file, or an audio or video recording.'
   if (file.size > MAX_BYTES) return 'That file is over 100 MB. Try a smaller or compressed version.'
   return null
 }

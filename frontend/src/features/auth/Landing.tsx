@@ -8,7 +8,7 @@ import { Badge, Logo, Skeleton, buttonClass, XpAvatar } from '../../ui/primitive
 import '../../styles/auth.css'
 
 const STEPS: [IconName, string, string][] = [
-  ['upload', 'Upload', 'Add your class notes as PDF or Word (.docx) files.'],
+  ['upload', 'Upload', 'Add class notes (PDF or Word) or lecture recordings (audio or video).'],
   ['sparkles', 'Ask XP', 'XP is your AI study assistant. It answers from your files and shows where each answer came from.'],
   ['repeat', 'Review', 'Practise with quizzes, and flashcards that come back just before you would forget them.'],
 ]

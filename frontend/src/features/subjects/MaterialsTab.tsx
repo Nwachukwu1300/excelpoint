@@ -125,7 +125,7 @@ export function MaterialsTab({ subjectId, onUpload, onQuizzes }: { subjectId: nu
         <div className="empty-state empty-state--compact">
           <span className="empty-icon"><Icon name="upload" /></span>
           <h2>No files yet</h2>
-          <p>Upload class notes as PDF or Word (.docx). XP will turn each one into a summary, flashcards and a quiz.</p>
+          <p>Upload class notes (PDF or Word) or lecture recordings (audio or video). XP will turn each one into a summary, flashcards and a quiz.</p>
           <Button icon="upload" onClick={onUpload}>Upload file</Button>
         </div>
       )}

@@ -72,7 +72,7 @@ class UploadChecksTest(TestCase):
             ('junk.pdf', b'just some text', "isn't a readable PDF"),
             ('notes.docx', b'plain text', "isn't a readable Word (.docx)"),
             ('old.doc', b'\xd0\xcf\x11\xe0', 'Save it as .docx or PDF'),
-            ('talk.mp4', b'\x00\x00\x00\x18ftyp', "Audio and video aren't supported yet"),
+            ('talk.mp4', b'\x00\x00\x00\x18ftyp', "Audio and video aren't available here yet"),  # tests have no OpenAI key
             ('run.exe', b'MZ', "isn't supported"),
         ]
         for name, content, reason in cases:
@@ -83,11 +83,12 @@ class UploadChecksTest(TestCase):
         self.assertFalse(SubjectMaterial.objects.exists())
         process.delay.assert_not_called()
 
-    def test_checks_work_where_pydub_cannot_import(self, process):
-        import sys
-        with patch.dict(sys.modules, {'pydub': None, 'subjects.services.transcription_service': None}):
-            response = self.upload('talk.mp4', b'\x00\x00\x00\x18ftyp')
-        self.assertEqual(response.status_code, 400)  # CI has no audioop: this was a 500
+    @patch('subjects.utils.transcription_available', return_value=True)
+    def test_audio_and_video_are_accepted_when_transcription_is_set_up(self, _, process):
+        for name, file_type in [('lecture.mp4', 'VIDEO'), ('lecture.MOV', 'VIDEO'), ('talk.m4a', 'AUDIO'), ('talk.mp3', 'AUDIO')]:
+            with self.subTest(name=name):
+                self.assertEqual(self.upload(name, b'\x00\x00\x00\x18ftypmp42').status_code, 201)
+                self.assertEqual(SubjectMaterial.objects.latest('id').file_type, file_type)
 
     def test_shows_the_uploaded_name_not_the_stored_one(self, process):
         first = self.upload('notes.pdf', b'%PDF-1.4').json()

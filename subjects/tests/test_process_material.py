@@ -168,3 +168,50 @@ class FlashcardFormatTest(TestCase):
         self.assertEqual(len(cards), 2)
         prompt = openai.return_value.chat.completions.create.call_args.kwargs['messages'][1]['content']
         self.assertIn('QUESTION:', prompt)
+
+
+class TranscriptionTest(TestCase):
+    """Real ffmpeg (as in production and CI), OpenAI mocked: any recording becomes text, in chunks under 25 MB."""
+
+    def recording(self, folder, seconds, video=False):
+        import subprocess
+        path = f'{folder}/talk.{"mp4" if video else "wav"}'
+        inputs = ['-f', 'lavfi', '-i', f'sine=frequency=440:duration={seconds}']
+        if video:
+            inputs += ['-f', 'lavfi', '-i', f'color=c=blue:s=64x64:d={seconds}', '-shortest']
+        subprocess.run(['ffmpeg', '-nostdin', '-loglevel', 'error', '-y', *inputs, path], check=True)
+        return path
+
+    @patch('subjects.services.transcription_service.OpenAI')
+    def test_video_is_cut_into_chunks_and_each_is_transcribed(self, openai):
+        from subjects.services import transcription_service as ts
+        api = openai.return_value.audio.transcriptions.create
+        api.side_effect = lambda **kw: MagicMock(text=f'part {api.call_count}')
+        with tempfile.TemporaryDirectory() as folder, patch.object(ts, 'CHUNK_SECONDS', 2):
+            text = ts.transcribe(self.recording(folder, 5, video=True))
+        self.assertEqual(text, 'part 1\n\npart 2\n\npart 3')  # 5 seconds in 2-second chunks
+        self.assertEqual(api.call_args.kwargs['model'], 'gpt-transcribe')
+        self.assertTrue(api.call_args.kwargs['file'].name.endswith('.mp3'))
+
+    @patch('subjects.services.transcription_service.OpenAI')
+    def test_a_file_with_no_sound_or_no_speech_says_so(self, openai):
+        from subjects.services.transcription_service import transcribe
+        from subjects.utils import UnreadableFile
+        with tempfile.TemporaryDirectory() as folder:
+            junk = f'{folder}/junk.mp4'
+            open(junk, 'wb').write(b'not a video')
+            with self.assertRaisesRegex(UnreadableFile, 'find any sound'):
+                transcribe(junk)
+            openai.return_value.audio.transcriptions.create.return_value = MagicMock(text='  ')
+            with self.assertRaisesRegex(UnreadableFile, 'No speech'):
+                transcribe(self.recording(folder, 1))
+
+    @patch('subjects.utils.ContentProcessor.process_chunks_immediately', side_effect=lambda chunks: chunks)
+    @patch('subjects.utils.transcribe', return_value='The Calvin cycle fixes carbon dioxide into sugar.')
+    def test_recordings_go_through_transcription(self, transcribe, _):
+        from subjects.utils import ContentProcessor
+        with tempfile.TemporaryDirectory() as folder:
+            path = self.recording(folder, 1)
+            chunks = ContentProcessor().process_file(path, use_batch_processing=False)
+        transcribe.assert_called_once_with(path)
+        self.assertIn('Calvin cycle', ' '.join(chunks))

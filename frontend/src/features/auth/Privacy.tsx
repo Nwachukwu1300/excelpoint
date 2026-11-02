@@ -44,6 +44,7 @@ const PRIVACY: Sections = [
   ['Who can see it', [
     'Only you. Other people using ExcelPoint can’t see your files, questions or results.',
     'To write answers, summaries, flashcards and quizzes, the text of your files and your questions is sent to OpenAI, the company that runs the AI model XP uses.',
+    'Audio and video recordings are sent to OpenAI to be turned into text. We keep the text and your original file, not a separate audio copy.',
     'OpenAI says it does not use data sent through its API to train its models, and keeps it for up to 30 days to check for abuse before deleting it.',
     'The search that finds the right parts of your files runs on our own server.',
     'If you sign in with Google, Google tells us your name, email address and Google account ID.',

@@ -9,9 +9,8 @@ from langchain_community.document_loaders import (
 )
 import PyPDF2
 import docx
-import importlib.util
 import os
-from functools import cached_property, lru_cache
+from functools import lru_cache
 from typing import List, Dict, Any
 from sentence_transformers import SentenceTransformer
 import torch
@@ -24,13 +23,7 @@ import gc
 import logging
 from .llm_utils import generate_flashcards as llm_generate_flashcards
 
-# Conditional import for transcription service
-try:
-    from .services.transcription_service import TranscriptionService
-    TRANSCRIPTION_AVAILABLE = True
-except ImportError:
-    TranscriptionService = None
-    TRANSCRIPTION_AVAILABLE = False
+from .services.transcription_service import transcribe, transcription_available
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +55,7 @@ class UnreadableFile(Exception):
 
 # First bytes each readable type starts with (a .docx is a zip file)
 FILE_SIGNATURES = {'PDF': (b'%PDF', 'PDF'), 'DOCX': (b'PK', 'Word (.docx)')}
-SUPPORTED_UPLOADS = 'Upload a PDF or Word (.docx) file.'
+SUPPORTED_UPLOADS = 'Upload a PDF, a Word (.docx) file, or an audio or video recording.'
 
 
 def upload_problem(uploaded_file):
@@ -73,9 +66,7 @@ def upload_problem(uploaded_file):
     if file_type == 'DOC':
         return 'Old .doc files can\'t be read. Save it as .docx or PDF, then upload that.'
     if file_type in ('AUDIO', 'VIDEO'):
-        # Not via transcription_service: importing it pulls in pydub, which breaks on Python 3.13 without audioop
-        whisper_installed = importlib.util.find_spec('whisper') is not None
-        return None if whisper_installed else f'Audio and video aren\'t supported yet. {SUPPORTED_UPLOADS}'
+        return None if transcription_available() else 'Audio and video aren\'t available here yet. Upload a PDF or Word (.docx) file.'
     signature, label = FILE_SIGNATURES[file_type]
     head = uploaded_file.read(len(signature))
     uploaded_file.seek(0)
@@ -180,11 +171,6 @@ class ContentProcessor:
         
         logger.info(f"ContentProcessor initialized with batch_size={self.batch_size}, memory_threshold={self.memory_threshold}")
 
-    @cached_property
-    def transcription_service(self):
-        # Loaded on first audio/video file so text-only work never needs Whisper
-        return TranscriptionService() if TRANSCRIPTION_AVAILABLE else None
-    
     def _calculate_optimal_batch_size(self) -> int:
         """Calculate optimal batch size based on available memory and model requirements."""
         try:
@@ -334,19 +320,8 @@ class ContentProcessor:
                 loader = TextLoader(file_path)
                 text = loader.load()[0].page_content
             
-            elif file_type == 'AUDIO':
-                # Use the new transcription service for audio files
-                if self.transcription_service:
-                    text = self.transcription_service.process_media_file(file_path, 'AUDIO')
-                else:
-                    raise Exception("Transcription service not available. Cannot process audio files.")
-            
-            elif file_type == 'VIDEO':
-                # Use the new transcription service for video files
-                if self.transcription_service:
-                    text = self.transcription_service.process_media_file(file_path, 'VIDEO')
-                else:
-                    raise Exception("Transcription service not available. Cannot process video files.")
+            elif file_type in ('AUDIO', 'VIDEO'):
+                text = transcribe(file_path)
             
             else:
                 raise Exception(f"Unsupported file type: {file_type}")
@@ -386,6 +361,8 @@ class ContentProcessor:
                     os.unlink(temp_file_path)
                 except:
                     pass
+            if isinstance(e, UnreadableFile):
+                raise  # its message is meant for the user
             raise Exception(f"Error processing file: {str(e)}")
     
     def process_chunks_immediately(self, chunks: List[str]) -> List[Dict[str, Any]]:
