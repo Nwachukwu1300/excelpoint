@@ -18,7 +18,8 @@ def app_shell(request):
     if not request.user.is_authenticated and not public:
         return redirect_to_login(request.get_full_path())  # → /app/login?next=…
     try:
-        return HttpResponse(APP_INDEX.read_text())
+        # Link previews need an absolute image address, and only the server knows the domain
+        return HttpResponse(APP_INDEX.read_text().replace('__SITE_URL__', request.build_absolute_uri('/').rstrip('/')))
     except FileNotFoundError:
         return HttpResponse('The app is not built yet. Run: npm --prefix frontend run build',
                             status=503, content_type='text/plain')

@@ -37,6 +37,13 @@ class AppShellTest(TestCase):
                 self.assertContains(response, '<div id="root">')
         self.assertIn('csrftoken', response.cookies)
 
+    def test_link_preview_image_gets_this_sites_full_address(self):
+        self.index.write_text('<meta property="og:image" content="__SITE_URL__/static/app/og-image.jpg" />')
+        with patch.object(views, 'APP_INDEX', self.index), self.settings(ALLOWED_HOSTS=['excelpoint.example.com']):
+            response = self.client.get('/app/welcome', HTTP_HOST='excelpoint.example.com')
+        self.assertContains(response, 'content="http://excelpoint.example.com/static/app/og-image.jpg"')
+        self.assertNotContains(response, '__SITE_URL__')
+
     def test_signed_in_home_goes_to_the_app(self):
         self.client.force_login(self.user)
         self.assertRedirects(self.client.get('/'), '/app', fetch_redirect_response=False)
