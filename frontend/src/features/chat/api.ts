@@ -152,6 +152,8 @@ export async function sendMessage(subjectId: number, body: { message: string; se
 }
 
 const UNVERIFIED_NOTE = /\n*_Note: parts of this answer could not be fully verified against your materials\._\s*$/
+// XP writes "(Source: notes.pdf)" into answers; the passage shown under the answer replaces it
+const INLINE_SOURCE = /\s*\(Sources?:[^)]*\)/gi
 
 /** What the thread needs to know about an answer. */
 export function describeAnswer(m: ChatMessage) {
@@ -164,6 +166,6 @@ export function describeAnswer(m: ChatMessage) {
     confidence: info.confidence ?? null,
     chunks,
     // The backend appends a sentence when verification failed; the app shows a notice box instead.
-    body: m.content.replace(UNVERIFIED_NOTE, ''),
+    body: chunks.length ? m.content.replace(UNVERIFIED_NOTE, '').replace(INLINE_SOURCE, '') : m.content.replace(UNVERIFIED_NOTE, ''),
   }
 }

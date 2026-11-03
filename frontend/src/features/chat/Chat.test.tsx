@@ -46,12 +46,46 @@ describe('XP chat', () => {
     expect(screen.getByRole('link', { name: 'How was this answered?' })).toHaveAttribute('href', '/insights/abc')
     expect(screen.getByRole('link', { name: /B-tree indexes explained/ })).toHaveAttribute('aria-current', 'page')
 
+    const evidence = screen.getByRole('figure')
+    expect(evidence).toHaveTextContent('From lecture4.pdf')
+    expect(evidence).toHaveTextContent('A B-tree is a self-balancing search tree')
+    expect(within(evidence).getByText('search', { selector: 'mark' })).toBeInTheDocument() // a word the answer shares
+    expect(evidence).not.toHaveTextContent('part')
+
     await userEvent.click(screen.getByRole('button', { name: /Show sources/ }))
-    await userEvent.click(screen.getByRole('button', { name: /lecture4.pdf · part 18/ }))
     const panel = screen.getByRole('complementary', { name: 'Sources' })
     expect(within(panel).getByText('1 excerpt used')).toBeInTheDocument()
     expect(within(panel).getByText('94%')).toBeInTheDocument()
     expect(within(panel).getByText('High · 0.91')).toBeInTheDocument()
+  })
+
+  it('starts the short passage at the sentence that matches the answer', async () => {
+    const { fromBestSentence } = await import('./Thread')
+    const passage = 'Photosynthesis happens in leaves. It needs sunlight. Chlorophyll absorbs red and blue light.'
+    expect(fromBestSentence(passage, 'Chlorophyll absorbs red and blue light.')).toBe('…Chlorophyll absorbs red and blue light.')
+    expect(fromBestSentence(passage, 'Photosynthesis happens in leaves.')).toBe(passage)
+  })
+
+  it('shows the passage instead of the inline source, and opens further passages in Sources', async () => {
+    const two = answer({
+      content: 'Chlorophyll absorbs red and blue light. (Source: notes.pdf)',
+      metadata: {
+        context_used: true,
+        retrieved_chunks: [
+          { content: 'Chlorophyll absorbs mostly red and blue light and reflects green.', chunk_index: 0, material_name: 'notes.pdf', similarity_score: 0.8 },
+          { content: 'Plants look green because green light is reflected.', chunk_index: 3, material_name: 'notes.pdf', similarity_score: 0.6 },
+        ],
+        model_info: { pipeline: 'reasoning', verified: true, confidence: 0.9 },
+      },
+    })
+    mockApi({ 'GET /api/me/': me, 'GET /api/subjects/3/chat/sessions/?limit=30': sessions,
+      'GET /api/subjects/3/chat/messages/?session_id=5': { messages: [history.messages[0], two] } })
+    renderApp('/subjects/3/chat/5')
+    expect(await screen.findByText('Chlorophyll absorbs red and blue light.')).toBeInTheDocument()
+    expect(screen.queryByText(/\(Source:/)).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'See 1 more passage' }))
+    const panel = screen.getByRole('complementary', { name: 'Sources' })
+    expect(within(panel).getByText('2 excerpts used')).toBeInTheDocument()
     expect(panel.querySelector('.source-excerpt')).toHaveClass('is-focused')
   })
 
