@@ -123,7 +123,7 @@ export function Answer({ message, subjectId, selected, onCite, animate }: {
         <div className="answer-body">
           <Markdown text={a.body} />
           {a.verified === false && (
-            <div className="verification-note">Parts of this answer could not be fully verified against your materials.</div>
+            <div className="verification-note">Some parts of this answer could not be checked against your files.</div>
           )}
         </div>
         <Evidence chunks={a.chunks} answer={a.body} onOpen={onCite} />

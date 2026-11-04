@@ -57,7 +57,7 @@ class ReasoningChatTest(TestCase):
         run.return_value = reasoning_result(self.subject.id, chunks=False)
         run.return_value.final_answer = ''
         result = self.ask('What is DDL?')
-        self.assertIn("couldn't find information", result['response'])
+        self.assertIn("couldn't find anything", result['response'])
         self.assertFalse(result['context_used'])
 
     @patch('reasoning.pipeline.ReasoningPipeline.run', side_effect=ReasoningError('LLM down'))
@@ -69,7 +69,7 @@ class ReasoningChatTest(TestCase):
 
     @patch('reasoning.pipeline.ReasoningPipeline.run')
     def test_no_matches_and_small_talk_skip_the_pipeline(self, run):
-        self.assertIn("couldn't find information", self.ask('Who painted the Mona Lisa?', chunks=())['response'])
+        self.assertIn("couldn't find anything", self.ask('Who painted the Mona Lisa?', chunks=())['response'])
         with patch.object(self.rag, '_generate_llm_response', return_value={'content': 'Hi! Ask me about your materials.'}):
             self.ask('Hello', chunks=())
         run.assert_not_called()
@@ -166,7 +166,7 @@ class NoReadyFilesTest(TestCase):
         from subjects.models import SubjectMaterial
         SubjectMaterial.objects.create(subject=self.subject, file='subject_materials/a.pdf', file_type='PDF', status='COMPLETED')
         result = self.ask()
-        self.assertIn("couldn't find information", result['response'])
+        self.assertIn("couldn't find anything", result['response'])
         self.assertIs(result['metadata']['files_ready'], True)
 
 

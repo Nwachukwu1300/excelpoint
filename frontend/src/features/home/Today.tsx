@@ -98,7 +98,7 @@ export function Today() {
       <div className="page-intro">
         <div>
           <p className="overline">{todayLabel()}</p>
-          {me.data ? <h1>{greeting()}, {me.data.first_name || me.data.username}</h1> : <h1><Skeleton className="skeleton-value" /></h1>}
+          {me.data ? <h1>{greeting()}{me.data.first_name ? `, ${me.data.first_name}` : ''}</h1> : <h1><Skeleton className="skeleton-value" /></h1>}
           <p>Here’s the most useful work to do today.</p>
         </div>
       </div>

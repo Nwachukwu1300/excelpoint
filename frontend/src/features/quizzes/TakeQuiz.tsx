@@ -169,6 +169,9 @@ export function TakeQuiz() {
               {remaining && <span className={remaining.low ? 'is-low' : ''}><Icon name="clock" size={14} /> {remaining.text} remaining</span>}
             </div>
             <ProgressBar value={((index + 1) / questions.length) * 100} label="Quiz progress" />
+            {index === 0 && data.quiz.time_limit ? (
+              <p className="quiz-timer-note">You have {plural(data.quiz.time_limit, 'minute')}. The timer keeps running if you leave. Save &amp; exit keeps your answers.</p>
+            ) : null}
             <motion.section key={q.id} className="question-card" initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}>
               <div className="question-meta">
                 <Badge>{typeLabel[q.type]}</Badge>

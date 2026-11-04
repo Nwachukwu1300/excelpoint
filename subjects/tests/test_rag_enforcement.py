@@ -83,7 +83,7 @@ class RAGEnforcementTestCase(TestCase):
                     
                     # Should return subject-specific fallback
                     self.assertIn('Computer Science', result['response'])
-                    self.assertIn('materials', result['response'])
+                    self.assertIn('files', result['response'])
                     self.assertFalse(result['context_used'])
     
     def test_academic_general_knowledge_blocked(self):
@@ -154,7 +154,7 @@ class RAGEnforcementTestCase(TestCase):
                         # Should use context and provide material-based response
                         self.assertTrue(result['context_used'])
                         self.assertIn('DDL', result['response'])
-                        self.assertNotIn('Computer Science materials', result['response'])  # Not fallback
+                        self.assertNotIn('Computer Science files', result['response'])  # Not fallback
     
     def test_cross_subject_contamination_prevented(self):
         """Test that responses don't leak information from other subjects"""
@@ -196,9 +196,9 @@ class RAGEnforcementTestCase(TestCase):
                 # Should contain subject name multiple times
                 self.assertIn(expected_name, fallback)
                 # Should provide helpful guidance
-                self.assertIn('materials', fallback)
-                self.assertIn('documents', fallback)
-                self.assertIn('uploading', fallback)
+                self.assertIn('files', fallback)
+                self.assertIn('only answer from the files', fallback)
+                self.assertIn('Upload notes', fallback)
     
     def _mock_openai(self, content):
         """Replace the OpenAI client so tests never hit the network."""
@@ -298,7 +298,7 @@ class RAGEnforcementTestCase(TestCase):
                         )
                         
                         # Should not get fallback message for conversational queries
-                        self.assertNotIn("couldn't find information", result['response'].lower())
+                        self.assertNotIn("couldn't find anything", result['response'].lower())
                         
                         # Should get some kind of friendly response
                         self.assertTrue(len(result['response'].strip()) > 0)
@@ -360,7 +360,7 @@ class RAGEnforcementTestCase(TestCase):
                             user_id=self.user.id
                         )
                     
-                    contains_fallback = "couldn't find information" in result['response'].lower()
+                    contains_fallback = "couldn't find anything" in result['response'].lower()
                     self.assertEqual(contains_fallback, case['should_get_fallback'])
 
     def test_automated_validation_pipeline(self):

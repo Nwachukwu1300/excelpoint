@@ -21,7 +21,7 @@ function Section({ n, title, children }: { n: number; title: string; children: R
 }
 
 function Chunks({ chunks }: { chunks: Trace['chunks'] }) {
-  if (!chunks.length) return <p className="list-empty">Nothing in your materials matched this question.</p>
+  if (!chunks.length) return <p className="list-empty">Nothing in your files matched this question.</p>
   return (
     <>
       {chunks.map((c, i) => (

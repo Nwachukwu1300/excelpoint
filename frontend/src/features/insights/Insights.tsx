@@ -69,7 +69,7 @@ export function Insights() {
         <div>
           <p className="overline">ANSWER QUALITY</p>
           <h1>Insights</h1>
-          <p>See how reliably XP answers from your uploaded materials.</p>
+          <p>See how well XP’s answers match your files.</p>
         </div>
         <div className="segmented-control" role="group" aria-label="Time range">
           {RANGES.map(r => (
@@ -110,7 +110,7 @@ export function Insights() {
             <Metric label="Match with your files" value={num(t.faithfulness)} note="How closely answers stick to your files (1 is best)"
               badge={t.faithfulness == null ? '—' : confidenceLevel(t.faithfulness)} tone={t.faithfulness == null ? 'neutral' : t.faithfulness >= 0.8 ? 'success' : 'warning'} />
             <Metric label="Not backed by your files" value={pct(t.hallucination_rate)} note={`${plural(t.unverified, 'answer')} not fully verified`} badge={`${days}d`} tone="warning" />
-            <Metric label="Not in materials" value={pct(t.sessions ? t.no_context / t.sessions : null)} note={`${plural(t.no_context, 'question')} found nothing in your files`} badge={`${days}d`} tone="neutral" />
+            <Metric label="Not in your files" value={pct(t.sessions ? t.no_context / t.sessions : null)} note={`${plural(t.no_context, 'question')} found nothing in your files`} badge={`${days}d`} tone="neutral" />
           </div>
           <div className="insights-layout">
             <section className="trend-card">

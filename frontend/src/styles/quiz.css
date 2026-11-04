@@ -116,3 +116,5 @@ td:last-child, th:last-child { width: 36px; padding-left: 0; }
   .history-table table { min-width: 620px; }
 }
 .history-table td:last-child, .history-table th:last-child { width: auto; padding-left: 14px; white-space: nowrap; } /* the shared table rule sizes the last column for a "…" button */
+
+.quiz-timer-note { margin: 0; color: var(--muted); font-size: var(--text-meta); }

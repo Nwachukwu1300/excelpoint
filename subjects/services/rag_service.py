@@ -561,9 +561,11 @@ RULES:
             Encouraging fallback message
         """
         return (
-            f"I couldn't find information about that in your {subject_name} materials. "
-            f"I can only help with the materials uploaded under this subject, so try uploading "
-            f"documents that cover this topic or ask about something they include."
+            # the name falls back to "this subject" when it can't be loaded
+            f"I couldn't find anything about that in your "
+            f"{'files for this subject' if subject_name == 'this subject' else subject_name + ' files'}. "
+            f"I only answer from the files in this subject. "
+            f"Upload notes that cover it, or ask about something your files include."
         )
     
     def _is_conversational_query(self, query: str) -> bool:

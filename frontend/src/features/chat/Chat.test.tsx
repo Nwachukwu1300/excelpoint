@@ -161,7 +161,7 @@ describe('XP chat', () => {
   })
 
   it('turns a no-match reply into a "Not in your materials" card', async () => {
-    const fallback = answer({ id: 3, content: "I couldn't find information about graph databases in your materials.", metadata: { context_used: false, retrieved_chunks: [], model_info: { pipeline: 'fallback' } } })
+    const fallback = answer({ id: 3, content: "I couldn't find anything about graph databases in your materials.", metadata: { context_used: false, retrieved_chunks: [], model_info: { pipeline: 'fallback' } } })
     mockApi({ 'GET /api/me/': me, 'GET /api/subjects/3/chat/sessions/?limit=30': sessions, 'GET /api/subjects/3/chat/messages/?session_id=5': { messages: [fallback] } })
     renderApp('/subjects/3/chat/5')
     expect(await screen.findByText('Not in your materials')).toBeInTheDocument()

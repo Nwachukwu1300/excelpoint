@@ -76,7 +76,7 @@ class ChatStreamTest(TestCase):
     def test_no_match_streams_the_fallback(self, _):
         events = parse_sse(self.post('Who painted the Mona Lisa?'))
         self.assertEqual([e for e, _ in events], ['token', 'done'])
-        self.assertIn("couldn't find information", events[0][1]['text'])
+        self.assertIn("couldn't find anything", events[0][1]['text'])
 
     def test_failure_becomes_an_error_event(self):
         with patch.object(RAGService, 'respond_events', side_effect=RuntimeError('boom')):
@@ -98,7 +98,7 @@ class ChatStreamTest(TestCase):
         with patch('reasoning.pipeline.ReasoningPipeline.run_events', nothing_found):
             events = parse_sse(self.post())
         self.assertEqual([e for e, _ in events], ['token', 'done'])
-        self.assertIn("couldn't find information", events[0][1]['text'])
+        self.assertIn("couldn't find anything", events[0][1]['text'])
 
     def test_invalid_input_is_a_json_400_even_when_asking_for_a_stream(self):
         response = self.client.post(self.url, {}, format='json', HTTP_ACCEPT='text/event-stream')

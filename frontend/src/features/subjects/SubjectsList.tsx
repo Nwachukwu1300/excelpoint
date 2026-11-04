@@ -70,7 +70,7 @@ export function SubjectsList() {
           <motion.button type="button" className="add-subject-card" onClick={() => setCreating(true)} {...reveal(subjects.data.length)}>
             <span><Icon name="plus" /></span>
             <strong>New subject</strong>
-            <small>Create a space for your materials</small>
+            <small>Keep one class’s files together</small>
           </motion.button>
         </div>
       )}

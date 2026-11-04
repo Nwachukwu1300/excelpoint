@@ -134,6 +134,7 @@ export function ReviewSession() {
             ) : (
               <div className="grade-area">
                 <p>How well did you remember?</p>
+                <p className="grade-help">Cards you found hard come back sooner; easy ones wait longer.</p>
                 <div>
                   {queue.data?.grades.map(g => (
                     <button type="button" key={g.grade} className={GRADE_CLASS[g.grade] ?? ''} onClick={() => answer(g.grade)}>

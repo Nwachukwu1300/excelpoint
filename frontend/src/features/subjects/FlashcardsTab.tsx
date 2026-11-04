@@ -7,7 +7,7 @@ import { Icon } from '../../ui/Icon'
 import { Badge, Button, Skeleton, buttonClass } from '../../ui/primitives'
 import { useFlashcards, type Flashcard } from './api'
 
-const ALL = 'All materials'
+const ALL = 'All files'
 
 /** "Due today" or "In 3 days"; never-reviewed cards are due now. */
 export function dueLabel(card: Flashcard, now = Date.now()) {

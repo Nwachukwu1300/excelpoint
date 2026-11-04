@@ -753,7 +753,7 @@ class RAGServiceTest(TestCase):
         )
         
         # Should return standard fallback response
-        self.assertIn("I can only help with the materials uploaded under this subject", result['response'])
+        self.assertIn("I only answer from the files in this subject", result['response'])
         self.assertEqual(len(result['retrieved_chunks']), 0)
         self.assertFalse(result['context_used'])
 
@@ -855,12 +855,12 @@ class RAGServiceTest(TestCase):
         # Empty response
         empty_response = ""
         validated = rag_service._validate_response(empty_response, context)
-        self.assertIn("I can only help with the materials uploaded under this subject", validated)
+        self.assertIn("in your files for this subject. I only answer from the files", validated)
         
         # Response without context should return fallback
         no_context_response = "General information about Python"
         validated = rag_service._validate_response(no_context_response, "")
-        self.assertIn("I can only help with the materials uploaded under this subject", validated)
+        self.assertIn("in your files for this subject. I only answer from the files", validated)
 
     @patch('subjects.services.rag_service.VectorSearchService')
     def test_get_service_stats(self, mock_vector_service):
@@ -1053,7 +1053,7 @@ class RAGServiceIntegrationTest(TestCase):
         )
         
         # Should return fallback response
-        self.assertIn("I can only help with the materials uploaded under this subject", result['response'])
+        self.assertIn("I only answer from the files in this subject", result['response'])
         self.assertFalse(result['context_used'])
 
 # XP Chatbot API Tests
