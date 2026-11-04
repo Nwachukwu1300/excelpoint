@@ -46,11 +46,22 @@ describe('Today', () => {
   it('welcomes a brand-new user instead of showing empty numbers', async () => {
     mockApi({ 'GET /api/me/': { ...me, subjects: [], due_count: 0 }, 'GET /api/home/': emptyHome })
     renderApp('/')
-    expect(await screen.findByRole('heading', { name: 'Start with your first subject' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Create your first subject' })).toHaveAttribute('href', '/subjects?new=1')
+    expect(await screen.findByRole('heading', { name: 'Get started in three steps' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Create a subject' })).toHaveAttribute('href', '/subjects?new=1')
+    expect(screen.queryByRole('link', { name: 'Upload a file' })).not.toBeInTheDocument() // one step at a time
     expect(screen.queryByRole('link', { name: 'Start review' })).not.toBeInTheDocument()
     expect(screen.getByText(/No conversations yet/)).toBeInTheDocument()
-    expect(screen.getByText(/Nothing to suggest yet/)).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Suggested next steps' })).not.toBeInTheDocument() // Get started covers it
+  })
+
+  it('walks a new user to their first answer, then steps aside', async () => {
+    const fresh = { ...home, due: { count: 5, subjects: 1, minutes: 3 }, suggestions: [], recent_chats: [],
+      subjects: [{ id: 4, name: 'Maths', materials_count: 0, due_count: 0, last_quiz_score: null }, { id: 3, name: 'Biology', materials_count: 1, due_count: 5, last_quiz_score: null }] }
+    mockApi({ 'GET /api/me/': me, 'GET /api/home/': fresh })
+    renderApp('/')
+    expect(await screen.findByRole('link', { name: 'Ask XP' })).toHaveAttribute('href', '/subjects/3/chat') // the subject with a file
+    expect(screen.getByText('Create a subject')).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: '5 flashcards to review' }, { timeout: 3000 })).toBeInTheDocument() // counts up
   })
 
   it('offers a retry when the page fails to load', async () => {

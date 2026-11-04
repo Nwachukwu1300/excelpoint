@@ -17,7 +17,7 @@ GAP_WINDOW_DAYS = 14
 
 
 def _material_name(material):
-    return material.display_name if material else 'this material'
+    return material.display_name if material else 'this file'
 
 
 def recommend(user, limit=6):
@@ -45,7 +45,7 @@ def recommend(user, limit=6):
             recs.append({
                 'kind': 'weak_quiz', 'priority': 40 + round(WEAK_SCORE - last.score),
                 'title': f"Retake the quiz on {_material_name(last.quiz.material)}",
-                'reason': f"Your last score was {last.score:.0f}%. Each retake asks new questions from the same material.",
+                'reason': f"Your last score was {last.score:.0f}%. Each retake asks new questions from the same file.",
                 'url': reverse('take_quiz', args=[quiz_id]),
                 'subject_id': last.quiz.subject_id, 'quiz_id': quiz_id,
             })
@@ -91,7 +91,7 @@ def recommend(user, limit=6):
     for subject in Subject.objects.filter(user=user).annotate(n=Count('materials')).filter(n=0)[:2]:
         recs.append({
             'kind': 'empty_subject', 'priority': 20,
-            'title': f"Upload your first material to {subject.name}",
+            'title': f"Upload your first file to {subject.name}",
             'reason': "XP can only answer, quiz and make flashcards from what you upload.",
             'url': reverse('subject_detail', args=[subject.id]),
             'subject_id': subject.id, 'quiz_id': None,

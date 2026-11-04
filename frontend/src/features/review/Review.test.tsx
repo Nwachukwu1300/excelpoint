@@ -31,7 +31,7 @@ describe('Review session', () => {
     expect(await screen.findByRole('heading', { name: 'What is ACID?' })).toBeInTheDocument()
     await userEvent.keyboard(' ')
     await userEvent.keyboard('4') // 4th button = Easy
-    expect(await screen.findByRole('heading', { name: 'Nothing to review now' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Well done, Alex' })).toBeInTheDocument()
     expect(screen.getByText(/You reviewed 2 cards/)).toBeInTheDocument()
 
     const grades = fetchMock.mock.calls.filter(([url]) => url === '/api/review/grade/').map(([, init]) => JSON.parse(init!.body as string))

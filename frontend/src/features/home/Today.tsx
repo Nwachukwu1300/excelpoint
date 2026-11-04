@@ -74,6 +74,50 @@ function ReviewHero({ due }: { due: Home['due'] }) {
   )
 }
 
+/** The three steps to a first sourced answer; Home shows them until all are done. */
+function firstSteps(data: Home) {
+  const subject = data.subjects.find(x => x.materials_count > 0) ?? data.subjects[0]
+  return [
+    { done: data.subjects.length > 0, title: 'Create a subject', text: 'One subject for each class, like Biology.',
+      to: '/subjects?new=1', action: 'Create a subject', icon: 'plus' as const },
+    { done: data.subjects.some(x => x.materials_count > 0), title: 'Upload a file',
+      text: 'Notes, slides or a lecture recording. XP turns it into a summary, flashcards and a quiz.',
+      to: `/subjects/${subject?.id}?upload=1`, action: 'Upload a file', icon: 'upload' as const },
+    { done: data.recent_chats.length > 0, title: 'Ask XP a question',
+      text: 'XP answers only from your files and shows the passage it used.',
+      to: `/subjects/${subject?.id}/chat`, action: 'Ask XP', icon: 'sparkles' as const },
+  ]
+}
+const started = (data: Home) => firstSteps(data).every(x => x.done)
+// Get started already asks for the first upload
+const suggestionsFor = (data: Home) => started(data) ? data.suggestions : data.suggestions.filter(s => s.kind !== 'empty_subject')
+
+function GetStarted({ data }: { data: Home }) {
+  const steps = firstSteps(data)
+  const next = steps.findIndex(x => !x.done)
+  return (
+    <section className="first-run" aria-labelledby="get-started">
+      <h2 id="get-started">Get started in three steps</h2>
+      <ol>
+        {steps.map((step, i) => (
+          <li key={step.title} className={step.done ? 'is-done' : i === next ? 'is-next' : ''}>
+            <span className="first-run-mark">{step.done ? <Icon name="check" size={16} /> : i + 1}</span>
+            <div>
+              <strong>{step.title}</strong>{step.done && <span className="sr-only"> (done)</span>}
+              {i === next && <p>{step.text}</p>}
+            </div>
+            {i === next && (
+              <Link className={buttonClass(step.icon === 'sparkles' ? 'ai' : 'primary')} to={step.to}>
+                <Icon name={step.icon} />{step.action}
+              </Link>
+            )}
+          </li>
+        ))}
+      </ol>
+    </section>
+  )
+}
+
 function TodaySkeleton() {
   return (
     <div className="today-grid" aria-busy="true" aria-label="Loading your day">
@@ -114,18 +158,10 @@ export function Today() {
       {data && (
         <div className="today-grid">
           <div className="today-main">
-            {data.subjects.length === 0 ? (
-              <section className="first-run">
-                <span className="empty-icon"><Icon name="book" /></span>
-                <div>
-                  <h2>Start with your first subject</h2>
-                  <p>A subject holds the files for one class, like Biology. Then upload notes or a lecture recording and ask XP about it.</p>
-                  <Link className={buttonClass()} to="/subjects?new=1"><Icon name="plus" />Create your first subject</Link>
-                </div>
-              </section>
-            ) : <ReviewHero due={data.due} />}
+            {!started(data) ? <GetStarted data={data} /> : <ReviewHero due={data.due} />}
+            {!started(data) && data.due.count > 0 && <ReviewHero due={data.due} />}
 
-            <section className="dashboard-section">
+            {(started(data) || suggestionsFor(data).length > 0) && <section className="dashboard-section">
               <div className="section-heading">
                 <div>
                   <h2>Suggested next steps</h2>
@@ -133,10 +169,10 @@ export function Today() {
                 </div>
               </div>
               <div className="next-list">
-                {data.suggestions.length === 0 && (
+                {suggestionsFor(data).length === 0 && (
                   <p className="list-empty">Nothing to suggest yet. Upload a file to a subject and XP will plan your next steps.</p>
                 )}
-                {data.suggestions.map((s, i) => {
+                {suggestionsFor(data).map((s, i) => {
                   const action = ACTIONS[s.kind]
                   return (
                     <motion.article className="next-item" key={`${s.kind}-${s.subject_id}-${s.quiz_id}`} {...reveal(i)}>
@@ -152,7 +188,7 @@ export function Today() {
                   )
                 })}
               </div>
-            </section>
+            </section>}
 
             {data.subjects.length > 0 && (
               <section className="dashboard-section">

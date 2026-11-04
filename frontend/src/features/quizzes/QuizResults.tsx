@@ -40,12 +40,13 @@ export function QuizResults() {
       <div className="results-hero">
         <ProgressRing value={r.score} label="score" />
         <div>
-          <Badge tone={r.passed ? 'success' : 'warning'}>{r.passed ? 'QUIZ COMPLETE' : 'BELOW PASS MARK'}</Badge>
+          <Badge tone={r.passed ? 'success' : 'warning'}>{r.passed ? 'Passed' : 'Not passed yet'}</Badge>
           <h1>{verdict(r.score)}{name ? `, ${name}` : ''}</h1>
           <p>
             You earned <strong>{r.earned_points} of {plural(r.total_points, 'point')}</strong> and answered{' '}
             <strong>{plural(r.correct_count, 'question')} correctly</strong>
             {' '}on {r.quiz.material_name ?? r.quiz.title}.
+            {!r.passed && ' Look at the questions you missed below, then try new questions.'}
           </p>
         </div>
         <div className="results-actions">

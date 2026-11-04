@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'motion/react'
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
-import { api } from '../../lib/api'
+import { api, useMe } from '../../lib/api'
 import { plural } from '../../lib/format'
 import { Icon } from '../../ui/Icon'
 import { Button, Logo, ProgressBar, Skeleton, buttonClass } from '../../ui/primitives'
@@ -75,6 +75,7 @@ export function ReviewSession() {
     for (const key of [['me'], ['home'], ['subjects'], ['flashcards']]) queryClient.invalidateQueries({ queryKey: key })
   }, [finished, reviewed, queryClient])
 
+  const name = useMe().data?.first_name
   if (finished || queue.data?.cards.length === 0) {
     return (
       <div className="review-focus done-review">
@@ -82,10 +83,10 @@ export function ReviewSession() {
         <motion.span className="success-burst" initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 380, damping: 18 }}>
           <Icon name="check" />
         </motion.span>
-        <h1>Nothing to review now</h1>
+        <h1>{reviewed ? `Well done${name ? `, ${name}` : ''}` : 'Nothing to review now'}</h1>
         <p>
           {reviewed
-            ? `You reviewed ${plural(reviewed, 'card')}. Cards come back on a schedule that stretches each time you remember them.`
+            ? `You reviewed ${plural(reviewed, 'card')}. The ones you remembered come back in a few days; the ones you missed come back sooner.`
             : 'New cards appear when you upload files. Cards you have reviewed come back when it’s time to practise them again.'}
         </p>
         <Link className={buttonClass()} to="/">Back to Home</Link>
