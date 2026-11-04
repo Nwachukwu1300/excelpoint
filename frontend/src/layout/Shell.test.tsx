@@ -24,7 +24,7 @@ describe('Shell', () => {
     expect(within(nav).getByRole('link', { name: /Home/ })).toHaveAttribute('aria-current', 'page')
     expect(screen.getByRole('button', { name: 'Notifications, 2 unread' })).toBeInTheDocument()
     expect(screen.getByText('Alex Morgan')).toBeInTheDocument()
-    expect(screen.getByText('You have 20 flashcards to review today.')).toBeInTheDocument()
+    expect(screen.queryByText(/Study tip/)).not.toBeInTheDocument() // the Review badge already shows the count
   })
 
   it('keeps answer-quality numbers out of the main navigation', async () => {

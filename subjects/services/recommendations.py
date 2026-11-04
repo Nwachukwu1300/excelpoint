@@ -10,7 +10,6 @@ from django.urls import reverse
 from django.utils import timezone
 
 from ..models import ChatMessage, Quiz, Subject, UserQuizAttempt
-from .spaced_repetition import due_cards
 
 WEAK_SCORE = 70  # percent
 GAP_WINDOW_DAYS = 14
@@ -26,16 +25,7 @@ def recommend(user, limit=6):
     the React app builds its own links from the ids."""
     recs = []
 
-    # 1. Flashcards due (spaced repetition)
-    # order_by() clears due_cards' ordering, which Django would otherwise add to GROUP BY
-    for row in due_cards(user).order_by().values('subject_id', 'subject__name').annotate(n=Count('id', distinct=True)):
-        recs.append({
-            'kind': 'review', 'priority': 50 + min(row['n'], 40),
-            'title': f"Review {row['n']} flashcard{'s' if row['n'] != 1 else ''} in {row['subject__name']}",
-            'reason': "They're ready to review now. Reviewing on time helps you remember them.",
-            'url': reverse('review_flashcards', args=[row['subject_id']]),
-            'subject_id': row['subject_id'], 'quiz_id': None,
-        })
+    # Cards to review aren't suggested: Home's review card already leads with them
 
     # 2. Weak quizzes: latest completed attempt under the threshold
     attempts = UserQuizAttempt.objects.filter(user=user, is_completed=True, score__isnull=False)

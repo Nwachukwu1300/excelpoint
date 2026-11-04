@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router'
 import { displayName, initials, type Me } from '../lib/api'
 import { spring } from '../lib/motion'
 import { Icon, type IconName } from '../ui/Icon'
-import { Avatar, Badge, IconButton, Logo, Skeleton } from '../ui/primitives'
+import { Avatar, IconButton, Logo, Skeleton } from '../ui/primitives'
 import { NavLinkItem } from './NavLinkItem'
 
 type Item = { icon: IconName; label: string; to?: string; href?: string; badge?: number; active: boolean }
@@ -62,16 +62,6 @@ export function Sidebar({ me, collapsed, onToggle }: { me?: Me; collapsed: boole
         <NavItem item={items[2]!} collapsed={collapsed} />
       </nav>
       <div className="sidebar-help">
-        {!collapsed && me && (
-          <>
-            <Badge tone="ai">Study tip</Badge>
-            <p>
-              {me.due_count > 0
-                ? `You have ${me.due_count} flashcard${me.due_count === 1 ? '' : 's'} to review today.`
-                : me.subjects.length ? 'No flashcards to review now. Upload a file to get new ones, or ask XP about a file.' : 'Create a subject and upload a file to get started.'}
-            </p>
-          </>
-        )}
         <Link className="sidebar-user" to="/settings" title={collapsed ? 'Settings' : undefined}>
           {me ? <Avatar small initials={initials(name)} /> : <Skeleton className="skeleton-avatar" />}
           <div>

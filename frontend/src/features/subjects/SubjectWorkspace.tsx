@@ -85,10 +85,6 @@ export function SubjectWorkspace() {
           )}
         </div>
         <div className="workspace-actions">
-          <button type="button" className={buttonClass('secondary')} onClick={() => setUploading(true)}><Icon name="upload" />Upload file</button>
-          {subject?.due_count
-            ? <Link className={buttonClass('secondary')} to={`/review?subject=${id}`}><Icon name="repeat" />Review {plural(subject.due_count, 'card')}</Link>
-            : <button type="button" className={buttonClass('secondary')} disabled><Icon name="repeat" />No cards to review</button>}
           <Link className={buttonClass('ai')} to={`/subjects/${id}/chat`}><Icon name="sparkles" />Ask XP</Link>
           {subject && <MoreMenu label={`More actions for ${subject.name}`} items={[{ label: 'Delete subject', danger: true, onSelect: () => setDeleting(true) }]} />}
         </div>

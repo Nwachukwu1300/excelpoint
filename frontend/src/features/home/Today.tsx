@@ -11,7 +11,7 @@ import { Button, Skeleton, buttonClass, type Tone, XpAvatar } from '../../ui/pri
 import '../../styles/home.css'
 
 type Suggestion = {
-  kind: 'review' | 'weak_quiz' | 'untried_quiz' | 'knowledge_gap' | 'empty_subject'
+  kind: 'weak_quiz' | 'untried_quiz' | 'knowledge_gap' | 'empty_subject'
   title: string
   reason: string
   url: string
@@ -29,15 +29,13 @@ const MotionLink = motion.create(Link)
 
 /** Where a suggestion goes inside the app; null while its screen still lives on the old pages. */
 const inApp = (s: Suggestion): string | null =>
-  s.kind === 'review' ? `/review?subject=${s.subject_id}`
-    : s.kind === 'weak_quiz' ? `/quizzes/${s.quiz_id}/start?fresh=1` // a retake asks new questions
+  s.kind === 'weak_quiz' ? `/quizzes/${s.quiz_id}/start?fresh=1` // a retake asks new questions
     : s.kind === 'untried_quiz' ? `/quizzes/${s.quiz_id}/start`
     : s.kind === 'knowledge_gap' || s.kind === 'empty_subject' ? `/subjects/${s.subject_id}?upload=1`
     : null
 
 const ACTIONS: Record<Suggestion['kind'], { label: string; tone: Tone }> = {
   weak_quiz: { label: 'Retake', tone: 'warning' },
-  review: { label: 'Review', tone: 'primary' },
   knowledge_gap: { label: 'Upload', tone: 'ai' },
   untried_quiz: { label: 'Start quiz', tone: 'success' },
   empty_subject: { label: 'Upload', tone: 'neutral' },

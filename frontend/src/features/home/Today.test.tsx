@@ -9,7 +9,7 @@ const home = {
   due: { count: 20, subjects: 2, minutes: 9 },
   suggestions: [
     { kind: 'weak_quiz', title: 'Retake the quiz on lecture4.pdf', reason: 'Your last score was 45%.', url: '/api/quiz/9/take/', subject_id: 3, quiz_id: 9 },
-    { kind: 'review', title: 'Review 12 flashcards in Database Systems', reason: 'They’re due now.', url: '/subjects/3/review/', subject_id: 3, quiz_id: null },
+    { kind: 'untried_quiz', title: 'Test yourself on sql.pdf', reason: 'You haven’t tried this quiz yet.', url: '/api/quiz/7/take/', subject_id: 3, quiz_id: 7 },
   ],
   recent_chats: [{ id: 5, title: 'B-tree indexes explained', subject_id: 3, subject_name: 'Database Systems', last_activity: new Date().toISOString() }],
   subjects: [
@@ -32,8 +32,8 @@ describe('Today', () => {
     const steps = screen.getAllByRole('article')
     expect(within(steps[0]!).getByRole('link', { name: 'Retake' })).toHaveAttribute('href', '/quizzes/9/start?fresh=1')
     expect(within(steps[0]!).getByRole('link', { name: 'Retake' })).toHaveClass('button--primary') // top pick stands out
-    expect(within(steps[1]!).getByRole('link', { name: 'Review' })).toHaveClass('button--secondary')
-    expect(within(steps[1]!).getByRole('link', { name: 'Review' })).toHaveAttribute('href', '/review?subject=3')
+    expect(within(steps[1]!).getByRole('link', { name: 'Start quiz' })).toHaveClass('button--secondary')
+    expect(within(steps[1]!).getByRole('link', { name: 'Start quiz' })).toHaveAttribute('href', '/quizzes/7/start')
 
     const db = screen.getByRole('link', { name: /Database Systems\s*8 files/ })
     expect(within(db).getByText('45%')).toBeInTheDocument()
