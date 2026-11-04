@@ -127,8 +127,8 @@ export function Insights() {
               </div>
               <TrendChart summary={data.summary} />
             </section>
-            <section className="retrieval-card">
-              <div className="card-heading"><div><h2>Finding the right parts</h2><p>How XP searched your files, on average</p></div></div>
+            <details className="retrieval-card">
+              <summary className="card-heading"><div><h2>Technical details</h2><p>How XP searched your files, on average</p></div></summary>
               <dl className="retrieval-list">
                 {[
                   ['Top similarity', num(data.summary.retrieval.avg_top_similarity)],
@@ -139,7 +139,7 @@ export function Insights() {
                   ['Judge relevance', t.judge_relevance == null ? 'Not enabled' : num(t.judge_relevance)],
                 ].map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}
               </dl>
-            </section>
+            </details>
           </div>
           <section className="attention-card">
             <div className="card-heading">

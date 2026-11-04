@@ -27,6 +27,14 @@ describe('Shell', () => {
     expect(screen.getByText('You have 20 flashcards to review today.')).toBeInTheDocument()
   })
 
+  it('keeps answer-quality numbers out of the main navigation', async () => {
+    mockApi({ 'GET /api/me/': me, 'GET /api/home/': emptyHome })
+    renderApp('/')
+    await screen.findByRole('heading', { name: /, Alex$/ })
+    expect(within(screen.getByRole('navigation', { name: 'Primary navigation' })).queryByRole('link', { name: /Insights/ })).not.toBeInTheDocument()
+    expect(within(screen.getByRole('navigation', { name: 'Mobile navigation' })).getByRole('link', { name: /Quizzes/ })).toHaveAttribute('href', '/quizzes/history')
+  })
+
   it('lets keyboard users skip straight to the page content', async () => {
     mockApi({ 'GET /api/me/': me, 'GET /api/home/': emptyHome })
     renderApp('/')

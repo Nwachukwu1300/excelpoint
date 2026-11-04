@@ -1,8 +1,7 @@
 import { motion } from 'motion/react'
 import { useEffect, useRef } from 'react'
 import { plural } from '../../lib/format'
-import { ConfidencePill } from '../../ui/AnswerBadges'
-import { IconButton, ProgressBar } from '../../ui/primitives'
+import { IconButton } from '../../ui/primitives'
 import { describeAnswer, type ChatMessage, type SourceChunk } from './api'
 import { chunkLabel, fileName } from './Thread'
 
@@ -32,33 +31,29 @@ export function SourcesPanel({ message, focus, onClose }: { message?: ChatMessag
       <div className="sources-head">
         <div>
           <strong>Sources</strong>
-          <span>{chunks.length ? `${plural(chunks.length, 'excerpt')} used` : 'Nothing cited yet'}</span>
+          <span>{chunks.length ? `${plural(chunks.length, 'passage')} from your files` : 'No passages yet'}</span>
         </div>
         <IconButton icon="close" label="Close sources" onClick={onClose} />
       </div>
-      {a?.confidence !== null && a?.confidence !== undefined && (
-        <div className="sources-confidence"><span>Answer confidence</span><ConfidencePill value={a.confidence} /></div>
+      {chunks.length > 0 && a?.verified !== undefined && (
+        <p className="sources-check">{a.verified
+          ? 'XP checked this answer against these passages.'
+          : 'Some parts of this answer could not be checked against these passages.'}</p>
       )}
       <div ref={list}>
         {chunks.length === 0 && (
-          <p className="sources-empty">When XP answers from your files, the exact excerpts it used appear here.</p>
+          <p className="sources-empty">When XP answers from your files, the passages it used appear here.</p>
         )}
         {chunks.map((c, i) => {
           const label = chunkLabel(c)
-          const pct = Math.round(Math.max(0, Math.min(1, c.similarity_score)) * 100)
           return (
             <article key={`${label}-${i}`} data-chunk={label} className={`source-excerpt ${focus && chunkLabel(focus) === label ? 'is-focused' : ''}`}>
               <div>
                 <span className="file-type">{ext(c.material_name)}</span>
                 <div>
                   <strong>{fileName(c.material_name)}</strong>
-                  <span>{c.chunk_index !== undefined ? `Part ${c.chunk_index + 1}` : 'Excerpt'}</span>
+                  <span>Passage {i + 1}</span>
                 </div>
-              </div>
-              <div className="similarity">
-                <span>Similarity</span>
-                <ProgressBar value={pct} label={`Similarity ${pct}%`} />
-                <strong>{pct}%</strong>
               </div>
               <p>“{excerpt(c.content)}”</p>
             </article>

@@ -158,3 +158,10 @@
 .trace-plain h2 { margin: 0 0 10px; font-size: 15px; }
 .trace-plain ul { margin: 0; padding-left: 20px; font-size: var(--text-body); line-height: 1.7; }
 .trace-technical > summary { margin-bottom: 16px; padding: 12px 0; color: var(--primary); font-size: 15px; font-weight: 600; cursor: pointer; }
+
+/* Technical details fold away: a student opens them only to check how XP searched */
+.retrieval-card > summary { cursor: pointer; list-style: none; }
+.retrieval-card > summary::-webkit-details-marker { display: none; }
+.retrieval-card > summary::after { content: 'Show'; align-self: center; color: var(--primary); font-size: var(--text-ui); font-weight: 600; }
+.retrieval-card[open] > summary::after { content: 'Hide'; }
+.retrieval-card { align-self: start; }

@@ -11,7 +11,7 @@ export function MobileNav({ me }: { me?: Me }) {
     { icon: 'home', label: 'Home', to: '/', active: pathname === '/' },
     { icon: 'book', label: 'Subjects', to: '/subjects', active: pathname.startsWith('/subjects') },
     { icon: 'repeat', label: 'Review', to: '/review', active: pathname.startsWith('/review'), badge: me?.due_count },
-    { icon: 'chart', label: 'Insights', to: '/insights', active: pathname.startsWith('/insights') },
+    { icon: 'layers', label: 'Quizzes', to: '/quizzes/history', active: pathname.startsWith('/quiz') },
     { icon: 'user', label: 'Account', to: '/settings', active: pathname.startsWith('/settings') || pathname.startsWith('/notifications') },
   ]
   return (

@@ -54,9 +54,9 @@ describe('XP chat', () => {
 
     await userEvent.click(screen.getByRole('button', { name: /Show sources/ }))
     const panel = screen.getByRole('complementary', { name: 'Sources' })
-    expect(within(panel).getByText('1 excerpt used')).toBeInTheDocument()
-    expect(within(panel).getByText('94%')).toBeInTheDocument()
-    expect(within(panel).getByText('High · 0.91')).toBeInTheDocument()
+    expect(within(panel).getByText('1 passage from your files')).toBeInTheDocument()
+    expect(within(panel).getByText('XP checked this answer against these passages.')).toBeInTheDocument()
+    expect(within(panel).queryByText(/94%|0\.91|Similarity|Part 18/)).not.toBeInTheDocument() // no engineering numbers
   })
 
   it('starts the short passage at the sentence that matches the answer', async () => {
@@ -85,7 +85,7 @@ describe('XP chat', () => {
     expect(screen.queryByText(/\(Source:/)).not.toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'See 1 more passage' }))
     const panel = screen.getByRole('complementary', { name: 'Sources' })
-    expect(within(panel).getByText('2 excerpts used')).toBeInTheDocument()
+    expect(within(panel).getByText('2 passages from your files')).toBeInTheDocument()
     expect(panel.querySelector('.source-excerpt')).toHaveClass('is-focused')
   })
 
