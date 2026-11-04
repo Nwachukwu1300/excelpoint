@@ -55,9 +55,9 @@ class HomeApiTest(TestCase):
         kinds = {s['kind']: s for s in data['suggestions']}
         self.assertEqual(kinds['weak_quiz']['subject_id'], self.db.id)
         self.assertIsNotNone(kinds['weak_quiz']['quiz_id'])
-        self.assertEqual(kinds['review']['subject_id'], self.db.id)
+        self.assertNotIn('review', kinds)  # due cards lead the page already
         self.assertEqual(kinds['empty_subject']['subject_id'], self.maths.id)
-        self.assertNotIn('priority', kinds['review'])
+        self.assertNotIn('priority', kinds['weak_quiz'])
 
     def test_new_user_gets_an_empty_but_valid_payload(self):
         self.client.force_login(User.objects.create_user('new', password='p'))
