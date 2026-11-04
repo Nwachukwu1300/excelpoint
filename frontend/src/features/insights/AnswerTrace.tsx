@@ -109,9 +109,8 @@ export function AnswerTrace() {
         : <Link className="back-link" to="/insights"><Icon name="chevronRight" size={14} /> Back to Insights</Link>}
       <div className="trace-header">
         <div>
-          <p className="overline">HOW THIS ANSWER WAS MADE · {when.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase()}, {when.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</p>
           <h1>{t.question}</h1>
-          {t.subject && <p>{t.subject.name}</p>}
+          <p>{t.subject && `${t.subject.name} · `}Asked {when.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}, {when.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</p>
         </div>
       </div>
       <PlainSummary t={t} claims={claims} />

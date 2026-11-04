@@ -33,7 +33,6 @@ main { min-height: calc(100vh - var(--topbar-height)); }
 /* One heading weight everywhere, balanced lines; body copy avoids a lone last word */
 h1, h2, h3, h4 { font-weight: 650; text-wrap: balance; }
 p, li { text-wrap: pretty; }
-.overline, .eyebrow { margin: 0 0 6px; color: var(--muted); font-size: var(--text-label); font-weight: 700; letter-spacing: .1em; }
 .page-intro h1 { margin: 0; font-size: 28px; font-weight: 650; letter-spacing: -.035em; line-height: 1.25; }
 .page-intro > div > p:last-child { margin: 7px 0 0; color: var(--muted); font-size: var(--text-body); }
 .section-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 16px; }

@@ -1,5 +1,5 @@
 /* Shared primitives (ui/). Values from the prototype; press feedback added (easyui PressButton: scale .97). */
-.button { display: inline-flex; min-height: 40px; align-items: center; justify-content: center; gap: 8px; padding: 0 16px; border: 1px solid transparent; border-radius: var(--radius); font-size: 15px; font-weight: 600; transition: .15s ease, scale var(--dur-fast) var(--ease-spring); }
+.button { display: inline-flex; min-height: 40px; align-items: center; justify-content: center; gap: 8px; padding: 0 16px; border: 1px solid transparent; border-radius: var(--radius); font-size: 15px; font-weight: 600; transition: .15s ease, scale var(--dur-fast) var(--ease-out); }
 .button:active:not(:disabled), .icon-button:active:not(:disabled) { scale: .97; }
 .button--primary { color: white; background: var(--primary-fill); box-shadow: 0 1px 2px rgb(37 99 235 / .15); }
 .button--primary:hover { background: var(--primary-fill-hover); }
@@ -10,7 +10,7 @@
 .button--ai { color: white; background: linear-gradient(135deg, var(--ai-one), var(--ai-two)); }
 .full-width { width: 100%; }
 
-.icon-button { display: inline-grid; width: 34px; height: 34px; place-items: center; border: 0; border-radius: 7px; color: var(--muted); background: transparent; transition: .15s ease, scale var(--dur-fast) var(--ease-spring); }
+.icon-button { display: inline-grid; width: 34px; height: 34px; place-items: center; border: 0; border-radius: 7px; color: var(--muted); background: transparent; transition: .15s ease, scale var(--dur-fast) var(--ease-out); }
 .icon-button:hover { color: var(--text); background: var(--hover); }
 
 .badge { display: inline-flex; min-height: 22px; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 20px; color: var(--muted); background: var(--hover); font-size: var(--text-meta); font-weight: 700; white-space: nowrap; }
@@ -69,7 +69,7 @@
 .list-empty { padding: 16px; color: var(--muted); font-size: var(--text-ui); line-height: 1.5; }
 .conversations-card .list-empty { padding: 12px 0 2px; border-top: 1px solid var(--border); }
 /* added: a load failure in place of the content, with a retry */
-.inline-error { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 20px; border: 1px solid var(--border); border-left: 3px solid var(--danger); border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow); }
+.inline-error { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 20px; border: 1px solid var(--danger); border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow); }
 .inline-error p { color: var(--muted); font-size: 15px; }
 
 /* Indeterminate progress (added): processing has no real percentage, so sweep instead of faking one */

@@ -67,7 +67,6 @@ export function Insights() {
     <div className="page-content insights-page">
       <div className="page-intro">
         <div>
-          <p className="overline">ANSWER QUALITY</p>
           <h1>Insights</h1>
           <p>See how well XP’s answers match your files.</p>
         </div>

@@ -17,7 +17,6 @@ export function QuizHistory() {
     <div className="page-content">
       <div className="page-intro">
         <div>
-          <p className="overline">QUIZZES</p>
           <h1>Quiz history</h1>
           <p>Every attempt, score, and subject in one place.</p>
         </div>

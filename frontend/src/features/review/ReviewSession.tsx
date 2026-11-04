@@ -125,9 +125,9 @@ export function ReviewSession() {
               transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
               aria-live="polite"
             >
-              <span className="eyebrow">{revealed ? 'ANSWER' : card.subject_name.toUpperCase()}</span>
+              {revealed && <p className="card-question">{card.question}</p>}
               <h1>{revealed ? card.answer : card.question}</h1>
-              {card.material_name && <span className="card-source">{card.material_name}</span>}
+              <span className="card-source">{[card.subject_name, card.material_name].filter(Boolean).join(' · ')}</span>
             </motion.div>
             {/* In "Show answer", detail 2 is the second click of a double click on the grade before: not a request to reveal */}
             {!revealed ? (

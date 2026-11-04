@@ -5,7 +5,7 @@
 .review-focus-head .icon-button { justify-self: end; }
 .review-card-stage { display: flex; min-height: calc(100vh - 64px); flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; }
 .study-card { display: flex; width: min(620px, 90vw); min-height: 340px; flex-direction: column; align-items: center; justify-content: center; padding: 50px; border: 1px solid var(--border); border-radius: 14px; background: var(--card); box-shadow: 0 12px 40px rgb(15 23 42 / .07); text-align: center; }
-.study-card.is-revealed { border-top: 3px solid var(--success); }
+.card-question { max-width: 520px; margin: 0; color: var(--muted); font-size: var(--text-ui); } /* added: keeps the question in view */
 .study-card h1 { max-width: 520px; margin: 15px 0; font-size: 26px; font-weight: 600; line-height: 1.5; }
 .study-card.is-revealed h1 { font-size: 17px; }
 .card-source { color: var(--muted); font-size: var(--text-meta); }
@@ -26,7 +26,7 @@
 .done-review p { max-width: 450px; margin: 0 0 22px; color: var(--muted); font-size: var(--text-ui); line-height: 1.6; }
 .review-focus-head > .logo { justify-self: start; } /* added */
 .grade-area > div { justify-content: center; }
-.grade-area button { transition: background .15s ease, border-color .15s ease, scale var(--dur-fast) var(--ease-spring); } /* added: hover and press */
+.grade-area button { transition: background .15s ease, border-color .15s ease, scale var(--dur-fast) var(--ease-out); } /* added: hover and press */
 .grade-area button:hover { background: var(--hover); }
 .grade-area button:active { scale: .97; }
 .grade-area .grade-again:hover { background: var(--danger-soft); }

@@ -780,7 +780,11 @@ class ChatMessageListCreateAPIView(generics.ListCreateAPIView):
         session_manager.extend_session(session)
         if not session.title or session.title == "New conversation":
             try:
-                session.title = self._generate_session_title(user_message_content, rag_response['response'], subject.name)
+                if rag_response['metadata'].get('pipeline') == 'fallback':  # nothing found: keep the no-AI-call promise
+                    question = ' '.join(user_message_content.split())
+                    session.title = question if len(question) <= 50 else question[:47] + '...'
+                else:
+                    session.title = self._generate_session_title(user_message_content, rag_response['response'], subject.name)
                 session.save(update_fields=['title'])
             except Exception as e:
                 logger.warning(f"Failed to generate title for session {session.id}: {str(e)}")

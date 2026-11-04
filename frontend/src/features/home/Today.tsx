@@ -48,7 +48,7 @@ export function greeting(hour = new Date().getHours()) {
 export function todayLabel(date = new Date()) {
   const weekday = date.toLocaleDateString('en-GB', { weekday: 'long' })
   const day = date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })
-  return `${weekday}, ${day}`.toUpperCase()
+  return `${weekday} ${day}`
 }
 
 function ReviewHero({ due }: { due: Home['due'] }) {
@@ -58,7 +58,6 @@ function ReviewHero({ due }: { due: Home['due'] }) {
       <div>
         <span className="review-symbol"><Icon name="repeat" /></span>
         <div>
-          <span className="eyebrow">CARDS TO REVIEW</span>
           {caughtUp ? <h2>Nothing to review now</h2> : <h2><CountUp value={due.count} /> flashcard{due.count === 1 ? '' : 's'} to review</h2>}
           <p>
             {caughtUp
@@ -139,9 +138,8 @@ export function Today() {
     <div className="page-content today-page">
       <div className="page-intro">
         <div>
-          <p className="overline">{todayLabel()}</p>
           {me.data ? <h1>{greeting()}{me.data.first_name ? `, ${me.data.first_name}` : ''}</h1> : <h1><Skeleton className="skeleton-value" /></h1>}
-          <p>Here’s the most useful work to do today.</p>
+          <p>{todayLabel()}. Here’s the most useful work to do today.</p>
         </div>
       </div>
 

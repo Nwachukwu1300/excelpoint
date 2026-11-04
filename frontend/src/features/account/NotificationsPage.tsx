@@ -30,7 +30,6 @@ export function NotificationsPage() {
     <div className="page-content narrow-page">
       <div className="page-intro">
         <div>
-          <p className="overline">UPDATES</p>
           <h1>Notifications</h1>
           <p>Study aids, review reminders, and processing updates.</p>
         </div>

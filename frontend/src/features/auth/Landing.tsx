@@ -59,7 +59,6 @@ export function Landing() {
           </motion.div>
         </section>
         <section className="how-section">
-          <p className="overline">HOW IT WORKS</p>
           <h2>Three simple steps</h2>
           <div>
             {STEPS.map(([icon, title, text], i) => (
@@ -74,7 +73,6 @@ export function Landing() {
         </section>
         <section className="features-section">
           <div>
-            <p className="overline">BUILT FOR TRUSTED LEARNING</p>
             <h2>Answers you can check</h2>
             <p>ExcelPoint turns the materials you already trust into an active study system, and shows you exactly where every answer came from.</p>
           </div>

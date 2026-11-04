@@ -8,7 +8,7 @@ from rest_framework.test import APIClient
 
 from reasoning.pipeline import ReasoningResult
 from retrieval.reranking import RankedChunk
-from subjects.models import ChatMessage, Subject, SubjectMaterial
+from subjects.models import ChatMessage, ChatSession, Subject, SubjectMaterial
 from subjects.services.rag_service import RAGService
 
 CHUNK = {'chunk_id': 1, 'content': 'DML includes INSERT.', 'material_name': 'db.pdf', 'similarity_score': 0.8}
@@ -77,6 +77,16 @@ class ChatStreamTest(TestCase):
         events = parse_sse(self.post('Who painted the Mona Lisa?'))
         self.assertEqual([e for e, _ in events], ['token', 'done'])
         self.assertIn("couldn't find anything", events[0][1]['text'])
+
+    @patch.object(RAGService, '_retrieve_relevant_chunks', return_value=[])
+    def test_no_match_titles_the_chat_without_an_ai_call(self, _):
+        session = ChatSession.objects.create(user=self.user, subject=self.subject, status='active', title='New conversation')
+        with patch('subjects.views.ChatMessageListCreateAPIView._generate_session_title') as ai_title:
+            parse_sse(self.client.post(self.url, {'message': 'Who painted   the Mona Lisa?', 'session_id': session.id},
+                                       format='json', HTTP_ACCEPT='text/event-stream'))
+        ai_title.assert_not_called()
+        session.refresh_from_db()
+        self.assertEqual(session.title, 'Who painted the Mona Lisa?')
 
     def test_failure_becomes_an_error_event(self):
         with patch.object(RAGService, 'respond_events', side_effect=RuntimeError('boom')):

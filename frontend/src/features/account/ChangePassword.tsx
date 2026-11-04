@@ -44,7 +44,6 @@ export function ChangePassword() {
     <div className="page-content settings-page">
       <div className="page-intro">
         <div>
-          <p className="overline">SECURITY</p>
           <h1>{setting ? 'Set a password' : 'Change password'}</h1>
           <p>{setting ? 'Add a password so you can sign in without Google.' : 'Choose a strong password you don’t use elsewhere.'}</p>
         </div>

@@ -81,7 +81,7 @@ describe('Today helpers', () => {
     expect(greeting(9)).toBe('Good morning')
     expect(greeting(14)).toBe('Good afternoon')
     expect(greeting(20)).toBe('Good evening')
-    expect(todayLabel(new Date(2026, 2, 18))).toBe('WEDNESDAY, 18 MARCH')
+    expect(todayLabel(new Date(2026, 2, 18))).toBe('Wednesday 18 March')
     expect(subjectInitials('Computer Networks')).toBe('CN')
     expect(subjectInitials('Database Systems')).toBe('DS') // the mock-up's "DB" was hand-picked
     expect(subjectInitials('  📚 علم الأحياء Biology 🌱  ')).toBe('عا')
