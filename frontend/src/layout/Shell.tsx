@@ -55,10 +55,11 @@ export function Shell() {
   if (focus) return <><AnimatedOutlet /><Toaster /><ScrollRestoration /></>
   return (
     <div className="app-shell">
+      <a className="skip-link" href="#main">Skip to content</a>
       <Sidebar me={me.data} collapsed={collapsed} onToggle={toggle} />
       <div className={`app-main ${collapsed ? 'sidebar-collapsed' : ''} ${fullBleed ? 'is-full-bleed' : ''}`}>
         {!fullBleed && <Topbar me={me.data} />}
-        <main><AnimatedOutlet /></main>
+        <main id="main" tabIndex={-1}><AnimatedOutlet /></main>
       </div>
       {!fullBleed && <MobileNav me={me.data} />}
       <Toaster />

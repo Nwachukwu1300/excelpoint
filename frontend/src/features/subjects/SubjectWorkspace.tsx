@@ -96,7 +96,6 @@ export function SubjectWorkspace() {
 
       <div className="tabs" role="tablist" aria-label="Subject sections">
         {tabButton('materials', 'Files')}
-        <Link role="tab" aria-selected={false} to={`/subjects/${id}/chat`}>Chat</Link>
         {tabButton('quizzes', 'Quizzes')}
         {tabButton('flashcards', 'Flashcards', subject?.due_count)}
       </div>

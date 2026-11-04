@@ -152,6 +152,7 @@ describe('Subject workspace', () => {
     expect(within(row).getByRole('link', { name: /New questions/ })).toHaveAttribute('href', '/quizzes/9/start?fresh=1')
     expect(within(row).getByRole('link', { name: 'Resume quiz' })).toHaveAttribute('href', '/quizzes/9/start')
 
+    expect(screen.getAllByRole('tab').map(t => t.textContent)).not.toContain('Chat') // chat opens from Ask XP, not a fake tab
     await userEvent.click(screen.getByRole('tab', { name: /Flashcards/ }))
     expect(await screen.findByText('B-tree index')).toBeInTheDocument()
     expect(screen.getByText('Review today')).toBeInTheDocument()

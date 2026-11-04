@@ -43,7 +43,7 @@
 .breadcrumb strong { font-weight: 600; }
 .top-actions { display: flex; align-items: center; gap: 6px; }
 .menu-wrap { position: relative; }
-.unread { position: absolute; top: -2px; right: -1px; display: grid; min-width: 16px; height: 16px; padding: 0 3px; place-items: center; border: 2px solid var(--card); border-radius: 8px; color: white; background: var(--danger); font-size: var(--text-meta); font-weight: 700; pointer-events: none; }
+.unread { position: absolute; top: -2px; right: -1px; display: grid; min-width: 18px; height: 18px; padding: 0 4px; place-items: center; border: 2px solid var(--card); border-radius: 9px; color: white; background: var(--danger-fill); font-size: var(--text-label); font-weight: 700; pointer-events: none; }
 .avatar-button { display: flex; align-items: center; gap: 4px; margin-left: 4px; padding: 2px 4px; border: 0; border-radius: 20px; color: var(--muted); background: transparent; }
 .avatar-button:hover { background: var(--hover); }
 .theme-icon { display: grid; place-items: center; } /* added: sun/moon swap */

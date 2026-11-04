@@ -12,7 +12,7 @@
   img, svg, video, canvas { display: block; vertical-align: middle; }
   img, video { max-width: 100%; height: auto; }
   button, input, select, textarea { font: inherit; letter-spacing: inherit; color: inherit; border-radius: 0; background-color: transparent; opacity: 1; }
-  ::placeholder { opacity: 1; color: color-mix(in oklab, currentcolor 50%, transparent); }
+  ::placeholder { opacity: 1; color: var(--muted); }
   textarea { resize: vertical; }
   [hidden]:where(:not([hidden='until-found'])) { display: none !important; }
 
@@ -20,7 +20,7 @@
   html { font-family: 'Inter', system-ui, sans-serif; color: var(--text); background: var(--background); }
   body { min-width: 320px; min-height: 100vh; background: var(--background); }
   button { cursor: pointer; }
-  button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, a:focus-visible { outline: 3px solid rgb(37 99 235 / .25); outline-offset: 2px; }
+  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
   button:disabled { cursor: not-allowed; opacity: .5; }
 }
 
@@ -61,3 +61,8 @@ p, li { text-wrap: pretty; }
   *, ::before, ::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
   ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
 }
+
+/* Skip link: hidden until a keyboard user tabs to it */
+.skip-link { position: fixed; top: -64px; left: 16px; z-index: 100; padding: 10px 14px; border-radius: var(--radius); color: white; background: var(--primary-fill); font-size: var(--text-ui); font-weight: 600; }
+.skip-link:focus { top: 12px; }
+main:focus { outline: none; }

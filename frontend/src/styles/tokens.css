@@ -16,7 +16,14 @@
   --danger: #ef4444;
   --danger-soft: #fef2f2;
   --text: #1e293b;
-  --muted: #64748b;
+  --muted: #5f6e82;  /* darker than the prototype's #64748b so it passes AA on tinted backgrounds too */
+  --success-text: #047857;
+  --warning-text: #b45309;
+  --primary-fill: #2563eb;
+  --primary-fill-hover: #1d4ed8;
+  --danger-fill: #dc2626;
+  --focus: #2563eb;
+  --primary-on-dark: #93c5fd;
   --border: #e2e8f0;
   --background: #f8fafc;
   --card: #ffffff;
@@ -41,6 +48,9 @@
   --danger-soft: rgb(239 68 68 / .12);
   --text: #f1f5f9;
   --muted: #94a3b8;
+  --success-text: #06d6a0;
+  --warning-text: #f59e0b;
+  --focus: #60a5fa;
   --border: #334155;
   --background: #0f172a;
   --card: #1e293b;

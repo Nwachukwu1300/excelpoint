@@ -35,7 +35,7 @@
 .retrieval-list dd { margin: 0; font-size: var(--text-meta); font-weight: 650; }
 .attention-card { margin-bottom: 16px; }
 .attention-row { display: grid; transition: background .15s ease; width: 100%; grid-template-columns: auto minmax(180px, 1fr) minmax(220px, 1fr) auto; align-items: center; gap: 10px; padding: 12px 0; border: 0; border-top: 1px solid var(--border); color: var(--text); background: transparent; text-align: left; }
-.warning-marker { display: grid; width: 28px; height: 28px; place-items: center; border-radius: 50%; color: var(--warning); background: var(--warning-soft); }
+.warning-marker { display: grid; width: 28px; height: 28px; place-items: center; border-radius: 50%; color: var(--warning-text); background: var(--warning-soft); }
 .attention-row > strong { overflow: hidden; font-size: var(--text-meta); text-overflow: ellipsis; white-space: nowrap; }
 .reason-chips { display: flex; flex-wrap: wrap; gap: 5px; }
 .trace-link { display: flex; align-items: center; gap: 5px; color: var(--primary); font-size: var(--text-meta); font-weight: 600; }
@@ -91,7 +91,7 @@
 .claims-grid > div { padding: 12px; border: 1px solid var(--border); border-radius: 6px; }
 .claims-grid h3 { margin: 0 0 10px; font-size: var(--text-meta); }
 .claims-grid p { display: flex; align-items: center; gap: 6px; margin: 7px 0; color: var(--muted); font-size: var(--text-meta); }
-.claims-grid p .icon { color: var(--success); }
+.claims-grid p .icon { color: var(--success-text); }
 .no-claims { display: grid; min-height: 80px; place-items: center; color: var(--muted); background: var(--background); font-size: var(--text-meta); }
 .evaluation-card, .confidence-card { margin-top: 16px; }
 .confidence-row { display: grid; grid-template-columns: 140px 1fr 36px; align-items: center; gap: 12px; margin-top: 12px; }
@@ -112,7 +112,7 @@
 .back-link { color: var(--muted); }
 .back-link:hover { color: var(--text); }
 .back-link .icon { transform: rotate(180deg); }
-.empty-inline { display: flex; align-items: center; gap: 10px; color: var(--success); }
+.empty-inline { display: flex; align-items: center; gap: 10px; color: var(--success-text); }
 .empty-inline > div strong, .empty-inline > div p { display: block; margin: 0; color: var(--text); font-size: var(--text-meta); }
 .empty-inline > div p { margin-top: 3px; color: var(--muted); }
 .prompt-wrap { overflow: hidden; }

@@ -27,6 +27,15 @@ describe('Shell', () => {
     expect(screen.getByText('You have 20 flashcards to review today.')).toBeInTheDocument()
   })
 
+  it('lets keyboard users skip straight to the page content', async () => {
+    mockApi({ 'GET /api/me/': me, 'GET /api/home/': emptyHome })
+    renderApp('/')
+    await screen.findByRole('heading', { name: /, Alex$/ })
+    const skip = screen.getByRole('link', { name: 'Skip to content' })
+    expect(skip).toHaveAttribute('href', '#main')
+    expect(document.getElementById('main')).toHaveAttribute('tabindex', '-1')
+  })
+
   it('sends signed-out users to the Django login with a return path', async () => {
     const assign = vi.fn()
     vi.stubGlobal('location', { ...location, assign, pathname: '/app/', search: '' })

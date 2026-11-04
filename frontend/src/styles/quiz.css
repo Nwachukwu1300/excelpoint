@@ -33,7 +33,7 @@
 .generation-state small { color: var(--muted); font-size: var(--text-meta); }
 .generation-state > .button { margin-top: 20px; }
 .generation-state > div:last-child { display: flex; gap: 8px; margin-top: 20px; }
-.warning-icon { color: var(--warning); background: var(--warning-soft); }
+.warning-icon { color: var(--warning-text); background: var(--warning-soft); }
 .results-page { max-width: 1000px; }
 .results-hero { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 24px; padding: 26px; border: 1px solid var(--border); border-radius: 12px; background: var(--card); box-shadow: var(--shadow); }
 .results-hero .progress-ring { width: 94px; height: 94px; }
@@ -45,11 +45,11 @@
 .review-heading h2 { margin: 0; font-size: 16px; }
 .review-heading p { margin: 4px 0 0; color: var(--muted); font-size: var(--text-meta); }
 .result-question { margin-bottom: 12px; padding: 20px 22px; border: 1px solid var(--border); border-left-width: 3px; border-radius: var(--radius); background: var(--card); }
-.result-question.is-correct { border-left-color: var(--success); }
+.result-question.is-correct { border-left-color: var(--success-text); }
 .result-question.is-incorrect { border-left-color: var(--danger); }
 .result-number { display: flex; align-items: center; gap: 8px; }
 .result-number > span { display: grid; width: 24px; height: 24px; place-items: center; border-radius: 50%; }
-.is-correct .result-number > span { color: var(--success); background: var(--success-soft); }
+.is-correct .result-number > span { color: var(--success-text); background: var(--success-soft); }
 .is-incorrect .result-number > span { color: var(--danger); background: var(--danger-soft); }
 .result-number strong { font-size: var(--text-meta); }
 .result-number small { margin-left: auto; color: var(--muted); font-size: var(--text-meta); }

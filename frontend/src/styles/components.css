@@ -1,8 +1,8 @@
 /* Shared primitives (ui/). Values from the prototype; press feedback added (easyui PressButton: scale .97). */
 .button { display: inline-flex; min-height: 40px; align-items: center; justify-content: center; gap: 8px; padding: 0 16px; border: 1px solid transparent; border-radius: var(--radius); font-size: 15px; font-weight: 600; transition: .15s ease, scale var(--dur-fast) var(--ease-spring); }
 .button:active:not(:disabled), .icon-button:active:not(:disabled) { scale: .97; }
-.button--primary { color: white; background: var(--primary); box-shadow: 0 1px 2px rgb(37 99 235 / .15); }
-.button--primary:hover { background: var(--primary-hover); }
+.button--primary { color: white; background: var(--primary-fill); box-shadow: 0 1px 2px rgb(37 99 235 / .15); }
+.button--primary:hover { background: var(--primary-fill-hover); }
 .button--secondary { border-color: var(--border); color: var(--text); background: var(--card); }
 .button--secondary:hover, .button--ghost:hover { background: var(--hover); }
 .button--ghost { color: var(--text); background: transparent; }
@@ -17,8 +17,8 @@
 .badge--primary { color: var(--primary); background: var(--primary-soft); }
 .badge--ai { color: #6746a5; background: var(--ai-soft); }
 [data-theme='dark'] .badge--ai { color: #c4b5fd; }
-.badge--success { color: var(--success); background: var(--success-soft); }
-.badge--warning { color: var(--warning); background: var(--warning-soft); }
+.badge--success { color: var(--success-text); background: var(--success-soft); }
+.badge--warning { color: var(--warning-text); background: var(--warning-soft); }
 .badge--danger { color: var(--danger); background: var(--danger-soft); }
 .status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 
@@ -101,7 +101,7 @@
 .dropzone > span:last-child { color: var(--muted); font-size: var(--text-meta); }
 .dropzone > strong { max-width: 90%; overflow: hidden; font-size: var(--text-ui); text-overflow: ellipsis; white-space: nowrap; }
 .upload-icon { display: grid; width: 42px; height: 42px; margin-bottom: 4px; place-items: center; border-radius: 50%; color: var(--primary); background: var(--primary-soft); }
-.upload-icon.success { color: var(--success); background: var(--success-soft); }
+.upload-icon.success { color: var(--success-text); background: var(--success-soft); }
 .upload-icon.failed { color: var(--danger); background: var(--danger-soft); }
 .modal-note { display: flex; gap: 7px; margin: 14px 0 20px; color: var(--muted); font-size: var(--text-meta); line-height: 1.5; }
 .upload-file-error { display: flex; align-items: center; gap: 7px; margin-top: 8px; padding: 9px 10px; border-radius: 6px; color: var(--danger); background: var(--danger-soft); font-size: var(--text-meta); }
@@ -121,7 +121,7 @@
 .toast-stack { position: fixed; right: 24px; bottom: 24px; z-index: 80; display: flex; flex-direction: column; gap: 8px; }
 .toast { display: flex; width: min(360px, calc(100vw - 32px)); align-items: flex-start; gap: 10px; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow-lg); }
 .toast > span { display: grid; width: 26px; height: 26px; flex: 0 0 auto; place-items: center; border-radius: 50%; }
-.toast--success > span { color: var(--success); background: var(--success-soft); }
+.toast--success > span { color: var(--success-text); background: var(--success-soft); }
 .toast--error > span { color: var(--danger); background: var(--danger-soft); }
 .toast > div { flex: 1; min-width: 0; }
 .toast strong { font-size: var(--text-meta); }
@@ -145,8 +145,8 @@
 
 /* Answer badges (ui/AnswerBadges): verification, confidence, citation chip */
 .verification, .confidence { display: inline-flex; align-items: center; gap: 4px; padding: 3px 7px; border-radius: 20px; font-size: var(--text-meta); font-weight: 700; }
-.is-verified, .confidence--high { color: var(--success); background: var(--success-soft); }
-.is-unverified, .confidence--moderate { color: var(--warning); background: var(--warning-soft); }
+.is-verified, .confidence--high { color: var(--success-text); background: var(--success-soft); }
+.is-unverified, .confidence--moderate { color: var(--warning-text); background: var(--warning-soft); }
 .confidence--low { color: var(--danger); background: var(--danger-soft); }
 .citation-chip { display: inline-flex; max-width: 100%; align-items: center; gap: 5px; padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px; color: var(--primary); background: var(--card); font-size: var(--text-meta); font-weight: 600; }
 .citation-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
