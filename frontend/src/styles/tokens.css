@@ -1,5 +1,10 @@
 /* Design tokens, verbatim from the Figma Make prototype (src/index.css). */
 :root {
+  /* Type roles (one name per job, sized for second-language readers on phones) */
+  --text-label: 12px;  /* capitals labels, badges */
+  --text-meta: 13px;   /* timestamps, captions, secondary lines */
+  --text-ui: 14px;     /* buttons, navigation, list items */
+  --text-body: 16px;   /* anything read: answers, summaries, card backs, quotes */
   --primary: #2563eb;
   --primary-hover: #1d4ed8;
   --ai-one: #667eea;

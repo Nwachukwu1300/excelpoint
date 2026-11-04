@@ -9,17 +9,9 @@
   html .chat-composer > span { display: none; }
   html .chat-top > div > a { display: grid; width: 44px; height: 44px; place-items: center; }
 
-  /* Text people read on a phone: nothing under 13px */
-  html .answer-body, html .not-found-answer p, html .chat-empty p, html .user-message { font-size: 15px; }
-  html .chat-top strong { font-size: 14px; }
-  html .chat-top span, html .field-error, html .field-hint, html .form-field label, html .auth-switch,
-  html .toast strong, html .toast p, html .chat-empty button, html .failure-copy, html .history-row strong { font-size: 13px; }
-  html .mobile-nav a { font-size: 11px; }
-  html .material-primary > span, html .material-actions button, html .answer-footer, html .citation-chip, html .verification,
-  html .confidence, html .source-excerpt p, html .source-excerpt div > div strong, html .source-excerpt div > div span,
-  html .how-section article p, html .feature-grid p, html .overline, html .eyebrow, html .auth-card > div:first-child p,
-  html .workspace-breadcrumb, html .workspace-header p { font-size: 13px; }
-  html .source-excerpt .file-type { font-size: 9px; }
+  /* Reading text stays at body size on phones (the base type scale has no text under 13px) */
+  html .answer-body, html .not-found-answer p, html .chat-empty p, html .user-message { font-size: var(--text-body); }
+  html .mobile-nav a { font-size: var(--text-label); }
 
   /* Small links and chips get a 44px-tall touch area */
   html .citation-chip, html .material-actions button, html .answer-footer > a, html .auth-switch a,

@@ -30,13 +30,16 @@
 main { min-height: calc(100vh - var(--topbar-height)); }
 .page-content { max-width: 1360px; margin: 0 auto; padding: 36px 40px 56px; }
 .page-intro { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 28px; }
-.overline, .eyebrow { margin: 0 0 6px; color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: .1em; }
+/* One heading weight everywhere, balanced lines; body copy avoids a lone last word */
+h1, h2, h3, h4 { font-weight: 650; text-wrap: balance; }
+p, li { text-wrap: pretty; }
+.overline, .eyebrow { margin: 0 0 6px; color: var(--muted); font-size: var(--text-label); font-weight: 700; letter-spacing: .1em; }
 .page-intro h1 { margin: 0; font-size: 28px; font-weight: 650; letter-spacing: -.035em; line-height: 1.25; }
-.page-intro > div > p:last-child { margin: 7px 0 0; color: var(--muted); font-size: 14px; }
+.page-intro > div > p:last-child { margin: 7px 0 0; color: var(--muted); font-size: var(--text-body); }
 .section-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
 .section-heading h2 { margin: 0; font-size: 16px; font-weight: 650; letter-spacing: -.015em; }
-.section-heading p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
-.section-heading > button, .section-heading > a { display: flex; align-items: center; gap: 6px; border: 0; color: var(--primary); background: transparent; font-size: 11px; font-weight: 600; }
+.section-heading p { margin: 4px 0 0; color: var(--muted); font-size: var(--text-ui); }
+.section-heading > button, .section-heading > a { display: flex; align-items: center; gap: 6px; border: 0; color: var(--primary); background: transparent; font-size: var(--text-ui); font-weight: 600; }
 
 @keyframes fade { from { opacity: 0; } }
 @keyframes enter { from { opacity: 0; transform: translateY(5px); } }
