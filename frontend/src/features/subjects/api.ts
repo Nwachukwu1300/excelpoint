@@ -60,6 +60,14 @@ export function useCreateSubject() {
   })
 }
 
+export function useRenameSubject() {
+  const refresh = useRefreshAfter()
+  return useMutation({
+    mutationFn: ({ id, name }: { id: number; name: string }) => api<{ id: number; name: string }>(`/api/subjects/${id}/`, { method: 'PATCH', body: { name } }),
+    onSuccess: () => refresh(['subjects'], ['me'], ['home']),
+  })
+}
+
 export function useDeleteSubject() {
   const refresh = useRefreshAfter()
   return useMutation({

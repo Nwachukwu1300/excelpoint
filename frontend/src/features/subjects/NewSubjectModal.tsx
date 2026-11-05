@@ -5,27 +5,35 @@ import { useOneAtATime } from '../../lib/useOneAtATime'
 import { Modal } from '../../ui/Modal'
 import { Button, IconButton } from '../../ui/primitives'
 import { toast } from '../../ui/Toast'
-import { useCreateSubject } from './api'
+import { useCreateSubject, useRenameSubject } from './api'
 
-export function NewSubjectModal({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [name, setName] = useState('')
+/** Creates a subject, or renames one when `subject` is given. */
+export function NewSubjectModal({ open, onClose, subject }: { open: boolean; onClose: () => void; subject?: { id: number; name: string } }) {
+  const [name, setName] = useState(subject?.name ?? '')
   const me = useMe()
-  const create = useCreateSubject()
+  const created = useCreateSubject()
+  const renamed = useRenameSubject()
+  const create = subject ? renamed : created
   const navigate = useNavigate()
   const once = useOneAtATime()
 
   const trimmed = name.trim()
-  const duplicate = me.data?.subjects.some(s => s.name.toLowerCase() === trimmed.toLowerCase())
+  const duplicate = me.data?.subjects.some(s => s.id !== subject?.id && s.name.toLowerCase() === trimmed.toLowerCase())
   const serverError = create.error instanceof ApiError
     ? ((create.error.data as { name?: string[] } | undefined)?.name?.[0] ?? create.error.message)
-    : create.error ? 'Couldn’t create the subject. Try again.' : null
+    : create.error ? `Couldn’t ${subject ? 'rename' : 'create'} the subject. Try again.` : null
   const error = duplicate ? `A subject named ${trimmed} already exists.` : serverError
 
-  const close = () => { setName(''); create.reset(); onClose() }
+  const close = () => { setName(subject?.name ?? ''); create.reset(); onClose() }
   const submit = (e: SyntheticEvent) => {
     e.preventDefault()
     if (!trimmed || duplicate) return
-    once(() => create.mutateAsync(trimmed).then(subject => {
+    if (subject) {
+      if (trimmed === subject.name) { close(); return }
+      once(() => renamed.mutateAsync({ id: subject.id, name: trimmed }).then(s => { close(); toast('success', 'Subject renamed', `It’s now called ${s.name}.`) }))
+      return
+    }
+    once(() => created.mutateAsync(trimmed).then(subject => {
       close()
       toast('success', 'Subject created', `${subject.name} is ready for your first upload.`)
       navigate(`/subjects/${subject.id}`)
@@ -37,7 +45,7 @@ export function NewSubjectModal({ open, onClose }: { open: boolean; onClose: () 
       <form onSubmit={submit}>
         <div className="modal-head">
           <div>
-            <h2 id="new-subject-title">Create a new subject</h2>
+            <h2 id="new-subject-title">{subject ? 'Rename subject' : 'Create a new subject'}</h2>
             <p>Use a unique name you’ll recognise later.</p>
           </div>
           <IconButton icon="close" label="Close" onClick={close} />
@@ -60,7 +68,7 @@ export function NewSubjectModal({ open, onClose }: { open: boolean; onClose: () 
         <div className="modal-actions">
           <Button variant="secondary" onClick={close}>Cancel</Button>
           <Button type="submit" disabled={!trimmed || !!duplicate || create.isPending}>
-            {create.isPending ? 'Creating…' : 'Create subject'}
+            {subject ? (create.isPending ? 'Saving…' : 'Save name') : create.isPending ? 'Creating…' : 'Create subject'}
           </Button>
         </div>
       </form>

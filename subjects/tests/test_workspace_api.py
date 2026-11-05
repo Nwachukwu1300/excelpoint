@@ -41,6 +41,16 @@ class WorkspaceApiTest(TestCase):
         self.assertEqual(r.status_code, 400)
         self.assertEqual(r.json(), {'name': ['A subject named Database Systems already exists.']})
 
+    def test_rename_a_subject(self):
+        patch_ = lambda pk, name: self.client.patch(f'/api/subjects/{pk}/', {'name': name}, content_type='application/json')
+        Subject.objects.create(user=self.user, name='Maths')
+        self.assertEqual(patch_(self.db.pk, ' Databases ').json()['name'], 'Databases')
+        self.assertEqual(patch_(self.db.pk, 'DATABASES').status_code, 200)  # its own name in another case is fine
+        r = patch_(self.db.pk, 'maths')
+        self.assertEqual((r.status_code, r.json()), (400, {'name': ['A subject named maths already exists.']}))
+        self.assertEqual(patch_(self.theirs.pk, 'Mine now').status_code, 404)  # someone else's subject
+        self.assertEqual(Subject.objects.get(pk=self.theirs.pk).name, 'Secret')
+
     def test_summary_lists_only_own_subjects(self):
         rows = self.client.get('/api/subjects/summary/').json()
         self.assertEqual([r['name'] for r in rows], ['Database Systems'])

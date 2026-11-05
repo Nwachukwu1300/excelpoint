@@ -93,6 +93,27 @@ describe('Subject workspace', () => {
     expect(await screen.findByText('File deleted')).toBeInTheDocument()
   })
 
+  it('renames a subject from its menu, and blocks a name already in use', async () => {
+    const fetchMock = mockApi({ ...base, 'PATCH /api/subjects/3/': { id: 3, name: 'Databases' }, 'GET /api/home/': emptyHome })
+    renderApp('/subjects/3')
+    await userEvent.click(await screen.findByRole('button', { name: 'More actions for Database Systems' }))
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Rename subject' }))
+    const dialog = screen.getByRole('dialog', { name: 'Rename subject' })
+    const input = within(dialog).getByLabelText('Subject name')
+    expect(input).toHaveValue('Database Systems')
+    await userEvent.clear(input)
+    await userEvent.type(input, 'maths')
+    expect(within(dialog).getByText('A subject named maths already exists.')).toBeInTheDocument()
+    expect(within(dialog).getByRole('button', { name: 'Save name' })).toBeDisabled()
+    await userEvent.clear(input)
+    await userEvent.type(input, 'Databases')
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Save name' }))
+    expect(await screen.findByText('Subject renamed')).toBeInTheDocument()
+    const sent = fetchMock.mock.calls.filter(([u, i]) => u === '/api/subjects/3/' && i?.method === 'PATCH')
+    expect(sent).toHaveLength(1)
+    expect(JSON.parse(sent[0]![1]!.body as string)).toEqual({ name: 'Databases' })
+  })
+
   it('deletes a subject after confirming, then goes back to Subjects', async () => {
     const fetchMock = mockApi({ ...base, 'DELETE /api/subjects/3/': reply(204, null), 'GET /api/home/': emptyHome })
     renderApp('/subjects/3')

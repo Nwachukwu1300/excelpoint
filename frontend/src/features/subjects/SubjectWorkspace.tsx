@@ -13,6 +13,7 @@ import { useDeleteSubject, useMaterials, useSubjects } from './api'
 import { FlashcardsTab } from './FlashcardsTab'
 import { MaterialsTab } from './MaterialsTab'
 import { QuizzesTab } from './QuizzesTab'
+import { NewSubjectModal } from './NewSubjectModal'
 import { UploadModal } from './UploadModal'
 import '../../styles/subjects.css'
 
@@ -29,6 +30,7 @@ export function SubjectWorkspace() {
   const remove = useDeleteSubject()
   const once = useOneAtATime()
   const [deleting, setDeleting] = useState(false)
+  const [renaming, setRenaming] = useState(false)
 
   // Tab and upload live in the URL so links (e.g. Home's "Upload") can open them directly.
   const update = (changes: Record<string, string | null>) => {
@@ -87,7 +89,7 @@ export function SubjectWorkspace() {
         </div>
         <div className="workspace-actions">
           <Link className={buttonClass(filesReady ? 'ai' : 'secondary')} to={`/subjects/${id}/chat`}><Icon name="sparkles" />Ask XP</Link>
-          {subject && <MoreMenu label={`More actions for ${subject.name}`} items={[{ label: 'Delete subject', danger: true, onSelect: () => setDeleting(true) }]} />}
+          {subject && <MoreMenu label={`More actions for ${subject.name}`} items={[{ label: 'Rename subject', onSelect: () => setRenaming(true) }, { label: 'Delete subject', danger: true, onSelect: () => setDeleting(true) }]} />}
         </div>
       </div>
 
@@ -110,6 +112,7 @@ export function SubjectWorkspace() {
         {tab === 'flashcards' && <FlashcardsTab subjectId={id} dueCount={subject?.due_count ?? 0} />}
       </motion.section>
 
+      {subject && <NewSubjectModal key={`${subject.id}-${subject.name}`} open={renaming} onClose={() => setRenaming(false)} subject={subject} />}
       <UploadModal open={uploading} onClose={() => setUploading(false)} subjectId={id}
         onUploaded={() => params.get('then') === 'chat' && navigate(`/subjects/${id}/chat`)} />
       <ConfirmDialog open={deleting} title={`Delete ${subject?.name ?? 'this subject'}?`} confirmLabel="Delete subject" icon="book"
