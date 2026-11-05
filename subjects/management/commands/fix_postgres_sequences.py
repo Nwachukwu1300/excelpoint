@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 from django.db import connection, models
-from subjects.models import SubjectMaterial, ContentChunk, Flashcard, QuizQuestion
+from subjects.models import SubjectMaterial, ContentChunk, Flashcard
 
 
 class Command(BaseCommand):
@@ -13,7 +13,6 @@ class Command(BaseCommand):
                 ('subjects_subjectmaterial', SubjectMaterial),
                 ('subjects_contentchunk', ContentChunk),
                 ('subjects_flashcard', Flashcard),
-                ('subjects_quizquestion', QuizQuestion),
             ]
             
             for table_name, model in tables_and_models:

@@ -2,7 +2,7 @@
 from django.urls import reverse
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import Subject, SubjectMaterial, ContentChunk, Flashcard, QuizQuestion, QuizAttempt, ChatSession, ChatMessage
+from .models import Subject, SubjectMaterial, ContentChunk, Flashcard, ChatSession, ChatMessage
 
 User = get_user_model()
 
@@ -63,24 +63,6 @@ class FlashcardSerializer(serializers.ModelSerializer):
         Needs the view to prefetch the user's reviews into `my_reviews`."""
         reviews = getattr(obj, 'my_reviews', None)
         return reviews[0].due_at if reviews else None
-
-class QuizQuestionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = QuizQuestion
-        fields = ['id', 'question', 'options', 'hint', 'created_at']
-        read_only_fields = ['created_at']
-
-class QuizAttemptSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = QuizAttempt
-        fields = ['id', 'quiz_question', 'selected_answer', 'used_hint', 'is_correct', 'created_at']
-        read_only_fields = ['is_correct', 'created_at']
-
-class QuizAnswerSerializer(serializers.Serializer):
-    question_id = serializers.IntegerField()
-    selected_answer = serializers.CharField()
-    used_hint = serializers.BooleanField(default=False)
-
 
 # XP Chatbot Serializers
 

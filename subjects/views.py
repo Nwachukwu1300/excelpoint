@@ -16,13 +16,12 @@ from django.utils import timezone
 import logging
 
 from .models import (
-    Subject, SubjectMaterial, Flashcard, FlashcardReview, QuizQuestion, QuizAttempt,
+    Subject, SubjectMaterial, Flashcard, FlashcardReview,
     Quiz, Choice, UserQuizAttempt, UserAnswer,
     ChatSession, ChatMessage, delete_subjects
 )
 from .serializers import (
     SubjectSerializer, SubjectMaterialSerializer, FlashcardSerializer,
-    QuizQuestionSerializer, QuizAnswerSerializer,
     ChatSessionSerializer, ChatMessageSerializer, ChatMessageCreateSerializer,
 )
 from .permissions import IsSubjectOwner, ChatAPIPermission, IsChatSessionOwner
@@ -286,44 +285,6 @@ class SubjectViewSet(viewsets.ModelViewSet):
             })
         
         return Response(quiz_data)
-
-    @action(detail=True, methods=['get'])
-    def quiz_questions(self, request, pk=None):
-        """Legacy endpoint - keep for backward compatibility"""
-        subject = self.get_object()
-        questions = QuizQuestion.objects.filter(subject=subject)
-        serializer = QuizQuestionSerializer(questions, many=True)
-        return Response(serializer.data)
-
-    @action(detail=True, methods=['post'])
-    def submit_quiz(self, request, pk=None):
-        """Legacy endpoint - keep for backward compatibility"""
-        subject = self.get_object()
-        serializer = QuizAnswerSerializer(data=request.data, many=True)
-        
-        if serializer.is_valid():
-            answers = serializer.validated_data
-            results = []
-            
-            for answer in answers:
-                question = get_object_or_404(QuizQuestion, id=answer['question_id'], subject=subject)
-                is_correct = answer['selected_answer'] == question.correct_answer
-                
-                attempt = QuizAttempt.objects.create(
-                    user=request.user,
-                    quiz_question=question,
-                    selected_answer=answer['selected_answer'],
-                    used_hint=answer['used_hint'],
-                    is_correct=is_correct
-                )
-                
-                results.append({
-                    'question_id': question.id,
-                    'is_correct': is_correct
-                })
-            
-            return Response(results)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class SubjectMaterialViewSet(viewsets.ModelViewSet):
     serializer_class = SubjectMaterialSerializer

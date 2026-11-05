@@ -567,47 +567,6 @@ class ChatMessage(models.Model):
         """
         return self.metadata.get('response_time', None)
 
-class QuizQuestion(models.Model):
-    """Legacy quiz question model maintained for backward compatibility.
-    
-    This model predates the current Quiz/Question system and is kept
-    to avoid breaking existing data. New implementations should use
-    the Quiz and Question models instead.
-    """
-    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='legacy_quiz_questions')
-    material = models.ForeignKey(SubjectMaterial, on_delete=models.CASCADE, related_name='legacy_quiz_questions', null=True, blank=True)
-    question = models.TextField()
-    correct_answer = models.CharField(max_length=255)
-    options = models.JSONField()  # Store multiple choice options
-    hint = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = ['-created_at']
-
-    def __str__(self):
-        return f"Legacy Quiz: {self.question[:50]}..."
-
-class QuizAttempt(models.Model):
-    """Legacy quiz attempt model maintained for backward compatibility.
-    
-    This model predates the current UserQuizAttempt system and is kept
-    to avoid breaking existing data. New implementations should use
-    the UserQuizAttempt model instead.
-    """
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='legacy_quiz_attempts')
-    quiz_question = models.ForeignKey(QuizQuestion, on_delete=models.CASCADE, related_name='attempts')
-    selected_answer = models.CharField(max_length=255)
-    used_hint = models.BooleanField(default=False)
-    is_correct = models.BooleanField()
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = ['-created_at']
-
-    def __str__(self):
-        return f"Legacy Attempt by {self.user.username} on {self.quiz_question.question[:30]}..."
-
 class CachedResponse(models.Model):
     """Model for caching AI chatbot responses to reduce costs and improve performance.
     
