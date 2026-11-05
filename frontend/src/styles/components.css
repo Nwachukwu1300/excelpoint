@@ -91,12 +91,12 @@
 .form-field { margin: 22px 0 14px; }
 .form-field label { display: block; margin-bottom: 7px; font-size: var(--text-ui); font-weight: 600; }
 .select-wrap { position: relative; }
-.select-wrap select { width: 100%; height: 42px; appearance: none; padding: 0 36px 0 12px; border: 1px solid var(--border); border-radius: var(--radius); outline: none; color: var(--text); background: var(--card); font-size: var(--text-ui); }
+.select-wrap select { width: 100%; height: 42px; appearance: none; padding: 0 36px 0 12px; border: 1px solid var(--input-border); border-radius: var(--radius); outline: none; color: var(--text); background: var(--card); font-size: var(--text-ui); }
 .select-wrap select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgb(37 99 235 / .1); }
 .select-wrap .icon { position: absolute; top: 13px; right: 12px; color: var(--muted); pointer-events: none; }
 .compact-select select { min-width: 170px; height: 40px; }
 .compact-select .icon { top: 13px; }
-.text-input { width: 100%; height: 42px; padding: 0 12px; border: 1px solid var(--border); border-radius: var(--radius); outline: none; color: var(--text); background: var(--card); font-size: 15px; }
+.text-input { width: 100%; height: 42px; padding: 0 12px; border: 1px solid var(--input-border); border-radius: var(--radius); outline: none; color: var(--text); background: var(--card); font-size: 15px; }
 .text-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgb(37 99 235 / .1); }
 .text-input.is-invalid { border-color: var(--danger); }
 .field-error { display: block; margin-top: 6px; color: var(--danger-text); font-size: var(--text-ui); }

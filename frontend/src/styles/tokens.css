@@ -23,7 +23,8 @@
   --primary-fill: #2563eb;
   --primary-fill-hover: #1d4ed8;
   --danger-fill: #dc2626;
-  --danger-text: #b91c1c;  /* red text: #ef4444 was 3.4-3.8:1 */
+  --danger-text: #b91c1c;
+  --input-border: #8492a6;  /* form fields: 3.2:1 on white (WCAG 1.4.11); card hairlines keep --border */  /* red text: #ef4444 was 3.4-3.8:1 */
   --focus: #2563eb;
   --primary-on-dark: #93c5fd;
   --border: #e2e8f0;
@@ -45,6 +46,7 @@
   --primary-hover: #93c5fd;
   --ai-text: #a5b4fc;
   --danger-text: #f87171;
+  --input-border: #64748b;
   --success: #06d6a0;
   --success-soft: rgb(6 214 160 / .12);
   --warning: #f59e0b;

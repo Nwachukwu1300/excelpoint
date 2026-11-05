@@ -48,7 +48,7 @@
 .chat-empty button { padding: 7px 10px; border: 1px solid var(--border); border-radius: 20px; color: var(--text); background: var(--card); font-size: var(--text-meta); }
 .rate-banner { display: flex; align-items: center; gap: 8px; margin: 0 20px 8px; padding: 9px 12px; border: 1px solid color-mix(in srgb, var(--warning) 24%, var(--border)); border-radius: 6px; color: var(--warning-text); background: var(--warning-soft); font-size: var(--text-meta); }
 .rate-banner span { flex: 1; }
-.chat-composer { position: relative; margin: 0 20px 18px; padding: 10px 48px 18px 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow); }
+.chat-composer { position: relative; margin: 0 20px 18px; padding: 10px 48px 18px 12px; border: 1px solid var(--input-border); border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow); }
 .chat-composer:focus-within { border-color: var(--ai-one); box-shadow: 0 0 0 3px rgb(102 126 234 / .1); }
 .chat-composer textarea { width: 100%; max-height: 110px; resize: none; border: 0; outline: 0; color: var(--text); background: transparent; font-size: var(--text-ui); }
 .chat-composer > button { position: absolute; right: 8px; bottom: 8px; display: grid; width: 34px; height: 34px; place-items: center; border: 0; border-radius: 7px; color: white; background: linear-gradient(135deg, #5a67d8, var(--ai-two)); }

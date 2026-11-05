@@ -22,6 +22,7 @@ colors:
   danger: "#ef4444"
   danger-fill: "#dc2626"
   danger-text: "#b91c1c"
+  input-border: "#8492a6"
   danger-soft: "#fef2f2"
   ink: "#1e293b"
   muted: "#5f6e82"
@@ -34,6 +35,7 @@ colors:
   focus-dark: "#60a5fa"
   ai-text-dark: "#a5b4fc"
   danger-text-dark: "#f87171"
+  input-border-dark: "#64748b"
   success-dark: "#06d6a0"
   warning-dark: "#f59e0b"
   ink-dark: "#f1f5f9"
@@ -281,6 +283,7 @@ Quiet and solid; a small press (scale .97) on click.
 ### Inputs / Fields
 - **Style:** 42px tall, 1px Hairline border, 8px corners, Card White, 15px text (16px on phones).
 - **Focus:** border turns Study Blue with a 3px soft blue ring. The chat composer turns to ai-one with an XP-tinted ring.
+- **Border:** form fields (inputs, selects, short answers, the chat composer) use input-border, 3:1 or more against their ground (WCAG 1.4.11); cards keep the softer border hairline.
 - **Error:** border turns danger with a 14px danger-text message below.
 
 ### Navigation

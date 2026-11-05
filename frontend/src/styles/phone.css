@@ -7,7 +7,7 @@
   html .icon-button, html .chat-composer > button { min-width: 44px; min-height: 44px; }
   html .chat-composer { padding-right: 58px; }
   html .chat-composer > span { display: none; }
-  html .chat-top > div > a { display: grid; width: 44px; height: 44px; place-items: center; }
+  html .chat-top > div > a { display: grid; width: 44px; height: 44px; flex: none; place-items: center; } /* flex: none, or a long title squeezes it */
 
   /* Reading text stays at body size on phones (the base type scale has no text under 13px) */
   html .answer-body, html .not-found-answer p, html .chat-empty p, html .user-message { font-size: var(--text-body); }
@@ -21,6 +21,8 @@
   html .landing .demo-foot button, html .landing-bar > a { min-height: 44px; }
   html .dropdown-links a, html .dropdown-links button { min-height: 44px; }
   html .email-banner { margin: 12px 16px 0; }
+  html .email-banner-close, html .avatar-button { min-width: 44px; }
+  html .auth-forgot, html .landing-foot a, html .auth-logo { display: inline-flex; min-height: 44px; align-items: center; }
   html .email-banner button, html .email-banner a { min-height: 44px; }
   html .section-heading > a { display: inline-flex; min-height: 44px; align-items: center; white-space: nowrap; }
 

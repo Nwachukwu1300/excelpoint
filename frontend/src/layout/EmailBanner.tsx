@@ -24,16 +24,16 @@ export function EmailBanner({ me }: { me: Me }) {
   ))
 
   return (
-    <div className="email-banner" role="status">
+    <section className="email-banner" aria-label="Email confirmation">
       <Icon name="bell" size={16} />
       {me.email
-        ? <p><strong>Confirm your email.</strong> We sent a link to {me.email}. It lets you reset your password if you forget it.</p>
-        : <p><strong>Add your email.</strong> Without one, you can’t reset your password if you forget it.</p>}
+        ? <p role="status"><strong>Confirm your email.</strong> We sent a link to {me.email}. It lets you reset your password if you forget it.</p>
+        : <p role="status"><strong>Add your email.</strong> Without one, you can’t reset your password if you forget it.</p>}
       <div>
         {me.email && <button type="button" onClick={resend}>Send again</button>}
         <Link to="/settings">{me.email ? 'Change email' : 'Add email'}</Link>
         <button type="button" className="email-banner-close" aria-label="Hide for now" onClick={hide}><Icon name="close" size={15} /></button>
       </div>
-    </div>
+    </section>
   )
 }
