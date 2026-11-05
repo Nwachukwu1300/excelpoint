@@ -59,11 +59,14 @@ describe('Quizzes', () => {
   it('says when time ran out and marks skipped questions as not answered', async () => {
     const timed = { ...quiz, time_limit: 10 }
     const late: Results = { ...results, quiz: timed, started_at: new Date(Date.now() - 11 * 60_000).toISOString(),
-      questions: [results.questions[0]!, { ...results.questions[1]!, your_answer: '' }] }
+      questions: [results.questions[0]!, { ...results.questions[1]!, your_answer: '', source: 'A B-tree index keeps keys sorted for range queries.' }] }
     mockApi({ 'GET /api/me/': me, 'GET /api/quiz/attempts/41/results/': late })
     renderApp('/quiz-attempts/41/results')
     expect(await screen.findByText(/Time ran out before you answered 1 question\./)).toBeInTheDocument()
     expect(screen.getByLabelText('Not answered')).toBeInTheDocument()
+    const fromFile = screen.getByRole('figure')
+    expect(fromFile).toHaveTextContent('From lecture4.pdf')
+    expect(within(fromFile).getByText('A B-tree index keeps keys sorted for range queries.', { selector: 'mark' })).toBeInTheDocument()
     expect(screen.getByText('Question 2')).toBeInTheDocument() // numbered as in the quiz, not the filtered list
   })
 

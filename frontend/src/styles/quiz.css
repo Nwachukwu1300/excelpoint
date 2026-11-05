@@ -60,7 +60,13 @@
 .answer-review strong { margin-top: 3px; font-size: var(--text-meta); }
 .explanation { margin-top: 12px; padding: 11px; border-radius: 6px; background: var(--primary-soft); }
 .explanation strong { font-size: var(--text-meta); }
-.explanation p { margin: 4px 0 0; color: var(--muted); font-size: var(--text-meta); line-height: 1.55; }
+.explanation p { margin: 4px 0 0; color: var(--text); font-size: var(--text-body); line-height: 1.55; }
+/* added: the sentence of the student's file behind the right answer, styled like the chat's passage box */
+.result-source { margin: 10px 0 0; padding: 11px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--background); }
+.result-source figcaption { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: var(--text-meta); }
+.result-source figcaption strong { color: var(--text); }
+.result-source blockquote { margin: 6px 0 0; font-size: var(--text-body); line-height: 1.6; overflow-wrap: anywhere; }
+.result-source mark { padding: 0 2px; border-radius: 3px; color: inherit; background: color-mix(in srgb, var(--primary) 18%, transparent); }
 .performance-card { max-width: 720px; margin-bottom: 24px; padding: 20px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow); }
 .performance-card > div:first-child { margin-bottom: 18px; }
 .performance-card h2 { margin: 0; font-size: 15px; }

@@ -108,6 +108,12 @@ export function QuizResults() {
               <p>{q.explanation}</p>
             </div>
           )}
+          {q.source && (
+            <figure className="result-source">
+              <figcaption><Icon name="file" size={14} />From <strong>{r.quiz.material_name ?? 'your file'}</strong></figcaption>
+              <blockquote><mark>{q.source}</mark></blockquote>
+            </figure>
+          )}
         </motion.article>
       ))}
     </div>

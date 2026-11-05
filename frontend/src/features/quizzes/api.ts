@@ -5,7 +5,7 @@ export type QuizInfo = { id: number; title: string; material_name: string | null
 export type Question = { id: string; text: string; type: 'multiple_choice' | 'true_false' | 'short_answer'; points: number; choices: { id: string; text: string }[] }
 export type AttemptStatus = 'generating' | 'ready' | 'failed' | 'completed' | 'abandoned'
 export type Attempt = { id: number; status: AttemptStatus; fresh: boolean; started_at: string; quiz: QuizInfo; questions: Question[]; fell_back?: boolean }
-export type ReviewRow = { id: string; text: string; type: Question['type']; points: number; your_answer: string; correct_answer: string; is_correct: boolean; explanation: string }
+export type ReviewRow = { id: string; text: string; type: Question['type']; points: number; your_answer: string; correct_answer: string; is_correct: boolean; explanation: string; source?: string }
 export type Results = {
   id: number; quiz: QuizInfo; fresh: boolean; score: number; passed: boolean; earned_points: number; total_points: number
   correct_count: number; question_count: number; started_at: string; finished_at: string; questions: ReviewRow[]

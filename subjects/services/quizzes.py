@@ -4,6 +4,10 @@ Static quizzes keep their questions in Question/Choice/Answer rows; "fresh" atte
 questions stored on the attempt (dynamic_questions JSON). These helpers treat both the same way.
 """
 
+import math
+import re
+from collections import Counter
+
 from ..models import UserAnswer
 from ..utils import short_answer_matches
 
@@ -99,4 +103,40 @@ def review(attempt):
             rows.append({'id': str(q.id), 'text': q.text, 'type': q.question_type, 'points': q.points,
                          'your_answer': a.answer_text if a else '', 'correct_answer': right,
                          'is_correct': bool(a and a.is_correct), 'explanation': q.explanation})
+    return rows
+
+
+# Words worth matching: 4+ letters, or any token with a digit (CO2, 1945); common words never count
+_COMMON = {'that', 'this', 'with', 'from', 'have', 'they', 'their', 'them', 'then', 'than', 'which', 'into', 'about',
+           'also', 'your', 'what', 'when', 'where', 'there', 'these', 'those', 'were', 'been', 'will', 'each', 'such',
+           'only', 'more', 'most', 'some', 'because', 'answer', 'correct', 'question', 'text', 'given'}
+
+
+def _words(text):
+    return {w for w in (t.lower() for t in re.findall(r'[^\W_]+', text))
+            if (len(w) >= 4 or (len(w) >= 2 and any(c.isdigit() for c in w))) and w not in _COMMON}
+
+
+def add_sources(attempt, rows):
+    """Give each reviewed question the sentence of the quiz's file that best supports its right answer.
+
+    Shared words count more when rare in the file, and long sentences don't win by size (the chat's passage
+    box ranks the same way). A sentence needs 2+ shared words, otherwise `source` stays empty rather than guess.
+    """
+    material = attempt.quiz.material
+    sentences = [s.strip() for c in material.chunks.order_by('chunk_index') for s in re.split(r'(?<=[.!?])\s+|\n+', c.content)
+                 if len(s.strip()) > 20] if material else []
+    sets = [_words(s) for s in sentences]
+    df = Counter(w for words in sets for w in words)
+    for row in rows:
+        target = _words(f"{row['correct_answer']} {row['explanation']}")
+        best, best_score = '', 0.0
+        for sentence, words in zip(sentences, sets):
+            hits = words & target
+            if len(hits) < 2:
+                continue
+            score = sum(math.log(1 + len(sets) / df[w]) for w in hits) / math.sqrt(len(words))
+            if score > best_score:
+                best, best_score = sentence, score
+        row['source'] = best[:400]
     return rows

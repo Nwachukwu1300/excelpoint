@@ -48,7 +48,7 @@ class QuizApiTest(TestCase):
         self.assertEqual((data['score'], data['correct_count'], data['question_count']), (50, 1, 2))  # the skipped one counts
         rows = {q['text']: q for q in data['questions']}
         self.assertEqual(rows['Balanced?'], {'id': str(self.mc.id), 'text': 'Balanced?', 'type': 'multiple_choice', 'points': 1,
-                                             'your_answer': 'Yes', 'correct_answer': 'Yes', 'is_correct': True, 'explanation': 'Leaves share a depth.'})
+                                             'your_answer': 'Yes', 'correct_answer': 'Yes', 'is_correct': True, 'explanation': 'Leaves share a depth.', 'source': ''})
         self.assertEqual(rows['What is DDL?']['correct_answer'], 'Data Definition Language')
         self.assertEqual(self.client.get(f'/api/quiz/attempts/{attempt}/results/').json()['score'], 50)
         # it's finished: can't be submitted twice
@@ -154,3 +154,16 @@ class QuizApiTest(TestCase):
         attempt.refresh_from_db()
         self.assertEqual(attempt.dynamic_questions, [])
         self.assertEqual(self.client.get(f'/api/quiz/attempts/{attempt.id}/').json()['status'], 'failed')
+
+    def test_results_show_the_sentence_behind_each_answer(self):
+        from subjects.models import ContentChunk
+        material = self.quiz.material
+        ContentChunk.objects.create(material=material, chunk_index=0, content=(
+            'Lecture 4 covers indexes and the language of databases. '
+            'DDL stands for Data Definition Language, the commands that create and change tables. '
+            'A heap file stores rows in no particular order.'))
+        attempt = UserQuizAttempt.objects.create(user=self.user, quiz=self.quiz)
+        self.client.post(f'/api/quiz/attempts/{attempt.id}/submit/', {'answers': {}}, content_type='application/json')
+        rows = self.client.get(f'/api/quiz/attempts/{attempt.id}/results/').json()['questions']
+        self.assertEqual(rows[1]['source'], 'DDL stands for Data Definition Language, the commands that create and change tables.')
+        self.assertEqual(rows[0]['source'], '')  # nothing in the file backs "Yes / Leaves share a depth": show nothing, don't guess

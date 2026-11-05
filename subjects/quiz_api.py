@@ -10,7 +10,7 @@ from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.response import Response
 
 from .models import Quiz, UserQuizAttempt
-from .services.quizzes import attempt_status, grade, public_questions, review
+from .services.quizzes import add_sources, attempt_status, grade, public_questions, review
 from .tasks import generate_dynamic_quiz_questions
 
 logger = logging.getLogger(__name__)
@@ -98,7 +98,7 @@ def submit_attempt(request, attempt_id):
 
 
 def _results_payload(attempt):
-    rows = review(attempt)
+    rows = add_sources(attempt, review(attempt))
     return {
         'id': attempt.id, 'quiz': _quiz_info(attempt.quiz), 'fresh': attempt.uses_dynamic_questions,
         'score': round(attempt.score or 0), 'passed': attempt.is_passed(),
