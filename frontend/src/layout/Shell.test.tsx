@@ -22,6 +22,7 @@ describe('Shell', () => {
     expect(within(nav).getByRole('link', { name: /Database Systems\s*12/ })).toHaveAttribute('href', '/subjects/3')
     expect(within(nav).getByRole('link', { name: /Review\s*20/ })).toHaveAttribute('href', '/review')
     expect(within(nav).getByRole('link', { name: /Home/ })).toHaveAttribute('aria-current', 'page')
+    expect(within(nav).getByRole('link', { name: /Quizzes/ })).toHaveAttribute('href', '/quizzes/history') // same places as the phone tabs
     expect(screen.getByRole('button', { name: 'Notifications, 2 unread' })).toBeInTheDocument()
     expect(screen.getByText('Alex Morgan')).toBeInTheDocument()
     expect(screen.queryByText(/Study tip/)).not.toBeInTheDocument() // the Review badge already shows the count

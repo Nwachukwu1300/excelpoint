@@ -73,6 +73,15 @@ describe('Subject workspace', () => {
     expect(screen.getByRole('link', { name: /Take the quiz for this file/ })).toHaveAttribute('href', '/quizzes/9/start')
   })
 
+  it('makes uploading the main action while a subject has no files', async () => {
+    mockApi({ ...base, 'GET /api/subjects/3/materials/': [] })
+    renderApp('/subjects/3')
+    expect(await screen.findByRole('heading', { name: 'No files yet' })).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: 'Upload file' })).toHaveLength(1) // not one in the header too
+    expect(screen.getByRole('link', { name: 'Ask XP' })).toHaveClass('button--secondary')
+    expect(screen.getByRole('link', { name: 'All subjects' })).toHaveAttribute('href', '/subjects')
+  })
+
   it('deletes a file after confirming', async () => {
     const fetchMock = mockApi({ ...base, 'DELETE /api/materials/10/': reply(204) })
     renderApp('/subjects/3')

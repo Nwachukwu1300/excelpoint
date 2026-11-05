@@ -77,7 +77,9 @@
 .tabs button, .tabs a { display: inline-flex; align-items: center; justify-content: center; } /* added: Chat is a link until step 4 */
 .tabs a { position: relative; flex: none; min-width: 92px; padding: 12px 14px; color: var(--muted); font-size: var(--text-ui); font-weight: 500; }
 .tabs a:hover, .tabs button:not(.is-active):hover { color: var(--text); }
-.workspace-breadcrumb a:hover { color: var(--primary); } /* added */
+.workspace-breadcrumb { width: fit-content; }
+.workspace-breadcrumb:hover { color: var(--primary); } /* added */
+.back-chevron { display: inline-flex; transform: rotate(180deg); }
 .subject-list-card { transition: border-color .15s ease, translate .15s ease; } /* added lift */
 .subject-list-card:hover { border-color: #cbd5e1; translate: 0 -2px; }
 [data-theme='dark'] .subject-list-card:hover { border-color: #475569; }

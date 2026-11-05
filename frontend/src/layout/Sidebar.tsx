@@ -31,6 +31,7 @@ export function Sidebar({ me, collapsed, onToggle }: { me?: Me; collapsed: boole
     { icon: 'home', label: 'Home', to: '/', active: pathname === '/' },
     { icon: 'book', label: 'Subjects', to: '/subjects', active: pathname.startsWith('/subjects') },
     { icon: 'repeat', label: 'Review', to: '/review', badge: me?.due_count, active: pathname.startsWith('/review') },
+    { icon: 'layers', label: 'Quizzes', to: '/quizzes/history', active: pathname.startsWith('/quiz') },
   ]
   const name = me ? displayName(me) : ''
 
@@ -60,6 +61,7 @@ export function Sidebar({ me, collapsed, onToggle }: { me?: Me; collapsed: boole
           </div>
         )}
         <NavItem item={items[2]!} collapsed={collapsed} />
+        <NavItem item={items[3]!} collapsed={collapsed} />
       </nav>
       <div className="sidebar-help">
         <Link className="sidebar-user" to="/settings" title={collapsed ? 'Settings' : undefined}>

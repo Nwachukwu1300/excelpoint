@@ -105,7 +105,7 @@ export function MaterialsTab({ subjectId, onUpload, onQuizzes }: { subjectId: nu
           <h2>Files</h2>
           <p>{materials.data ? `${plural(materials.data.length, 'file')} · summaries and study tools stay linked to their source.` : 'Loading files…'}</p>
         </div>
-        <Button icon="upload" onClick={onUpload}>Upload file</Button>
+        {materials.data?.length !== 0 && <Button icon="upload" onClick={onUpload}>Upload file</Button>}{/* the empty state has its own */}
       </div>
 
       {materials.isPending && (

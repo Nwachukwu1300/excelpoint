@@ -9,7 +9,7 @@ import { MoreMenu } from '../../ui/Menu'
 import { toast } from '../../ui/Toast'
 import { Icon } from '../../ui/Icon'
 import { Skeleton, buttonClass } from '../../ui/primitives'
-import { useDeleteSubject, useSubjects } from './api'
+import { useDeleteSubject, useMaterials, useSubjects } from './api'
 import { FlashcardsTab } from './FlashcardsTab'
 import { MaterialsTab } from './MaterialsTab'
 import { QuizzesTab } from './QuizzesTab'
@@ -43,6 +43,9 @@ export function SubjectWorkspace() {
   const setUploading = (on: boolean) => update({ upload: on ? '1' : null })
 
   const subject = subjects.data?.find(s => s.id === id)
+  const materials = useMaterials(id)
+  // Until a file is ready XP has nothing to answer from, so uploading is the main action, not Ask XP
+  const filesReady = !materials.data || materials.data.some(m => m.status === 'COMPLETED')
   const confirmDelete = () => once(() => remove.mutateAsync(id).then(
     () => { setDeleting(false); navigate('/subjects'); toast('success', 'Subject deleted', `${subject?.name ?? 'The subject'} and everything in it were removed.`) },
     () => { toast('error', 'Couldn’t delete the subject', 'Try again in a moment.'); throw new Error('not deleted') },
@@ -72,9 +75,7 @@ export function SubjectWorkspace() {
     <div className="page-content workspace-page">
       <div className="workspace-header">
         <div>
-          <div className="workspace-breadcrumb">
-            <Link to="/subjects">Subjects</Link> <Icon name="chevronRight" size={13} /> {subject?.name}
-          </div>
+          <Link className="workspace-breadcrumb" to="/subjects"><span className="back-chevron"><Icon name="chevronRight" size={13} /></span>All subjects</Link>
           {subject ? (
             <>
               <h1>{subject.name}</h1>
@@ -85,7 +86,7 @@ export function SubjectWorkspace() {
           )}
         </div>
         <div className="workspace-actions">
-          <Link className={buttonClass('ai')} to={`/subjects/${id}/chat`}><Icon name="sparkles" />Ask XP</Link>
+          <Link className={buttonClass(filesReady ? 'ai' : 'secondary')} to={`/subjects/${id}/chat`}><Icon name="sparkles" />Ask XP</Link>
           {subject && <MoreMenu label={`More actions for ${subject.name}`} items={[{ label: 'Delete subject', danger: true, onSelect: () => setDeleting(true) }]} />}
         </div>
       </div>
