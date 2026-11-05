@@ -12,7 +12,7 @@ const questions: Attempt['questions'] = [
 const attempt = (over: Partial<Attempt> = {}): Attempt => ({ id: 41, status: 'ready', fresh: true, started_at: new Date().toISOString(), quiz, questions, ...over })
 const results: Results = {
   id: 41, quiz, fresh: true, score: 50, passed: false, earned_points: 1, total_points: 2, correct_count: 1, question_count: 2,
-  finished_at: new Date().toISOString(),
+  started_at: new Date(Date.now() - 120_000).toISOString(), finished_at: new Date().toISOString(),
   questions: [
     { id: 'dynamic_1', text: 'Which tree stays balanced?', type: 'multiple_choice', points: 1, your_answer: 'B-tree', correct_answer: 'B-tree', is_correct: true, explanation: 'B-trees rebalance.' },
     { id: 'dynamic_2', text: 'Name the index for ranges', type: 'short_answer', points: 1, your_answer: 'heap', correct_answer: 'B-tree', is_correct: false, explanation: '' },
@@ -47,10 +47,24 @@ describe('Quizzes', () => {
     expect(screen.getByRole('img', { name: 'score 50%' })).toBeInTheDocument()
     const wrong = screen.getByRole('heading', { name: 'Name the index for ranges' }).closest('article')!
     expect(within(wrong).getByText('Correct answer')).toBeInTheDocument()
+    expect(screen.queryByText('B-trees rebalance.')).not.toBeInTheDocument() // opens on the missed question
+    await userEvent.click(screen.getByRole('button', { name: 'All (2)' }))
     expect(screen.getByText('B-trees rebalance.')).toBeInTheDocument()
+    expect(screen.getByText('Question 1')).toBeInTheDocument()
     expect(JSON.parse(fetchMock.mock.calls.find(([u]) => u === '/api/quiz/attempts/41/submit/')![1]!.body as string))
       .toEqual({ answers: { dynamic_1: 'c1', dynamic_2: 'heap' } })
     expect(localStorage.getItem('xp-quiz-41')).toBeNull() // draft cleared once submitted
+  })
+
+  it('says when time ran out and marks skipped questions as not answered', async () => {
+    const timed = { ...quiz, time_limit: 10 }
+    const late: Results = { ...results, quiz: timed, started_at: new Date(Date.now() - 11 * 60_000).toISOString(),
+      questions: [results.questions[0]!, { ...results.questions[1]!, your_answer: '' }] }
+    mockApi({ 'GET /api/me/': me, 'GET /api/quiz/attempts/41/results/': late })
+    renderApp('/quiz-attempts/41/results')
+    expect(await screen.findByText(/Time ran out before you answered 1 question\./)).toBeInTheDocument()
+    expect(screen.getByLabelText('Not answered')).toBeInTheDocument()
+    expect(screen.getByText('Question 2')).toBeInTheDocument() // numbered as in the quiz, not the filtered list
   })
 
   it('keeps answers through "Save & exit" and a reload', async () => {

@@ -41,7 +41,7 @@
 .results-hero h1 { margin: 8px 0 5px; font-size: 22px; }
 .results-hero p { margin: 0; color: var(--muted); font-size: var(--text-meta); }
 .results-actions { display: flex; flex-direction: column; gap: 7px; }
-.review-heading { margin: 28px 0 14px; }
+.review-heading { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; margin: 28px 0 14px; }
 .review-heading h2 { margin: 0; font-size: 16px; }
 .review-heading p { margin: 4px 0 0; color: var(--muted); font-size: var(--text-meta); }
 .result-question { margin-bottom: 12px; padding: 20px 22px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); }
@@ -49,6 +49,7 @@
 .result-number > span { display: grid; width: 24px; height: 24px; place-items: center; border-radius: 50%; }
 .is-correct .result-number > span { color: var(--success-text); background: var(--success-soft); }
 .is-incorrect .result-number > span { color: var(--danger); background: var(--danger-soft); }
+.is-unanswered .result-number > span { color: var(--muted); background: var(--hover); } /* added: skipped is not wrong */
 .result-number strong { font-size: var(--text-meta); }
 .result-number small { margin-left: auto; color: var(--muted); font-size: var(--text-meta); }
 .result-question h3 { margin: 14px 0; font-size: var(--text-ui); }

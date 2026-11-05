@@ -86,6 +86,7 @@ class QuizApiTest(TestCase):
         self.assertEqual((results['score'], results['correct_count']), (50, 1))
         self.assertEqual(results['questions'][1]['correct_answer'], 'B-tree')
         self.assertEqual(results['questions'][1]['your_answer'], 'heap')
+        self.assertTrue(results['started_at'] and results['finished_at'])  # lets the page tell when time ran out
 
     @patch('subjects.quiz_api.generate_dynamic_quiz_questions')
     def test_failed_generation_is_reported(self, task):

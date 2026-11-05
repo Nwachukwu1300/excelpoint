@@ -152,3 +152,12 @@
 .citation-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .citation-chip { transition: border-color .15s ease, background .15s ease; }
 .citation-chip:hover, .citation-chip.is-active { border-color: var(--primary); background: var(--primary-soft); }
+
+/* Segmented control (time ranges, result filters); the pill slides with layoutId */
+.segmented-control { display: inline-flex; padding: 3px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); }
+.segmented-control button { min-width: 62px; height: 30px; border: 0; border-radius: 5px; color: var(--muted); background: transparent; font-size: var(--text-meta); font-weight: 600; }
+.segmented-control button.is-active { color: var(--primary); background: var(--primary-soft); box-shadow: 0 1px 2px rgb(15 23 42 / .05); }
+.segmented-control button { position: relative; }
+.segmented-control button.is-active { background: transparent; box-shadow: none; }
+.segmented-control button > span:last-child { position: relative; }
+.segment-pill { position: absolute; inset: 0; border-radius: 5px; background: var(--primary-soft); box-shadow: 0 1px 2px rgb(15 23 42 / .05); }

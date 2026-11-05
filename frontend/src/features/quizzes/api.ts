@@ -8,7 +8,7 @@ export type Attempt = { id: number; status: AttemptStatus; fresh: boolean; start
 export type ReviewRow = { id: string; text: string; type: Question['type']; points: number; your_answer: string; correct_answer: string; is_correct: boolean; explanation: string }
 export type Results = {
   id: number; quiz: QuizInfo; fresh: boolean; score: number; passed: boolean; earned_points: number; total_points: number
-  correct_count: number; question_count: number; finished_at: string; questions: ReviewRow[]
+  correct_count: number; question_count: number; started_at: string; finished_at: string; questions: ReviewRow[]
 }
 export type History = {
   attempts: { id: number; quiz_id: number; quiz_title: string; subject_id: number; subject_name: string; score: number; passed: boolean; fresh: boolean; finished_at: string }[]

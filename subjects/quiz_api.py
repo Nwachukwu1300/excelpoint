@@ -104,7 +104,7 @@ def _results_payload(attempt):
         'score': round(attempt.score or 0), 'passed': attempt.is_passed(),
         'earned_points': attempt.earned_points, 'total_points': attempt.total_points,
         'correct_count': sum(r['is_correct'] for r in rows), 'question_count': len(rows),
-        'finished_at': attempt.end_time, 'questions': rows,
+        'started_at': attempt.start_time, 'finished_at': attempt.end_time, 'questions': rows,
     }
 
 
