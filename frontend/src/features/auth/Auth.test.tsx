@@ -106,7 +106,7 @@ describe('Landing', () => {
   it('confirms a deleted account', async () => {
     mockApi(signedOut)
     renderApp('/welcome?deleted=1')
-    expect(await screen.findByRole('status')).toHaveTextContent('Your account and everything in it were deleted.')
+    expect(await screen.findByText('Your account and everything in it were deleted.')).toHaveAttribute('role', 'status')
   })
 
   it('links to a privacy page that says where files go and that it is free in beta', async () => {

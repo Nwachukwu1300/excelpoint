@@ -4,11 +4,11 @@ import { useCallback, useRef, useState } from 'react'
 import { Link, useMatches, useNavigate } from 'react-router'
 import { api, displayName, initials, type Me } from '../lib/api'
 import { timeAgo } from '../lib/format'
-import { ease, popover } from '../lib/motion'
-import { useTheme } from '../lib/theme'
+import { popover } from '../lib/motion'
 import { useDismiss } from '../lib/useDismiss'
 import { Icon } from '../ui/Icon'
 import { Avatar, IconButton, Skeleton } from '../ui/primitives'
+import { ThemeToggle } from '../ui/ThemeToggle'
 import { followNotification, notificationLook, type Notification } from '../features/account/notifications'
 
 export type RouteHandle = { title: string | ((params: Record<string, string | undefined>, me?: Me) => string); fullBleed?: boolean; focus?: boolean }
@@ -101,33 +101,6 @@ function AccountMenu({ me, onClose }: { me?: Me; onClose: () => void }) {
         <button type="button" className="logout" onClick={signOut}><Icon name="logout" />Log out</button>
       </div>
     </motion.div>
-  )
-}
-
-export function ThemeToggle() {
-  const { resolved, setTheme } = useTheme()
-  const dark = resolved === 'dark'
-  return (
-    <button
-      type="button"
-      className="icon-button"
-      aria-label={dark ? 'Use light theme' : 'Use dark theme'}
-      title={dark ? 'Use light theme' : 'Use dark theme'}
-      onClick={() => setTheme(dark ? 'light' : 'dark')}
-    >
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.span
-          key={resolved}
-          className="theme-icon"
-          initial={{ opacity: 0, rotate: -60, scale: 0.8 }}
-          animate={{ opacity: 1, rotate: 0, scale: 1 }}
-          exit={{ opacity: 0, rotate: 60, scale: 0.8 }}
-          transition={ease.fast}
-        >
-          <Icon name={dark ? 'sun' : 'moon'} />
-        </motion.span>
-      </AnimatePresence>
-    </button>
   )
 }
 

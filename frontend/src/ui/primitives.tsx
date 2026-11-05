@@ -1,7 +1,6 @@
 import excelpointIcon from '../assets/excelpoint-icon.webp'
 import xpIcon from '../assets/xp-icon.webp'
-import type { ButtonHTMLAttributes, CSSProperties, ReactNode } from 'react'
-import { CountUp } from './CountUp'
+import type { ButtonHTMLAttributes, ReactNode } from 'react'
 import { Icon, type IconName } from './Icon'
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'ai'
@@ -81,14 +80,3 @@ export function ProgressBar({ value, label }: { value?: number; label: string })
   )
 }
 
-/** Score ring: fills from empty and counts up on first show (both skip with reduced motion). */
-export function ProgressRing({ value, label }: { value: number; label: string }) {
-  return (
-    <div className="progress-ring" style={{ '--progress': `${value * 3.6}deg` } as CSSProperties} role="img" aria-label={`${label} ${value}%`}>
-      <div aria-hidden="true">
-        <strong><CountUp value={value} />%</strong>
-        <span>{label}</span>
-      </div>
-    </div>
-  )
-}
