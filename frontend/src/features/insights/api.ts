@@ -14,6 +14,8 @@ export type InsightsData = {
     failures: { session_id: string; query: string; reasons: string[]; created_at: string }[]
   }
   recent: { session_id: string; question: string; subject_name: string; category: string; chunks: number; confidence: number | null; unverified: boolean; no_context: boolean; latency_ms: number | null; created_at: string }[]
+  /** "Not in your files" replies (no AI call, so not in summary) */
+  not_found: number
 }
 type Chunk = { material_name: string; chunk_index: number; similarity: number; rerank: number | null; text: string }
 export type Trace = {

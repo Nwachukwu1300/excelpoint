@@ -1,8 +1,10 @@
 """Insights and answer-trace JSON for the React app (/app/insights). Scoped to the user's own subjects."""
 
 import json
+from datetime import timedelta
 
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
@@ -42,7 +44,11 @@ def insights(request):
             'confidence': s.confidence_score, 'unverified': s.unverified, 'no_context': not s.retrieved_chunk_count,
             'latency_ms': round(s.total_latency) if s.total_latency else None, 'created_at': s.created_at,
         })
-    return Response({'summary': quality_summary(sessions, days=days), 'recent': recent})
+    # "Not in your files" replies make no AI call, so they leave no ReasoningSession: count them from the chat
+    not_found = ChatMessage.objects.filter(
+        session__user=request.user, role='assistant', metadata__model_info__pipeline='fallback',
+        timestamp__gte=timezone.now() - timedelta(days=days)).count()
+    return Response({'summary': quality_summary(sessions, days=days), 'recent': recent, 'not_found': not_found})
 
 
 def _claims(verification):

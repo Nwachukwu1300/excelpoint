@@ -134,15 +134,15 @@ def quality_summary(sessions, days=30, failure_limit=20):
         evals = {e.evaluator: e for e in s.evaluations.all()}
         reasons = []
         if not s.retrieved_chunk_count:
-            reasons.append('nothing retrieved')
+            reasons.append('Nothing found in your files')
         elif s.unverified:
-            reasons.append('not verified')
+            reasons.append('Not fully checked')
         h = evals.get('heuristic')
         if h and h.hallucination_rate:
-            reasons.append(f'{h.hallucination_rate:.0%} unsupported claims')
+            reasons.append(f'{h.hallucination_rate:.0%} of statements not in your files')
         j = evals.get('llm_judge')
         if j and j.answer_relevance is not None and j.answer_relevance < 0.5:
-            reasons.append(f'low relevance ({j.answer_relevance:.2f})')
+            reasons.append('May not answer the question')
         if reasons:
             failures.append({
                 'session_id': str(s.session_id),

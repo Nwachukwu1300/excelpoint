@@ -3,10 +3,10 @@ import type { ReactNode } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { plural } from '../../lib/format'
 import { reveal, spring } from '../../lib/motion'
-import { ConfidencePill, VerificationBadge, confidenceLevel } from '../../ui/AnswerBadges'
+import { VerificationBadge } from '../../ui/AnswerBadges'
 import { CountUp } from '../../ui/CountUp'
 import { Icon } from '../../ui/Icon'
-import { Badge, Button, Skeleton, buttonClass, type Tone } from '../../ui/primitives'
+import { Badge, Button, Skeleton, buttonClass } from '../../ui/primitives'
 import { dailySeries, ms, num, pct, useInsights, type InsightsData } from './api'
 import '../../styles/insights.css'
 
@@ -45,10 +45,10 @@ function TrendChart({ summary }: { summary: InsightsData['summary'] }) {
   )
 }
 
-function Metric({ label, value, note, badge, tone }: { label: string; value: ReactNode; note: string; badge: string; tone: Tone }) {
+function Metric({ label, value, note }: { label: string; value: ReactNode; note: string }) {
   return (
     <article className="metric-card">
-      <div><span>{label}</span><Badge tone={tone}>{badge}</Badge></div>
+      <div><span>{label}</span></div>
       <strong>{value}</strong>
       <p>{note}</p>
     </article>
@@ -67,8 +67,8 @@ export function Insights() {
     <div className="page-content insights-page">
       <div className="page-intro">
         <div>
-          <h1>Insights</h1>
-          <p>See how well XP’s answers match your files.</p>
+          <h1>Answer quality</h1>
+          <p>How often XP could answer from your files, and how well its answers were checked.</p>
         </div>
         <div className="segmented-control" role="group" aria-label="Time range">
           {RANGES.map(r => (
@@ -88,28 +88,27 @@ export function Insights() {
       )}
       {loading && (
         <div aria-busy="true" aria-label="Loading insights">
-          <div className="stats-grid">
-            {[0, 1, 2, 3].map(i => <div className="metric-card" key={i}><Skeleton className="skeleton-label" /><Skeleton className="skeleton-value" /><Skeleton /></div>)}
+          <div className="stats-grid stats-grid--three">
+            {[0, 1, 2].map(i => <div className="metric-card" key={i}><Skeleton className="skeleton-label" /><Skeleton className="skeleton-value" /><Skeleton /></div>)}
           </div>
           <Skeleton className="skeleton-chart" />
         </div>
       )}
-      {!loading && data && t && t.sessions === 0 && (
+      {!loading && data && t && t.sessions + data.not_found === 0 && (
         <div className="empty-state">
           <span className="empty-icon"><Icon name="chart" /></span>
-          <h2>No insights yet</h2>
-          <p>Ask XP a question about your files. Each answer is checked here: how well it matches your files, which parts it used, and how fast it was.</p>
+          <h2>No questions yet</h2>
+          <p>Ask XP a question about your files. You will see here how many it could answer from your files, and how each answer was checked.</p>
           <Link className={buttonClass('secondary')} to="/subjects">Go to subjects</Link>
         </div>
       )}
-      {!loading && data && t && t.sessions > 0 && (
+      {!loading && data && t && t.sessions + data.not_found > 0 && (
         <>
-          <div className="stats-grid">
-            <Metric label="Questions asked" value={<CountUp value={t.sessions} />} note={`In the last ${days} days`} badge={`${days}d`} tone="primary" />
-            <Metric label="Match with your files" value={num(t.faithfulness)} note="How closely answers stick to your files (1 is best)"
-              badge={t.faithfulness == null ? '—' : confidenceLevel(t.faithfulness)} tone={t.faithfulness == null ? 'neutral' : t.faithfulness >= 0.8 ? 'success' : 'warning'} />
-            <Metric label="Not backed by your files" value={pct(t.hallucination_rate)} note={`${plural(t.unverified, 'answer')} not fully verified`} badge={`${days}d`} tone="warning" />
-            <Metric label="Not in your files" value={pct(t.sessions ? t.no_context / t.sessions : null)} note={`${plural(t.no_context, 'question')} found nothing in your files`} badge={`${days}d`} tone="neutral" />
+          <div className="stats-grid stats-grid--three">
+            <Metric label="Questions asked" value={<CountUp value={t.sessions + data.not_found} />} note={`In the last ${days} days`} />
+            <Metric label="Answered from your files" value={<CountUp value={t.sessions - t.no_context} />}
+              note={t.unverified ? `${plural(t.unverified, 'answer')} could not be fully checked` : 'Every answer was checked against your files'} />
+            <Metric label="Not in your files" value={<CountUp value={t.no_context + data.not_found} />} note="XP said so instead of guessing" />
           </div>
           <div className="insights-layout">
             <section className="trend-card">
@@ -121,7 +120,7 @@ export function Insights() {
                 <div className="chart-legend" aria-hidden="true">
                   <span className="line-key">Match</span>
                   <span className="bar-key">Questions</span>
-                  <span className="dot-key">Nothing found</span>
+                  <span className="dot-key">Not in your files</span>
                 </div>
               </div>
               <TrendChart summary={data.summary} />
@@ -130,6 +129,8 @@ export function Insights() {
               <summary className="card-heading"><div><h2>Technical details</h2><p>How XP searched your files, on average</p></div></summary>
               <dl className="retrieval-list">
                 {[
+                  ['Match score (1 is best)', num(t.faithfulness)],
+                  ['Statements not backed by your files', pct(t.hallucination_rate)],
                   ['Top similarity', num(data.summary.retrieval.avg_top_similarity)],
                   ['Parts of files used', num(data.summary.retrieval.avg_chunks, 1)],
                   ['Search time', ms(data.summary.retrieval.avg_retrieval_ms)],
@@ -158,20 +159,16 @@ export function Insights() {
             ))}
           </section>
           <section className="recent-answers">
-            <div className="card-heading"><div><h2>Recent answers</h2><p>Most recent XP responses and quality signals</p></div></div>
+            <div className="card-heading"><div><h2>Recent answers</h2><p>Your latest questions and whether each answer was checked</p></div></div>
             <div className="table-wrap">
               <table>
-                <thead><tr><th>Question</th><th>Type</th><th>Parts used</th><th>Confidence</th><th>Status</th><th>Time</th><th /></tr></thead>
+                <thead><tr><th>Question</th><th>Checked</th><th /></tr></thead>
                 <tbody>
                   {data.recent.map(r => (
                     <tr key={r.session_id}>
                       <td><strong>{r.question}</strong><span className="row-subject">{r.subject_name}</span></td>
-                      <td>{r.category}</td>
-                      <td>{r.chunks}</td>
-                      <td>{r.confidence == null ? '—' : <ConfidencePill value={r.confidence} />}</td>
-                      <td>{r.no_context ? <Badge>Nothing found</Badge> : <VerificationBadge verified={!r.unverified} />}</td>
-                      <td>{ms(r.latency_ms)}</td>
-                      <td><Link className={buttonClass('secondary')} to={`/insights/${r.session_id}`}>Inspect</Link></td>
+                      <td>{r.no_context ? <Badge>Not in your files</Badge> : <VerificationBadge verified={!r.unverified} />}</td>
+                      <td><Link className={buttonClass('secondary')} to={`/insights/${r.session_id}`}>How it was answered</Link></td>
                     </tr>
                   ))}
                 </tbody>

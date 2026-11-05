@@ -78,7 +78,7 @@ export function AnswerTrace() {
   if (trace.isError) {
     return (
       <div className="page-content trace-page">
-        <Link className="back-link" to="/insights"><Icon name="chevronRight" size={14} /> Back to Insights</Link>
+        <Link className="back-link" to="/insights"><Icon name="chevronRight" size={14} /> Back to Answer quality</Link>
         <div className="empty-state">
           <h2>{trace.error.message.includes('404') || trace.error.message === 'Not found.' ? 'This answer isn’t available' : 'We couldn’t load this answer’s details'}</h2>
           <p>It may belong to a subject that was deleted.</p>
@@ -106,7 +106,7 @@ export function AnswerTrace() {
     <div className="page-content trace-page">
       {t.chat
         ? <Link className="back-link" to={`/subjects/${t.chat.subject_id}/chat/${t.chat.session_id}`}><Icon name="chevronRight" size={14} /> Back to the conversation</Link>
-        : <Link className="back-link" to="/insights"><Icon name="chevronRight" size={14} /> Back to Insights</Link>}
+        : <Link className="back-link" to="/insights"><Icon name="chevronRight" size={14} /> Back to Answer quality</Link>}
       <div className="trace-header">
         <div>
           <h1>{t.question}</h1>

@@ -10,8 +10,9 @@ const insights: InsightsData = {
     days: 30, totals: metrics,
     trends: [{ ...metrics, day: new Date().toISOString().slice(0, 10) }],
     retrieval: { avg_chunks: 4.2, avg_retrieval_ms: 184, avg_total_ms: 1048, no_context_rate: 0.25, avg_top_similarity: 0.84 },
-    failures: [{ session_id: 'abc', query: 'What is horizontal sharding?', reasons: ['nothing retrieved'], created_at: new Date().toISOString() }],
+    failures: [{ session_id: 'abc', query: 'What is horizontal sharding?', reasons: ['Nothing found in your files'], created_at: new Date().toISOString() }],
   },
+  not_found: 2,
   recent: [{ session_id: 'def', question: 'How do B-trees work?', subject_name: 'Database Systems', category: 'Standalone', chunks: 2, confidence: 0.92, unverified: false, no_context: false, latency_ms: 842, created_at: new Date().toISOString() }],
 }
 const trace: Trace = {
@@ -32,13 +33,16 @@ describe('Insights', () => {
   it('shows quality metrics, what needs attention and recent answers', async () => {
     const fetchMock = mockApi({ 'GET /api/me/': me, 'GET /api/reasoning/insights/?days=30': insights, 'GET /api/reasoning/insights/?days=7': { ...insights, summary: { ...insights.summary, days: 7 } } })
     renderApp('/insights')
-    expect(await screen.findByText('0.87')).toBeInTheDocument()
-    expect(screen.getByText('6.4%')).toBeInTheDocument() // unsupported claims
-    expect(screen.getByText('25%')).toBeInTheDocument() // 1 of 4 found nothing
+    expect(await screen.findByRole('heading', { name: 'Answer quality', level: 1 })).toBeInTheDocument()
+    const card = (label: string) => screen.getByText(label, { selector: '.metric-card span' }).closest('article')!
+    await waitFor(() => expect(card('Questions asked')).toHaveTextContent('6')) // 4 answered by the pipeline + 2 not found
+    expect(card('Answered from your files')).toHaveTextContent(/3.*1 answer could not be fully checked/)
+    await waitFor(() => expect(card('Not in your files')).toHaveTextContent('3')) // 1 nothing retrieved + 2 not found
+    expect(screen.queryByText('0.87')).not.toBeVisible() // the score lives in Technical details
     expect(screen.getByRole('link', { name: /What is horizontal sharding\?.*See how this answer was made/ })).toHaveAttribute('href', '/insights/abc')
     const row = screen.getByRole('cell', { name: /How do B-trees work\?/ }).closest('tr')!
-    expect(within(row).getByText('High · 0.92')).toBeInTheDocument()
-    expect(within(row).getByText('842 ms')).toBeInTheDocument()
+    expect(within(row).getByText('Verified')).toBeInTheDocument()
+    expect(within(row).queryByText(/842 ms|0\.92|Standalone/)).not.toBeInTheDocument() // no engineering numbers
 
     await userEvent.click(screen.getByRole('button', { name: '7 days' }))
     await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/reasoning/insights/?days=7', expect.anything()))
@@ -46,9 +50,9 @@ describe('Insights', () => {
   })
 
   it('explains what will appear before any questions are asked', async () => {
-    mockApi({ 'GET /api/me/': me, 'GET /api/reasoning/insights/?days=30': { ...insights, summary: { ...insights.summary, totals: { ...metrics, sessions: 0 } } } })
+    mockApi({ 'GET /api/me/': me, 'GET /api/reasoning/insights/?days=30': { ...insights, not_found: 0, summary: { ...insights.summary, totals: { ...metrics, sessions: 0 } } } })
     renderApp('/insights')
-    expect(await screen.findByRole('heading', { name: 'No insights yet' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'No questions yet' })).toBeInTheDocument()
   })
 
   it('shows the full trace of one answer', async () => {

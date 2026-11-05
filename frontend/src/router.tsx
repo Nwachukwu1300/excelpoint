@@ -40,7 +40,7 @@ export const routes = [
       // XP chat fills the window: no top bar or mobile tab bar (the design's full chat page)
       { path: 'review', element: <ReviewSession />, handle: { title: 'Review', focus: true } satisfies RouteHandle },
       { path: 'quizzes/history', element: <QuizHistory />, handle: { title: 'Quiz history' } },
-      { path: 'insights', element: <Insights />, handle: { title: 'Insights' } },
+      { path: 'insights', element: <Insights />, handle: { title: 'Answer quality' } },
       { path: 'notifications', element: <NotificationsPage />, handle: { title: 'Notifications' } },
       { path: 'settings', element: <SettingsPage />, handle: { title: 'Settings' } },
       { path: 'settings/password', element: <ChangePassword />, handle: { title: 'Password' } },

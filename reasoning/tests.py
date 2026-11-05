@@ -268,8 +268,8 @@ class QualityDashboardTest(TestCase):
         self.assertEqual(len(data['trends']), 1)
 
         reasons = {f['session_id']: f['reasons'] for f in data['failures']}
-        self.assertEqual(reasons[str(self.empty.session_id)], ['nothing retrieved'])
-        self.assertEqual(reasons[str(self.good.session_id)], ['25% unsupported claims', 'low relevance (0.30)'])
+        self.assertEqual(reasons[str(self.empty.session_id)], ['Nothing found in your files'])
+        self.assertEqual(reasons[str(self.good.session_id)], ['25% of statements not in your files', 'May not answer the question'])
 
     def test_bad_days_param(self):
         self.assertEqual(self.client.get(reverse('reasoning:quality'), {'days': 'x'}).status_code, 400)
@@ -481,11 +481,21 @@ class InsightsApiTest(InsightsFixture, TestCase):
         data = self.client.get('/api/reasoning/insights/?days=7').json()
         self.assertEqual(data['summary']['days'], 7)
         self.assertEqual(data['summary']['totals']['sessions'], 1)
-        self.assertEqual(data['summary']['failures'][0]['reasons'], ['50% unsupported claims'])
+        self.assertEqual(data['summary']['failures'][0]['reasons'], ['50% of statements not in your files'])
         self.assertEqual(data['recent'][0]['question'], 'What is DDL?')
         self.assertEqual(data['recent'][0]['category'], 'Follow-up')  # it was rewritten
         self.assertEqual(data['recent'][0]['subject_name'], 'DB')
         self.assertEqual(self.client.get('/api/reasoning/insights/?days=1000').json()['summary']['days'], 30)  # only 7/30/90
+        self.assertEqual(data['not_found'], 0)
+
+    def test_not_in_your_files_replies_are_counted(self):
+        from subjects.models import ChatMessage, ChatSession
+        def fallback(user):
+            chat = ChatSession.objects.create(user=user, subject=Subject.objects.filter(user=user).first() or Subject.objects.create(user=user, name='X'))
+            ChatMessage.objects.create(session=chat, role='assistant', content='not found', metadata={'model_info': {'pipeline': 'fallback'}})
+        fallback(self.user)
+        fallback(get_user_model().objects.create_user('other', password='p'))  # someone else's: not counted
+        self.assertEqual(self.client.get('/api/reasoning/insights/').json()['not_found'], 1)
 
     def test_trace_has_every_stage(self):
         data = self.client.get(f'/api/reasoning/sessions/{self.session.session_id}/trace/').json()

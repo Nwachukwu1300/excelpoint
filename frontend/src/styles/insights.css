@@ -3,6 +3,7 @@
 .segmented-control button { min-width: 62px; height: 30px; border: 0; border-radius: 5px; color: var(--muted); background: transparent; font-size: var(--text-meta); font-weight: 600; }
 .segmented-control button.is-active { color: var(--primary); background: var(--primary-soft); box-shadow: 0 1px 2px rgb(15 23 42 / .05); }
 .stats-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 20px; }
+.stats-grid--three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .metric-card { min-height: 132px; padding: 18px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow); }
 .metric-card > div { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .metric-card > div > span { color: var(--muted); font-size: var(--text-meta); font-weight: 600; }
@@ -130,6 +131,7 @@
 
 @media (max-width: 900px) {
   .stats-grid { grid-template-columns: 1fr 1fr; }
+  .stats-grid--three { grid-template-columns: 1fr; }
   .insights-layout { grid-template-columns: 1fr; }
   .attention-row { grid-template-columns: auto 1fr auto; }
   .reason-chips { grid-column: 2 / -1; }
