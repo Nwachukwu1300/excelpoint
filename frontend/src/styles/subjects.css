@@ -39,7 +39,7 @@
 .material-primary > strong, .material-primary > span, .material-primary > small { display: block; }
 .material-primary > strong { overflow: hidden; font-size: var(--text-ui); text-overflow: ellipsis; white-space: nowrap; }
 .material-primary > span { margin-top: 4px; color: var(--muted); font-size: var(--text-meta); }
-.failure-copy { margin-top: 5px; color: var(--danger); font-size: var(--text-meta); }
+.failure-copy { margin-top: 5px; color: var(--danger-text); font-size: var(--text-meta); }
 .material--failed { border-color: color-mix(in srgb, var(--danger) 30%, var(--border)); }
 .material-actions { display: flex; align-items: center; gap: 5px; }
 .material-actions > button:not(.icon-button) { display: flex; min-height: 30px; align-items: center; gap: 5px; padding: 0 9px; border: 1px solid var(--border); border-radius: 6px; color: var(--text); background: var(--card); font-size: var(--text-meta); font-weight: 600; }
@@ -52,7 +52,7 @@
 .material-summary > p, .material-summary li { color: var(--muted); font-size: var(--text-body); line-height: 1.6; }
 .material-summary ul { padding-left: 18px; columns: 2; column-gap: 30px; }
 .confirm-dialog { text-align: center; }
-.danger-icon { display: grid; width: 48px; height: 48px; margin: 0 auto 16px; place-items: center; border-radius: 50%; color: var(--danger); background: var(--danger-soft); }
+.danger-icon { display: grid; width: 48px; height: 48px; margin: 0 auto 16px; place-items: center; border-radius: 50%; color: var(--danger-text); background: var(--danger-soft); }
 .confirm-dialog h2 { margin: 0; font-size: 18px; }
 .confirm-dialog p { margin: 8px 0 22px; color: var(--muted); font-size: var(--text-ui); line-height: 1.6; }
 .confirm-dialog .modal-actions { justify-content: center; }

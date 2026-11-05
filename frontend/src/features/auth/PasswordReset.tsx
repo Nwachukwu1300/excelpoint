@@ -9,7 +9,7 @@ type Errors = Record<string, string[]>
 
 function Card({ title, intro, children }: { title: string; intro: string; children: React.ReactNode }) {
   return (
-    <div className="auth-page">
+    <main className="auth-page">
       <Link className="auth-logo" to="/welcome" aria-label="ExcelPoint home"><Logo /></Link>
       <div className="auth-card">
         <div>
@@ -19,7 +19,7 @@ function Card({ title, intro, children }: { title: string; intro: string; childr
         {children}
         <p className="auth-switch"><Link to="/login">Back to sign in</Link></p>
       </div>
-    </div>
+    </main>
   )
 }
 

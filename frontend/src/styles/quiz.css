@@ -48,7 +48,7 @@
 .result-number { display: flex; align-items: center; gap: 8px; }
 .result-number > span { display: grid; width: 24px; height: 24px; place-items: center; border-radius: 50%; }
 .is-correct .result-number > span { color: var(--success-text); background: var(--success-soft); }
-.is-incorrect .result-number > span { color: var(--danger); background: var(--danger-soft); }
+.is-incorrect .result-number > span { color: var(--danger-text); background: var(--danger-soft); }
 .is-unanswered .result-number > span { color: var(--muted); background: var(--hover); } /* added: skipped is not wrong */
 .result-number strong { font-size: var(--text-meta); }
 .result-number small { margin-left: auto; color: var(--muted); font-size: var(--text-meta); }
@@ -87,7 +87,7 @@ td:last-child, th:last-child { width: 36px; padding-left: 0; }
 /* added */
 .focus-header > .logo { justify-self: start; }
 .focus-header > a:hover { color: var(--text); }
-.quiz-progress-head span.is-low { color: var(--danger); font-weight: 600; }
+.quiz-progress-head span.is-low { color: var(--danger-text); font-weight: 600; }
 .answer-options button { transition: border-color .15s ease, background .15s ease, scale var(--dur-fast) var(--ease-out); }
 .answer-options button:active { scale: .99; }
 .short-answer:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgb(37 99 235 / .1); }

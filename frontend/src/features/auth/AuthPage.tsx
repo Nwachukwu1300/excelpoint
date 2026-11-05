@@ -63,7 +63,7 @@ export function AuthPage({ mode }: { mode: 'signin' | 'register' }) {
   )
 
   return (
-    <div className="auth-page">
+    <main className="auth-page">
       <Link className="auth-logo" to="/welcome" aria-label="ExcelPoint home"><Logo /></Link>
       <form className="auth-card" onSubmit={submit}>
         <div>
@@ -94,6 +94,6 @@ export function AuthPage({ mode }: { mode: 'signin' | 'register' }) {
           <Link to={register ? '/login' : '/register'}>{register ? 'Sign in' : 'Create an account'}</Link>
         </p>
       </form>
-    </div>
+    </main>
   )
 }

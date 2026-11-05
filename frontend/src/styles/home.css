@@ -74,4 +74,4 @@
   .home-subjects { grid-template-columns: 1fr; }
 }
 
-.home-subject .failed-note { color: var(--danger); font-weight: 500; }
+.home-subject .failed-note { color: var(--danger-text); font-weight: 500; }

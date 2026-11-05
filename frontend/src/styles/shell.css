@@ -59,7 +59,7 @@
 .notification.is-new { background: var(--primary-soft); }
 .notification-icon { display: grid; width: 32px; height: 32px; flex: 0 0 auto; place-items: center; border-radius: 50%; color: var(--primary); background: var(--card); }
 .notification-icon.ai-bg { color: white; background: linear-gradient(135deg, var(--ai-one), var(--ai-two)); }
-.notification-icon.failed { color: var(--danger); background: var(--danger-soft); }
+.notification-icon.failed { color: var(--danger-text); background: var(--danger-soft); }
 .notification strong, .notification p, .notification small { display: block; margin: 0; font-size: var(--text-ui); }
 .notification p { margin: 3px 0; color: var(--muted); }
 .notification small { color: var(--muted); font-size: var(--text-meta); }
@@ -73,7 +73,7 @@
 .dropdown-links { padding: 6px; }
 .dropdown-links a, .dropdown-links button { display: flex; width: 100%; align-items: center; gap: 10px; padding: 9px 10px; border: 0; border-radius: 6px; color: var(--text); background: transparent; font-size: var(--text-ui); }
 .dropdown-links a:hover, .dropdown-links button:hover { background: var(--hover); }
-.dropdown-links .logout { margin-top: 5px; border-top: 1px solid var(--border); border-radius: 0; color: var(--danger); }
+.dropdown-links .logout { margin-top: 5px; border-top: 1px solid var(--border); border-radius: 0; color: var(--danger-text); }
 
 .mobile-nav { display: none; }
 

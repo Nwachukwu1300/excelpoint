@@ -17,7 +17,7 @@
 .grade-area strong, .grade-area span { display: block; }
 .grade-area strong { font-size: var(--text-meta); }
 .grade-area span { margin-top: 2px; color: var(--muted); font-size: var(--text-meta); }
-.grade-area .grade-again { border-color: var(--danger); color: var(--danger); }
+.grade-area .grade-again { border-color: var(--danger); color: var(--danger-text); }
 .grade-area .grade-easy { border-color: var(--success-text); color: var(--success-text); }
 .done-review { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 20px; text-align: center; }
 .done-review > .logo { position: absolute; top: 18px; left: 24px; }

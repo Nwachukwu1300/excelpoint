@@ -10,7 +10,7 @@ type Sections = [string, string[]][]
 /** Privacy and Terms share this layout: plain headed lists, with links between them. */
 export function LegalPage({ title, intro, sections }: { title: string; intro: string; sections: Sections }) {
   return (
-    <div className="auth-page privacy-page">
+    <main className="auth-page privacy-page">
       <Link className="auth-logo" to="/welcome" aria-label="ExcelPoint home"><Logo /></Link>
       <article className="auth-card privacy-card">
         <h1>{title}</h1>
@@ -29,7 +29,7 @@ export function LegalPage({ title, intro, sections }: { title: string; intro: st
           <Link to="/privacy">Privacy</Link> · <Link to="/terms">Terms</Link> · <Link to="/register">Create an account</Link> · <Link to="/welcome">Home page</Link>
         </p>
       </article>
-    </div>
+    </main>
   )
 }
 

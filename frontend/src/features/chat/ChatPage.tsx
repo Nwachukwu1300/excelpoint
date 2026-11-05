@@ -189,7 +189,7 @@ export function ChatPage() {
           <div>
             <Link to={`/subjects/${subjectId}`} aria-label={`Back to ${subjectName || 'subject'}`}><Icon name="chevronRight" size={15} /></Link>
             <div>
-              <strong>{title}</strong>
+              <h1 className="chat-title">{title}</h1>
               <span>{subjectName}</span>
             </div>
           </div>
@@ -203,7 +203,7 @@ export function ChatPage() {
           {empty && !filesReady ? (
             <div className="chat-empty">
               <span className="xp-avatar"><Icon name="file" /></span>
-              <h1>{filesBusy ? 'Your file is still being read' : 'Upload a file first'}</h1>
+              <h2>{filesBusy ? 'Your file is still being read' : 'Upload a file first'}</h2>
               <p>{filesBusy
                 ? 'XP can answer as soon as it has finished. This usually takes under a minute.'
                 : `XP answers only from the files in ${subjectName || 'this subject'}, and none are ready yet.`}</p>
@@ -214,7 +214,7 @@ export function ChatPage() {
           ) : empty ? (
             <div className="chat-empty">
               <XpAvatar />
-              <h1>Ask anything about your {subjectName} files</h1>
+              <h2>Ask anything about your {subjectName} files</h2>
               <p>XP answers only from your files and shows where each answer came from.</p>
               <div>
                 {['Summarise the key ideas', 'Explain the hardest concept simply', 'What are the most important definitions?'].map(q => (

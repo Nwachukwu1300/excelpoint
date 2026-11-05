@@ -1,4 +1,4 @@
-const COLORS = ['violet', 'blue', 'green'] as const
+const COLORS = ['teal', 'blue', 'green'] as const // purple belongs to XP
 
 // Whole characters (not UTF-16 halves), letters and digits only, so an emoji can't come out as "�"
 const letters = (word: string) => [...word].filter(c => /[\p{L}\p{N}]/u.test(c))

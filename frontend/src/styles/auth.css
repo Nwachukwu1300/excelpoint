@@ -9,7 +9,7 @@
 .google-mark { color: #4285f4; font-size: 15px; font-weight: 700; }
 .auth-divider { display: flex; align-items: center; gap: 10px; margin: 18px 0; color: var(--muted); font-size: var(--text-meta); }
 .auth-divider::before, .auth-divider::after { flex: 1; height: 1px; background: var(--border); content: ''; }
-.auth-error { display: flex; gap: 7px; margin-bottom: 12px; padding: 10px; border-radius: 6px; color: var(--danger); background: var(--danger-soft); font-size: var(--text-meta); }
+.auth-error { display: flex; gap: 7px; margin-bottom: 12px; padding: 10px; border-radius: 6px; color: var(--danger-text); background: var(--danger-soft); font-size: var(--text-meta); }
 .auth-switch, .auth-legal { color: var(--muted); font-size: var(--text-meta); text-align: center; }
 .auth-switch { margin: 16px 0 0; }
 .auth-privacy { margin: 14px 0 0; color: var(--muted); font-size: var(--text-ui); text-align: center; }

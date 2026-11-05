@@ -14,8 +14,13 @@
   html .mobile-nav a { font-size: var(--text-label); }
 
   /* Small links and chips get a 44px-tall touch area */
-  html .citation-chip, html .material-actions button, html .answer-footer > a, html .auth-switch a,
-  html .workspace-breadcrumb a, html .dropdown-head button { display: inline-flex; min-height: 44px; align-items: center; }
+  /* Selectors must outrank the page rules: .material-actions > button:not(.icon-button) beats a plain descendant rule */
+  html .citation-chip, html .material-actions > button:not(.icon-button), html .answer-footer > a, html .auth-switch a,
+  html a.workspace-breadcrumb, html .dropdown-head button, html .evidence-actions button { display: inline-flex; min-height: 44px; align-items: center; }
+  html .button, html .next-item .button, html .recent-answers .button, html .not-found-answer .button, html .quiz-actions .button, html .segmented-control button, html .avatar-button,
+  html .landing .demo-foot button, html .landing-bar > a { min-height: 44px; }
+  html .dropdown-links a, html .dropdown-links button { min-height: 44px; }
+  html .section-heading > a { display: inline-flex; min-height: 44px; align-items: center; white-space: nowrap; }
 
   /* Toasts at the top, so they never cover a bottom sheet's buttons */
   html .toast-stack { top: calc(12px + env(safe-area-inset-top)); bottom: auto; }

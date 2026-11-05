@@ -7,7 +7,7 @@
 .button--secondary:hover, .button--ghost:hover { background: var(--hover); }
 .button--ghost { color: var(--text); background: transparent; }
 .button--danger { color: white; background: var(--danger-fill); }
-.button--ai { color: white; background: linear-gradient(135deg, var(--ai-one), var(--ai-two)); }
+.button--ai { color: white; background: linear-gradient(135deg, #5a67d8, var(--ai-two)); } /* #667eea under white text is 3.7:1 */
 .full-width { width: 100%; }
 
 .icon-button { display: inline-grid; width: 34px; height: 34px; place-items: center; border: 0; border-radius: 7px; color: var(--muted); background: transparent; transition: .15s ease, scale var(--dur-fast) var(--ease-out); }
@@ -19,7 +19,7 @@
 [data-theme='dark'] .badge--ai { color: #c4b5fd; }
 .badge--success { color: var(--success-text); background: var(--success-soft); }
 .badge--warning { color: var(--warning-text); background: var(--warning-soft); }
-.badge--danger { color: var(--danger); background: var(--danger-soft); }
+.badge--danger { color: var(--danger-text); background: var(--danger-soft); }
 .status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 
 .avatar { display: grid; width: 38px; height: 38px; flex: 0 0 auto; place-items: center; border: 1px solid #bfdbfe; border-radius: 50%; color: #1e40af; background: #dbeafe; font-size: var(--text-ui); font-weight: 700; }
@@ -75,6 +75,10 @@
 
 /* Indeterminate progress (added): processing has no real percentage, so sweep instead of faking one */
 .progress-track.is-indeterminate span { width: 40%; animation: sweep 1.4s var(--ease-drawer) infinite; }
+@media (prefers-reduced-motion: reduce) {
+  /* a frozen 40% bar reads as "40% done"; a full, faint bar reads as "working" */
+  .progress-track.is-indeterminate span, .generation-progress span { width: 100%; opacity: .45; }
+}
 @keyframes sweep { from { transform: translateX(-100%); } to { transform: translateX(260%); } }
 
 /* Modal, forms and upload (prototype) */
@@ -95,7 +99,7 @@
 .text-input { width: 100%; height: 42px; padding: 0 12px; border: 1px solid var(--border); border-radius: var(--radius); outline: none; color: var(--text); background: var(--card); font-size: 15px; }
 .text-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgb(37 99 235 / .1); }
 .text-input.is-invalid { border-color: var(--danger); }
-.field-error { display: block; margin-top: 6px; color: var(--danger); font-size: var(--text-ui); }
+.field-error { display: block; margin-top: 6px; color: var(--danger-text); font-size: var(--text-ui); }
 .field-hint { display: block; margin-top: 6px; color: var(--muted); font-size: var(--text-ui); }
 .dropzone { display: flex; width: 100%; min-height: 180px; flex-direction: column; align-items: center; justify-content: center; gap: 7px; border: 1px dashed #94a3b8; border-radius: var(--radius); color: var(--text); background: var(--background); transition: border-color .15s ease, background .15s ease; }
 .dropzone:hover, .dropzone.is-dragging { border-color: var(--primary); background: var(--primary-soft); }
@@ -103,12 +107,12 @@
 .dropzone > strong { max-width: 90%; overflow: hidden; font-size: var(--text-ui); text-overflow: ellipsis; white-space: nowrap; }
 .upload-icon { display: grid; width: 42px; height: 42px; margin-bottom: 4px; place-items: center; border-radius: 50%; color: var(--primary); background: var(--primary-soft); }
 .upload-icon.success { color: var(--success-text); background: var(--success-soft); }
-.upload-icon.failed { color: var(--danger); background: var(--danger-soft); }
+.upload-icon.failed { color: var(--danger-text); background: var(--danger-soft); }
 .modal-note { display: flex; gap: 7px; margin: 14px 0 20px; color: var(--muted); font-size: var(--text-meta); line-height: 1.5; }
-.upload-file-error { display: flex; align-items: center; gap: 7px; margin-top: 8px; padding: 9px 10px; border-radius: 6px; color: var(--danger); background: var(--danger-soft); font-size: var(--text-meta); }
+.upload-file-error { display: flex; align-items: center; gap: 7px; margin-top: 8px; padding: 9px 10px; border-radius: 6px; color: var(--danger-text); background: var(--danger-soft); font-size: var(--text-meta); }
 .modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
 .confirm-dialog { text-align: center; }
-.danger-icon { display: grid; width: 48px; height: 48px; margin: 0 auto 16px; place-items: center; border-radius: 50%; color: var(--danger); background: var(--danger-soft); }
+.danger-icon { display: grid; width: 48px; height: 48px; margin: 0 auto 16px; place-items: center; border-radius: 50%; color: var(--danger-text); background: var(--danger-soft); }
 .confirm-dialog h2 { margin: 0; font-size: 18px; overflow-wrap: anywhere; }
 .confirm-dialog p { margin: 8px 0 22px; color: var(--muted); font-size: var(--text-ui); line-height: 1.6; }
 .confirm-dialog .modal-actions { justify-content: center; }
@@ -116,14 +120,14 @@
 
 /* Row "…" menu (added; reuses the dropdown look) */
 .row-menu { width: 170px; z-index: 30; }
-.dropdown-links .danger { color: var(--danger); }
+.dropdown-links .danger { color: var(--danger-text); }
 
 /* Toasts (prototype look; stacked and animated in ui/Toast.tsx) */
 .toast-stack { position: fixed; right: 24px; bottom: 24px; z-index: 80; display: flex; flex-direction: column; gap: 8px; }
 .toast { display: flex; width: min(360px, calc(100vw - 32px)); align-items: flex-start; gap: 10px; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow-lg); }
 .toast > span { display: grid; width: 26px; height: 26px; flex: 0 0 auto; place-items: center; border-radius: 50%; }
 .toast--success > span { color: var(--success-text); background: var(--success-soft); }
-.toast--error > span { color: var(--danger); background: var(--danger-soft); }
+.toast--error > span { color: var(--danger-text); background: var(--danger-soft); }
 .toast > div { flex: 1; min-width: 0; }
 .toast strong { font-size: var(--text-meta); }
 .toast p { margin: 3px 0 0; color: var(--muted); font-size: var(--text-meta); }
@@ -137,10 +141,10 @@
 
 /* Subject initials tile (ui/SubjectIcon) */
 .subject-icon { display: grid; width: 36px; height: 36px; place-items: center; border-radius: var(--radius); font-size: var(--text-ui); font-weight: 700; }
-.subject-icon--violet { color: #6d28d9; background: #ede9fe; }
+.subject-icon--teal { color: #0f766e; background: #ccfbf1; }
 .subject-icon--blue { color: #1d4ed8; background: #dbeafe; }
 .subject-icon--green { color: #047857; background: #d1fae5; }
-[data-theme='dark'] .subject-icon--violet { color: #ddd6fe; background: rgb(109 40 217 / .25); }
+[data-theme='dark'] .subject-icon--teal { color: #99f6e4; background: rgb(15 118 110 / .25); }
 [data-theme='dark'] .subject-icon--blue { color: #bfdbfe; background: rgb(29 78 216 / .25); }
 [data-theme='dark'] .subject-icon--green { color: #a7f3d0; background: rgb(4 120 87 / .25); }
 
@@ -148,7 +152,7 @@
 .verification, .confidence { display: inline-flex; align-items: center; gap: 4px; padding: 3px 7px; border-radius: 20px; font-size: var(--text-meta); font-weight: 700; }
 .is-verified, .confidence--high { color: var(--success-text); background: var(--success-soft); }
 .is-unverified, .confidence--moderate { color: var(--warning-text); background: var(--warning-soft); }
-.confidence--low { color: var(--danger); background: var(--danger-soft); }
+.confidence--low { color: var(--danger-text); background: var(--danger-soft); }
 .citation-chip { display: inline-flex; max-width: 100%; align-items: center; gap: 5px; padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px; color: var(--primary); background: var(--card); font-size: var(--text-meta); font-weight: 600; }
 .citation-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .citation-chip { transition: border-color .15s ease, background .15s ease; }

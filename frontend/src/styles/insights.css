@@ -114,7 +114,7 @@
 .trace-answer details summary { cursor: pointer; }
 .trace-answer details .answer-body { margin: 8px 0 0; }
 .verification-reason { margin: 0 0 14px; color: var(--muted); font-size: var(--text-meta); line-height: 1.6; }
-.claims-grid p.is-unsupported .icon { color: var(--danger); }
+.claims-grid p.is-unsupported .icon { color: var(--danger-text); }
 .retry-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--border); }
 .retry-row:first-child { border-top: 0; padding-top: 0; }
 .retry-row p { margin: 0; font-size: var(--text-meta); }
@@ -125,7 +125,7 @@
 @media (max-width: 900px) {
   .stats-grid { grid-template-columns: 1fr 1fr; }
   .stats-grid--three { grid-template-columns: 1fr; }
-  .insights-layout { grid-template-columns: 1fr; }
+  .insights-layout { grid-template-columns: minmax(0, 1fr); } /* min 0 so cards shrink at 320px */
   .attention-row { grid-template-columns: auto 1fr auto; }
   .reason-chips { grid-column: 2 / -1; }
 }
