@@ -6,7 +6,9 @@ It takes about 45 minutes the first time, most of it waiting.
 What you need: a card for Oracle's identity check (Always Free resources are not charged), a Gmail account,
 and an OpenAI API key.
 
-## 1. A Gmail app password (for password-reset emails)
+## 1. A Gmail app password (for confirmation and password-reset emails)
+
+ExcelPoint emails every new student a link to confirm their address, and password reset only works for confirmed addresses. Without this step those emails go nowhere, so don't skip it.
 
 1. Turn on 2-Step Verification for the Gmail account: https://myaccount.google.com/security
 2. Create an app password: https://myaccount.google.com/apppasswords (name it "ExcelPoint").
