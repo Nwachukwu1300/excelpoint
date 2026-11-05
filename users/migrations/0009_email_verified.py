@@ -3,11 +3,6 @@
 from django.db import migrations, models
 
 
-def google_accounts_are_confirmed(apps, schema_editor):
-    """Google only signs people in with an address it has verified."""
-    apps.get_model('users', 'User').objects.exclude(google_id=None).update(email_verified=True)
-
-
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -20,5 +15,4 @@ class Migration(migrations.Migration):
             name='email_verified',
             field=models.BooleanField(default=False),
         ),
-        migrations.RunPython(google_accounts_are_confirmed, migrations.RunPython.noop),
     ]

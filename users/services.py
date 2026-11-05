@@ -150,6 +150,10 @@ class GoogleOAuthService:
             with transaction.atomic():
                 user = User.objects.filter(google_id=google_id).first()
                 if user:
+                    # Google just vouched for this address: confirm it if it is still the one on the account
+                    if not user.email_verified and user.email and user.email.lower() == email.lower():
+                        user.email_verified = True
+                        user.save(update_fields=['email_verified'])
                     return user
                 # Never link by email: someone could register (or switch their account to) a victim's address and
                 # catch the victim's Google sign-in. A confirmed account keeps its email; an unconfirmed one loses it

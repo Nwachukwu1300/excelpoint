@@ -8,11 +8,13 @@ import logging
 
 from django.contrib.auth import get_user_model
 from django.core import signing
+from django.core.cache import cache
 
 logger = logging.getLogger(__name__)
 
 SALT = 'excelpoint.confirm-email'
 MAX_AGE = 7 * 24 * 60 * 60
+PER_HOUR = 3  # per account, across sign-up, email changes and "Send again", so no path can flood an inbox
 
 
 def make_token(user):
@@ -32,11 +34,17 @@ def user_for_token(token):
 
 
 def send_confirmation(user, request):
-    """Queue the confirmation email; a broken queue must not fail sign-up or Settings."""
+    """Queue the confirmation email. False when over the hourly limit (or nothing to confirm).
+    A broken queue must not fail sign-up or Settings."""
     from .tasks import send_email_confirmation
     if not user.email or user.email_verified:
-        return
+        return False
+    key = f'confirm-email:{user.pk}'
+    cache.add(key, 0, 60 * 60)
+    if cache.incr(key) > PER_HOUR:
+        return False
     try:
         send_email_confirmation.delay(user.pk, request.build_absolute_uri('/'))
     except Exception:
         logger.exception('Could not queue an email confirmation')
+    return True

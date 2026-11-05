@@ -531,13 +531,20 @@ class EmailConfirmationTest(TestCase):
         self.assertEqual(mail.outbox[-1].to, ['ama2@example.com'])
         self.assertEqual(len(mail.outbox), sent + 1)
 
+    def test_changing_email_again_and_again_cannot_flood_inboxes(self):
+        from django.core import mail
+        self.register()
+        for i in range(5):
+            self.client.patch('/api/me/', {'email': f'target{i}@example.com'}, content_type='application/json')
+        self.assertEqual(len(mail.outbox), 3)  # the hourly limit covers every way of sending
+
     def test_resend_is_limited_and_only_for_unconfirmed_emails(self):
         from django.core import mail
         self.register()
-        for _ in range(3):
+        for _ in range(2):
             self.assertEqual(self.post('/api/me/confirm-email/').status_code, 200)
         self.assertEqual(self.post('/api/me/confirm-email/').status_code, 429)
-        self.assertEqual(len(mail.outbox), 4)  # sign-up plus three resends
+        self.assertEqual(len(mail.outbox), 3)  # sign-up plus two resends: three an hour in all
         self.post('/api/auth/verify-email/', {'token': self.token()})
         self.assertEqual(self.post('/api/me/confirm-email/').json()['detail'], 'Your email is already confirmed.')
         self.client.logout()

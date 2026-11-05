@@ -3,7 +3,6 @@
 from collections import Counter
 
 from django.conf import settings
-from django.core.cache import cache
 from django.contrib.auth import logout, update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm, SetPasswordForm
 from django.utils import timezone
@@ -146,7 +145,6 @@ def export_data(request):
     return FileResponse(build_export(request.user), as_attachment=True, filename=name, content_type='application/zip')
 
 
-CONFIRMATIONS_PER_HOUR = 3
 
 
 @api_view(['POST'])
@@ -157,9 +155,6 @@ def resend_confirmation(request):
         return Response({'detail': 'Your email is already confirmed.'}, status=400)
     if not user.email:
         return Response({'detail': 'Add an email address in Settings first.'}, status=400)
-    key = f'confirm-email:{user.pk}'
-    cache.add(key, 0, 60 * 60)
-    if cache.incr(key) > CONFIRMATIONS_PER_HOUR:
+    if not send_confirmation(user, request):
         return Response({'detail': 'We’ve sent a few links already. Check your inbox and spam folder, or try again in an hour.'}, status=429)
-    send_confirmation(user, request)
     return Response({'ok': True, 'email': user.email})

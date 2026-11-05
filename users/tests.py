@@ -73,6 +73,17 @@ class GoogleEmailVerificationTest(TestCase):
         squatter.refresh_from_db()
         self.assertEqual((squatter.email, squatter.google_id), ('', None))
 
+    def test_a_returning_google_user_is_confirmed_only_while_the_email_matches(self):
+        from users.models import User
+        user = User.objects.create_user('g', 'G@x.com', google_id='5')  # e.g. created before confirmation existed
+        GoogleOAuthService().authenticate_or_create_user({'email': 'g@x.com', 'sub': '5', 'email_verified': True})
+        user.refresh_from_db()
+        self.assertTrue(user.email_verified)
+        other = User.objects.create_user('h', 'someone-else@x.com', google_id='6')  # changed to an unconfirmed address
+        GoogleOAuthService().authenticate_or_create_user({'email': 'h@x.com', 'sub': '6', 'email_verified': True})
+        other.refresh_from_db()
+        self.assertFalse(other.email_verified)
+
     def test_never_takes_a_confirmed_email(self):
         from users.models import User
         User.objects.create_user('owner', 'Owner@gmail.com', 'pw', email_verified=True)
