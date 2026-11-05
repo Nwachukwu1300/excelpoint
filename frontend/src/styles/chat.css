@@ -2,7 +2,7 @@
 .chat-layout { display: grid; height: 100vh; height: 100dvh; grid-template-rows: minmax(0, 1fr); /* added: long threads scroll inside instead of pushing the composer off screen */ grid-template-columns: 220px minmax(420px, 1fr) 300px; overflow: hidden; background: var(--card); }
 .chat-layout.sources-closed { grid-template-columns: 220px minmax(420px, 1fr); }
 .chat-history { padding: 16px 10px; border-right: 1px solid var(--border); background: var(--background); }
-.history-label { display: block; margin: 22px 9px 8px; color: var(--muted); font-size: var(--text-label); font-weight: 700; letter-spacing: .12em; }
+.history-label { display: block; margin: 22px 9px 8px; color: var(--muted); font-size: var(--text-meta); font-weight: 600; }
 .history-row { display: flex; align-items: center; border-radius: 6px; }
 .history-row:hover, .history-row.is-active { background: var(--primary-soft); }
 .history-row > a { display: block; flex: 1; min-width: 0; padding: 10px; color: var(--text); text-align: left; }

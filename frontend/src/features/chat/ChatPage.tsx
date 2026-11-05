@@ -19,7 +19,6 @@ import { SourcesPanel } from './SourcesPanel'
 import '../../styles/chat.css'
 
 const MAX = 1000
-const wide = () => typeof matchMedia === 'function' && matchMedia('(min-width: 1101px)').matches
 
 type Pending = { question: string; text: string }
 
@@ -42,7 +41,7 @@ export function ChatPage() {
   const [justArrived, setJustArrived] = useState<number[]>([])
   const [error, setError] = useState<string | null>(null)
   const [rateLimit, setRateLimit] = useState<RateLimitError | null>(null)
-  const [sourcesOpen, setSourcesOpen] = useState(wide)
+  const [sourcesOpen, setSourcesOpen] = useState(false) // the passage already sits under each answer; this panel is for more
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [focus, setFocus] = useState<SourceChunk | null>(null)
   const inflight = useRef<{ sid: number; controller: AbortController } | null>(null)
@@ -171,7 +170,7 @@ export function ChatPage() {
       {historyOpen && <div className="history-scrim" onClick={() => setHistoryOpen(false)} aria-hidden="true" />}
       <aside className={`chat-history ${historyOpen ? 'is-open' : ''}`} aria-label="Conversations">
         <Link className="button button--secondary full-width" to={`/subjects/${subjectId}/chat`}><Icon name="plus" />New chat</Link>
-        <span className="history-label">RECENT</span>
+        <span className="history-label">Recent</span>
         {sessions.isPending && <div className="skeleton-stack history-loading"><Skeleton /><Skeleton /><Skeleton /></div>}
         {sessions.data?.length === 0 && <p className="history-empty">Your conversations will be listed here.</p>}
         {sessions.data?.map(s => (
@@ -180,7 +179,7 @@ export function ChatPage() {
               <strong>{s.title || 'Untitled conversation'}</strong>
               <span>{shortDate(s.last_activity)}</span>
             </Link>
-            <IconButton icon="close" label={`Delete conversation: ${s.title || 'Untitled'}`} onClick={() => setDeletingChat(s)} />
+            <IconButton icon="trash" label={`Delete conversation: ${s.title || 'Untitled'}`} onClick={() => setDeletingChat(s)} />
           </div>
         ))}
       </aside>
@@ -296,7 +295,7 @@ export function ChatPage() {
           </>
         )}
       </AnimatePresence>
-      <ConfirmDialog open={!!deletingChat} title="Delete this conversation?" confirmLabel="Delete conversation" icon="sparkles"
+      <ConfirmDialog open={!!deletingChat} title="Delete this conversation?" confirmLabel="Delete conversation" icon="trash"
         busy={removeChat.isPending} onCancel={() => setDeletingChat(null)} onConfirm={confirmDeleteChat}>
         <p>“{deletingChat?.title || 'Untitled conversation'}” and all its messages will be removed. This can’t be undone.</p>
       </ConfirmDialog>

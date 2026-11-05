@@ -6,7 +6,7 @@ import { Link } from 'react-router'
 import { Icon } from '../../ui/Icon'
 import { MoreMenu } from '../../ui/Menu'
 import { Modal } from '../../ui/Modal'
-import { Badge, Button, ProgressBar, Skeleton, StatusChip, XpAvatar } from '../../ui/primitives'
+import { Button, ProgressBar, Skeleton, StatusChip, XpAvatar } from '../../ui/primitives'
 import { toast } from '../../ui/Toast'
 import { useOneAtATime } from '../../lib/useOneAtATime'
 import { parseSummary, useDeleteMaterial, useMaterials, type Material } from './api'
@@ -20,8 +20,8 @@ function Summary({ material }: { material: Material }) {
       <div className="summary-heading">
         <XpAvatar small />
         <div>
-          <Badge tone="ai">AI SUMMARY</Badge>
-          <h3>Core concepts from this material</h3>
+          <h3>Summary by XP</h3>
+          <p className="summary-note">The key ideas of this file</p>
         </div>
       </div>
       {intro.length === 0 && points.length === 0 && <p>No summary yet. XP writes one after processing a file.</p>}

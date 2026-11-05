@@ -47,7 +47,8 @@
 .inline-processing small { display: block; margin-top: 4px; color: var(--muted); font-size: var(--text-meta); }
 .material-summary { margin: 0 16px 16px 64px; padding: 18px; border: 1px solid color-mix(in srgb, var(--ai-one) 22%, var(--border)); border-radius: var(--radius); background: var(--ai-soft); }
 .summary-heading { display: flex; align-items: center; gap: 10px; }
-.summary-heading h3 { margin: 3px 0 0; font-size: var(--text-ui); }
+.summary-heading h3 { margin: 0; font-size: var(--text-ui); }
+.summary-note { margin: 2px 0 0; color: var(--muted); font-size: var(--text-meta); }
 .material-summary > p, .material-summary li { color: var(--muted); font-size: var(--text-body); line-height: 1.6; }
 .material-summary ul { padding-left: 18px; columns: 2; column-gap: 30px; }
 .confirm-dialog { text-align: center; }

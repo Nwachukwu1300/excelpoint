@@ -82,7 +82,7 @@ td:last-child, th:last-child { width: 36px; padding-left: 0; }
 .progress-ring > div { z-index: 1; text-align: center; }
 .progress-ring strong, .progress-ring span { display: block; }
 .progress-ring strong { font-size: 15px; font-variant-numeric: tabular-nums; }
-.progress-ring span { margin-top: 1px; color: var(--muted); font-size: var(--text-label); text-transform: uppercase; }
+.progress-ring span { margin-top: 1px; color: var(--muted); font-size: var(--text-meta); }
 
 /* added */
 .focus-header > .logo { justify-self: start; }

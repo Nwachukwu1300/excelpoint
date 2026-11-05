@@ -19,11 +19,11 @@
 .grade-area span { margin-top: 2px; color: var(--muted); font-size: var(--text-meta); }
 .grade-area .grade-again { border-color: var(--danger); color: var(--danger); }
 .grade-area .grade-easy { border-color: var(--success-text); color: var(--success-text); }
-.done-review { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.done-review { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 20px; text-align: center; }
 .done-review > .logo { position: absolute; top: 18px; left: 24px; }
 .success-burst { display: grid; width: 72px; height: 72px; place-items: center; border-radius: 50%; color: var(--success-text); background: var(--success-soft); }
 .done-review h1 { margin: 22px 0 8px; font-size: 28px; }
-.done-review p { max-width: 450px; margin: 0 0 22px; color: var(--muted); font-size: var(--text-ui); line-height: 1.6; }
+.done-review p { max-width: 450px; margin: 0 0 22px; color: var(--muted); font-size: var(--text-body); line-height: 1.6; }
 .review-focus-head > .logo { justify-self: start; } /* added */
 .grade-area > div { justify-content: center; }
 .grade-area button { transition: background .15s ease, border-color .15s ease, scale var(--dur-fast) var(--ease-out); } /* added: hover and press */

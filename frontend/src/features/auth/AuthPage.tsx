@@ -79,8 +79,8 @@ export function AuthPage({ mode }: { mode: 'signin' | 'register' }) {
         {errors.__all__ && (
           <div className="auth-error" role="alert"><Icon name="close" size={15} /><span>{errors.__all__[0]}</span></div>
         )}
-        {field('username', 'Username', 'text', 'username', 'alexmorgan')}
-        {register && field('email', 'Email', 'email', 'email', 'alex@example.com', 'Only for your account. We don’t send marketing email.')}
+        {field('username', 'Username', 'text', 'username', '')}
+        {register && field('email', 'Email', 'email', 'email', '', 'Only for your account. We don’t send marketing email.')}
         {field('password1', 'Password', 'password', register ? 'new-password' : 'current-password', register ? 'At least 8 characters' : 'Your password',
           register ? 'At least 8 characters, not only numbers, and not a common password.' : undefined)}
         {register && field('password2', 'Confirm password', 'password', 'new-password', 'Repeat your password')}

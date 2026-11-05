@@ -1,7 +1,7 @@
 import type { ReactNode } from "react"
 
 // Icon set ported verbatim from the Figma Make prototype (Lucide-style strokes).
-export type IconName = "home" | "book" | "repeat" | "chart" | "user" | "bell" | "sun" | "moon" | "chevronDown" | "chevronRight" | "plus" | "panel" | "upload" | "file" | "sparkles" | "arrow" | "more" | "search" | "close" | "check" | "clock" | "layers" | "play" | "settings" | "lock" | "logout"
+export type IconName = "home" | "book" | "repeat" | "chart" | "user" | "bell" | "sun" | "moon" | "chevronDown" | "chevronRight" | "plus" | "panel" | "upload" | "file" | "sparkles" | "arrow" | "more" | "search" | "close" | "check" | "clock" | "layers" | "play" | "settings" | "lock" | "logout" | "trash"
 
 const iconPaths: Record<IconName, ReactNode> = {
   home: (
@@ -91,6 +91,7 @@ const iconPaths: Record<IconName, ReactNode> = {
     </>
   ),
   close: <path d="m6 6 12 12M18 6 6 18" />,
+  trash: <path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" />,
   check: <path d="m5 12 4 4L19 6" />,
   clock: (
     <>

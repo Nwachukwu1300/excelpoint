@@ -34,6 +34,7 @@
 
 /* XP's 3D icon. 30% rounding follows the icon's own tile, so its dark corners don't show. */
 .xp-avatar { display: grid; width: 40px; height: 40px; flex: 0 0 auto; place-items: center; overflow: hidden; border-radius: 30%; color: white; background: linear-gradient(135deg, var(--ai-one), var(--ai-two)); box-shadow: 0 5px 12px rgb(102 126 234 / .25); }
+[data-theme='dark'] .xp-avatar { box-shadow: 0 4px 10px rgb(0 0 0 / .35); } /* a purple halo on dark reads as glow */
 .xp-avatar img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .xp-avatar--small { width: 32px; height: 32px; }
 
@@ -55,7 +56,7 @@
 /* Full-screen error pages (404 / 500) */
 .error-page { display: flex; min-height: 100vh; flex-direction: column; align-items: center; justify-content: center; padding: 24px; background: var(--background); text-align: center; }
 .error-page > .logo { position: absolute; top: 24px; left: 28px; }
-.error-code { color: var(--primary-soft); font-size: clamp(100px, 18vw, 220px); font-weight: 700; letter-spacing: -.08em; line-height: .8; }
+.error-code { color: var(--primary-soft); font-size: clamp(100px, 18vw, 220px); font-weight: 700; letter-spacing: -.04em; line-height: .8; }
 .error-page .badge { margin-top: -12px; }
 .error-page h1 { margin: 18px 0 8px; font-size: 28px; }
 .error-page p { max-width: 440px; margin: 0 0 22px; color: var(--muted); font-size: var(--text-ui); line-height: 1.6; }
