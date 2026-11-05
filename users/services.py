@@ -151,10 +151,13 @@ class GoogleOAuthService:
                 user = User.objects.filter(google_id=google_id).first()
                 if user:
                     return user
-                # Never link by email: emails here are unverified, so anyone could register (or switch their
-                # account to) a victim's address and catch the victim's Google sign-in
-                if User.objects.filter(email__iexact=email).exists():
+                # Never link by email: someone could register (or switch their account to) a victim's address and
+                # catch the victim's Google sign-in. A confirmed account keeps its email; an unconfirmed one loses it
+                # to the Google owner, who has just proved the address is theirs.
+                holders = User.objects.filter(email__iexact=email)
+                if holders.filter(email_verified=True).exists():
                     raise ValueError("This email belongs to an account that signs in with a password")
+                holders.update(email='')
 
                 # Create new user
                 username = self._generate_unique_username(user_info.get('given_name', ''), user_info.get('family_name', ''))
@@ -164,7 +167,8 @@ class GoogleOAuthService:
                     email=email,
                     first_name=user_info.get('given_name', ''),
                     last_name=user_info.get('family_name', ''),
-                    google_id=google_id
+                    google_id=google_id,
+                    email_verified=True,
                 )
                 
                 # Create user profile

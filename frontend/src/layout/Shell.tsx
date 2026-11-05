@@ -4,6 +4,7 @@ import { ScrollRestoration, useLocation, useMatches, useOutlet } from 'react-rou
 import { ApiError, loginUrl, useMe } from '../lib/api'
 import { Toaster } from '../ui/Toast'
 import { MobileNav } from './MobileNav'
+import { EmailBanner } from './EmailBanner'
 import { Sidebar } from './Sidebar'
 import { Topbar, type RouteHandle } from './Topbar'
 
@@ -59,7 +60,10 @@ export function Shell() {
       <Sidebar me={me.data} collapsed={collapsed} onToggle={toggle} />
       <div className={`app-main ${collapsed ? 'sidebar-collapsed' : ''} ${fullBleed ? 'is-full-bleed' : ''}`}>
         {!fullBleed && <Topbar me={me.data} />}
-        <main id="main" tabIndex={-1}><AnimatedOutlet /></main>
+        <main id="main" tabIndex={-1}>
+          {!fullBleed && !focus && me.data && <EmailBanner me={me.data} />}
+          <AnimatedOutlet />
+        </main>
       </div>
       {!fullBleed && <MobileNav me={me.data} />}
       <Toaster />

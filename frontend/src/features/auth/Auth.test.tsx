@@ -162,3 +162,21 @@ describe('Password reset', () => {
     expect(JSON.parse(init!.body as string)).toMatchObject({ uid: 'MQ', token: 'abc-123', new_password1: 'Brand-new-456!' })
   })
 })
+
+describe('Confirm email', () => {
+  it('confirms the email from the link', async () => {
+    const fetchMock = mockApi({ ...signedOut, 'POST /api/auth/verify-email/': { ok: true, email: 'alex@example.com' } })
+    renderApp('/verify-email/abc.def')
+    expect(await screen.findByRole('heading', { name: 'Your email is confirmed' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/login')
+    const call = fetchMock.mock.calls.find(([u]) => u === '/api/auth/verify-email/')!
+    expect(JSON.parse(call[1]!.body as string)).toEqual({ token: 'abc.def' })
+  })
+
+  it('says why an old link failed', async () => {
+    mockApi({ ...signedOut, 'POST /api/auth/verify-email/': reply(400, { detail: 'This link has expired or no longer matches your email. Sign in and ask for a new one.' }) })
+    renderApp('/verify-email/old')
+    expect(await screen.findByRole('heading', { name: 'We couldn’t confirm your email' })).toBeInTheDocument()
+    expect(screen.getByRole('alert')).toHaveTextContent('expired or no longer matches')
+  })
+})

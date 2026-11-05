@@ -14,7 +14,7 @@ PUBLIC_APP_PAGES = {'/app/login', '/app/register', '/app/welcome', '/app/privacy
 @ensure_csrf_cookie
 def app_shell(request):
     """Serve the built React app's index.html for every /app/ route; React Router takes it from there."""
-    public = request.path.rstrip('/') in PUBLIC_APP_PAGES or request.path.startswith('/app/reset-password/')
+    public = request.path.rstrip('/') in PUBLIC_APP_PAGES or request.path.startswith(('/app/reset-password/', '/app/verify-email/'))
     if not request.user.is_authenticated and not public:
         return redirect_to_login(request.get_full_path())  # → /app/login?next=…
     try:

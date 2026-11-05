@@ -7,7 +7,7 @@ import { routes } from '../router'
 
 export const me: Me = {
   authenticated: true, google_sign_in: true,
-  id: 1, username: 'alex', first_name: 'Alex', last_name: 'Morgan', email: 'alex@example.com',
+  id: 1, username: 'alex', first_name: 'Alex', last_name: 'Morgan', email: 'alex@example.com', email_verified: true,
   education_level: 'undergraduate', has_password: true,
   education_choices: [{ value: 'secondary', label: 'Secondary school' }, { value: 'undergraduate', label: 'Undergraduate' }],
   unread_notifications: 2, due_count: 20,

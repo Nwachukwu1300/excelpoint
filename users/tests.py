@@ -63,12 +63,22 @@ class GoogleEmailVerificationTest(TestCase):
         self.assertEqual(again, google_user)
         self.assertEqual(User.objects.count(), 1)
 
-    def test_never_links_to_an_account_that_claims_the_same_email(self):
+    def test_an_unconfirmed_claim_on_the_email_loses_it_to_the_google_owner(self):
         from users.models import User
-        User.objects.create_user('attacker', 'Victim@gmail.com', 'pw')  # emails are not verified
+        squatter = User.objects.create_user('attacker', 'Victim@gmail.com', 'pw')  # never confirmed the address
+        victim = GoogleOAuthService().authenticate_or_create_user(
+            {'email': 'victim@gmail.com', 'sub': '9', 'email_verified': True, 'given_name': 'V'})
+        self.assertNotEqual(victim, squatter)  # never linked: the squatter's account stays separate
+        self.assertTrue(victim.email_verified)
+        squatter.refresh_from_db()
+        self.assertEqual((squatter.email, squatter.google_id), ('', None))
+
+    def test_never_takes_a_confirmed_email(self):
+        from users.models import User
+        User.objects.create_user('owner', 'Owner@gmail.com', 'pw', email_verified=True)
         with self.assertRaisesMessage(ValueError, 'belongs to an account'):
             GoogleOAuthService().authenticate_or_create_user(
-                {'email': 'victim@gmail.com', 'sub': '9', 'email_verified': True, 'given_name': 'V'})
+                {'email': 'owner@gmail.com', 'sub': '9', 'email_verified': True, 'given_name': 'O'})
         self.assertFalse(User.objects.filter(google_id='9').exists())
 
     def test_verified_email_creates_user(self):

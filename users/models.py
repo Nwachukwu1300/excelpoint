@@ -15,6 +15,9 @@ class User(AbstractUser):
         unique=True,
         help_text="Google OAuth user ID"
     )
+    # Set once the student opens the link sent to their email (Google accounts arrive confirmed).
+    # Only confirmed emails get password-reset links, and an unconfirmed one can't block a Google sign-up.
+    email_verified = models.BooleanField(default=False)
 
     def __str__(self):
         return self.username

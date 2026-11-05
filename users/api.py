@@ -3,6 +3,7 @@
 from collections import Counter
 
 from django.conf import settings
+from django.core.cache import cache
 from django.contrib.auth import logout, update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm, SetPasswordForm
 from django.utils import timezone
@@ -18,6 +19,7 @@ from subjects.services.spaced_repetition import due_cards
 
 from .forms import SettingsForm
 from .models import UserProfile
+from .verification import send_confirmation
 
 
 def _unread(user):
@@ -48,8 +50,13 @@ def me(request):
             return Response(form.errors, status=400)
         form.save()
         user.first_name, user.last_name = form.cleaned_data['first_name'], form.cleaned_data['last_name']
+        changed = form.cleaned_data['email'].lower() != (user.email or '').lower()
         user.email = form.cleaned_data['email']
-        user.save(update_fields=['first_name', 'last_name', 'email'])
+        if changed:
+            user.email_verified = False  # a new address has to be confirmed again
+        user.save(update_fields=['first_name', 'last_name', 'email', 'email_verified'])
+        if changed:
+            send_confirmation(user, request)
     due = Counter(due_cards(user).order_by().values_list('subject_id', flat=True))
     return Response({
         'authenticated': True,
@@ -59,6 +66,7 @@ def me(request):
         'first_name': user.first_name,
         'last_name': user.last_name,
         'email': user.email,
+        'email_verified': user.email_verified,
         'education_level': profile.education_level or '',
         'education_choices': [{'value': v, 'label': label} for v, label in UserProfile.EDUCATION_LEVEL_CHOICES],
         'has_password': user.has_usable_password(),  # Google-only accounts set one instead of changing it
@@ -136,3 +144,22 @@ def export_data(request):
     from .export import build_export
     name = f"excelpoint-{request.user.username}-{timezone.localdate():%Y-%m-%d}.zip"
     return FileResponse(build_export(request.user), as_attachment=True, filename=name, content_type='application/zip')
+
+
+CONFIRMATIONS_PER_HOUR = 3
+
+
+@api_view(['POST'])
+def resend_confirmation(request):
+    """Send the confirmation link again (a few times an hour, so the button can't be used to spam an inbox)."""
+    user = request.user
+    if user.email_verified:
+        return Response({'detail': 'Your email is already confirmed.'}, status=400)
+    if not user.email:
+        return Response({'detail': 'Add an email address in Settings first.'}, status=400)
+    key = f'confirm-email:{user.pk}'
+    cache.add(key, 0, 60 * 60)
+    if cache.incr(key) > CONFIRMATIONS_PER_HOUR:
+        return Response({'detail': 'We’ve sent a few links already. Check your inbox and spam folder, or try again in an hour.'}, status=429)
+    send_confirmation(user, request)
+    return Response({'ok': True, 'email': user.email})

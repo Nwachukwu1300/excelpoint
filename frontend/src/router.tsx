@@ -48,6 +48,7 @@ export const routes: RouteObject[] = [
   { path: 'privacy', ...page(() => import('./features/auth/Privacy').then(m => ({ default: m.Privacy }))) },
   { path: 'terms', ...page(() => import('./features/auth/Terms').then(m => ({ default: m.Terms }))) },
   { path: 'forgot-password', ...page(() => import('./features/auth/PasswordReset').then(m => ({ default: m.ForgotPassword }))) },
+  { path: 'verify-email/:token', ...page(() => import('./features/auth/VerifyEmail').then(m => ({ default: m.VerifyEmail }))) },
   { path: 'reset-password/:uid/:token', ...page(() => import('./features/auth/PasswordReset').then(m => ({ default: m.ResetPassword }))) },
   { path: '*', element: <ErrorPage code="404" /> },
 ]

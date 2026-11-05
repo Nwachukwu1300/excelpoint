@@ -20,6 +20,7 @@ from django.views.decorators.http import require_POST
 from rest_framework.throttling import BaseThrottle
 
 from .backends import FAIL_WINDOW
+from .verification import send_confirmation, user_for_token
 from .forms import RegistrationForm
 from .tasks import send_password_reset
 
@@ -69,7 +70,21 @@ def register(request):
         return JsonResponse(errors, status=400)
     user = form.save()
     login(request, user)  # the one configured backend
+    send_confirmation(user, request)
     return JsonResponse({'ok': True, 'next': '/app/'}, status=201)
+
+
+@require_POST
+@csrf_protect
+def verify_email(request):
+    """Opened from the emailed link; works signed in or out, since the signed link itself is the proof."""
+    user = user_for_token(str(_body(request).get('token', '')))
+    if user is None:
+        return JsonResponse({'detail': 'This link has expired or no longer matches your email. Sign in and ask for a new one.'}, status=400)
+    if not user.email_verified:
+        user.email_verified = True
+        user.save(update_fields=['email_verified'])
+    return JsonResponse({'ok': True, 'email': user.email})
 
 
 @require_POST
@@ -97,7 +112,8 @@ def password_reset(request):
     if not email or not _under_limit(f'reset:ip:{ip}', RESETS_PER_IP) or not _under_limit(f'reset:email:{email.lower()}', RESETS_PER_EMAIL):
         return JsonResponse(RESET_SENT)  # same answer when limited: nothing to learn, nothing sent
     site = request.build_absolute_uri('/')  # scheme and host the link needs; the worker makes the token
-    for user in get_user_model().objects.filter(email__iexact=email, is_active=True):
+    # Only confirmed emails: a link to an address nobody confirmed could hand someone else's notes to its owner
+    for user in get_user_model().objects.filter(email__iexact=email, is_active=True, email_verified=True):
         try:
             send_password_reset.delay(user.pk, site)  # queued: sending in the request would be slower only for real accounts
         except Exception:

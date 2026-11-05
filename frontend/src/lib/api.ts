@@ -63,6 +63,7 @@ export type Me = {
   first_name: string
   last_name: string
   email: string
+  email_verified: boolean
   education_level: string
   education_choices: { value: string; label: string }[]
   has_password: boolean

@@ -412,7 +412,7 @@ class PasswordResetTest(TestCase):
         from config.celery import app
         app.conf.task_always_eager = True  # run the email task in the test, as the worker would
         self.addCleanup(setattr, app.conf, 'task_always_eager', False)
-        self.user = User.objects.create_user('alex', email='alex@example.com', password='Old-pass-123!')
+        self.user = User.objects.create_user('alex', email='alex@example.com', password='Old-pass-123!', email_verified=True)
 
     def post(self, url, body):
         return self.client.post(url, body, content_type='application/json')
@@ -448,6 +448,13 @@ class PasswordResetTest(TestCase):
         self.assertEqual(known, unknown)
         self.assertEqual(len(mail.outbox), 1)
 
+    def test_an_unconfirmed_email_gets_the_same_answer_and_no_email(self):
+        from django.core import mail
+        User.objects.create_user('typo', email='someone@example.com', password='Old-pass-123!')  # never confirmed
+        r = self.post('/api/auth/password-reset/', {'email': 'someone@example.com'})
+        self.assertEqual(r.json(), self.post('/api/auth/password-reset/', {'email': 'nobody@example.com'}).json())
+        self.assertEqual(len(mail.outbox), 0)  # the address's owner never gets a way into someone else's notes
+
     def test_a_mail_failure_gives_the_same_answer(self):
         with patch('users.auth_api.send_password_reset.delay', side_effect=ConnectionError('broker down')):
             r = self.post('/api/auth/password-reset/', {'email': 'alex@example.com'})
@@ -467,3 +474,71 @@ class PasswordResetTest(TestCase):
         weak = self.post('/api/auth/password-reset/confirm/', {'uid': uid, 'token': token, 'new_password1': 'abc', 'new_password2': 'abc'})
         self.assertIn('too short', weak.json()['new_password1'][0])
         self.assertEqual(self.post('/api/auth/password-reset/confirm/', {'uid': '!!', 'token': token}).status_code, 400)
+
+
+@override_settings(CELERY_TASK_ALWAYS_EAGER=True)
+class EmailConfirmationTest(TestCase):
+    def setUp(self):
+        cache.clear()
+        from config.celery import app
+        app.conf.task_always_eager = True  # run the email task in the test, as the worker would
+        self.addCleanup(setattr, app.conf, 'task_always_eager', False)
+
+    def post(self, url, body=None):
+        return self.client.post(url, body or {}, content_type='application/json')
+
+    def token(self):
+        from django.core import mail
+        import re as _re
+        return _re.search(r'/app/verify-email/(\S+)', mail.outbox[-1].body).group(1)
+
+    def register(self):
+        return self.post('/api/auth/register/', {'username': 'ama', 'email': 'ama@example.com',
+                                                 'password1': 'Study-Pass-2027!', 'password2': 'Study-Pass-2027!'})
+
+    def test_sign_up_sends_a_link_that_confirms_the_email(self):
+        from django.core import mail
+        self.assertEqual(self.register().status_code, 201)
+        self.assertIs(self.client.get('/api/me/').json()['email_verified'], False)  # they can study meanwhile
+        self.assertEqual((len(mail.outbox), mail.outbox[0].to), (1, ['ama@example.com']))
+        self.client.logout()  # the link works from any device, signed in or not
+        r = self.post('/api/auth/verify-email/', {'token': self.token()})
+        self.assertEqual(r.json(), {'ok': True, 'email': 'ama@example.com'})
+        self.assertTrue(User.objects.get(username='ama').email_verified)
+
+    def test_bad_or_outdated_links_are_refused(self):
+        self.register()
+        token = self.token()
+        self.assertEqual(self.post('/api/auth/verify-email/', {'token': token + 'x'}).status_code, 400)
+        r = self.client.patch('/api/me/', {'email': 'new@example.com'}, content_type='application/json')
+        self.assertEqual(r.json()['email_verified'], False)
+        r = self.post('/api/auth/verify-email/', {'token': token})  # sent to the old address
+        self.assertEqual(r.status_code, 400)
+        self.assertIn('no longer matches', r.json()['detail'])
+        self.assertEqual(self.post('/api/auth/verify-email/', {'token': self.token()}).json()['email'], 'new@example.com')
+        with patch('django.core.signing.time.time', return_value=__import__('time').time() + 8 * 24 * 3600):
+            self.assertEqual(self.post('/api/auth/verify-email/', {'token': self.token()}).status_code, 400)  # a week at most
+
+    def test_changing_email_needs_a_new_confirmation(self):
+        from django.core import mail
+        self.register()
+        self.post('/api/auth/verify-email/', {'token': self.token()})
+        self.client.patch('/api/me/', {'first_name': 'Ama'}, content_type='application/json')
+        self.assertTrue(self.client.get('/api/me/').json()['email_verified'])  # other changes keep it
+        sent = len(mail.outbox)
+        self.client.patch('/api/me/', {'email': 'ama2@example.com'}, content_type='application/json')
+        self.assertFalse(self.client.get('/api/me/').json()['email_verified'])
+        self.assertEqual(mail.outbox[-1].to, ['ama2@example.com'])
+        self.assertEqual(len(mail.outbox), sent + 1)
+
+    def test_resend_is_limited_and_only_for_unconfirmed_emails(self):
+        from django.core import mail
+        self.register()
+        for _ in range(3):
+            self.assertEqual(self.post('/api/me/confirm-email/').status_code, 200)
+        self.assertEqual(self.post('/api/me/confirm-email/').status_code, 429)
+        self.assertEqual(len(mail.outbox), 4)  # sign-up plus three resends
+        self.post('/api/auth/verify-email/', {'token': self.token()})
+        self.assertEqual(self.post('/api/me/confirm-email/').json()['detail'], 'Your email is already confirmed.')
+        self.client.logout()
+        self.assertEqual(self.post('/api/me/confirm-email/').status_code, 403)

@@ -15,6 +15,7 @@
 .settings-section-head p { margin: 4px 0 0; color: var(--muted); font-size: var(--text-meta); }
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; margin-top: 6px; }
 .full-field { grid-column: 1 / -1; }
+.email-status { grid-column: 1 / -1; margin: -6px 0 0; } /* added: under the email field */
 .settings-divider { height: 1px; margin: 24px 0; background: var(--border); }
 .theme-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; margin-top: 14px; }
 .theme-options button { display: grid; min-height: 92px; grid-template-columns: auto 1fr; align-content: center; gap: 3px 9px; padding: 14px; border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); background: var(--card); text-align: left; }

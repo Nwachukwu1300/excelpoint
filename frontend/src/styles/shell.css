@@ -6,6 +6,15 @@
 .is-collapsed .sidebar-top { justify-content: center; padding: 0; }
 .is-collapsed .sidebar-top .icon-button { display: none; }
 .logo-button { border-radius: var(--radius); } /* added: the logo expands a collapsed sidebar */
+/* Reminder to confirm the email (layout/EmailBanner) */
+.email-banner { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin: 16px 24px 0; padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); font-size: var(--text-ui); }
+.email-banner > svg { color: var(--primary); }
+.email-banner p { flex: 1 1 280px; margin: 0; color: var(--muted); line-height: 1.5; }
+.email-banner p strong { color: var(--text); }
+.email-banner > div { display: flex; align-items: center; gap: 4px; }
+.email-banner button, .email-banner a { min-height: 36px; padding: 0 10px; border: 0; border-radius: 6px; color: var(--primary); background: transparent; font-weight: 600; display: inline-flex; align-items: center; }
+.email-banner button:hover, .email-banner a:hover { background: var(--hover); }
+.email-banner .email-banner-close { color: var(--muted); }
 .main-nav :focus-visible { outline-offset: -2px; } /* the nav scrolls sideways-hidden, so an outside ring would be clipped */
 .main-nav { display: flex; flex: 1; flex-direction: column; gap: 4px; padding: 20px 12px; overflow-x: hidden; overflow-y: auto; }
 .nav-item { position: relative; display: flex; width: 100%; height: 40px; flex: 0 0 auto; align-items: center; gap: 12px; padding: 0 12px; border: 0; border-radius: var(--radius); color: var(--muted); background: transparent; font-size: var(--text-body); font-weight: 500; text-align: left; white-space: nowrap; transition: color .15s ease, background .15s ease; }

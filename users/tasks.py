@@ -24,3 +24,21 @@ def send_password_reset(user_id, site):
         'If it wasn’t you, ignore this email. Your password stays the same.\n',
         None, [user.email],
     )
+
+
+@shared_task(autoretry_for=(OSError,), retry_backoff=True, max_retries=3)
+def send_email_confirmation(user_id, site):
+    """The link is made here, like the reset token, so it never sits in the job queue."""
+    from .verification import MAX_AGE, make_token
+    user = get_user_model().objects.filter(pk=user_id, is_active=True).first()
+    if user is None or not user.email or user.email_verified:
+        return
+    link = f"{site.rstrip('/')}/app/verify-email/{make_token(user)}"
+    send_mail(
+        'Confirm your ExcelPoint email',
+        f'Hello {user.username},\n\nPlease confirm this is your email address by opening this link within '
+        f'{MAX_AGE // 86400} days:\n\n{link}\n\n'
+        'Confirming lets you reset your password if you ever forget it.\n'
+        'If you didn’t make an ExcelPoint account, ignore this email.\n',
+        None, [user.email],
+    )

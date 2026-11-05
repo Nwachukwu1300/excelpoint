@@ -40,3 +40,5 @@
 .auth-forgot { display: block; margin: -4px 0 14px; color: var(--primary); font-size: 15px; font-weight: 600; text-align: right; }
 .auth-card form .form-field { margin-bottom: 16px; }
 
+
+.auth-wide { width: 100%; } /* added: the one action on the confirm-email card */

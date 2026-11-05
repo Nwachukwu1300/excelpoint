@@ -98,4 +98,25 @@ describe('Shell', () => {
     renderApp('/nope')
     expect(await screen.findByRole('heading', { name: 'This page isn’t here' })).toBeInTheDocument()
   })
+
+  it('asks an unconfirmed student to confirm their email, and can send the link again', async () => {
+    sessionStorage.clear()
+    const fetchMock = mockApi({ 'GET /api/me/': { ...me, email_verified: false }, 'GET /api/home/': emptyHome,
+      'POST /api/me/confirm-email/': { ok: true, email: 'alex@example.com' } })
+    renderApp('/')
+    const banner = await screen.findByText(/Confirm your email\./)
+    expect(banner.closest('[role=status]')).toHaveTextContent('We sent a link to alex@example.com')
+    await userEvent.click(screen.getByRole('button', { name: 'Send again' }))
+    expect(await screen.findByText('Link sent')).toBeInTheDocument()
+    expect(fetchMock.mock.calls.filter(([u]) => u === '/api/me/confirm-email/')).toHaveLength(1)
+    await userEvent.click(screen.getByRole('button', { name: 'Hide for now' }))
+    expect(screen.queryByText(/Confirm your email\./)).not.toBeInTheDocument()
+  })
+
+  it('shows no reminder once the email is confirmed', async () => {
+    mockApi({ 'GET /api/me/': me, 'GET /api/home/': emptyHome })
+    renderApp('/')
+    await screen.findByRole('heading', { name: /, Alex$/ })
+    expect(screen.queryByText(/Confirm your email/)).not.toBeInTheDocument()
+  })
 })

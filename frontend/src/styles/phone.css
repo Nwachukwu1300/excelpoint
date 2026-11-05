@@ -20,6 +20,8 @@
   html .button, html .next-item .button, html .recent-answers .button, html .not-found-answer .button, html .quiz-actions .button, html .segmented-control button, html .avatar-button,
   html .landing .demo-foot button, html .landing-bar > a { min-height: 44px; }
   html .dropdown-links a, html .dropdown-links button { min-height: 44px; }
+  html .email-banner { margin: 12px 16px 0; }
+  html .email-banner button, html .email-banner a { min-height: 44px; }
   html .section-heading > a { display: inline-flex; min-height: 44px; align-items: center; white-space: nowrap; }
 
   /* Toasts at the top, so they never cover a bottom sheet's buttons */

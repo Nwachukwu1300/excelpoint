@@ -67,6 +67,9 @@ export function SettingsPage() {
           {field('first_name', 'First name')}
           {field('last_name', 'Last name')}
           {field('email', 'Email', 'email', true)}
+          {!errors.email && form.email === me.data.email && (
+            <p className="field-hint email-status">{me.data.email_verified ? 'Confirmed.' : 'Not confirmed yet. Open the link we emailed you.'}</p>
+          )}
           <div className="form-field full-field">
             <label htmlFor="settings-education">Level of education</label>
             <div className="select-wrap">
