@@ -20,8 +20,8 @@ const PASSAGE = {
 
 const reducedMotion = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
 
-/** Streams the sample answer word by word, then lights up the passage; shows it whole for reduced motion. */
-function useStream() {
+/** Streams the sample answer word by word once the card is in view, then lights up the passage; whole for reduced motion. */
+function useStream(target: React.RefObject<HTMLElement | null>) {
   const [shown, setShown] = useState(() => (reducedMotion() ? WORDS.length : 0))
   const timer = useRef<number>(undefined)
   const play = () => {
@@ -34,16 +34,24 @@ function useStream() {
     }), 70)
   }
   useEffect(() => {
-    const start = window.setTimeout(play, 600)
-    return () => { window.clearTimeout(start); window.clearInterval(timer.current) }
+    let start: number | undefined
+    const begin = () => { start = window.setTimeout(play, 600) }
+    // On phones the card starts below the fold: play when it is half visible, so the moment is seen, not missed
+    const seen = typeof IntersectionObserver === 'function' && target.current
+      ? new IntersectionObserver(([e]) => { if (e?.isIntersecting) { seen?.disconnect(); begin() } }, { threshold: 0.5 })
+      : null
+    if (seen && target.current) seen.observe(target.current)
+    else begin()
+    return () => { seen?.disconnect(); window.clearTimeout(start); window.clearInterval(timer.current) }
   }, [])
   return { shown, done: shown >= WORDS.length, play }
 }
 
 function AnswerDemo() {
-  const { shown, done, play } = useStream()
+  const card = useRef<HTMLElement>(null)
+  const { shown, done, play } = useStream(card)
   return (
-    <figure className="demo">
+    <figure className="demo" ref={card}>
       <figcaption className="demo-head">
         <span><i aria-hidden="true" />Biology</span>
         <span>3 files</span>
@@ -56,8 +64,8 @@ function AnswerDemo() {
             <strong>XP</strong>
             <p className="sr-only">{ANSWER}</p>
             <p aria-hidden="true">
-              {WORDS.map((w, i) => <span key={i} className={i < shown ? 'is-on' : ''}>{w} </span>)}
-              {!done && <span className="caret" />}
+              {shown === 0 && <span className="caret" />}
+              {WORDS.map((w, i) => <span key={i} className={i < shown ? 'is-on' : ''}>{w}{!done && i === shown - 1 && <span className="caret" />} </span>)}
             </p>
           </div>
         </div>
@@ -73,7 +81,7 @@ function AnswerDemo() {
       </div>
       <div className="demo-foot">
         <span>Example with sample notes</span>
-        <button type="button" onClick={play}>Replay answer</button>
+        {!reducedMotion() && <button type="button" onClick={play}>Replay answer</button>}
       </div>
     </figure>
   )
@@ -88,7 +96,7 @@ const GRADES: [string, string][] = [['Again', 'This session'], ['Hard', '1 day']
 const PROMISES: [string, string][] = [
   ['Every answer shows its source', 'The file name and the exact passage, right under the answer.'],
   ['Only you can see your files', 'Your notes stay private to your account.'],
-  ['Download or delete anything', 'One file, one subject or your whole account, any time.'],
+  ['Delete anything, any time', 'One file, one subject or your whole account. Download everything as a zip first.'],
   ['No ads. No selling data.', 'We never sell what you upload.'],
 ]
 const FAQ: [string, string][] = [
