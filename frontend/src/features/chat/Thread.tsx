@@ -22,25 +22,46 @@ function passages(chunks: SourceChunk[]) {
 
 const COMMON = new Set(['that', 'this', 'with', 'from', 'have', 'they', 'their', 'them', 'then', 'than', 'which', 'into', 'about',
   'also', 'your', 'what', 'when', 'where', 'there', 'these', 'those', 'were', 'been', 'will', 'each', 'such', 'only', 'more', 'most', 'some'])
-const words = (text: string) => new Set((text.toLowerCase().match(/[\p{L}\p{N}]{4,}/gu) ?? []).filter(w => !COMMON.has(w)))
+/** Words worth matching: 4+ letters, or any token with a digit (CO2, 6O2, 1945). */
+const words = (text: string) => new Set((text.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [])
+  .filter(w => (w.length >= 4 || (w.length >= 2 && /\d/.test(w))) && !COMMON.has(w)))
+/** Sentences, with a line break also ending one, so a heading is never glued to the text under it. */
+const sentencesOf = (passage: string) => passage.match(/[^.!?\n]+(?:[.!?]+|\n+|$)\s*/g) ?? [passage]
 
-/** The passage with the words it shares with the answer marked, so the match is visible at a glance. */
-export function markShared(passage: string, answer: string) {
+/**
+ * Index of the sentence that best supports the answer. Shared words count more when they are rare in the
+ * passage (a formula or term beats the topic word every sentence repeats), and long sentences don't win by size.
+ * Headings and fragments (under 3 words) never win. 0 when nothing matches.
+ */
+export function bestSentence(sentences: string[], answer: string) {
   const shared = words(answer)
-  return passage.split(/([\p{L}\p{N}]+)/u).map((part, i) =>
-    shared.has(part.toLowerCase()) ? <mark key={i}>{part}</mark> : part)
-}
-
-/** The passage from the sentence that shares the most words with the answer, so the short view shows the match. */
-export function fromBestSentence(passage: string, answer: string) {
-  const shared = words(answer)
-  const sentences = passage.match(/[^.!?]+[.!?]*\s*/g) ?? [passage]
-  let best = 0, bestScore = -1
-  sentences.forEach((s, i) => {
-    const score = [...words(s)].filter(w => shared.has(w)).length
+  const sets = sentences.map(words)
+  const df = new Map<string, number>()
+  sets.forEach(set => set.forEach(w => df.set(w, (df.get(w) ?? 0) + 1)))
+  let best = 0, bestScore = 0
+  sets.forEach((set, i) => {
+    if (set.size < 3) return
+    let score = 0
+    set.forEach(w => { if (shared.has(w)) score += Math.log(1 + sets.length / df.get(w)!) })
+    score /= Math.sqrt(set.size)
     if (score > bestScore) { best = i; bestScore = score }
   })
+  return best
+}
+
+/** The passage from the sentence that best supports the answer, so the short view starts at the match. */
+export function fromBestSentence(passage: string, answer: string) {
+  const sentences = sentencesOf(passage)
+  const best = bestSentence(sentences, answer)
   return best === 0 ? passage : '…' + sentences.slice(best).join('').trimStart()
+}
+
+/** The text with the supporting sentence marked as one highlight. */
+function markSentence(text: string, sentence: string) {
+  const target = sentence.trim()
+  const at = target ? text.indexOf(target) : -1
+  if (at < 0) return text
+  return <>{text.slice(0, at)}<mark>{target}</mark>{text.slice(at + target.length)}</>
 }
 
 /** The evidence for an answer: the best passage from the student's own file, right under the answer. */
@@ -49,6 +70,8 @@ function Evidence({ chunks, answer, onOpen }: { chunks: SourceChunk[]; answer: s
   const [best, ...rest] = passages(chunks)
   if (!best) return null
   const whole = best.content.trim()
+  const sentences = sentencesOf(whole)
+  const match = sentences[bestSentence(sentences, answer)]!
   const short = fromBestSentence(whole, answer)
   const long = short.length > 240 || short !== whole
   return (
@@ -57,7 +80,7 @@ function Evidence({ chunks, answer, onOpen }: { chunks: SourceChunk[]; answer: s
         <Icon name="file" size={15} />
         <span>From <strong>{fileName(best.material_name)}</strong></span>
       </figcaption>
-      <blockquote className={long && !open ? 'is-clamped' : ''}>{markShared(open ? whole : short, answer)}</blockquote>
+      <blockquote className={long && !open ? 'is-clamped' : ''}>{markSentence(open ? whole : short, match)}</blockquote>
       <div className="evidence-actions">
         {long && <button type="button" aria-expanded={open} onClick={() => setOpen(o => !o)}>{open ? 'Show less' : 'Show the whole passage'}</button>}
         {rest.length > 0 && (

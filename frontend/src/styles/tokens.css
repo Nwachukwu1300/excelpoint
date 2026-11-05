@@ -9,6 +9,7 @@
   --primary-hover: #1d4ed8;
   --ai-one: #667eea;
   --ai-two: #764ba2;
+  --ai-text: #764ba2;  /* purple text on --ai-soft (6:1); --ai-one is too light for text */
   --success: #06a77f;
   --success-soft: #e6fbf5;
   --warning: #d97706;
@@ -39,8 +40,9 @@
 }
 
 [data-theme='dark'] {
-  --primary: #3b82f6;
-  --primary-hover: #60a5fa;
+  --primary: #60a5fa;  /* text and marks: #3b82f6 was 3.4-4.1:1 on dark cards; fills use --primary-fill */
+  --primary-hover: #93c5fd;
+  --ai-text: #a5b4fc;
   --success: #06d6a0;
   --success-soft: rgb(6 214 160 / .12);
   --warning: #f59e0b;

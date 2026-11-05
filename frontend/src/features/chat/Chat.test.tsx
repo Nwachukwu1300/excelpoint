@@ -49,7 +49,7 @@ describe('XP chat', () => {
     const evidence = screen.getByRole('figure')
     expect(evidence).toHaveTextContent('From lecture4.pdf')
     expect(evidence).toHaveTextContent('A B-tree is a self-balancing search tree')
-    expect(within(evidence).getByText('search', { selector: 'mark' })).toBeInTheDocument() // a word the answer shares
+    expect(within(evidence).getByText('A B-tree is a self-balancing search tree…', { selector: 'mark' })).toBeInTheDocument() // the supporting sentence, whole
     expect(evidence).not.toHaveTextContent('part')
 
     await userEvent.click(screen.getByRole('button', { name: /Show sources/ }))
@@ -64,6 +64,14 @@ describe('XP chat', () => {
     const passage = 'Photosynthesis happens in leaves. It needs sunlight. Chlorophyll absorbs red and blue light.'
     expect(fromBestSentence(passage, 'Chlorophyll absorbs red and blue light.')).toBe('…Chlorophyll absorbs red and blue light.')
     expect(fromBestSentence(passage, 'Photosynthesis happens in leaves.')).toBe(passage)
+  })
+
+  it('prefers the sentence with the rare matching words over a long one full of topic words', async () => {
+    const { fromBestSentence } = await import('./Thread')
+    const passage = 'Photosynthesis Notes\n\nPhotosynthesis is the process plants use to turn light into chemical energy during photosynthesis in leaves. ' +
+      'The overall equation is 6CO2 + 6H2O + light energy gives C6H12O6 + 6O2.'
+    expect(fromBestSentence(passage, 'The products of photosynthesis are glucose (C6H12O6) and oxygen (6O2).'))
+      .toBe('…The overall equation is 6CO2 + 6H2O + light energy gives C6H12O6 + 6O2.')
   })
 
   it('shows the passage instead of the inline source, and opens further passages in Sources', async () => {

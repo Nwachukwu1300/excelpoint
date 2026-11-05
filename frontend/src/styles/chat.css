@@ -33,7 +33,7 @@
 .answer-footer > a:last-child { border: 0; color: var(--muted); background: transparent; text-decoration: underline; }
 .verification-note { margin-top: 10px; padding: 9px 11px; border: 1px solid color-mix(in srgb, var(--warning) 24%, var(--border)); border-radius: 6px; color: var(--warning-text); background: var(--warning-soft); font-size: var(--text-meta); }
 .not-found-answer { display: flex; gap: 10px; max-width: 90%; margin-bottom: 28px; padding: 15px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--primary-soft); }
-.info-icon { display: grid; width: 24px; height: 24px; flex: 0 0 auto; place-items: center; border-radius: 50%; color: white; background: var(--primary); font-size: var(--text-ui); font-weight: 700; }
+.info-icon { display: grid; width: 24px; height: 24px; flex: 0 0 auto; place-items: center; border-radius: 50%; color: white; background: var(--primary-fill); font-size: var(--text-ui); font-weight: 700; }
 .not-found-answer strong { font-size: var(--text-ui); }
 .not-found-answer p { margin: 5px 0 10px; color: var(--muted); font-size: var(--text-meta); line-height: 1.55; }
 .not-found-answer .button { min-height: 30px; font-size: var(--text-meta); }
