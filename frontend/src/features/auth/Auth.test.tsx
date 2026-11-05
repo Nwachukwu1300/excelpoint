@@ -90,13 +90,17 @@ describe('Landing', () => {
   it('invites visitors to sign up, and offers the app to signed-in users', async () => {
     mockApi(signedOut)
     const first = renderApp('/welcome')
-    expect(await screen.findByRole('heading', { name: 'Learn faster from your own materials' })).toBeInTheDocument()
-    expect(screen.getAllByRole('link', { name: /Sign up free|Start studying free|Create your free account/ })[0]).toHaveAttribute('href', '/register')
+    expect(await screen.findByRole('heading', { name: 'Learn faster from your own notes.', level: 1 })).toBeInTheDocument()
+    for (const link of screen.getAllByRole('link', { name: /Start studying free/ })) expect(link).toHaveAttribute('href', '/register')
+    expect(screen.getByText(/Example with sample notes/)).toBeInTheDocument() // the demo is labelled as an example
+    expect(screen.getByText(/Not in your materials/)).toBeInTheDocument()
+    expect(screen.queryByText(/5 flashcards|10 seconds/)).not.toBeInTheDocument() // no claims the product can't back
     first.unmount()
     vi.unstubAllGlobals()
     mockApi({ 'GET /api/me/': me })
     renderApp('/welcome')
-    expect(await screen.findByRole('link', { name: 'Open ExcelPoint' })).toHaveAttribute('href', '/app/')
+    for (const link of await screen.findAllByRole('link', { name: 'Open ExcelPoint' })) expect(link).toHaveAttribute('href', '/app/')
+    expect(screen.queryByRole('link', { name: /Start studying free/ })).not.toBeInTheDocument()
   })
 
   it('confirms a deleted account', async () => {

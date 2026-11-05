@@ -104,7 +104,7 @@ function AccountMenu({ me, onClose }: { me?: Me; onClose: () => void }) {
   )
 }
 
-function ThemeToggle() {
+export function ThemeToggle() {
   const { resolved, setTheme } = useTheme()
   const dark = resolved === 'dark'
   return (
