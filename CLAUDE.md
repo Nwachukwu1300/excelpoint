@@ -63,7 +63,7 @@ Motion should feel calm and fast: respect `prefers-reduced-motion`, and never an
 
 ### API used by the app
 
-- Shell and account: `GET/PATCH /api/me/` (signed out: 200 `{authenticated: false, google_sign_in}`), `POST /api/me/password/`, `POST /api/me/delete/ {confirm}`, `GET /api/me/export/` (zip), `GET /api/notifications/`, `POST /api/notifications/read/`, `POST /api/auth/{login,register,logout}/` (Google stays `/users/google/login/`).
+- Shell and account: `GET/PATCH /api/me/` (signed out: 200 `{authenticated: false, google_sign_in}`), `POST /api/me/password/`, `POST /api/me/delete/ {confirm}`, `GET /api/me/export/` (zip), `GET /api/notifications/`, `POST /api/notifications/read/`, `POST /api/auth/{login,register,logout}/` (Google stays `/users/google/login/`). Email confirmation: `POST /api/auth/verify-email/ {token}` (public, from the emailed `/app/verify-email/<token>` link) and `POST /api/me/confirm-email/` (send again); `users/verification.py` signs the link (7 days, tied to the address) and limits sends to 3 an hour per account. Students can study unconfirmed; password reset only goes to confirmed emails, and a Google sign-in can take an email from an unconfirmed account.
 - Home: `GET /api/home/`. Subjects: `/api/subjects/` (+ `summary`, `materials`, `flashcards`, `quizzes`, `upload_material`), `DELETE /api/materials/<id>/`.
 - Chat: `/api/subjects/<id>/chat/{session,sessions,messages,stream}/`; `messages` (GET and POST) and `stream` take an optional `session_id` to open or continue a past conversation.
 - Review: `GET /api/review/queue/?subject=`, `POST /api/review/grade/`.
@@ -110,7 +110,5 @@ venv/bin/python manage.py judge_answers    # optional LLM judge backlog
 ## Backlog
 
 - First real deploy: `docs/deploy-oracle.md` + `deploy/setup-server.sh` (Oracle Cloud Always Free ARM, DuckDNS, Gmail SMTP) are ready and CI builds the image for amd64 and arm64, but nothing has run on a server yet.
-- Email verification (unverified emails can block a Google sign-up, though no longer take over an account).
 - Tune the 0.3 similarity threshold with real questions (`benchmark_retrieval`).
 - Hybrid keyword + vector search.
-- Remove the legacy `QuizQuestion` / `QuizAttempt` models (needs a migration).
