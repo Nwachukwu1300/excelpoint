@@ -21,6 +21,7 @@ colors:
   warning-soft: "#fff7e6"
   danger: "#ef4444"
   danger-fill: "#dc2626"
+  danger-text: "#b91c1c"
   danger-soft: "#fef2f2"
   ink: "#1e293b"
   muted: "#5f6e82"
@@ -32,6 +33,7 @@ colors:
   primary-hover-dark: "#93c5fd"
   focus-dark: "#60a5fa"
   ai-text-dark: "#a5b4fc"
+  danger-text-dark: "#f87171"
   success-dark: "#06d6a0"
   warning-dark: "#f59e0b"
   ink-dark: "#f1f5f9"
@@ -182,14 +184,15 @@ A cool slate palette with a single confident blue and a purple gradient held bac
 - **Focus Blue** (focus / focus-dark): keyboard focus rings only.
 
 ### Secondary
-- **XP Gradient** (ai-one to ai-two, 135deg): the XP avatar tile, Ask XP and AI action buttons, the send button, AI notification icons, quiz generation progress. Never decoration.
+- **XP Gradient** (ai-one to ai-two, 135deg): the XP avatar tile, Ask XP and AI action buttons, the send button, AI notification icons, quiz generation progress. Never decoration. Where white text or an icon sits on it (buttons, send), the gradient starts at #5a67d8, because white on #667eea is only 3.7:1.
+- **Subject tiles** use teal, blue and green initials tiles; never purple, which belongs to XP.
 - **XP Violet Text** (ai-text / ai-text-dark): purple text on the XP wash. ai-one is too light for text.
 - **XP Wash** (ai-soft): background for XP-tagged badges and ranks.
 
 ### Tertiary
 - **Mint** (success, success-text, success-soft; success-dark in dark): verified answers, ready files, high confidence, right answers.
 - **Amber** (warning, warning-text, warning-soft; warning-dark in dark): pending states, unverified notes, rate-limit banners, moderate confidence.
-- **Signal Red** (danger, danger-fill, danger-soft): errors, low confidence, delete. danger-fill carries white text; danger is for text and borders.
+- **Signal Red** (danger, danger-fill, danger-text, danger-soft): errors, low confidence, delete. danger-fill carries white text; danger-text (#b91c1c, dark #f87171) is for red text; danger is for borders and marks only, since it is 3.4-3.9:1 as text.
 
 ### Neutral
 - **Slate Ink** (ink / ink-dark): all primary text.
@@ -200,7 +203,7 @@ A cool slate palette with a single confident blue and a purple gradient held bac
 - **Hover Slate** (hover / hover-dark): hover rows, the user's chat bubble, neutral badge fill, progress tracks.
 
 ### Named Rules
-**The Fill Versus Text Rule.** White text sits only on primary-fill, danger-fill or the XP gradient. A colour named for text (primary, danger, ai-text) is never a background for white text, and in dark theme primary (#60a5fa) is for text and marks only.
+**The Fill Versus Text Rule.** White text sits only on primary-fill, danger-fill or the XP gradient. A colour named for text (primary, danger-text, ai-text) is never a background for white text, and in dark theme primary (#60a5fa) is for text and marks only.
 
 **The XP Owns Purple Rule.** The gradient and the purple washes appear only where XP speaks or works: the XP avatar, Ask XP, AI actions, the composer. If a surface is not XP, it is not purple.
 
@@ -278,7 +281,7 @@ Quiet and solid; a small press (scale .97) on click.
 ### Inputs / Fields
 - **Style:** 42px tall, 1px Hairline border, 8px corners, Card White, 15px text (16px on phones).
 - **Focus:** border turns Study Blue with a 3px soft blue ring. The chat composer turns to ai-one with an XP-tinted ring.
-- **Error:** border turns danger with a 14px danger message below.
+- **Error:** border turns danger with a 14px danger-text message below.
 
 ### Navigation
 - **Sidebar:** 16px nav items, 40px tall, muted until hover. The active item is blue text on a Blue Wash pill that slides between items, with a 3px blue marker at the sidebar's edge. Focus rings sit inside (offset -2px) so the clipped nav never cuts them.
