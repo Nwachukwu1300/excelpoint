@@ -21,7 +21,7 @@ def transcription_available():
     return bool(settings.OPENAI_API_KEY) and shutil.which('ffmpeg') is not None and shutil.which('ffprobe') is not None
 
 
-def transcribe(path: str) -> str:
+def transcribe(path: str, model: str = MODEL) -> str:
     from ..utils import UnreadableFile  # utils imports this module
 
     probe = subprocess.run(['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', path],
@@ -48,7 +48,7 @@ def transcribe(path: str) -> str:
         texts = []
         for chunk in chunks:
             with open(chunk, 'rb') as audio:
-                texts.append(client.audio.transcriptions.create(model=MODEL, file=audio).text.strip())
+                texts.append(client.audio.transcriptions.create(model=model, file=audio).text.strip())
     text = '\n\n'.join(t for t in texts if t)
     if not text:
         raise UnreadableFile('No speech found in this recording.')

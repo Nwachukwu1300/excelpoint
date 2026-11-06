@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'subjects',
     'retrieval',  # Stage 1: Retrieval System Optimization
     'reasoning',  # Stage 2: Agentic Reasoning Pipeline
+    'explain',  # Explain it back
     'rest_framework',
     'rest_framework_simplejwt',
 ]
@@ -202,6 +203,7 @@ REST_FRAMEWORK = {
     # point CACHES at Redis before running multiple workers in production.
     'DEFAULT_THROTTLE_RATES': {
         'llm': os.getenv('LLM_RATE_LIMIT', '60/hour'),
+        'explain_audio': os.getenv('EXPLAIN_AUDIO_RATE_LIMIT', '90/day'),  # transcriptions, including redone recordings
     },
 }
 
@@ -321,6 +323,15 @@ REASONING_VERIFIER_TEMPERATURE = float(os.getenv('REASONING_VERIFIER_TEMPERATURE
 # Stage 3 evaluation: the LLM judge adds one call per answer, so it's opt-in
 EVAL_LLM_JUDGE = os.getenv('EVAL_LLM_JUDGE', 'False').lower() in ('1', 'true', 'yes')
 EVAL_JUDGE_MODEL = os.getenv('EVAL_JUDGE_MODEL', REASONING_LLM_MODEL)
+
+# Explain it back
+EXPLAIN_DAILY_LIMIT = int(os.getenv('EXPLAIN_DAILY_LIMIT', '30'))  # checks per student per rolling 24 hours
+EXPLAIN_MAX_ROUNDS = int(os.getenv('EXPLAIN_MAX_ROUNDS', '4'))
+EXPLAIN_TRANSCRIBE_MODEL = os.getenv('EXPLAIN_TRANSCRIBE_MODEL', 'gpt-4o-mini-transcribe')  # OpenAI's cheapest (~$0.003/min)
+# XP's spoken replies: 'browser' (free, the device's own voice) or 'openai' (XP_VOICE_MODEL + XP_VOICE_NAME)
+XP_VOICE = os.getenv('XP_VOICE', 'browser')
+XP_VOICE_MODEL = os.getenv('XP_VOICE_MODEL', 'gpt-4o-mini-tts')
+XP_VOICE_NAME = os.getenv('XP_VOICE_NAME', 'alloy')
 
 
 # Logging: app loggers to the console (Celery and runserver both capture stdout)

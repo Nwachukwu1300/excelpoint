@@ -113,6 +113,8 @@ class ReasoningSession(models.Model):
         default=dict,
         help_text="Complete ReasoningResult as JSON"
     )
+    # 'chat' traces XP's answers; 'explain' traces a check of the student's own explanation
+    kind = models.CharField(max_length=10, default='chat', db_index=True)
     subject_id = models.IntegerField(
         db_index=True,
         help_text="Subject ID that was searched"
