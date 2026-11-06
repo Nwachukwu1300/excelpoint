@@ -9,7 +9,7 @@ from django.db.models import Count, Max
 from django.urls import reverse
 from django.utils import timezone
 
-from ..models import ChatMessage, Quiz, Subject, SubjectMaterial, UserQuizAttempt
+from ..models import ChatMessage, Quiz, Subject, UserQuizAttempt
 
 WEAK_SCORE = 70  # percent
 GAP_WINDOW_DAYS = 14
@@ -77,18 +77,20 @@ def recommend(user, limit=6):
             'subject_id': subject.id, 'quiz_id': None,
         })
 
-    # 5. A ready file the student hasn't explained back yet (the newest one)
-    from explain.models import ExplainSession  # explain imports subjects
-    explained = ExplainSession.objects.filter(user=user, material__isnull=False).values('material_id')
-    fresh = (SubjectMaterial.objects.filter(subject__user=user, status='COMPLETED')
-             .exclude(id__in=explained).order_by('-created_at').first())
-    if fresh:
+    # 5. Coverage gaps: fading sections, then the biggest untouched ones, then shaky ones (at most 3)
+    from .coverage import gaps
+    titles = {'fading': 'Refresh {label}', 'not_studied': 'Start {label}', 'shaky': 'Practise {label}'}
+    reasons = {'not_studied': "Nothing from this part of {file} has come up yet. Explain it to XP or take a quick quiz on it."}
+    ready = Subject.objects.filter(user=user, materials__status='COMPLETED').distinct()
+    for rank, gap in enumerate(gaps(user, ready)):
         recs.append({
-            'kind': 'explain_back', 'priority': 25,
-            'title': f"Explain {fresh.display_name} back to XP",
-            'reason': "Saying it in your own words shows what you really know. XP checks each point against the file.",
-            'url': reverse('subject_detail', args=[fresh.subject_id]),
-            'subject_id': fresh.subject_id, 'quiz_id': None, 'material_id': fresh.id,
+            'kind': 'coverage_gap', 'status': gap['status'],
+            # Fading and untouched parts outrank everything else (weak quizzes top out at 110)
+            'priority': {'fading': 130, 'not_studied': 120, 'shaky': 36}[gap['status']] - rank,
+            'title': titles[gap['status']].format(label=gap['label']),
+            'reason': reasons.get(gap['status'], gap['reason']).format(file=gap['file']),
+            'url': reverse('subject_detail', args=[gap['subject_id']]),
+            'subject_id': gap['subject_id'], 'quiz_id': None, 'section_id': gap['id'],
         })
 
     # 6. Subjects with nothing uploaded yet

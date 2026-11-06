@@ -20,7 +20,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import RedirectView
 from subjects.views import create_subject, upload_material
-from subjects import app_api as subjects_app_api, quiz_api
+from subjects import app_api as subjects_app_api, coverage_api, quiz_api
 from reasoning import app_api as reasoning_app_api
 from explain import api as explain_api
 from users import api as users_api, auth_api
@@ -57,6 +57,9 @@ urlpatterns = [
     path('api/explain/<int:session_id>/transcribe/', explain_api.transcribe, name='api_explain_transcribe'),
     path('api/explain/<int:session_id>/finish/', explain_api.finish, name='api_explain_finish'),
     path('api/explain/turns/<int:turn_id>/speech/', explain_api.speech, name='api_explain_speech'),
+    path('api/subjects/<int:subject_id>/coverage/', coverage_api.subject_map, name='api_coverage'),
+    path('api/sections/<int:section_id>/', coverage_api.section_detail, name='api_section'),
+    path('api/sections/<int:section_id>/quiz/', coverage_api.section_quiz, name='api_section_quiz'),
     path('api/notifications/', users_api.notifications, name='api_notifications'),
     path('api/notifications/read/', users_api.mark_notifications_read, name='api_notifications_read'),
     path('api/', include('subjects.urls')),

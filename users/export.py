@@ -9,6 +9,7 @@ import zipfile
 from django.core.serializers.json import DjangoJSONEncoder
 
 from subjects.models import ChatSession, FlashcardReview, UserQuizAttempt
+from subjects.services.coverage import subject_coverage
 from .models import UserProfile
 
 
@@ -55,6 +56,11 @@ def build_export(user):
     with zipfile.ZipFile(out, 'w', zipfile.ZIP_DEFLATED) as zf:
         for subject in user.subjects.order_by('name').prefetch_related('materials__chunks', 'flashcards'):
             folder = f'files/{subject.id}-{_safe(subject.name)}'
+            coverage = subject_coverage(user, subject)
+            sections = {}
+            for f in coverage['files']:
+                sections[f['id']] = [{'name': s['title'], 'range': s['range'], 'status': s['status'].replace('_', ' '),
+                                      'why': s['reason']} for s in f['sections']]
             materials = []
             for m in subject.materials.order_by('created_at'):
                 path = f'{folder}/{m.id}-{_safe(m.display_name)}' if m.file else None
@@ -66,11 +72,11 @@ def build_export(user):
                         path = None  # the stored file is gone; its text and summary are still exported
                 materials.append({
                     'name': m.display_name, 'type': m.file_type, 'status': m.status, 'uploaded': m.created_at,
-                    'file_in_zip': path, 'summary': m.summary,
+                    'file_in_zip': path, 'summary': m.summary, 'coverage_sections': sections.get(m.id, []),
                     'text': '\n\n'.join(c.content for c in sorted(m.chunks.all(), key=lambda c: c.chunk_index)),
                 })
             data['subjects'].append({
-                'name': subject.name, 'created': subject.created_at, 'files': materials,
+                'name': subject.name, 'created': subject.created_at, 'studied_percent': coverage['percent'], 'files': materials,
                 'flashcards': [
                     {'question': f.question, 'answer': f.answer,
                      'next_review': reviews[f.id].due_at if f.id in reviews else None}
@@ -79,7 +85,7 @@ def build_export(user):
             })
         zf.writestr('data.json', json.dumps(data, cls=DjangoJSONEncoder, indent=2, ensure_ascii=False))
         zf.writestr('README.txt', 'Your ExcelPoint data.\n\ndata.json: your account, subjects, file text and summaries, '
-                                  'flashcards, quiz results, XP conversations, Explain it back sessions (as text; recordings are never kept) '
+                                  'flashcards, quiz results, Coverage map sections and statuses, XP conversations, Explain it back sessions (as text; recordings are never kept) '
                                   'and notifications.\n'
                                   'files/: the files you uploaded, one folder per subject.\n')
     out.seek(0)
