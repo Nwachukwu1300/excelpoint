@@ -44,6 +44,7 @@ Get a visitor to sign up and upload their first file. Every section should push 
 - XP answers only from that subject's files, shows the source passage, and checks each statement against it.
 - Flashcards: Again, Hard, Good, Easy. On a new card, Hard comes back in 1 day, Good in 3, Easy in 7.
 - Quizzes can be saved and resumed, and you can ask for fresh questions.
+- Coverage map: each subject shows the % of its material studied and every section of every file as Not studied, Shaky, Solid or Fading, with a reason and one-tap ways to study any gap.
 - Explain it back: explain a topic by voice (30 seconds to 3 minutes) or by typing; each sentence is marked Correct, Not quite or Not in your notes, with the passage; XP lists key points you missed, replies briefly out loud, and ends with what you got right, what to fix and what you missed. Up to 30 checks a day. Recordings are never kept, only the text.
 - Works on phones and in light and dark themes.
 - Download all your data as a zip, or delete any file, subject, chat or the whole account.

@@ -55,6 +55,7 @@ Motion should feel calm and fast: respect `prefers-reduced-motion`, and never an
 | `subjects/` | Core: subjects, materials, chunks (pgvector), chat (`services/rag_service.py`), quizzes, flashcards + SM-2 (`services/spaced_repetition.py`), suggestions (`services/recommendations.py`), Celery tasks (`tasks.py`) |
 | `reasoning/` | Answer pipeline: rewrite (follow-ups only), retrieve, generate (streamable), verify, retry, confidence; traces (`ReasoningSession`), evaluations, judge, Insights + trace API (`app_api.py`) |
 | `retrieval/` | Retrieval pipeline, embeddings, reranking, metrics, benchmark (`benchmark.py`) |
+| `subjects/` coverage | Coverage map: `Section` model (a file's chapters, page groups or time ranges), built by `services/sections.py` at processing; statuses worked out live in `services/coverage.py`; API in `coverage_api.py` |
 | `explain/` | Explain it back: sessions and turns, the check (`service.py`, one JSON call marking each statement correct / wrong / not in notes), transcription of short clips, XP's voice (`voice.py`, `XP_VOICE`) |
 | `users/` | Custom User, Google OAuth, notifications (`Notification`), settings, change password |
 | `config/` | Settings, URLs, Celery (`celery.py`, beat schedule in settings) |
@@ -70,6 +71,7 @@ Motion should feel calm and fast: respect `prefers-reduced-motion`, and never an
 - Review: `GET /api/review/queue/?subject=`, `POST /api/review/grade/`.
 - Quizzes: `POST /api/quiz/<id>/attempts/ {fresh}`, `GET /api/quiz/attempts/` (history), `GET /api/quiz/attempts/<id>/` (status + questions without answers), `POST …/submit/`, `GET …/results/` (`subjects/quiz_api.py`). A failed fresh-question job stores `dynamic_questions = []`.
 - Insights: `GET /api/reasoning/insights/?days=7|30|90`, `GET /api/reasoning/sessions/<uuid>/trace/`. Explain checks are traces with `kind='explain'`: listed and traced, but left out of the quality numbers.
+- Coverage: `GET /api/subjects/<id>/coverage/` (%, sentence, counts, files with sections; files without sections queue `build_material_sections`), `GET /api/sections/<id>/` (status, reason, joined text), `POST /api/sections/<id>/quiz/` (5 fresh questions from that section), `GET /api/review/queue/?section=<id>` (all its cards), and `{section_id}` on the explain start. Thresholds are constants at the top of `services/coverage.py`.
 - Explain it back: `GET/POST /api/subjects/<id>/explain/` (files, summary topics, history; start with `{topic}` or `{material_id}`, or get `{covered: false, suggestions}`), `GET/DELETE /api/explain/<id>/`, `POST …/transcribe/` (multipart `audio`, not kept), `POST …/turns/ {text, mode}` (one check; 429 with `resets_at` past `EXPLAIN_DAILY_LIMIT`), `POST …/finish/`, `GET /api/explain/turns/<id>/speech/` (204 = the browser speaks). Settings: `EXPLAIN_DAILY_LIMIT` (30 per 24 h), `EXPLAIN_MAX_ROUNDS` (4), `EXPLAIN_TRANSCRIBE_MODEL` (`gpt-4o-mini-transcribe`), `XP_VOICE` (`browser` or `openai`, with `XP_VOICE_MODEL`, `XP_VOICE_NAME`), `EXPLAIN_AUDIO_RATE_LIMIT`.
 
 ## Deployment
@@ -107,6 +109,7 @@ venv/bin/python manage.py judge_answers    # optional LLM judge backlog
 
 - Fixed the original bugs: quiz FK, Whisper import, OAuth (state check, open redirect, verified email), IDOR in the APIs, S3 handling, secrets moved to env, test discovery.
 - Completed all 5 stages of `docs/stages.md`: retrieval (pgvector + HNSW, benchmark); reasoning pipeline; evaluation (heuristic + optional judge, quality API); observability (AI Insights pages, traces, JSON logs); workflows (upload chord → flashcards, quiz and summary + notification, SM-2 review, reminders, suggestions).
+- Coverage map (Nov 2026): sections per file, live statuses, the subject headline and Coverage tab, the section sheet, Today gap suggestions (replacing the file-level explain suggestion), export and Privacy.
 - Explain it back (Nov 2026): `explain/` app, the app pages in `frontend/src/features/explain/`, a subject Explain tab, Today entry points, traces in Insights, export, Privacy and landing sections.
 - Streaming answers, LLM rate limit, consistent verifier, confidence fixes, background dynamic quizzes, change-password fix, ~1,300 lines of dead code removed, frontend tests repaired (108 then; the new app has 59).
 

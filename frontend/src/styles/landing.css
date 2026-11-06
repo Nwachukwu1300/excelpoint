@@ -83,6 +83,12 @@
 .trust-promises h3 { font-size: 17px; font-weight: 700; }
 .trust-promises p { margin: 6px 0 0; color: var(--muted); font-size: 15px; line-height: 1.55; }
 
+.art-coverage { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; align-content: center; }
+.art-coverage i { height: 22px; border: 1px solid var(--border); border-radius: 4px; }
+.art-coverage i:nth-child(1), .art-coverage i:nth-child(4) { border-color: var(--success); background: color-mix(in srgb, var(--success) 45%, var(--card)); }
+.art-coverage i:nth-child(2) { border-color: var(--warning); background: repeating-linear-gradient(135deg, var(--warning-soft) 0 3px, color-mix(in srgb, var(--warning) 35%, var(--card)) 3px 5px); }
+.art-coverage i:nth-child(3) { background: var(--success-soft); }
+.art-coverage i:nth-child(5), .art-coverage i:nth-child(6) { border-style: dashed; border-color: var(--muted); }
 .landing-explain { padding-bottom: 0; } /* the FAQ below brings its own top space */
 .landing-explain > div:first-child p + p { margin-top: 16px; }
 .explain-verdicts { display: grid; gap: 10px; margin: 20px 0 0; padding: 0; list-style: none; font-size: 16px; line-height: 1.55; }
@@ -98,7 +104,7 @@
 .demo-marks .is-wrong { background: color-mix(in srgb, var(--danger-soft) 70%, var(--card)); }
 .demo-marks .is-wrong b { background: var(--danger-soft); color: var(--danger-text); }
 .landing-lede { margin: 16px 0 0; color: var(--muted); font-size: 18px; line-height: 1.6; }
-.landing-outputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-top: 40px; }
+.landing-outputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(196px, 1fr)); gap: 16px; margin-top: 40px; }
 .landing-outputs article { padding: 22px; border: 1px solid var(--border); border-radius: 12px; background: var(--background); }
 .landing-outputs h3 { margin-top: 18px; font-size: 19px; font-weight: 700; }
 .landing-outputs p { margin: 6px 0 0; color: var(--muted); font-size: 15px; line-height: 1.55; }
@@ -114,7 +120,7 @@
 .art-card span:first-child { inset: 14px 30px 0 22px; background: var(--hover); rotate: -4deg; }
 .art-card span:last-child { display: grid; inset: 6px 22px 8px 30px; place-items: center; padding: 0 10px; background: var(--card); font-size: var(--text-meta); font-weight: 600; text-align: center; }
 .art-quiz { display: flex; flex-direction: column; gap: 6px; padding: 10px 14px; font-size: 12px; }
-.art-quiz span { padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; color: var(--muted); }
+.art-quiz span { overflow: hidden; padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; color: var(--muted); text-overflow: ellipsis; white-space: nowrap; }
 .art-quiz .is-picked { border-color: var(--primary); color: var(--text); }
 .art-chat { display: flex; align-items: flex-start; gap: 10px; padding: 12px; }
 .art-chat > span:last-child { display: flex; flex: 1; flex-direction: column; gap: 7px; padding-top: 4px; }

@@ -302,6 +302,12 @@ Directly under each XP answer: a bordered Card White figure (8px corners, 12px 1
 - **Statement marks:** one 8px card per sentence the student said, with a badge first: success "Correct", danger "Not quite" (a mistake, the one place red marks content rather than an error), neutral "Not in your notes". Correct and Not quite cards take a soft tint of their badge colour; there are no side bars. Each card with evidence carries the Answer Evidence block, highlighting the deciding words.
 - **Summary:** two progress rings (covered, accurate) in a 12px hero card, then "What you nailed", "What to fix", "What you missed" and "Not in your notes".
 
+### Coverage map
+- **Statuses never rely on colour alone.** Each badge has a label and an icon: Solid (success, check), Shaky (warning, alert triangle), Fading (neutral, clock), Not studied (neutral, no icon). The small squares in a file's strip and the legend differ in shape too: filled (solid), striped (shaky), pale with a dot (fading), dashed outline (not studied).
+- **Hero:** a 12px card with the progress ring ("studied"), the headline at 20px and the sentence, then the legend with counts.
+- **Files:** 8px cards; the header row is a 44px+ button that opens the file's sections as rows (title, range, status badge). Subjects with more than 4 files start with every file closed.
+- **Section sheet:** the Modal (a bottom sheet on phones) with the status badge, title, range and file, a "Why is this …?" link that opens the reason, the section text in the Answer Evidence block, and three actions: Study N flashcards (secondary, hidden when there are none), Quiz this section (secondary) and Explain it to XP (AI).
+
 ## Do's and Don'ts
 
 ### Do:

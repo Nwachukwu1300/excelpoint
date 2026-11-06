@@ -12,9 +12,10 @@ Free while in beta. [Product brief](https://claude.ai/artifact/76HBvLPusaVo8TZEc
 - **Uploads:** PDF, Word (.docx), audio (MP3, WAV, M4A) and video (MP4, MOV, AVI), up to 100 MB; recordings up to 3 hours. Broken or unsupported files are refused with a reason, and a notification arrives when processing finishes or fails.
 - **XP chat:** answers only from that subject's files, streams the answer, shows its sources, and marks whether every statement was checked against them. "How was this answered?" explains the answer in plain words.
 - **Explain it back:** pick a topic from your file summaries, a whole file, or type your own (XP suggests close topics if your files don't cover it). Explain it by voice (30 seconds to 3 minutes, with a timer) or by typing, check and fix what XP heard, then XP marks every sentence **Correct**, **Not quite** (with the passage that shows the right answer) or **Not in your notes** (never wrong just because the notes are silent), and lists key points you missed. XP replies in a short spoken message: one thing you got right, one correction, one question. After up to 4 rounds you get a summary with coverage and accuracy, saved in the subject so you can see if you improve. Recordings are never kept, only the text.
+- **Coverage map:** each subject shows how much of its material you've studied ("You've studied 62% of Biology. Chapter 4 hasn't come up yet."). Files are split into sections (Word headings, PDF chapters or page groups, or 10-minute stretches of a recording), each marked **Not studied**, **Shaky**, **Solid** or **Fading** with a label and icon, and a "Why is this shaky?" reason. Any section opens to its text and three ways to study it: its flashcards, a 5-question quiz on just that section, or explaining it to XP.
 - **Flashcards:** spaced repetition (SM-2, the method Anki uses). On a new card, Hard comes back in 1 day, Good in 3 and Easy in 7.
 - **Quizzes:** one per file, fresh questions on request, explained results, and "Save & exit" to resume later.
-- **Today page:** cards to review, ranked next steps (including a file to explain back), recent conversations and a shortcut to Explain it back.
+- **Today page:** cards to review, ranked next steps (fading and untouched parts of your files first), recent conversations and a shortcut to Explain it back.
 - **Insights:** answer quality over time, and a full trace for each answer and each Explain it back check.
 - **Account:** email and password (with an emailed reset link) or Google sign-in, light and dark themes, download all your data as a zip, delete any file, subject, chat, Explain it back session or the whole account.
 
@@ -38,6 +39,17 @@ After an upload, a Celery worker reads the file (python-docx for Word, pypdf for
 3. Each check is **one AI call** in JSON mode: it splits the explanation into statements, marks each against the passages (the session's passages plus the closest ones to what was said), tracks which key points are covered, and writes XP's reply (under about 20 seconds, no citations read aloud). The server drops any mark whose passage XP didn't actually have, so every "Correct" or "Not quite" shows real evidence.
 4. XP's reply is spoken by the device's own voice (`XP_VOICE=browser`, free) or by OpenAI (`XP_VOICE=openai`, with `XP_VOICE_MODEL` and `XP_VOICE_NAME`).
 5. Each check is saved as a trace (`kind='explain'`) that opens in Insights, but it is left out of XP's answer-quality numbers. Each student gets 30 checks per rolling 24 hours (`EXPLAIN_DAILY_LIMIT`), and transcriptions and spoken replies have their own cap (`EXPLAIN_AUDIO_RATE_LIMIT`).
+
+## How the Coverage map works
+
+1. When a file is processed, its passages are grouped into sections (at most 15): Word `Heading 1`/`Heading 2`, a PDF's chapter bookmarks or else page groups, or 10-minute ranges of a recording (estimated from position in the transcript, since the transcription model gives no timestamps). Sections without a heading are named by one small AI call per file. Files processed before the map existed get sections the first time their map is opened.
+2. Each flashcard and quiz question is linked to the section of its closest passage (local embeddings, no AI call). Explain it back marks already point at a passage.
+3. Statuses are worked out live from reviews, quiz answers and explanations, so nothing extra is stored:
+   - **Not studied:** nothing has touched it.
+   - **Shaky:** the latest explanation of it had a mistake, a card was last rated Again or Hard, under 70% of its last 5 quiz answers were right, or it was only right once.
+   - **Solid:** right on 2 or more separate occasions (a correct explanation counts as 2).
+   - **Fading:** would be solid, but untouched for 21 days or one of its cards is more than a day overdue.
+4. The % is weighted by section length. Today suggests fading parts first, then the biggest untouched ones, then shaky ones.
 
 | Tool | Where |
 | --- | --- |

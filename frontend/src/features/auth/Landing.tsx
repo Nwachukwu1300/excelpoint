@@ -109,6 +109,7 @@ const FAQ: [string, string][] = [
   ['Is it free?', 'Yes. ExcelPoint is free while it is in beta (early testing). You do not need a credit card.'],
   ['What files work?', 'PDF and Word (.docx) notes, audio (MP3, WAV, M4A) and video (MP4, MOV, AVI). Each file can be up to 100 MB, and recordings up to 3 hours. Scanned PDFs (pictures of text) do not work yet.'],
   ['Where do my files go?', 'We store them privately in your account. To write answers, we send their text and recordings to OpenAI. OpenAI says it does not train its models on this data.'],
+  ['How do I know what I still need to study?', 'Each subject has a Coverage map. It splits your files into sections, like chapters or parts of a lecture, and shows which you’ve got solid, which are shaky, which are fading and which you haven’t touched yet. Tap any gap to quiz it, review its flashcards or explain it to XP.'],
   ['Can I practise out loud?', 'Yes. With Explain it back, you explain a topic by speaking or typing, and XP checks each sentence against your notes. Your recording is turned into text and then deleted. Only the text is kept. You can do up to 30 checks a day.'],
   ['Can I delete my data?', 'Yes, any time. Delete one file, a subject, a chat or your whole account. You can also download everything as a zip first.'],
 ]
@@ -189,8 +190,8 @@ export function Landing() {
 
         <section className="landing-band">
           <div className="landing-wrap">
-            <h2>One file. Four ways to study it.</h2>
-            <p className="landing-lede">Every upload makes all four in the background. You get a notification when they are ready.</p>
+            <h2>One file. Five ways to study it.</h2>
+            <p className="landing-lede">Every upload makes all five in the background. You get a notification when they are ready.</p>
             <div className="landing-outputs">
               <article>
                 <div className="output-art art-summary" aria-hidden="true"><i /><i /><i /><i /></div>
@@ -206,6 +207,11 @@ export function Landing() {
                 <div className="output-art art-quiz" aria-hidden="true"><b>Question 3 of 10</b><span className="is-picked">Thylakoid membrane</span><span>Stroma</span></div>
                 <h3>A quiz</h3>
                 <p>Save and finish later, or ask for fresh questions.</p>
+              </article>
+              <article>
+                <div className="output-art art-coverage" aria-hidden="true"><i /><i /><i /><i /><i /><i /></div>
+                <h3>A coverage map</h3>
+                <p>See which parts of the file you’ve studied, and what to study next.</p>
               </article>
               <article>
                 <div className="output-art art-chat" aria-hidden="true"><XpAvatar small /><span><i /><i /><mark /></span></div>

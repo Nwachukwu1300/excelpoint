@@ -111,6 +111,8 @@ describe('Landing', () => {
     expect(within(marks).getAllByRole('listitem').map(li => li.querySelector('b')?.textContent)).toEqual(['Correct', 'Not quite', 'Not in your notes'])
     expect(screen.getByText(/XP never marks you wrong for that/)).toBeInTheDocument()
     expect(screen.getByText(/Your recording is turned into text and then deleted/)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'One file. Five ways to study it.' })).toBeInTheDocument()
+    expect(screen.getByText(/Each subject has a Coverage map/)).toBeInTheDocument()
   })
 
   it('confirms a deleted account', async () => {
@@ -128,6 +130,7 @@ describe('Landing', () => {
     expect(screen.getByText(/text of your files and your questions is sent to OpenAI/)).toBeInTheDocument()
     expect(screen.getByText(/recordings are sent to OpenAI to be turned into text/)).toBeInTheDocument()
     expect(screen.getByText(/When you explain a topic out loud, the recording is sent to OpenAI/)).toBeInTheDocument()
+    expect(screen.getByText(/Deleting a file also removes its sections from your Coverage map/)).toBeInTheDocument()
     expect(screen.getByText(/Delete account removes your account/)).toBeInTheDocument()
     expect(screen.getByText(/does not use data sent through its API to train/)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'mnfinance664@gmail.com' })).toHaveAttribute('href', 'mailto:mnfinance664@gmail.com')

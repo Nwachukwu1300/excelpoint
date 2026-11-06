@@ -35,6 +35,7 @@ General chatbots cannot truthfully claim the first half. Flashcard and quiz apps
   - asking XP while studying;
   - taking and resuming quizzes;
   - explaining a topic back to XP, out loud or typed, and seeing each statement marked against their notes;
+  - checking the Coverage map to see which parts of their files are solid, shaky, fading or not studied, and studying a gap straight from it;
   - "How was this answered?" to check an answer.
 - **Devices:** phones and laptops, in light and dark themes.
 
@@ -42,6 +43,7 @@ General chatbots cannot truthfully claim the first half. Flashcard and quiz apps
 
 - **Grounding:** XP replies "Not in your materials", with no AI call, when nothing in the subject's files is close enough. Answers stream in with their source passages and a check of each statement.
 - **Explain it back:** the student explains a topic or file; XP marks each statement Correct, Not quite (with the passage that shows the right answer) or Not in your notes (never wrong just because the notes are silent), lists key points they missed, replies in under 20 seconds of speech, and ends with coverage and accuracy. Only the transcript is kept, never the recording.
+- **Coverage map:** one number and one sentence per subject ("You've studied 62% of Biology. Chapter 4 hasn't come up yet.") and every section of every file marked Not studied, Shaky, Solid or Fading, always with a label and icon, never colour alone. Explain it back is the strongest signal. The map is worked out from what the student did, so it updates as soon as they study.
 - **Background work:** processing runs in the background, and the student gets a notification when a file is ready or can't be read, with the reason.
 - **Account:** password reset by email, Google sign-in when configured, download all data as a zip, and delete any file, subject, conversation or the whole account.
 - **Price:** free while in beta, with no credit card. Pricing after the beta is undecided.
