@@ -11,12 +11,13 @@ import { Button, Skeleton, buttonClass, type Tone, XpAvatar } from '../../ui/pri
 import '../../styles/home.css'
 
 type Suggestion = {
-  kind: 'weak_quiz' | 'untried_quiz' | 'knowledge_gap' | 'empty_subject'
+  kind: 'weak_quiz' | 'untried_quiz' | 'knowledge_gap' | 'empty_subject' | 'explain_back'
   title: string
   reason: string
   url: string
   subject_id: number
   quiz_id: number | null
+  material_id?: number | null
 }
 type Home = {
   due: { count: number; subjects: number; minutes: number }
@@ -32,6 +33,7 @@ const inApp = (s: Suggestion): string | null =>
   s.kind === 'weak_quiz' ? `/quizzes/${s.quiz_id}/start?fresh=1` // a retake asks new questions
     : s.kind === 'untried_quiz' ? `/quizzes/${s.quiz_id}/start`
     : s.kind === 'knowledge_gap' || s.kind === 'empty_subject' ? `/subjects/${s.subject_id}?upload=1`
+    : s.kind === 'explain_back' ? `/subjects/${s.subject_id}/explain?file=${s.material_id}`
     : null
 
 const ACTIONS: Record<Suggestion['kind'], { label: string; tone: Tone }> = {
@@ -39,6 +41,7 @@ const ACTIONS: Record<Suggestion['kind'], { label: string; tone: Tone }> = {
   knowledge_gap: { label: 'Upload', tone: 'ai' },
   untried_quiz: { label: 'Start quiz', tone: 'success' },
   empty_subject: { label: 'Upload', tone: 'neutral' },
+  explain_back: { label: 'Explain it', tone: 'ai' },
 }
 
 export function greeting(hour = new Date().getHours()) {
@@ -217,6 +220,26 @@ export function Today() {
           </div>
 
           <aside className="today-side">
+            {data.subjects.some(s => s.materials_count > 0) && (
+              <section className="conversations-card">
+                <div className="section-heading">
+                  <div>
+                    <h2>Explain it back</h2>
+                    <p>Explain a topic in your own words and XP checks it against your files.</p>
+                  </div>
+                </div>
+                {data.subjects.filter(s => s.materials_count > 0).slice(0, 3).map(s => (
+                  <Link className="conversation-row" key={s.id} to={`/subjects/${s.id}/explain`}>
+                    <SubjectIcon id={s.id} name={s.name} />
+                    <div>
+                      <strong>{s.name}</strong>
+                      <span>Pick a topic to explain</span>
+                    </div>
+                    <Icon name="chevronRight" size={14} />
+                  </Link>
+                ))}
+              </section>
+            )}
             <section className="conversations-card">
               <div className="section-heading">
                 <div>

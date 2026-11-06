@@ -38,6 +38,7 @@ export const routes: RouteObject[] = [
       { path: 'quizzes/:quizId/start', ...page(() => import('./features/quizzes/StartQuiz').then(m => ({ default: m.StartQuiz }))), handle: { title: 'Quiz', focus: true } satisfies RouteHandle },
       { path: 'quiz-attempts/:attemptId', ...page(() => import('./features/quizzes/TakeQuiz').then(m => ({ default: m.TakeQuiz }))), handle: { title: 'Quiz', focus: true } satisfies RouteHandle },
       { path: 'quiz-attempts/:attemptId/results', ...page(() => import('./features/quizzes/QuizResults').then(m => ({ default: m.QuizResults }))), handle: { title: 'Quiz results' } },
+      { path: 'subjects/:subjectId/explain/:sessionId?', ...page(() => import('./features/explain/ExplainPage').then(m => ({ default: m.ExplainPage }))), handle: { title: subjectTitle } satisfies RouteHandle },
       { path: 'subjects/:subjectId/chat/:sessionId?', ...page(() => import('./features/chat/ChatPage').then(m => ({ default: m.ChatPage }))), handle: { title: subjectTitle, fullBleed: true } satisfies RouteHandle },
     ],
   },

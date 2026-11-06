@@ -40,7 +40,18 @@ describe('Today', () => {
     expect(within(screen.getByRole('link', { name: /Maths\s*0 files/ })).getByText('—')).toBeInTheDocument()
 
     expect(screen.getByRole('link', { name: /B-tree indexes explained/ })).toHaveAttribute('href', '/subjects/3/chat/5')
+    // Explain it back: one card per subject with files, and no card for a subject without any
+    expect(screen.getByRole('link', { name: /Database Systems\s*Pick a topic to explain/ })).toHaveAttribute('href', '/subjects/3/explain')
+    expect(screen.queryByRole('link', { name: /Maths\s*Pick a topic/ })).not.toBeInTheDocument()
     expect(screen.queryByText('New to ExcelPoint?')).not.toBeInTheDocument()
+  })
+
+  it('links an explain suggestion straight to that file', async () => {
+    const explain = { kind: 'explain_back', title: 'Explain sql.pdf back to XP', reason: 'Saying it in your own words…', url: '/subjects/3/', subject_id: 3, quiz_id: null, material_id: 11 }
+    mockApi({ 'GET /api/me/': me, 'GET /api/home/': { ...home, suggestions: [explain] } })
+    renderApp('/')
+    const item = (await screen.findByText('Explain sql.pdf back to XP')).closest('article')!
+    expect(within(item).getByRole('link', { name: 'Explain it' })).toHaveAttribute('href', '/subjects/3/explain?file=11')
   })
 
   it('welcomes a brand-new user instead of showing empty numbers', async () => {

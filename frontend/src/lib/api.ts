@@ -46,11 +46,33 @@ export async function upload<T>(path: string, form: FormData): Promise<T> {
     body: form,
   })
   const data = await response.json().catch(() => null)
-  if (!response.ok) {
-    const fieldError = data && typeof data === 'object' ? Object.values(data as Record<string, unknown>).flat()[0] : null
-    throw new ApiError(response.status, typeof fieldError === 'string' ? fieldError : `Upload failed (${response.status})`, data)
-  }
+  if (!response.ok) throw uploadError(response.status, data)
   return data as T
+}
+
+/** The first message in an error body: {detail} or the first field error. */
+function uploadError(status: number, data: unknown) {
+  const message = data && typeof data === 'object' ? Object.values(data as Record<string, unknown>).flat()[0] : null
+  return new ApiError(status, typeof message === 'string' ? message : `Upload failed (${status})`, data)
+}
+
+/** upload() with progress (0 to 1), for slow connections. fetch can't report upload progress, so this uses XHR. */
+export function uploadWithProgress<T>(path: string, form: FormData, onProgress: (fraction: number) => void): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+    xhr.open('POST', path)
+    xhr.setRequestHeader('Accept', 'application/json')
+    xhr.setRequestHeader('X-CSRFToken', csrfToken())
+    xhr.upload.onprogress = e => { if (e.lengthComputable) onProgress(e.loaded / e.total) }
+    xhr.onload = () => {
+      let data: unknown = null
+      try { data = JSON.parse(xhr.responseText) } catch { /* not JSON */ }
+      if (xhr.status >= 200 && xhr.status < 300) resolve(data as T)
+      else reject(uploadError(xhr.status, data))
+    }
+    xhr.onerror = () => reject(new ApiError(0, 'The recording didn’t send. Check your connection and try again.'))
+    xhr.send(form)
+  })
 }
 
 export const loginUrl = () => `/app/login?next=${encodeURIComponent(location.pathname + location.search)}`

@@ -65,7 +65,7 @@ function markSentence(text: string, sentence: string) {
 }
 
 /** The evidence for an answer: the best passage from the student's own file, right under the answer. */
-function Evidence({ chunks, answer, onOpen }: { chunks: SourceChunk[]; answer: string; onOpen: (c: SourceChunk) => void }) {
+export function Evidence({ chunks, answer, onOpen }: { chunks: SourceChunk[]; answer: string; onOpen: (c: SourceChunk) => void }) {
   const [open, setOpen] = useState(false)
   const [best, ...rest] = passages(chunks)
   if (!best) return null

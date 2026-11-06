@@ -13,11 +13,12 @@ import { useDeleteSubject, useMaterials, useSubjects } from './api'
 import { FlashcardsTab } from './FlashcardsTab'
 import { MaterialsTab } from './MaterialsTab'
 import { QuizzesTab } from './QuizzesTab'
+import { ExplainTab } from '../explain/ExplainTab'
 import { NewSubjectModal } from './NewSubjectModal'
 import { UploadModal } from './UploadModal'
 import '../../styles/subjects.css'
 
-const TABS = ['materials', 'quizzes', 'flashcards'] as const
+const TABS = ['materials', 'quizzes', 'flashcards', 'explain'] as const
 type Tab = (typeof TABS)[number]
 
 export function SubjectWorkspace() {
@@ -88,6 +89,7 @@ export function SubjectWorkspace() {
           )}
         </div>
         <div className="workspace-actions">
+          {filesReady && <Link className={buttonClass('secondary')} to={`/subjects/${id}/explain`}><Icon name="mic" />Explain it back</Link>}
           <Link className={buttonClass(filesReady ? 'ai' : 'secondary')} to={`/subjects/${id}/chat`}><Icon name="sparkles" />Ask XP</Link>
           {subject && <MoreMenu label={`More actions for ${subject.name}`} items={[{ label: 'Rename subject', onSelect: () => setRenaming(true) }, { label: 'Delete subject', danger: true, onSelect: () => setDeleting(true) }]} />}
         </div>
@@ -97,6 +99,7 @@ export function SubjectWorkspace() {
         {tabButton('materials', 'Files')}
         {tabButton('quizzes', 'Quizzes')}
         {tabButton('flashcards', 'Flashcards', subject?.due_count)}
+        {tabButton('explain', 'Explain')}
       </div>
 
       <motion.section
@@ -110,6 +113,7 @@ export function SubjectWorkspace() {
         {tab === 'materials' && <MaterialsTab subjectId={id} onUpload={() => setUploading(true)} onQuizzes={() => setTab('quizzes')} />}
         {tab === 'quizzes' && <QuizzesTab subjectId={id} />}
         {tab === 'flashcards' && <FlashcardsTab subjectId={id} dueCount={subject?.due_count ?? 0} />}
+        {tab === 'explain' && <ExplainTab subjectId={id} />}
       </motion.section>
 
       {subject && <NewSubjectModal key={`${subject.id}-${subject.name}`} open={renaming} onClose={() => setRenaming(false)} subject={subject} />}

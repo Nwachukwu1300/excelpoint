@@ -46,7 +46,7 @@ def _session(s, full=True):
     if full:
         turns = list(s.turns.all())
         data.update({
-            'subject_name': s.subject.name, 'material_name': s.material.display_name if s.material else None,
+            'subject_name': s.subject.name, 'material_id': s.material_id, 'material_name': s.material.display_name if s.material else None,
             'key_points': s.key_points, 'turns': [_turn(t) for t in turns], 'voice': voice.provider(),
             'max_rounds': settings.EXPLAIN_MAX_ROUNDS, 'summary': service.summary(s) if s.finished else None,
             'limit': _limit(s.user),

@@ -1,7 +1,7 @@
 import type { ReactNode } from "react"
 
 // Icon set ported verbatim from the Figma Make prototype (Lucide-style strokes).
-export type IconName = "home" | "book" | "repeat" | "chart" | "user" | "bell" | "sun" | "moon" | "chevronDown" | "chevronRight" | "plus" | "panel" | "upload" | "file" | "sparkles" | "arrow" | "more" | "search" | "close" | "check" | "clock" | "layers" | "play" | "settings" | "lock" | "logout" | "trash"
+export type IconName = "home" | "book" | "repeat" | "chart" | "user" | "bell" | "sun" | "moon" | "chevronDown" | "chevronRight" | "plus" | "panel" | "upload" | "file" | "sparkles" | "arrow" | "more" | "search" | "close" | "check" | "clock" | "layers" | "play" | "settings" | "lock" | "logout" | "trash" | "mic" | "stop" | "volume" | "volumeOff"
 
 const iconPaths: Record<IconName, ReactNode> = {
   home: (
@@ -92,6 +92,25 @@ const iconPaths: Record<IconName, ReactNode> = {
   ),
   close: <path d="m6 6 12 12M18 6 6 18" />,
   trash: <path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" />,
+  mic: (
+    <>
+      <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+      <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3" />
+    </>
+  ),
+  stop: <rect x="6" y="6" width="12" height="12" rx="2" />,
+  volume: (
+    <>
+      <path d="M11 5 6 9H2v6h4l5 4V5Z" />
+      <path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14" />
+    </>
+  ),
+  volumeOff: (
+    <>
+      <path d="M11 5 6 9H2v6h4l5 4V5Z" />
+      <path d="m22 9-6 6M16 9l6 6" />
+    </>
+  ),
   check: <path d="m5 12 4 4L19 6" />,
   clock: (
     <>
