@@ -14,7 +14,7 @@ from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle
 
 from reasoning.models import ReasoningSession
-from subjects.models import Subject
+from subjects.models import Section, Subject
 
 from . import service, voice
 from .models import ExplainSession, ExplainTurn
@@ -79,15 +79,20 @@ def subject_sessions(request, subject_id):
         })
 
     topic = str(request.data.get('topic') or '').strip()
-    material = None
-    if request.data.get('material_id'):
+    material = section = None
+    if request.data.get('section_id'):
+        section = Section.objects.filter(id=request.data.get('section_id'), material__subject=subject,
+                                         material__status='COMPLETED').select_related('material').first()
+        if section is None:
+            raise ValidationError({'section_id': "This part of your notes isn't ready, or its file was deleted."})
+    elif request.data.get('material_id'):
         material = service.ready_files(subject).filter(id=request.data.get('material_id')).first()
         if material is None:
             raise ValidationError({'material_id': "This file isn't ready, or it was deleted."})
     elif not 3 <= len(topic) <= 200:
         raise ValidationError({'topic': 'Type a topic of 3 to 200 characters.'})
     try:
-        session = service.start(request.user, subject, topic=topic, material=material)
+        session = service.start(request.user, subject, topic=topic, material=material, section=section)
     except service.NotReady:
         return Response({'detail': NO_FILES}, status=status.HTTP_409_CONFLICT)
     if session is None:

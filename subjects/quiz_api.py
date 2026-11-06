@@ -21,8 +21,8 @@ def _material_name(quiz):
     return quiz.material.display_name if quiz.material else None
 
 
-def _quiz_info(quiz):
-    return {'id': quiz.id, 'title': quiz.title, 'material_name': _material_name(quiz), 'subject_id': quiz.subject_id,
+def _quiz_info(quiz, section=None):
+    return {'section': section.title if section else None,'id': quiz.id, 'title': quiz.title, 'material_name': _material_name(quiz), 'subject_id': quiz.subject_id,
             'subject_name': quiz.subject.name, 'time_limit': quiz.time_limit, 'pass_score': quiz.pass_score}
 
 
@@ -30,7 +30,7 @@ def _attempt_payload(attempt):
     state = attempt_status(attempt)
     return {
         'id': attempt.id, 'status': state, 'fresh': attempt.uses_dynamic_questions,
-        'started_at': attempt.start_time, 'quiz': _quiz_info(attempt.quiz),
+        'started_at': attempt.start_time, 'quiz': _quiz_info(attempt.quiz, attempt.section),
         'questions': public_questions(attempt) if state == 'ready' else [],
     }
 
@@ -44,7 +44,7 @@ MISSING_QUIZ = "This quiz doesn't exist, or it was deleted."
 
 
 def _own_attempt(request, attempt_id):
-    attempt = (UserQuizAttempt.objects.select_related('quiz__subject', 'quiz__material')
+    attempt = (UserQuizAttempt.objects.select_related('quiz__subject', 'quiz__material', 'section')
                .filter(id=attempt_id, user=request.user).first())
     if attempt is None:
         raise NotFound(MISSING_QUIZ)  # not Django's "No UserQuizAttempt matches the given query."
@@ -100,7 +100,7 @@ def submit_attempt(request, attempt_id):
 def _results_payload(attempt):
     rows = add_sources(attempt, review(attempt))
     return {
-        'id': attempt.id, 'quiz': _quiz_info(attempt.quiz), 'fresh': attempt.uses_dynamic_questions,
+        'id': attempt.id, 'quiz': _quiz_info(attempt.quiz, attempt.section), 'fresh': attempt.uses_dynamic_questions,
         'score': round(attempt.score or 0), 'passed': attempt.is_passed(),
         'earned_points': attempt.earned_points, 'total_points': attempt.total_points,
         'correct_count': sum(r['is_correct'] for r in rows), 'question_count': len(rows),

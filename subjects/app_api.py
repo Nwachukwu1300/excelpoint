@@ -10,7 +10,7 @@ from rest_framework.decorators import api_view
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
-from .models import ChatSession, Flashcard, FlashcardReview, Subject, UserQuizAttempt
+from .models import ChatSession, Flashcard, FlashcardReview, Section, Subject, UserQuizAttempt
 from .services.recommendations import recommend
 from .services.spaced_repetition import REVIEW_GRADES, due_cards, preview_intervals, record_review
 
@@ -54,7 +54,7 @@ def home(request):
     return Response({
         'due': {'count': count, 'subjects': len(due), 'minutes': math.ceil(count * SECONDS_PER_CARD / 60)},
         'suggestions': [
-            {k: r.get(k) for k in ('kind', 'title', 'reason', 'url', 'subject_id', 'quiz_id', 'material_id')}
+            {k: r.get(k) for k in ('kind', 'status', 'title', 'reason', 'url', 'subject_id', 'quiz_id', 'section_id')}
             for r in recommend(user, limit=5)
         ],
         'recent_chats': [
@@ -68,19 +68,28 @@ def home(request):
 
 @api_view(['GET'])
 def review_queue(request):
-    """Cards due now (one subject with ?subject=<id>, otherwise all), each with how long every grade would push it back."""
+    """Cards due now (one subject with ?subject=<id>, otherwise all), each with how long every grade would push it back.
+    ?section=<id> instead gives every card from one section, due or not: the student chose to practise it."""
     user = request.user
-    subject = None
+    subject = section = None
+    if request.GET.get('section'):
+        if not request.GET['section'].isdigit():
+            raise ValidationError({'section': 'Must be a section id.'})
+        section = get_object_or_404(Section.objects.select_related('material__subject'), id=int(request.GET['section']),
+                                    material__subject__user=user)
+        subject = section.material.subject
     if request.GET.get('subject'):
         if not request.GET['subject'].isdigit():
             raise ValidationError({'subject': 'Must be a subject id.'})
         subject = get_object_or_404(Subject, id=int(request.GET['subject']), user=user)
-    due = due_cards(user, subject).select_related('subject', 'material')
+    due = (Flashcard.objects.filter(section=section).order_by('id') if section
+           else due_cards(user, subject)).select_related('subject', 'material')
     cards = list(due[:REVIEW_BATCH])
     reviews = {r.flashcard_id: r for r in FlashcardReview.objects.filter(user=user, flashcard__in=cards)}
     return Response({
         'due_count': due.count(),
         'subject': {'id': subject.id, 'name': subject.name} if subject else None,
+        'section': {'id': section.id, 'title': section.title} if section else None,
         'grades': [{'grade': g, 'label': label} for g, label in REVIEW_GRADES],
         'cards': [
             {

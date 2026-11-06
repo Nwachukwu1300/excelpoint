@@ -216,6 +216,22 @@ def material_ready(results, material_id: int):
     return {'made': made, 'failed': failed}
 
 
+def _add_sections(attempt, material, questions):
+    """Record which section each fresh question tests, so its answer counts toward the Coverage map."""
+    if attempt.section_id:
+        for q in questions:
+            q['section_id'] = attempt.section_id
+        return
+    try:
+        from .services.sections import nearest_sections
+        texts = [' '.join([q['text'], q.get('explanation', '')] + [c['text'] for c in q.get('choices', []) if c.get('is_correct')]
+                          + list(q.get('correct_answers', []))) for q in questions]
+        for q, section in zip(questions, nearest_sections(material, texts)):
+            q['section_id'] = section.id if section else None
+    except Exception:
+        logger.exception(f"Linking fresh questions to sections failed for attempt {attempt.id}")
+
+
 def _build_sections(material):
     from .services.sections import build_sections
     try:
@@ -468,7 +484,10 @@ def generate_dynamic_quiz_questions(self, attempt_id, num_questions=10):
         logger.info(f"Generating dynamic questions for attempt {attempt_id}")
         
         # Get text content from processed content chunks instead of raw file
-        content_chunks = ContentChunk.objects.filter(material=material)
+        content_chunks = ContentChunk.objects.filter(material=material).order_by('chunk_index')
+        if attempt.section:  # a section quiz asks only about that section
+            content_chunks = content_chunks.filter(chunk_index__gte=attempt.section.first_chunk,
+                                                   chunk_index__lte=attempt.section.last_chunk)
         
         if not content_chunks.exists():
             logger.warning(f"No content chunks found for material {material.id}, falling back to file processing")
@@ -542,6 +561,8 @@ def generate_dynamic_quiz_questions(self, attempt_id, num_questions=10):
             
             formatted_questions.append(formatted_question)
         
+        _add_sections(attempt, material, formatted_questions)
+
         # Store questions in the attempt
         attempt.dynamic_questions = formatted_questions
         attempt.uses_dynamic_questions = True  # Mark this attempt as using dynamic questions

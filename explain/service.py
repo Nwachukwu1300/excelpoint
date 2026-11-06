@@ -42,12 +42,15 @@ def _embed(texts):
     return load_embedding_model().encode(texts)
 
 
-def search(text, subject_id, top_k, material_id=None):
+def search(text, subject_id, top_k, material_id=None, section=None):
     """The subject's chunks closest to text, as passage dicts with a similarity score."""
     chunks = ContentChunk.objects.filter(material__subject_id=subject_id, material__status='COMPLETED',
                                          embedding_vector__isnull=False)
     if material_id:
         chunks = chunks.filter(material_id=material_id)
+    if section:
+        chunks = chunks.filter(material_id=section.material_id, chunk_index__gte=section.first_chunk,
+                               chunk_index__lte=section.last_chunk)
     vector = [float(x) for x in _embed(text)]
     with transaction.atomic():
         with transaction.get_connection().cursor() as cursor:
@@ -88,11 +91,15 @@ def close_topics(subject, topic, limit=4):
     return [candidates[i] for i in np.argsort(-scores)[:limit]]
 
 
-def start(user, subject, topic='', material=None):
+def start(user, subject, topic='', material=None, section=None):
     """A new session, or None when the topic isn't in the student's files."""
     if not ready_files(subject).exists():
         raise NotReady
-    if material:
+    if section:
+        # A section from the Coverage map: its own passages, closest to its name first
+        topic, material = section.title, section.material
+        passages = search(topic, subject.id, TOPIC_PASSAGES, section=section)
+    elif material:
         topic = material.display_name
         # A file's summary says what the file is about; search within that file only
         passages = search(material.summary or topic, subject.id, TOPIC_PASSAGES, material_id=material.id)
@@ -100,7 +107,8 @@ def start(user, subject, topic='', material=None):
         passages = [p for p in search(topic, subject.id, TOPIC_PASSAGES) if p['similarity'] >= THRESHOLD]
     if not passages:
         return None
-    return ExplainSession.objects.create(user=user, subject=subject, material=material, topic=topic[:200], passages=passages)
+    return ExplainSession.objects.create(user=user, subject=subject, material=material, section=section, topic=topic[:200],
+                                         passages=passages)
 
 
 def checks_today(user):
