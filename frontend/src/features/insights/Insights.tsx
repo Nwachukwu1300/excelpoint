@@ -94,7 +94,7 @@ export function Insights() {
           <Skeleton className="skeleton-chart" />
         </div>
       )}
-      {!loading && data && t && t.sessions + data.not_found === 0 && (
+      {!loading && data && t && t.sessions + data.not_found === 0 && data.recent.length === 0 && (
         <div className="empty-state">
           <span className="empty-icon"><Icon name="chart" /></span>
           <h2>No questions yet</h2>
@@ -102,8 +102,9 @@ export function Insights() {
           <Link className={buttonClass('secondary')} to="/subjects">Go to subjects</Link>
         </div>
       )}
-      {!loading && data && t && t.sessions + data.not_found > 0 && (
+      {!loading && data && t && (t.sessions + data.not_found > 0 || data.recent.length > 0) && (
         <>
+          {t.sessions + data.not_found > 0 && <>
           <div className="stats-grid stats-grid--three">
             <Metric label="Questions asked" value={<CountUp value={t.sessions + data.not_found} />} note={`In the last ${days} days`} />
             <Metric label="Answered from your files" value={<CountUp value={t.sessions - t.no_context} />}
@@ -158,6 +159,7 @@ export function Insights() {
               </motion.div>
             ))}
           </section>
+          </>}
           <section className="recent-answers">
             <div className="card-heading"><div><h2>Recent answers</h2><p>Your latest questions and whether each answer was checked</p></div></div>
             <div className="table-wrap">

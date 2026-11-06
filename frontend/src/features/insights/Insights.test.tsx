@@ -51,7 +51,7 @@ describe('Insights', () => {
   })
 
   it('explains what will appear before any questions are asked', async () => {
-    mockApi({ 'GET /api/me/': me, 'GET /api/reasoning/insights/?days=30': { ...insights, not_found: 0, summary: { ...insights.summary, totals: { ...metrics, sessions: 0 } } } })
+    mockApi({ 'GET /api/me/': me, 'GET /api/reasoning/insights/?days=30': { ...insights, not_found: 0, recent: [], summary: { ...insights.summary, totals: { ...metrics, sessions: 0 } } } })
     renderApp('/insights')
     expect(await screen.findByRole('heading', { name: 'No questions yet' })).toBeInTheDocument()
   })
@@ -76,6 +76,18 @@ describe('Insights', () => {
     expect(screen.getByText('Not enabled')).toBeInTheDocument() // no LLM judge row
   })
 
+  it('lists Explain it back checks even before any question to XP', async () => {
+    const none = { ...metrics, sessions: 0, no_context: 0, unverified: 0 }
+    mockApi({ 'GET /api/me/': me, 'GET /api/reasoning/insights/?days=30': {
+      ...insights, not_found: 0, summary: { ...insights.summary, totals: none, failures: [] },
+      recent: [{ ...insights.recent[0]!, kind: 'explain', category: 'Explain it back' }],
+    } })
+    renderApp('/insights')
+    expect(await screen.findByRole('link', { name: 'How it was checked' })).toHaveAttribute('href', '/insights/def')
+    expect(screen.queryByText('No questions yet')).not.toBeInTheDocument()
+    expect(screen.queryByText('Questions asked')).not.toBeInTheDocument() // the numbers are about XP's answers
+  })
+
   it('shows an Explain it back check with each statement marked', async () => {
     const passage = { chunk_id: 1, material_name: 'lecture4.pdf', chunk_index: 0, content: 'A B-tree is a self-balancing search tree.' }
     mockApi({
@@ -94,7 +106,7 @@ describe('Insights', () => {
     expect(await screen.findByRole('link', { name: /Back to the session/ })).toHaveAttribute('href', '/subjects/3/explain/7')
     expect(screen.getByText(/Explain it back: B-tree index/)).toBeInTheDocument()
     const plain = screen.getByRole('region', { name: 'In short' })
-    expect(within(plain).getByText('1 of 2 statements matched your notes, 0 didn’t, and 1 aren’t covered by your notes.')).toBeInTheDocument()
+    expect(within(plain).getByText('1 of 2 statements matched your notes, 0 didn’t, and 1 isn’t covered by your notes.')).toBeInTheDocument()
     expect(screen.getByText('Not in your notes')).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Retries' })).not.toBeInTheDocument()
   })

@@ -264,7 +264,7 @@ function SessionView({ subjectId, sessionId }: { subjectId: number; sessionId: n
   const toggleMute = () => { const next = !muted; setMuted(next); saveMuted(next); if (next) stopSpeaking() }
   const busy = stage.name === 'sending' || stage.name === 'hearing' || stage.name === 'checking'
   const prompt = data.turns.length === 0
-    ? `Explain ${data.topic} as if you were teaching it. Aim for 30 seconds to 3 minutes.`
+    ? `Explain ${data.material_name ? `the main ideas in ${data.topic}` : data.topic} as if you were teaching it. Aim for 30 seconds to 3 minutes.`
     : 'Answer XP’s question, or add anything you missed.'
 
   return (

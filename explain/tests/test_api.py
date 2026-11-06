@@ -58,7 +58,8 @@ class ExplainApiTest(TestCase):
         self.subject = Subject.objects.create(user=self.user, name='Databases')
         self.material = SubjectMaterial.objects.create(
             subject=self.subject, file='subject_materials/indexes.pdf', original_name='indexes.pdf', file_type='PDF',
-            status='COMPLETED', summary='Intro line.\n- **B-tree index** keeps keys sorted.\n- **Hash index** maps keys to buckets.')
+            status='COMPLETED', summary='Intro line.\n- **B-tree index** keeps keys sorted.\n- **Hash index** maps keys to buckets.\n'
+                                        '- all leaves sit at the same depth.\n- **b-tree index** again.')
         ContentChunk.objects.create(material=self.material, content=TREE, chunk_index=0, embedding_vector=vec(1, 0))
         ContentChunk.objects.create(material=self.material, content=HASH, chunk_index=1, embedding_vector=vec(0, 1))
 
@@ -73,7 +74,7 @@ class ExplainApiTest(TestCase):
         data = self.client.get(f'/api/subjects/{self.subject.id}/explain/').json()
         self.assertTrue(data['files_ready'])
         self.assertEqual(data['files'], [{'id': self.material.id, 'name': 'indexes.pdf'}])
-        self.assertEqual(data['topics'], ['B-tree index', 'Hash index'])
+        self.assertEqual(data['topics'], ['B-tree index', 'Hash index', 'All leaves sit at the same depth'])  # deduped, capitalised
         self.assertEqual([s['topic'] for s in data['sessions']], ['B-trees'])
         self.assertEqual(data['limit']['used'], 0)
 
@@ -88,7 +89,7 @@ class ExplainApiTest(TestCase):
         r = self.start(topic='Photosynthesis')
         self.assertEqual(r.status_code, 200)
         self.assertFalse(r.json()['covered'])
-        self.assertEqual(set(r.json()['suggestions']), {'B-tree index', 'Hash index'})
+        self.assertEqual(set(r.json()['suggestions']), {'B-tree index', 'Hash index', 'All leaves sit at the same depth'})
         self.assertFalse(ExplainSession.objects.exists())
 
     def test_a_file_starts_a_session_named_after_it(self, _):

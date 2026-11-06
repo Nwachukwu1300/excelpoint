@@ -117,4 +117,5 @@
   .explain-rings .progress-ring::before { width: 64px; height: 64px; }
   .explain-actions .button { flex: 1; }
   .explain-history a { flex-wrap: wrap; }
+  .explain-mark-head { flex-direction: column; gap: 6px; }
 }

@@ -70,6 +70,7 @@ def summary_topics(materials, limit=None):
             text = re.sub(r'[*_`]', '', text).strip().rstrip('.:')
             if len(text) > 70:
                 text = text[:70].rsplit(' ', 1)[0]
+            text = text[:1].upper() + text[1:]
             if len(text) >= 3 and text.lower() not in seen:
                 seen.add(text.lower())
                 topics.append(text)

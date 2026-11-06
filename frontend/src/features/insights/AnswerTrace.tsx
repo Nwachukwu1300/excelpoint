@@ -260,7 +260,7 @@ function ExplainSummary({ t }: { t: Trace }) {
       <ul>
         <li>XP checked what you said against {plural(t.chunks.length, 'part')} of {files.join(', ') || 'your files'}.</li>
         {marks.length > 0
-          ? <li>{n('correct')} of {plural(marks.length, 'statement')} matched your notes, {n('wrong')} didn’t, and {n('not_in_notes')} aren’t covered by your notes.</li>
+          ? <li>{n('correct')} of {plural(marks.length, 'statement')} matched your notes, {n('wrong')} didn’t, and {n('not_in_notes')} {n('not_in_notes') === 1 ? 'isn’t' : 'aren’t'} covered by your notes.</li>
           : <li>{t.category === 'question' ? 'You asked a question, so XP answered it from your notes.' : 'This message wasn’t about the topic, so nothing was marked.'}</li>}
         <li>It took {(t.total_ms / 1000).toFixed(1)} seconds.</li>
       </ul>

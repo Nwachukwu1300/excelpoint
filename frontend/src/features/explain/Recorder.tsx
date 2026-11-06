@@ -111,7 +111,7 @@ export function Recorder({ onTake, onType, prompt }: { onTake: (take: Take) => v
           <p>{help.text}</p>
         </div>
       ) : (
-        <p className="recorder-prompt" aria-live="polite">{recording ? 'Listening. Tap stop when you’ve finished.' : prompt}</p>
+        <p className="recorder-prompt" aria-live="polite">{recording ? 'Listening. Tap stop when you’ve finished.' : state === 'starting' ? 'Allow microphone access when your browser asks.' : prompt}</p>
       )}
       <button
         type="button"
