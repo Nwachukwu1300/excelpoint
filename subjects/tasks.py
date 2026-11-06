@@ -65,6 +65,7 @@ def process_material(material_id: int):
         material.save()
         
         logger.info(f"Successfully processed material {material.file.name} with {len(chunks_data)} chunks")
+        _build_sections(material)  # so the Coverage map shows the file as Not studied straight away
         
         # Study-material workflow: flashcards, quiz and summary run in parallel,
         # then material_ready fires once with all three results
@@ -207,7 +208,28 @@ def material_ready(results, material_id: int):
         f"{name} is ready to study" if made else f"Couldn't prepare study aids for {name}",
         body=body, url=f"/subjects/{material.subject_id}/",
     )
+    try:
+        from .services.sections import link_items
+        link_items(material)  # the new flashcards and quiz questions join their sections
+    except Exception:
+        logger.exception(f"Linking study aids to sections failed for material {material_id}")
     return {'made': made, 'failed': failed}
+
+
+def _build_sections(material):
+    from .services.sections import build_sections
+    try:
+        build_sections(material)
+    except Exception:
+        logger.exception(f"Building sections failed for material {material.id}")  # the map retries when opened
+
+
+@shared_task
+def build_material_sections(material_id: int):
+    """Sections for a file processed before the Coverage map existed (or whose first build failed)."""
+    material = SubjectMaterial.objects.filter(id=material_id, status='COMPLETED').first()
+    if material:
+        _build_sections(material)
 
 
 @shared_task(bind=True, max_retries=3, time_limit=300)  # 5 minute timeout

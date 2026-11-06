@@ -8,6 +8,7 @@ class ExplainSession(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='explain_sessions')
     subject = models.ForeignKey('subjects.Subject', on_delete=models.CASCADE, related_name='explain_sessions')
     material = models.ForeignKey('subjects.SubjectMaterial', on_delete=models.SET_NULL, null=True, blank=True)
+    section = models.ForeignKey('subjects.Section', on_delete=models.SET_NULL, null=True, blank=True)
     topic = models.CharField(max_length=200)
     # The passages found for the topic at the start: [{chunk_id, material_id, material_name, chunk_index, content}]
     passages = models.JSONField(default=list)

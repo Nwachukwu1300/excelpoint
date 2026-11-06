@@ -165,6 +165,28 @@ class ContentChunk(models.Model):
         self.embedding_status = 'failed'
         self.save(update_fields=['embedding_vector', 'embedding_status', 'updated_at'])
 
+class Section(models.Model):
+    """A part of a file a student would recognise (a chapter, a page range or a stretch of a recording).
+    It covers passages first_chunk to last_chunk (chunk_index, inclusive); the Coverage map is built from these."""
+    KINDS = (('heading', 'Heading'), ('pages', 'Pages'), ('time', 'Time range'), ('part', 'Part'), ('whole', 'Whole file'))
+
+    material = models.ForeignKey(SubjectMaterial, on_delete=models.CASCADE, related_name='sections')
+    order = models.PositiveIntegerField()
+    title = models.CharField(max_length=120)
+    kind = models.CharField(max_length=10, choices=KINDS)
+    start = models.FloatField(null=True, blank=True)  # first page, or seconds into a recording
+    end = models.FloatField(null=True, blank=True)
+    first_chunk = models.IntegerField()
+    last_chunk = models.IntegerField()
+
+    class Meta:
+        ordering = ['material_id', 'order']
+        unique_together = ['material', 'order']
+
+    def __str__(self):
+        return f'{self.material_id}/{self.order}: {self.title}'
+
+
 class Flashcard(models.Model):
     """Simple flashcard for memorization and review.
     
@@ -173,6 +195,7 @@ class Flashcard(models.Model):
     """
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='flashcards')
     material = models.ForeignKey(SubjectMaterial, on_delete=models.CASCADE, related_name='flashcards', null=True, blank=True)
+    section = models.ForeignKey(Section, on_delete=models.SET_NULL, related_name='flashcards', null=True, blank=True)
     question = models.TextField()
     answer = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
@@ -228,6 +251,7 @@ class Question(models.Model):
     )
     
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name='questions')
+    section = models.ForeignKey(Section, on_delete=models.SET_NULL, related_name='questions', null=True, blank=True)
     text = models.TextField()
     question_type = models.CharField(max_length=20, choices=QUESTION_TYPES)
     points = models.IntegerField(default=1)
@@ -281,6 +305,8 @@ class UserQuizAttempt(models.Model):
     """
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='quiz_attempts')
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name='attempts')
+    section = models.ForeignKey(Section, on_delete=models.SET_NULL, null=True, blank=True, related_name='attempts',
+                                help_text="Fresh questions from this section only")
     start_time = models.DateTimeField(auto_now_add=True)
     end_time = models.DateTimeField(null=True, blank=True)
     score = models.FloatField(null=True, blank=True)
