@@ -9,7 +9,7 @@ from django.db.models import Count, Max
 from django.urls import reverse
 from django.utils import timezone
 
-from ..models import ChatMessage, Quiz, Subject, UserQuizAttempt
+from ..models import ChatMessage, Quiz, Subject, SubjectMaterial, UserQuizAttempt
 
 WEAK_SCORE = 70  # percent
 GAP_WINDOW_DAYS = 14
@@ -77,7 +77,21 @@ def recommend(user, limit=6):
             'subject_id': subject.id, 'quiz_id': None,
         })
 
-    # 5. Subjects with nothing uploaded yet
+    # 5. A ready file the student hasn't explained back yet (the newest one)
+    from explain.models import ExplainSession  # explain imports subjects
+    explained = ExplainSession.objects.filter(user=user, material__isnull=False).values('material_id')
+    fresh = (SubjectMaterial.objects.filter(subject__user=user, status='COMPLETED')
+             .exclude(id__in=explained).order_by('-created_at').first())
+    if fresh:
+        recs.append({
+            'kind': 'explain_back', 'priority': 25,
+            'title': f"Explain {fresh.display_name} back to XP",
+            'reason': "Saying it in your own words shows what you really know. XP checks each point against the file.",
+            'url': reverse('subject_detail', args=[fresh.subject_id]),
+            'subject_id': fresh.subject_id, 'quiz_id': None, 'material_id': fresh.id,
+        })
+
+    # 6. Subjects with nothing uploaded yet
     for subject in Subject.objects.filter(user=user).annotate(n=Count('materials')).filter(n=0)[:2]:
         recs.append({
             'kind': 'empty_subject', 'priority': 20,

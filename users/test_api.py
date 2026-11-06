@@ -381,6 +381,11 @@ class ExportDataTest(TestCase):
         chat = ChatSession.objects.create(user=self.user, subject=subject, title='Light')
         ChatMessage.objects.create(session=chat, role='user', content='What does chlorophyll absorb?')
         Subject.objects.create(user=other, name='Not mine')
+        from explain.models import ExplainSession, ExplainTurn
+        explained = ExplainSession.objects.create(user=self.user, subject=subject, topic='Light', accuracy=0.5)
+        ExplainTurn.objects.create(session=explained, mode='voice', student_text='Chlorophyll absorbs green.', reply='Not quite.',
+                                   marks=[{'sentence': 'Chlorophyll absorbs green.', 'verdict': 'wrong', 'note': 'It absorbs red.'}])
+        ExplainSession.objects.create(user=other, subject=Subject.objects.get(name='Not mine'), topic='Theirs')
 
     def test_zip_has_my_data_and_files_only(self):
         import io
@@ -400,6 +405,9 @@ class ExportDataTest(TestCase):
         self.assertTrue(all('..' not in n.split('/') and not n.startswith('/') for n in zf.namelist()))
         self.assertEqual(data['subjects'][0]['flashcards'][0]['question'], 'What does chlorophyll absorb?')
         self.assertEqual(data['conversations'][0]['messages'][0]['text'], 'What does chlorophyll absorb?')
+        self.assertEqual([s['topic'] for s in data['explain_it_back']], ['Light'])
+        turn = data['explain_it_back'][0]['turns'][0]
+        self.assertEqual((turn['mode'], turn['you_said'], turn['marks'][0]['note']), ('voice', 'Chlorophyll absorbs green.', 'It absorbs red.'))
 
     def test_signed_out_cannot_export(self):
         self.assertEqual(self.client.get('/api/me/export/').status_code, 403)

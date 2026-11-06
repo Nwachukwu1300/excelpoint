@@ -29,13 +29,26 @@ class RecommendationTest(TestCase):
 
         recs = recommend(self.user, limit=20)
         # due cards aren't a suggestion: Home's review card covers them
-        self.assertEqual([r['kind'] for r in recs], ['weak_quiz', 'knowledge_gap', 'untried_quiz', 'empty_subject'])
+        self.assertEqual([r['kind'] for r in recs], ['weak_quiz', 'knowledge_gap', 'untried_quiz', 'explain_back', 'empty_subject'])
         by_kind = {r['kind']: r for r in recs}
         self.assertIn('40%', by_kind['weak_quiz']['reason'])
         self.assertIn('B-tree', by_kind['knowledge_gap']['reason'])
         self.assertIn('XP found nothing in your files for 1 recent question', by_kind['knowledge_gap']['reason'])
+        self.assertEqual((by_kind['explain_back']['title'], by_kind['explain_back']['material_id']),
+                         ('Explain sql.pdf back to XP', self.material.id))
+
+    def test_explain_back_suggests_the_newest_file_not_explained_yet(self):
+        from explain.models import ExplainSession
+        newer = SubjectMaterial.objects.create(subject=self.db, file='subject_materials/joins.pdf', file_type='PDF', status='COMPLETED')
+        SubjectMaterial.objects.create(subject=self.db, file='subject_materials/draft.pdf', file_type='PDF', status='PROCESSING')
+        ExplainSession.objects.create(user=self.user, subject=self.db, topic='typed topic')  # no file: hides nothing
+        self.assertEqual(recommend(self.user)[0]['material_id'], newer.id)
+        ExplainSession.objects.create(user=self.user, subject=self.db, material=newer, topic='joins.pdf')
+        self.assertEqual(recommend(self.user)[0]['material_id'], self.material.id)
 
     def test_good_scores_and_answered_questions_are_quiet(self):
+        from explain.models import ExplainSession
+        ExplainSession.objects.create(user=self.user, subject=self.db, material=self.material, topic='sql.pdf')
         quiz = Quiz.objects.create(subject=self.db, material=self.material, title='Good')
         UserQuizAttempt.objects.create(user=self.user, quiz=quiz, is_completed=True, score=90, end_time=timezone.now())
         session = ChatSession.objects.create(user=self.user, subject=self.db)
@@ -44,12 +57,17 @@ class RecommendationTest(TestCase):
         self.assertEqual(self.kinds(), [])
 
     def test_other_users_data_is_ignored(self):
+        from explain.models import ExplainSession
+        ExplainSession.objects.create(user=self.user, subject=self.db, material=self.material, topic='sql.pdf')
         other = get_user_model().objects.create_user('x', password='p')
-        Flashcard.objects.create(subject=Subject.objects.create(user=other, name='Theirs'), question='q', answer='a')
+        theirs = Subject.objects.create(user=other, name='Theirs')
+        Flashcard.objects.create(subject=theirs, question='q', answer='a')
+        SubjectMaterial.objects.create(subject=theirs, file='subject_materials/t.pdf', file_type='PDF', status='COMPLETED')
         self.assertEqual(self.kinds(), [])
 
     def test_home_api_shows_suggestions(self):
         Subject.objects.create(user=self.user, name='Maths')
         self.client.force_login(self.user)
-        titles = [s['title'] for s in self.client.get('/api/home/').json()['suggestions']]
-        self.assertEqual(titles, ['Upload your first file to Maths'])
+        suggestions = self.client.get('/api/home/').json()['suggestions']
+        self.assertEqual([s['title'] for s in suggestions], ['Explain sql.pdf back to XP', 'Upload your first file to Maths'])
+        self.assertEqual((suggestions[0]['material_id'], suggestions[1]['material_id']), (self.material.id, None))

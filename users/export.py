@@ -37,6 +37,14 @@ def build_export(user):
              'messages': [{'role': m.role, 'text': m.content, 'at': m.timestamp} for m in s.messages.order_by('timestamp')]}
             for s in ChatSession.objects.filter(user=user).select_related('subject').order_by('created_at')
         ],
+        'explain_it_back': [
+            {'subject': s.subject.name, 'topic': s.topic, 'started': s.created_at, 'finished': s.finished_at,
+             'coverage': s.coverage, 'accuracy': s.accuracy,
+             'turns': [{'mode': t.mode, 'you_said': t.student_text, 'xp_replied': t.reply, 'xp_answer': t.answer,
+                        'marks': [{'statement': m['sentence'], 'verdict': m['verdict'], 'note': m.get('note', '')} for m in t.marks],
+                        'at': t.created_at} for t in s.turns.all()]}
+            for s in user.explain_sessions.select_related('subject').prefetch_related('turns').order_by('created_at')
+        ],
         'notifications': [
             {'title': n.title, 'body': n.body, 'at': n.created_at, 'read': n.read_at is not None}
             for n in user.notifications.order_by('created_at')
@@ -71,7 +79,8 @@ def build_export(user):
             })
         zf.writestr('data.json', json.dumps(data, cls=DjangoJSONEncoder, indent=2, ensure_ascii=False))
         zf.writestr('README.txt', 'Your ExcelPoint data.\n\ndata.json: your account, subjects, file text and summaries, '
-                                  'flashcards, quiz results, XP conversations and notifications.\n'
+                                  'flashcards, quiz results, XP conversations, Explain it back sessions (as text; recordings are never kept) '
+                                  'and notifications.\n'
                                   'files/: the files you uploaded, one folder per subject.\n')
     out.seek(0)
     return out

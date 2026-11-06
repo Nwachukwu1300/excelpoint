@@ -103,7 +103,8 @@ def _avg(field, evaluator):
 
 def quality_summary(sessions, days=30, failure_limit=20):
     """Dashboard data for a queryset of ReasoningSessions: totals, daily trends, failures, retrieval."""
-    sessions = sessions.filter(created_at__gte=timezone.now() - timedelta(days=days))
+    # Explain it back checks grade the student, not XP's answers, so they stay out of these numbers
+    sessions = sessions.filter(kind='chat', created_at__gte=timezone.now() - timedelta(days=days))
     answered = Q(retrieved_chunk_count__gt=0)
     metrics = dict(
         sessions=Count('id', distinct=True),

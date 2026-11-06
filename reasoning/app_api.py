@@ -40,7 +40,9 @@ def insights(request):
     for s in sessions.prefetch_related('evaluations').order_by('-created_at')[:20]:
         recent.append({
             'session_id': str(s.session_id), 'question': s.original_query, 'subject_name': names.get(s.subject_id, ''),
-            'category': 'Follow-up' if _is_follow_up(s) else 'Standalone', 'chunks': s.retrieved_chunk_count,
+            'kind': s.kind,
+            'category': 'Explain it back' if s.kind == 'explain' else 'Follow-up' if _is_follow_up(s) else 'Standalone',
+            'chunks': s.retrieved_chunk_count,
             'confidence': s.confidence_score, 'unverified': s.unverified, 'no_context': not s.retrieved_chunk_count,
             'latency_ms': round(s.total_latency) if s.total_latency else None, 'created_at': s.created_at,
         })
@@ -63,6 +65,12 @@ def _claims(verification):
     return raw.get('supported_claims') or [], raw.get('unsupported_claims') or []
 
 
+def _explain_session(s):
+    from explain.models import ExplainTurn
+    turn = ExplainTurn.objects.filter(reasoning_session_id=s.session_id).values('session_id', 'session__subject_id').first()
+    return {'id': turn['session_id'], 'subject_id': turn['session__subject_id']} if turn else None
+
+
 def _chunk(c):
     return {'material_name': c.material_name, 'chunk_index': c.chunk_index, 'similarity': c.similarity_score,
             'rerank': c.reranking_score, 'text': c.chunk_text}
@@ -82,11 +90,14 @@ def trace(request, session_id):
     verification = result.get('verification_result') or {}
     supported, unsupported = _claims(verification)
     confidence = result.get('confidence_score') or {}
-    message = (ChatMessage.objects.filter(session__user=request.user, metadata__model_info__reasoning_session_id=str(s.session_id))
+    explain = result.get('explain') if s.kind == 'explain' else None
+    message = None if explain else (ChatMessage.objects.filter(session__user=request.user, metadata__model_info__reasoning_session_id=str(s.session_id))
                .select_related('session').first())
     chunks = s.chunks.order_by('-similarity_score')
     return Response({
-        'session_id': str(s.session_id), 'created_at': s.created_at, 'question': s.original_query,
+        'session_id': str(s.session_id), 'kind': s.kind, 'explain': explain,
+        'explain_session': _explain_session(s) if explain else None,
+        'created_at': s.created_at, 'question': s.original_query,
         'rewritten_query': s.rewritten_query, 'follow_up': _is_follow_up(s), 'category': s.classification_category, 'pipeline': s.pipeline_name,
         'subject': Subject.objects.filter(id=s.subject_id).values('id', 'name').first(),
         'chat': {'subject_id': message.session.subject_id, 'session_id': message.session_id} if message else None,

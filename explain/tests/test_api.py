@@ -242,3 +242,25 @@ class ExplainApiTest(TestCase):
         self.assertEqual(self.turn(session.id).status_code, 404)
         self.assertEqual(self.client.get(f'/api/explain/turns/{turn.id}/speech/').status_code, 404)
         self.assertTrue(ExplainSession.objects.filter(id=session.id).exists())
+
+
+@patch('explain.service._embed', side_effect=fake_embed)
+class ExplainInsightsTest(TestCase):
+    """Checks show up in Insights with a trace, but stay out of the answer-quality numbers."""
+
+    setUp = ExplainApiTest.setUp
+    start = ExplainApiTest.start
+    turn = ExplainApiTest.turn
+
+    def test_checks_are_listed_and_traced_but_not_scored(self, _):
+        session_id = self.start(topic='B-trees').json()['id']
+        with patch('explain.service.OpenAI', return_value=llm_reply(CHECK)):
+            self.turn(session_id)
+        data = self.client.get('/api/reasoning/insights/').json()
+        self.assertEqual(data['summary']['totals']['sessions'], 0)
+        self.assertEqual((data['recent'][0]['kind'], data['recent'][0]['category']), ('explain', 'Explain it back'))
+        trace = self.client.get(f"/api/reasoning/sessions/{data['recent'][0]['session_id']}/trace/").json()
+        self.assertEqual(trace['explain']['marks'][0]['verdict'], 'correct')
+        self.assertEqual(trace['explain_session'], {'id': session_id, 'subject_id': self.subject.id})
+        self.assertEqual([s['name'] for s in trace['stages']], ['search', 'verification'])
+        self.assertIn('B-trees stay balanced. Leaves can be at any depth.', trace['prompts']['user'])

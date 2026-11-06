@@ -3,6 +3,8 @@
 import logging
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.db import transaction
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from rest_framework import status
@@ -116,12 +118,15 @@ def add_turn(request, session_id):
     if len(text) > MAX_TEXT:
         raise ValidationError({'text': f'Keep it under {MAX_TEXT} characters. Try explaining one part at a time.'})
     mode = request.data.get('mode') if request.data.get('mode') in ('voice', 'text') else 'text'
-    limit = _limit(request.user)
-    if limit['used'] >= limit['limit']:
-        return Response({'detail': f"You've used today's {limit['limit']} checks.", 'resets_at': limit['resets_at']},
-                        status=status.HTTP_429_TOO_MANY_REQUESTS)
     try:
-        service.check_turn(s, text, mode)
+        with transaction.atomic():
+            # One check at a time per student, so two at once can't both slip under the daily limit
+            get_user_model().objects.select_for_update().filter(pk=request.user.pk).first()
+            limit = _limit(request.user)
+            if limit['used'] >= limit['limit']:
+                return Response({'detail': f"You've used today's {limit['limit']} checks.", 'resets_at': limit['resets_at']},
+                                status=status.HTTP_429_TOO_MANY_REQUESTS)
+            service.check_turn(s, text, mode)
     except Exception:
         logger.exception('Explain check failed for session %s', s.id)
         return Response({'detail': "XP couldn't check that just now. Your explanation is still here; try again in a moment."},

@@ -54,7 +54,7 @@ def home(request):
     return Response({
         'due': {'count': count, 'subjects': len(due), 'minutes': math.ceil(count * SECONDS_PER_CARD / 60)},
         'suggestions': [
-            {k: r[k] for k in ('kind', 'title', 'reason', 'url', 'subject_id', 'quiz_id')}
+            {k: r.get(k) for k in ('kind', 'title', 'reason', 'url', 'subject_id', 'quiz_id', 'material_id')}
             for r in recommend(user, limit=5)
         ],
         'recent_chats': [
