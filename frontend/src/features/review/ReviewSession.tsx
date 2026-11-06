@@ -21,10 +21,11 @@ const GRADE_CLASS: Record<number, string> = { [AGAIN]: 'grade-again', 5: 'grade-
 export function ReviewSession() {
   const [params] = useSearchParams()
   const subjectParam = params.get('subject')
+  const sectionParam = params.get('section') // one part of a file, from the Coverage map: all of its cards
   const queryClient = useQueryClient()
   const queue = useQuery({
-    queryKey: ['review-queue', subjectParam],
-    queryFn: () => api<Queue>(`/api/review/queue/${subjectParam ? `?subject=${subjectParam}` : ''}`),
+    queryKey: ['review-queue', subjectParam, sectionParam],
+    queryFn: () => api<Queue>(`/api/review/queue/${sectionParam ? `?section=${sectionParam}` : subjectParam ? `?subject=${subjectParam}` : ''}`),
     staleTime: Infinity, // one snapshot per session; grading changes it
     refetchOnWindowFocus: false,
     gcTime: 0,
@@ -46,7 +47,8 @@ export function ReviewSession() {
 
   const card = cards?.[pos]
   const finished = !!cards && pos >= cards.length
-  const exitTo = subjectParam ? `/subjects/${subjectParam}` : '/'
+  const exitTo = sectionParam && queue.data?.subject ? `/subjects/${queue.data.subject.id}?tab=coverage&section=${sectionParam}`
+    : subjectParam ? `/subjects/${subjectParam}` : '/'
 
   const answer = useCallback((value: number) => {
     if (!card || !revealed) return
@@ -72,7 +74,7 @@ export function ReviewSession() {
   // Counts on Home, the sidebar and the workspace change after a session
   useEffect(() => {
     if (!finished || !reviewed) return
-    for (const key of [['me'], ['home'], ['subjects'], ['flashcards']]) queryClient.invalidateQueries({ queryKey: key })
+    for (const key of [['me'], ['home'], ['subjects'], ['flashcards'], ['coverage'], ['section']]) queryClient.invalidateQueries({ queryKey: key })
   }, [finished, reviewed, queryClient])
 
   const name = useMe().data?.first_name

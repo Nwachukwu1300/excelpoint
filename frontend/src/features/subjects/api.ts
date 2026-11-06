@@ -5,6 +5,7 @@ import type { MaterialStatus } from '../../ui/primitives'
 
 export type SubjectSummary = {
   id: number; name: string; materials_count: number; due_count: number; last_quiz_score: number | null; updated_at: string
+  studied_percent?: number | null
 }
 export type Material = {
   id: number; filename: string; file_type: string; status: MaterialStatus; error?: string; created_at: string; summary: string; quiz_id: number | null

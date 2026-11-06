@@ -46,7 +46,7 @@ class HomeApiTest(TestCase):
         subjects = {s['name']: s for s in data['subjects']}
         self.assertTrue(subjects['Databases'].pop('updated_at'))
         self.assertEqual(subjects['Databases'], {'id': self.db.id, 'name': 'Databases', 'materials_count': 1, 'failed_count': 0,
-                                                 'due_count': 3, 'last_quiz_score': 45})  # latest attempt, not best
+                                                 'due_count': 3, 'last_quiz_score': 45, 'studied_percent': None})  # latest attempt, not best; no map yet
         self.assertIsNone(subjects['Maths']['last_quiz_score'])
         SubjectMaterial.objects.create(subject=self.db, file='subject_materials/scan.pdf', file_type='PDF', status='FAILED')
         failed = {s['name']: s for s in self.client.get('/api/home/').json()['subjects']}['Databases']

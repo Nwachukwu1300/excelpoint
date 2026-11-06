@@ -46,12 +46,12 @@ describe('Today', () => {
     expect(screen.queryByText('New to ExcelPoint?')).not.toBeInTheDocument()
   })
 
-  it('links an explain suggestion straight to that file', async () => {
-    const explain = { kind: 'explain_back', title: 'Explain sql.pdf back to XP', reason: 'Saying it in your own words…', url: '/subjects/3/', subject_id: 3, quiz_id: null, material_id: 11 }
-    mockApi({ 'GET /api/me/': me, 'GET /api/home/': { ...home, suggestions: [explain] } })
+  it('links a coverage gap straight to that part of the file', async () => {
+    const gap = { kind: 'coverage_gap', status: 'fading', title: 'Refresh Light reactions', reason: 'You knew this well, but you haven’t practised it since 3 October.', url: '/subjects/3/', subject_id: 3, quiz_id: null, section_id: 41 }
+    mockApi({ 'GET /api/me/': me, 'GET /api/home/': { ...home, suggestions: [gap] } })
     renderApp('/')
-    const item = (await screen.findByText('Explain sql.pdf back to XP')).closest('article')!
-    expect(within(item).getByRole('link', { name: 'Explain it' })).toHaveAttribute('href', '/subjects/3/explain?file=11')
+    const item = (await screen.findByText('Refresh Light reactions')).closest('article')!
+    expect(within(item).getByRole('link', { name: 'Review' })).toHaveAttribute('href', '/subjects/3?tab=coverage&section=41')
   })
 
   it('welcomes a brand-new user instead of showing empty numbers', async () => {

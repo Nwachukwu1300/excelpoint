@@ -11,19 +11,20 @@ import { Button, Skeleton, buttonClass, type Tone, XpAvatar } from '../../ui/pri
 import '../../styles/home.css'
 
 type Suggestion = {
-  kind: 'weak_quiz' | 'untried_quiz' | 'knowledge_gap' | 'empty_subject' | 'explain_back'
+  kind: 'weak_quiz' | 'untried_quiz' | 'knowledge_gap' | 'empty_subject' | 'coverage_gap'
   title: string
   reason: string
   url: string
   subject_id: number
   quiz_id: number | null
-  material_id?: number | null
+  section_id?: number | null
+  status?: 'not_studied' | 'shaky' | 'fading'
 }
 type Home = {
   due: { count: number; subjects: number; minutes: number }
   suggestions: Suggestion[]
   recent_chats: { id: number; title: string; subject_id: number; subject_name: string; last_activity: string }[]
-  subjects: { id: number; name: string; materials_count: number; failed_count?: number; due_count: number; last_quiz_score: number | null }[]
+  subjects: { id: number; name: string; materials_count: number; failed_count?: number; due_count: number; last_quiz_score: number | null; studied_percent?: number | null }[]
 }
 
 const MotionLink = motion.create(Link)
@@ -33,7 +34,7 @@ const inApp = (s: Suggestion): string | null =>
   s.kind === 'weak_quiz' ? `/quizzes/${s.quiz_id}/start?fresh=1` // a retake asks new questions
     : s.kind === 'untried_quiz' ? `/quizzes/${s.quiz_id}/start`
     : s.kind === 'knowledge_gap' || s.kind === 'empty_subject' ? `/subjects/${s.subject_id}?upload=1`
-    : s.kind === 'explain_back' ? `/subjects/${s.subject_id}/explain?file=${s.material_id}`
+    : s.kind === 'coverage_gap' ? `/subjects/${s.subject_id}?tab=coverage&section=${s.section_id}`
     : null
 
 const ACTIONS: Record<Suggestion['kind'], { label: string; tone: Tone }> = {
@@ -41,8 +42,10 @@ const ACTIONS: Record<Suggestion['kind'], { label: string; tone: Tone }> = {
   knowledge_gap: { label: 'Upload', tone: 'ai' },
   untried_quiz: { label: 'Start quiz', tone: 'success' },
   empty_subject: { label: 'Upload', tone: 'neutral' },
-  explain_back: { label: 'Explain it', tone: 'ai' },
+  coverage_gap: { label: 'Study', tone: 'primary' },
 }
+
+const GAP_ACTION = { fading: 'Review', not_studied: 'Start', shaky: 'Practise' } as const
 
 export function greeting(hour = new Date().getHours()) {
   return hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
@@ -172,7 +175,7 @@ export function Today() {
                   <p className="list-empty">Nothing to suggest yet. Upload a file to a subject and XP will plan your next steps.</p>
                 )}
                 {suggestionsFor(data).map((s, i) => {
-                  const action = ACTIONS[s.kind]
+                  const action = s.kind === 'coverage_gap' ? { ...ACTIONS.coverage_gap, label: GAP_ACTION[s.status ?? 'not_studied'] } : ACTIONS[s.kind]
                   return (
                     <motion.article className="next-item" key={`${s.kind}-${s.subject_id}-${s.quiz_id}`} {...reveal(i)}>
                       <span className={`rank rank--${action.tone}`}>{i + 1}</span>
@@ -210,6 +213,7 @@ export function Today() {
                       <dl>
                         <div><dt>To review</dt><dd>{s.due_count}</dd></div>
                         <div><dt>Last quiz</dt><dd>{s.last_quiz_score === null ? '—' : `${s.last_quiz_score}%`}</dd></div>
+                        {s.studied_percent != null && <div><dt>Studied</dt><dd>{s.studied_percent}%</dd></div>}
                       </dl>
                       <Icon name="chevronRight" size={16} />
                     </MotionLink>

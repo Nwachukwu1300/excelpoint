@@ -26,6 +26,8 @@
   html .email-banner button, html .email-banner a { min-height: 44px; }
   html .section-heading > a { display: inline-flex; min-height: 44px; align-items: center; white-space: nowrap; }
   html .topic-chips button, html .explain-files button, html .explain-play, html .explain-missing summary { min-height: 44px; }
+  html .coverage-file-head, html .coverage-headline button, html .section-why { min-height: 44px; }
+  html .coverage-headline button, html .section-why { display: inline-flex; align-items: center; }
   html .explain-play, html .explain-missing summary { display: inline-flex; align-items: center; }
 
   /* Toasts at the top, so they never cover a bottom sheet's buttons */

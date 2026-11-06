@@ -29,7 +29,7 @@ export const useOverview = (subjectId: number) =>
 export const useSession = (id: number | undefined) =>
   useQuery({ queryKey: sessionKey(id ?? 0), queryFn: () => api<Session>(`/api/explain/${id}/`), enabled: !!id })
 
-export const startSession = (subjectId: number, body: { topic: string } | { material_id: number }) =>
+export const startSession = (subjectId: number, body: { topic: string } | { material_id: number } | { section_id: number }) =>
   api<Session | NotCovered>(`/api/subjects/${subjectId}/explain/`, { method: 'POST', body })
 
 export const transcribe = (sessionId: number, clip: Blob, onProgress: (fraction: number) => void) => {

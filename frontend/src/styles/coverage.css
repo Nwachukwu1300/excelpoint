@@ -1,0 +1,60 @@
+/* The Coverage map. A status is never shown by colour alone: each has a label, and its icon or shape differs too. */
+.coverage-hero { display: flex; align-items: center; gap: 24px; margin-bottom: 20px; padding: 24px; border: 1px solid var(--border); border-radius: 12px; background: var(--card); box-shadow: var(--shadow); }
+.coverage-hero .progress-ring { width: 92px; height: 92px; }
+.coverage-hero .progress-ring::before { width: 78px; height: 78px; }
+.coverage-hero > div { min-width: 0; flex: 1; }
+.coverage-hero h2 { margin: 0; font-size: 20px; text-wrap: balance; }
+.coverage-hero p { margin: 6px 0 0; font-size: var(--text-body); line-height: 1.55; }
+.coverage-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 14px 0 0; padding: 0; list-style: none; color: var(--muted); font-size: var(--text-meta); }
+.coverage-legend li { display: flex; align-items: center; gap: 6px; }
+.coverage-legend b { color: var(--text); font-weight: 650; }
+
+/* Status swatches: dashed (not studied), striped (shaky), filled (solid), pale with a dot (fading) */
+.coverage-key, .coverage-strip i { display: inline-grid; flex: none; place-items: center; border: 1px solid var(--border); border-radius: 3px; background: var(--card); }
+.coverage-key { width: 16px; height: 16px; }
+.is-not_studied.coverage-key, .coverage-strip .is-not_studied { border: 1px dashed var(--muted); background: transparent; }
+.is-shaky.coverage-key, .coverage-strip .is-shaky { border-color: var(--warning); color: var(--warning-text); background: repeating-linear-gradient(135deg, var(--warning-soft) 0 3px, color-mix(in srgb, var(--warning) 35%, var(--card)) 3px 5px); }
+.is-solid.coverage-key, .coverage-strip .is-solid { border-color: var(--success); color: var(--success-text); background: color-mix(in srgb, var(--success) 45%, var(--card)); }
+.is-fading.coverage-key, .coverage-strip .is-fading { border-color: color-mix(in srgb, var(--success) 45%, var(--border)); color: var(--success-text); background: var(--success-soft); }
+.coverage-strip .is-fading::after { width: 4px; height: 4px; border-radius: 50%; background: var(--success-text); content: ''; }
+
+.coverage-files { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.coverage-file { overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); }
+.coverage-file > .progress-track { margin: 0 16px 14px; }
+.coverage-file-head { display: flex; width: 100%; align-items: flex-start; gap: 12px; padding: 14px 16px; border: 0; color: var(--text); background: none; text-align: left; }
+button.coverage-file-head:hover { background: var(--hover); }
+.coverage-file-head > .icon:first-child { flex: none; margin-top: 2px; color: var(--primary); }
+.coverage-file-head > div { display: grid; min-width: 0; flex: 1; gap: 4px; }
+.coverage-file-head strong { overflow-wrap: anywhere; font-size: var(--text-body); font-weight: 600; }
+.coverage-file-head span { color: var(--muted); font-size: var(--text-meta); }
+.coverage-file.is-failed .coverage-file-head span { color: var(--danger-text); }
+.coverage-file-head > .icon:last-child { flex: none; margin-top: 3px; color: var(--muted); }
+.coverage-strip { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 4px; }
+.coverage-strip i { width: 14px; height: 14px; }
+
+.coverage-sections { margin: 0; padding: 0 8px 8px; list-style: none; border-top: 1px solid var(--border); }
+.coverage-sections button { display: flex; width: 100%; min-height: 48px; align-items: center; justify-content: space-between; gap: 12px; padding: 8px; border: 0; border-radius: 6px; color: var(--text); background: none; text-align: left; }
+.coverage-sections button:hover { background: var(--hover); }
+.coverage-sections button > span:first-child { display: grid; min-width: 0; gap: 2px; }
+.coverage-sections strong { overflow-wrap: anywhere; font-size: var(--text-ui); font-weight: 600; }
+.coverage-sections small { color: var(--muted); font-size: var(--text-meta); }
+.coverage-sections .badge, .section-sheet .badge { flex: none; }
+
+.coverage-headline { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; margin: 0 0 18px; padding: 12px 16px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); }
+.coverage-headline p { margin: 0; font-size: var(--text-ui); line-height: 1.5; }
+.coverage-headline button { display: inline-flex; align-items: center; gap: 6px; padding: 0; border: 0; color: var(--primary); background: none; font-size: var(--text-ui); font-weight: 600; }
+
+.section-sheet-head h2 { margin: 10px 0 4px; font-size: 20px; text-wrap: balance; }
+.section-sheet-head p { margin: 0; color: var(--muted); font-size: var(--text-meta); }
+.section-why { margin-top: 12px; padding: 0; border: 0; color: var(--primary); background: none; font-size: var(--text-ui); font-weight: 600; }
+.section-reason { margin: 6px 0 0; padding: 10px 12px; border-radius: 6px; background: var(--hover); font-size: var(--text-body); line-height: 1.55; }
+.section-text { margin-top: 16px; }
+.section-text blockquote { white-space: pre-wrap; }
+.section-error { margin: 12px 0 0; color: var(--danger-text); font-size: var(--text-ui); }
+.section-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+
+@media (max-width: 640px) {
+  .coverage-hero { flex-direction: column; align-items: flex-start; padding: 18px; }
+  .coverage-hero h2 { font-size: 18px; }
+  .section-actions .button { flex: 1 1 100%; }
+}

@@ -1,7 +1,7 @@
 import type { ReactNode } from "react"
 
 // Icon set ported verbatim from the Figma Make prototype (Lucide-style strokes).
-export type IconName = "home" | "book" | "repeat" | "chart" | "user" | "bell" | "sun" | "moon" | "chevronDown" | "chevronRight" | "plus" | "panel" | "upload" | "file" | "sparkles" | "arrow" | "more" | "search" | "close" | "check" | "clock" | "layers" | "play" | "settings" | "lock" | "logout" | "trash" | "mic" | "stop" | "volume" | "volumeOff"
+export type IconName = "home" | "book" | "repeat" | "chart" | "user" | "bell" | "sun" | "moon" | "chevronDown" | "chevronRight" | "plus" | "panel" | "upload" | "file" | "sparkles" | "arrow" | "more" | "search" | "close" | "check" | "clock" | "layers" | "play" | "settings" | "lock" | "logout" | "trash" | "mic" | "stop" | "volume" | "volumeOff" | "alert"
 
 const iconPaths: Record<IconName, ReactNode> = {
   home: (
@@ -99,6 +99,12 @@ const iconPaths: Record<IconName, ReactNode> = {
     </>
   ),
   stop: <rect x="6" y="6" width="12" height="12" rx="2" />,
+  alert: (
+    <>
+      <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" />
+      <path d="M12 9v4M12 17h.01" />
+    </>
+  ),
   volume: (
     <>
       <path d="M11 5 6 9H2v6h4l5 4V5Z" />

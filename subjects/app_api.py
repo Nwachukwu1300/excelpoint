@@ -23,6 +23,13 @@ def due_by_subject(user):
     return Counter(due_cards(user).order_by().values_list('subject_id', flat=True))
 
 
+def _studied(user, subject):
+    """The Coverage map's % for a subject, or None before any of its files has sections."""
+    from .services.coverage import subject_coverage
+    data = subject_coverage(user, subject)
+    return data['percent'] if any(f['sections'] for f in data['files']) else None
+
+
 def subject_summaries(user, due):
     """Subjects with material count, due cards, latest quiz score and last update; most cards due first."""
     last_score = (UserQuizAttempt.objects
@@ -36,7 +43,8 @@ def subject_summaries(user, due):
     rows = [
         {'id': s.id, 'name': s.name, 'materials_count': s.materials_count, 'failed_count': s.failed_count, 'due_count': due.get(s.id, 0),
          'last_quiz_score': None if s.last_quiz_score is None else round(s.last_quiz_score),
-         'updated_at': max(filter(None, [s.updated_at, s.latest_upload]))}
+         'updated_at': max(filter(None, [s.updated_at, s.latest_upload])),
+         'studied_percent': _studied(user, s)}
         for s in subjects
     ]
     return sorted(rows, key=lambda r: -r['due_count'])  # stable, so ties stay alphabetical

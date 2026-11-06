@@ -14,11 +14,12 @@ import { FlashcardsTab } from './FlashcardsTab'
 import { MaterialsTab } from './MaterialsTab'
 import { QuizzesTab } from './QuizzesTab'
 import { ExplainTab } from '../explain/ExplainTab'
+import { CoverageHeadline, CoverageTab } from '../coverage/CoverageTab'
 import { NewSubjectModal } from './NewSubjectModal'
 import { UploadModal } from './UploadModal'
 import '../../styles/subjects.css'
 
-const TABS = ['materials', 'quizzes', 'flashcards', 'explain'] as const
+const TABS = ['materials', 'coverage', 'quizzes', 'flashcards', 'explain'] as const
 type Tab = (typeof TABS)[number]
 
 export function SubjectWorkspace() {
@@ -95,8 +96,11 @@ export function SubjectWorkspace() {
         </div>
       </div>
 
+      {tab !== 'coverage' && <CoverageHeadline subjectId={id} onOpen={() => setTab('coverage')} />}
+
       <div className="tabs" role="tablist" aria-label="Subject sections">
         {tabButton('materials', 'Files')}
+        {tabButton('coverage', 'Coverage')}
         {tabButton('quizzes', 'Quizzes')}
         {tabButton('flashcards', 'Flashcards', subject?.due_count)}
         {tabButton('explain', 'Explain')}
@@ -111,6 +115,7 @@ export function SubjectWorkspace() {
         transition={spring.gentle}
       >
         {tab === 'materials' && <MaterialsTab subjectId={id} onUpload={() => setUploading(true)} onQuizzes={() => setTab('quizzes')} />}
+        {tab === 'coverage' && <CoverageTab subjectId={id} onUpload={() => setUploading(true)} />}
         {tab === 'quizzes' && <QuizzesTab subjectId={id} />}
         {tab === 'flashcards' && <FlashcardsTab subjectId={id} dueCount={subject?.due_count ?? 0} />}
         {tab === 'explain' && <ExplainTab subjectId={id} />}

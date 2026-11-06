@@ -61,6 +61,7 @@ export function SubjectsList() {
               <div className="subject-card-stats">
                 <div><strong>{s.due_count}</strong><span>to review</span></div>
                 <div><strong>{s.last_quiz_score === null ? '—' : `${s.last_quiz_score}%`}</strong><span>last quiz</span></div>
+                <div><strong>{s.studied_percent == null ? '—' : `${s.studied_percent}%`}</strong><span>studied</span></div>
               </div>
               <Link className="button button--secondary full-width" to={`/subjects/${s.id}`}>
                 Open subject <Icon name="arrow" size={15} />
