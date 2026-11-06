@@ -42,6 +42,7 @@ const PRIVACY: Sections = [
     'Your quiz answers, flashcard review history and notifications.',
     'The Coverage map: how each file is split into sections and their names. Which sections you’ve studied is worked out from your reviews, quizzes and explanations each time you look, not stored separately.',
     'Explain it back sessions: the topic, what you said or typed (as text), XP’s feedback and replies, your scores, and a record of how each check was made. We never keep your voice recordings.',
+    'The time of each Explain it back check, so the daily limit still works if you delete a session. Nothing else is in it, and it goes with your account.',
   ]],
   ['Who can see it', [
     'Only you. Other people using ExcelPoint can’t see your files, questions or results.',

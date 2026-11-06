@@ -24,6 +24,13 @@ class ExplainSession(models.Model):
         ordering = ['-created_at']
 
 
+class ExplainCheck(models.Model):
+    """One check against the daily limit. Kept apart from sessions so deleting a session doesn't reset the limit;
+    it holds no content, and goes with the account."""
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='explain_checks')
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+
 class ExplainTurn(models.Model):
     MODES = (('voice', 'Voice'), ('text', 'Text'))
     KINDS = (('explanation', 'Explanation'), ('question', 'Question'), ('off_topic', 'Off topic'))

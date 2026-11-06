@@ -18,7 +18,7 @@ from reasoning.prompts import EXPLAIN_SYSTEM_PROMPT, EXPLAIN_USER_PROMPT_TEMPLAT
 from subjects.models import ContentChunk, SubjectMaterial
 from subjects.utils import load_embedding_model
 
-from .models import ExplainSession, ExplainTurn
+from .models import ExplainCheck, ExplainSession, ExplainTurn
 
 logger = logging.getLogger(__name__)
 
@@ -114,9 +114,10 @@ def start(user, subject, topic='', material=None, section=None):
 def checks_today(user):
     """How many checks the student has used in the last 24 hours, and when the oldest of them expires."""
     since = timezone.now() - timedelta(hours=24)
-    turns = ExplainTurn.objects.filter(session__user=user, created_at__gte=since)
-    oldest = turns.order_by('created_at').values_list('created_at', flat=True).first()
-    return turns.count(), (oldest + timedelta(hours=24)) if oldest else None
+    # shortcut: older rows are never pruned (a timestamp each); add a cleanup task if the table ever matters
+    checks = ExplainCheck.objects.filter(user=user, created_at__gte=since)
+    oldest = checks.order_by('created_at').values_list('created_at', flat=True).first()
+    return checks.count(), (oldest + timedelta(hours=24)) if oldest else None
 
 
 def _client():
@@ -232,6 +233,7 @@ def check_turn(session, text, mode='text'):
             session=trace, chunk_id=p['chunk_id'], chunk_text=p['content'], chunk_index=p['chunk_index'],
             material_id=p['material_id'], material_name=p['material_name'], similarity_score=p.get('similarity') or 0.0,
         ) for p in passages)
+        ExplainCheck.objects.create(user=session.user)
         turn = ExplainTurn.objects.create(session=session, mode=mode, kind=kind, student_text=text, reply=reply,
                                           answer=answer, marks=marks, reasoning_session_id=trace.session_id)
         session.key_points = key_points

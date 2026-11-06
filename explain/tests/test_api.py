@@ -9,7 +9,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.utils import timezone
 
-from explain.models import ExplainSession, ExplainTurn
+from explain.models import ExplainCheck, ExplainSession, ExplainTurn
 from reasoning.models import ReasoningSession
 from subjects.models import ContentChunk, Subject, SubjectMaterial
 from subjects.tests import vec
@@ -169,15 +169,24 @@ class ExplainApiTest(TestCase):
     @override_settings(EXPLAIN_DAILY_LIMIT=1)
     def test_the_daily_limit_says_when_they_can_go_again(self, _):
         session = ExplainSession.objects.create(user=self.user, subject=self.subject, topic='B-trees', passages=[])
-        old = ExplainTurn.objects.create(session=session, student_text='x', reply='y')
+        old = ExplainCheck.objects.create(user=self.user)
         r = self.turn(session.id)
         self.assertEqual(r.status_code, 429)
         self.assertIn("today's 1 checks", r.json()['detail'])
         self.assertIsNotNone(r.json()['resets_at'])
         # a day later the check is free again
-        ExplainTurn.objects.filter(id=old.id).update(created_at=timezone.now() - timedelta(hours=25))
+        ExplainCheck.objects.filter(id=old.id).update(created_at=timezone.now() - timedelta(hours=25))
         with patch('explain.service.OpenAI', return_value=llm_reply(CHECK)):
             self.assertEqual(self.turn(session.id).status_code, 200)
+
+    @override_settings(EXPLAIN_DAILY_LIMIT=1)
+    def test_deleting_sessions_does_not_reset_the_daily_limit(self, _):
+        first = self.start(topic='B-trees').json()['id']
+        with patch('explain.service.OpenAI', return_value=llm_reply(CHECK)):
+            self.assertEqual(self.turn(first).status_code, 200)
+        self.assertEqual(self.client.delete(f'/api/explain/{first}/').status_code, 204)
+        second = self.start(topic='B-trees').json()['id']
+        self.assertEqual(self.turn(second).status_code, 429)
 
     def test_empty_or_long_text_is_rejected(self, _):
         session_id = self.start(topic='B-trees').json()['id']
