@@ -22,6 +22,7 @@ from django.views.generic import RedirectView
 from subjects.views import create_subject, upload_material
 from subjects import app_api as subjects_app_api, quiz_api
 from reasoning import app_api as reasoning_app_api
+from explain import api as explain_api
 from users import api as users_api, auth_api
 from .views import home, app_shell
 
@@ -50,6 +51,12 @@ urlpatterns = [
     path('api/quiz/attempts/<int:attempt_id>/', quiz_api.attempt_detail, name='api_quiz_attempt'),
     path('api/quiz/attempts/<int:attempt_id>/submit/', quiz_api.submit_attempt, name='api_quiz_submit'),
     path('api/quiz/attempts/<int:attempt_id>/results/', quiz_api.attempt_results, name='api_quiz_results'),
+    path('api/subjects/<int:subject_id>/explain/', explain_api.subject_sessions, name='api_explain_sessions'),
+    path('api/explain/<int:session_id>/', explain_api.session_detail, name='api_explain_session'),
+    path('api/explain/<int:session_id>/turns/', explain_api.add_turn, name='api_explain_turn'),
+    path('api/explain/<int:session_id>/transcribe/', explain_api.transcribe, name='api_explain_transcribe'),
+    path('api/explain/<int:session_id>/finish/', explain_api.finish, name='api_explain_finish'),
+    path('api/explain/turns/<int:turn_id>/speech/', explain_api.speech, name='api_explain_speech'),
     path('api/notifications/', users_api.notifications, name='api_notifications'),
     path('api/notifications/read/', users_api.mark_notifications_read, name='api_notifications_read'),
     path('api/', include('subjects.urls')),
