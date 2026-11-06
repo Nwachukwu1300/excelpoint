@@ -215,7 +215,8 @@ def check_turn(session, text, mode='text'):
             faithfulness_score=correct / (correct + wrong) if correct + wrong else None,
             total_latency=(time.monotonic() - started) * 1000,
             latency_breakdown={'search_ms': round(search_ms, 1), 'verification_ms': round(check_ms, 1)},
-            full_result={'prompts': {'system': EXPLAIN_SYSTEM_PROMPT, 'user': user_prompt}, 'raw_response': raw,
+            full_result={'prompts': {'check': [{'role': 'system', 'content': EXPLAIN_SYSTEM_PROMPT},
+                                               {'role': 'user', 'content': user_prompt}]}, 'raw_response': raw,
                          'explain': {'topic': session.topic, 'kind': kind, 'marks': marks, 'key_points': key_points}},
         )
         ReasoningSessionChunk.objects.bulk_create(ReasoningSessionChunk(

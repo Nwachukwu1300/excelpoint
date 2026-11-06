@@ -3,7 +3,7 @@ import { Logo } from '../../ui/primitives'
 import '../../styles/auth.css'
 
 export const CONTACT = 'mnfinance664@gmail.com'
-const UPDATED = '28 October 2026'
+const UPDATED = '6 November 2026'
 
 type Sections = [string, string[]][]
 
@@ -40,27 +40,31 @@ const PRIVACY: Sections = [
     'Your files, the text read from them, and the summaries, flashcards and quizzes made from them.',
     'Your questions to XP, its answers, and a record of how each answer was made (which parts of your files it used, and quality scores).',
     'Your quiz answers, flashcard review history and notifications.',
+    'Explain it back sessions: the topic, what you said or typed (as text), XP’s feedback and replies, your scores, and a record of how each check was made. We never keep your voice recordings.',
   ]],
   ['Who can see it', [
     'Only you. Other people using ExcelPoint can’t see your files, questions or results.',
     'To write answers, summaries, flashcards and quizzes, the text of your files and your questions is sent to OpenAI, the company that runs the AI model XP uses.',
     'Audio and video recordings are sent to OpenAI to be turned into text. We keep the text and your original file, not a separate audio copy.',
+    'When you explain a topic out loud, the recording is sent to OpenAI to be turned into text, then thrown away. Only the text is kept.',
+    'XP’s spoken replies are read out by your device’s own voice. If we switch to OpenAI’s voice, the text of XP’s reply (never your recording) is sent to OpenAI to make the audio.',
     'OpenAI says it does not use data sent through its API to train its models, and keeps it for up to 30 days to check for abuse before deleting it.',
     'The search that finds the right parts of your files runs on our own server.',
     'If you sign in with Google, Google tells us your name, email address and Google account ID.',
   ]],
   ['How long we keep it', [
     'Everything stays until you delete it, or until you delete your account.',
-    'Deleting a file, subject, conversation or your account removes it from our database and file storage straight away.',
+    'Deleting a file, subject, conversation, Explain it back session or your account removes it from our database and file storage straight away.',
     'We keep a backup copy of the database each night for 7 days, so anything you delete is gone from the backups within 7 days.',
   ]],
   ['What we don’t do', [
     'No ads, no selling your data, and no marketing email.',
-    'No tracking or analytics tools. The site uses only the cookies it needs to keep you signed in and protect forms, and remembers your light or dark theme in your browser.',
+    'No tracking or analytics tools. The site uses only the cookies it needs to keep you signed in and protect forms, and remembers your light or dark theme, and whether XP’s voice is off, in your browser.',
   ]],
   ['Your choices', [
-    'Settings → Download my data gives you a zip of your files and everything made from them.',
-    'You can delete any file, subject or XP conversation at any time.',
+    'Settings → Download my data gives you a zip of your files and everything made from them, including your Explain it back sessions.',
+    'You can delete any file, subject, XP conversation or Explain it back session at any time.',
+    'Explain it back works without a microphone: you can always type instead.',
     'Settings → Delete account removes your account and everything above, including your stored files. This can’t be undone.',
   ]],
   ['Price', [

@@ -13,9 +13,10 @@ const insights: InsightsData = {
     failures: [{ session_id: 'abc', query: 'What is horizontal sharding?', reasons: ['Nothing found in your files'], created_at: new Date().toISOString() }],
   },
   not_found: 2,
-  recent: [{ session_id: 'def', question: 'How do B-trees work?', subject_name: 'Database Systems', category: 'Standalone', chunks: 2, confidence: 0.92, unverified: false, no_context: false, latency_ms: 842, created_at: new Date().toISOString() }],
+  recent: [{ session_id: 'def', kind: 'chat', question: 'How do B-trees work?', subject_name: 'Database Systems', category: 'Standalone', chunks: 2, confidence: 0.92, unverified: false, no_context: false, latency_ms: 842, created_at: new Date().toISOString() }],
 }
 const trace: Trace = {
+  kind: 'chat', explain: null, explain_session: null,
   session_id: 'def', created_at: '2026-10-24T10:42:00Z', question: 'How do B-trees work?', rewritten_query: null, follow_up: false, category: 'retrieval_required', pipeline: 'default',
   subject: { id: 3, name: 'Database Systems' }, chat: { subject_id: 3, session_id: 19 }, total_ms: 1284,
   stages: [{ name: 'embedding', ms: 122, pct: 9.5 }, { name: 'generation', ms: 638, pct: 49.7 }],
@@ -73,6 +74,29 @@ describe('Insights', () => {
     await userEvent.click(screen.getByRole('button', { name: /user prompt with context/ }))
     expect(await screen.findByText('Question: How do B-trees work?')).toBeInTheDocument()
     expect(screen.getByText('Not enabled')).toBeInTheDocument() // no LLM judge row
+  })
+
+  it('shows an Explain it back check with each statement marked', async () => {
+    const passage = { chunk_id: 1, material_name: 'lecture4.pdf', chunk_index: 0, content: 'A B-tree is a self-balancing search tree.' }
+    mockApi({
+      'GET /api/me/': me,
+      'GET /api/reasoning/sessions/def/trace/': {
+        ...trace, kind: 'explain', chat: null, category: 'explanation', retries: [],
+        question: 'B-trees are self-balancing. They were invented in 1970.', final_answer: 'Right about balance. What do leaves store?',
+        explain: { topic: 'B-tree index', kind: 'explanation', marks: [
+          { sentence: 'B-trees are self-balancing.', verdict: 'correct', note: '', quote: 'self-balancing', passage },
+          { sentence: 'They were invented in 1970.', verdict: 'not_in_notes', note: '', quote: '', passage: null },
+        ] },
+        explain_session: { id: 7, subject_id: 3 },
+      },
+    })
+    renderApp('/insights/def')
+    expect(await screen.findByRole('link', { name: /Back to the session/ })).toHaveAttribute('href', '/subjects/3/explain/7')
+    expect(screen.getByText(/Explain it back: B-tree index/)).toBeInTheDocument()
+    const plain = screen.getByRole('region', { name: 'In short' })
+    expect(within(plain).getByText('1 of 2 statements matched your notes, 0 didn’t, and 1 aren’t covered by your notes.')).toBeInTheDocument()
+    expect(screen.getByText('Not in your notes')).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Retries' })).not.toBeInTheDocument()
   })
 
   it('fills every day of the range for the chart', () => {

@@ -4,6 +4,8 @@ import { Link, useParams } from 'react-router'
 import { plural } from '../../lib/format'
 import { spring } from '../../lib/motion'
 import { fileName } from '../chat/Thread'
+import { Marks } from '../explain/Feedback'
+import '../../styles/explain.css'
 import { ConfidencePill, VerificationBadge } from '../../ui/AnswerBadges'
 import { Icon } from '../../ui/Icon'
 import { Markdown } from '../../ui/Markdown'
@@ -104,21 +106,23 @@ export function AnswerTrace() {
 
   return (
     <div className="page-content trace-page">
-      {t.chat
+      {t.explain_session
+        ? <Link className="back-link" to={`/subjects/${t.explain_session.subject_id}/explain/${t.explain_session.id}`}><Icon name="chevronRight" size={14} /> Back to the session</Link>
+        : t.chat
         ? <Link className="back-link" to={`/subjects/${t.chat.subject_id}/chat/${t.chat.session_id}`}><Icon name="chevronRight" size={14} /> Back to the conversation</Link>
         : <Link className="back-link" to="/insights"><Icon name="chevronRight" size={14} /> Back to Answer quality</Link>}
       <div className="trace-header">
         <div>
           <h1>{t.question}</h1>
-          <p>{t.subject && `${t.subject.name} · `}Asked {when.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}, {when.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</p>
+          <p>{t.subject && `${t.subject.name} · `}{t.explain ? `Explain it back: ${t.explain.topic} · ` : 'Asked '}{when.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}, {when.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</p>
         </div>
       </div>
-      <PlainSummary t={t} claims={claims} />
+      {t.explain ? <ExplainSummary t={t} /> : <PlainSummary t={t} claims={claims} />}
 
       <details className="trace-technical">
       <summary>Technical details: timings, search results, prompts and scores</summary>
       <div className="trace-chips">
-        <Badge>{t.follow_up ? 'Follow-up' : 'Standalone'}</Badge>
+        <Badge>{t.explain ? 'Explain it back' : t.follow_up ? 'Follow-up' : 'Standalone'}</Badge>
         {t.confidence.score != null && <ConfidencePill value={t.confidence.score} />}
         {heuristic?.faithfulness != null && <Badge tone={heuristic.faithfulness >= 0.8 ? 'success' : 'warning'}>Match {num(heuristic.faithfulness)}</Badge>}
         {t.chunks.length > 0 && <VerificationBadge verified={!t.unverified} />}
@@ -142,14 +146,14 @@ export function AnswerTrace() {
       <div className="trace-stack">
         <Section n={1} title="Query">
           <div className="trace-grid three">
-            <div><span>Type</span><strong>{t.follow_up ? 'Follow-up' : 'Standalone'}</strong></div>
+            <div><span>Type</span><strong>{t.explain ? `Explain it back (${t.category.replace('_', ' ')})` : t.follow_up ? 'Follow-up' : 'Standalone'}</strong></div>
             <div><span>Searched for</span><strong>{t.follow_up ? t.rewritten_query : t.question}</strong></div>
             <div><span>Pipeline</span><strong>{t.pipeline}</strong></div>
           </div>
         </Section>
         <Section n={2} title="Retrieved chunks"><Chunks chunks={t.chunks} /></Section>
         <Section n={3} title="Prompts sent to the model"><Prompts prompts={t.prompts} /></Section>
-        <Section n={4} title="Answer">
+        <Section n={4} title={t.explain ? 'XP’s reply' : 'Answer'}>
           <div className="trace-answer">
             <Badge tone="success">FINAL ANSWER</Badge>
             <div className="answer-body"><Markdown text={t.final_answer} /></div>
@@ -162,6 +166,7 @@ export function AnswerTrace() {
           </div>
         </Section>
         <Section n={5} title="Verification">
+          {t.explain ? (t.explain.marks.length ? <Marks marks={t.explain.marks} /> : <div className="no-claims">No statements to check in this message.</div>) : <>
           <div className="verification-head">
             {t.chunks.length > 0 && <VerificationBadge verified={!t.unverified} />}
             <span>{claims ? `${t.verification.supported_claims.length} of ${plural(claims, 'statement')} backed by your files` : 'No statements were checked for this answer'}</span>
@@ -181,8 +186,9 @@ export function AnswerTrace() {
                 : <div className="no-claims">Every statement is backed by your files.</div>}
             </div>
           </div>
+          </>}
         </Section>
-        <Section n={6} title="Retries">
+        {!t.explain && <Section n={6} title="Retries">
           {t.retries.length === 0 ? (
             <div className="empty-inline">
               <Icon name="check" />
@@ -199,7 +205,7 @@ export function AnswerTrace() {
               {t.retry_chunks.length > 0 && <><h3 className="retry-chunks-title">Chunks used by retries</h3><Chunks chunks={t.retry_chunks} /></>}
             </>
           )}
-        </Section>
+        </Section>}
       </div>
 
       <section className="evaluation-card">
@@ -240,6 +246,25 @@ export function AnswerTrace() {
       )}
       </details>
     </div>
+  )
+}
+
+/** An Explain it back check, in plain words. */
+function ExplainSummary({ t }: { t: Trace }) {
+  const files = [...new Set(t.chunks.map(c => fileName(c.material_name)))]
+  const marks = t.explain!.marks
+  const n = (v: string) => marks.filter(m => m.verdict === v).length
+  return (
+    <section className="trace-plain" aria-label="In short">
+      <h2>In short</h2>
+      <ul>
+        <li>XP checked what you said against {plural(t.chunks.length, 'part')} of {files.join(', ') || 'your files'}.</li>
+        {marks.length > 0
+          ? <li>{n('correct')} of {plural(marks.length, 'statement')} matched your notes, {n('wrong')} didn’t, and {n('not_in_notes')} aren’t covered by your notes.</li>
+          : <li>{t.category === 'question' ? 'You asked a question, so XP answered it from your notes.' : 'This message wasn’t about the topic, so nothing was marked.'}</li>}
+        <li>It took {(t.total_ms / 1000).toFixed(1)} seconds.</li>
+      </ul>
+    </section>
   )
 }
 

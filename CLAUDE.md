@@ -55,6 +55,7 @@ Motion should feel calm and fast: respect `prefers-reduced-motion`, and never an
 | `subjects/` | Core: subjects, materials, chunks (pgvector), chat (`services/rag_service.py`), quizzes, flashcards + SM-2 (`services/spaced_repetition.py`), suggestions (`services/recommendations.py`), Celery tasks (`tasks.py`) |
 | `reasoning/` | Answer pipeline: rewrite (follow-ups only), retrieve, generate (streamable), verify, retry, confidence; traces (`ReasoningSession`), evaluations, judge, Insights + trace API (`app_api.py`) |
 | `retrieval/` | Retrieval pipeline, embeddings, reranking, metrics, benchmark (`benchmark.py`) |
+| `explain/` | Explain it back: sessions and turns, the check (`service.py`, one JSON call marking each statement correct / wrong / not in notes), transcription of short clips, XP's voice (`voice.py`, `XP_VOICE`) |
 | `users/` | Custom User, Google OAuth, notifications (`Notification`), settings, change password |
 | `config/` | Settings, URLs, Celery (`celery.py`, beat schedule in settings) |
 | `frontend/` | The React app at `/app/` (its own package.json, tests and build to `static/app/`) |
@@ -68,7 +69,8 @@ Motion should feel calm and fast: respect `prefers-reduced-motion`, and never an
 - Chat: `/api/subjects/<id>/chat/{session,sessions,messages,stream}/`; `messages` (GET and POST) and `stream` take an optional `session_id` to open or continue a past conversation.
 - Review: `GET /api/review/queue/?subject=`, `POST /api/review/grade/`.
 - Quizzes: `POST /api/quiz/<id>/attempts/ {fresh}`, `GET /api/quiz/attempts/` (history), `GET /api/quiz/attempts/<id>/` (status + questions without answers), `POST …/submit/`, `GET …/results/` (`subjects/quiz_api.py`). A failed fresh-question job stores `dynamic_questions = []`.
-- Insights: `GET /api/reasoning/insights/?days=7|30|90`, `GET /api/reasoning/sessions/<uuid>/trace/`.
+- Insights: `GET /api/reasoning/insights/?days=7|30|90`, `GET /api/reasoning/sessions/<uuid>/trace/`. Explain checks are traces with `kind='explain'`: listed and traced, but left out of the quality numbers.
+- Explain it back: `GET/POST /api/subjects/<id>/explain/` (files, summary topics, history; start with `{topic}` or `{material_id}`, or get `{covered: false, suggestions}`), `GET/DELETE /api/explain/<id>/`, `POST …/transcribe/` (multipart `audio`, not kept), `POST …/turns/ {text, mode}` (one check; 429 with `resets_at` past `EXPLAIN_DAILY_LIMIT`), `POST …/finish/`, `GET /api/explain/turns/<id>/speech/` (204 = the browser speaks). Settings: `EXPLAIN_DAILY_LIMIT` (30 per 24 h), `EXPLAIN_MAX_ROUNDS` (4), `EXPLAIN_TRANSCRIBE_MODEL` (`gpt-4o-mini-transcribe`), `XP_VOICE` (`browser` or `openai`, with `XP_VOICE_MODEL`, `XP_VOICE_NAME`), `EXPLAIN_AUDIO_RATE_LIMIT`.
 
 ## Deployment
 

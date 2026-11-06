@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../../lib/api'
+import type { Mark } from '../explain/api'
 
 type Metrics = {
   sessions: number; no_context: number; unverified: number; faithfulness: number | null; hallucination_rate: number | null
@@ -13,12 +14,16 @@ export type InsightsData = {
     retrieval: { avg_chunks: number | null; avg_retrieval_ms: number | null; avg_total_ms: number | null; no_context_rate: number | null; avg_top_similarity: number | null }
     failures: { session_id: string; query: string; reasons: string[]; created_at: string }[]
   }
-  recent: { session_id: string; question: string; subject_name: string; category: string; chunks: number; confidence: number | null; unverified: boolean; no_context: boolean; latency_ms: number | null; created_at: string }[]
+  recent: { session_id: string; kind: 'chat' | 'explain'; question: string; subject_name: string; category: string; chunks: number; confidence: number | null; unverified: boolean; no_context: boolean; latency_ms: number | null; created_at: string }[]
   /** "Not in your files" replies (no AI call, so not in summary) */
   not_found: number
 }
 type Chunk = { material_name: string; chunk_index: number; similarity: number; rerank: number | null; text: string }
 export type Trace = {
+  kind: 'chat' | 'explain'
+  /** An Explain it back check: the student's statements as XP marked them */
+  explain: { topic: string; kind: string; marks: Mark[] } | null
+  explain_session: { id: number; subject_id: number } | null
   session_id: string; created_at: string; question: string; rewritten_query: string | null; follow_up: boolean; category: string; pipeline: string
   subject: { id: number; name: string } | null; chat: { subject_id: number; session_id: number } | null
   total_ms: number; stages: { name: string; ms: number; pct: number }[]

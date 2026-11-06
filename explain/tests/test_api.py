@@ -263,4 +263,4 @@ class ExplainInsightsTest(TestCase):
         self.assertEqual(trace['explain']['marks'][0]['verdict'], 'correct')
         self.assertEqual(trace['explain_session'], {'id': session_id, 'subject_id': self.subject.id})
         self.assertEqual([s['name'] for s in trace['stages']], ['search', 'verification'])
-        self.assertIn('B-trees stay balanced. Leaves can be at any depth.', trace['prompts']['user'])
+        self.assertIn('B-trees stay balanced. Leaves can be at any depth.', trace['prompts']['check'][1]['content'])

@@ -327,7 +327,12 @@ function SessionView({ subjectId, sessionId }: { subjectId: number; sessionId: n
               </div>
             </form>
           )}
-          {stage.name === 'record' && !typing && <Recorder prompt={prompt} onTake={heard} onType={() => setTyping(true)} />}
+          {stage.name === 'record' && !typing && (
+            <>
+              <Recorder prompt={prompt} onTake={heard} onType={() => setTyping(true)} />
+              <p className="explain-privacy">Your recording is turned into text by OpenAI, then deleted. Only the text is kept. <Link to="/privacy">Privacy</Link></p>
+            </>
+          )}
           {stage.name === 'record' && typing && (
             <form className="explain-typed" onSubmit={e => { e.preventDefault(); if (draft.trim()) check(draft.trim(), 'text') }}>
               <label htmlFor="explain-typed">{prompt}</label>

@@ -167,8 +167,8 @@ export function Insights() {
                   {data.recent.map(r => (
                     <tr key={r.session_id}>
                       <td><strong>{r.question}</strong><span className="row-subject">{r.subject_name}</span></td>
-                      <td>{r.no_context ? <Badge>Not in your files</Badge> : <VerificationBadge verified={!r.unverified} />}</td>
-                      <td><Link className={buttonClass('secondary')} to={`/insights/${r.session_id}`}>How it was answered</Link></td>
+                      <td>{r.kind === 'explain' ? <Badge tone="ai">Explain it back</Badge> : r.no_context ? <Badge>Not in your files</Badge> : <VerificationBadge verified={!r.unverified} />}</td>
+                      <td><Link className={buttonClass('secondary')} to={`/insights/${r.session_id}`}>{r.kind === 'explain' ? 'How it was checked' : 'How it was answered'}</Link></td>
                     </tr>
                   ))}
                 </tbody>
