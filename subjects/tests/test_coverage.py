@@ -106,7 +106,7 @@ class StatusRulesTest(CoverageFixture):
         self.card(self.light, grade=4, reps=2, days_ago=22)
         status, reason = self.status(self.light)
         self.assertEqual(status, 'fading')
-        self.assertIn("haven't practised it since", reason)
+        self.assertIn("haven’t practised it since", reason)
         self.card(self.calvin, grade=4, reps=2, due_in=-2)
         self.assertEqual(self.status(self.calvin), ('fading', 'One of its flashcards is overdue. Review them before you forget.'))
 
@@ -129,7 +129,7 @@ class CoverageApiTest(CoverageFixture):
         self.card(self.light, grade=4, reps=2)
         data = self.client.get(f'/api/subjects/{self.subject.id}/coverage/').json()
         self.assertEqual(data['percent'], 40)  # 4 of 10 passages
-        self.assertEqual(data['sentence'], "Calvin cycle hasn't come up yet.")
+        self.assertEqual(data['sentence'], "Calvin cycle hasn’t come up yet.")
         self.assertEqual(data['counts'], {'not_studied': 1, 'shaky': 0, 'solid': 1, 'fading': 0})
         file = data['files'][0]
         self.assertEqual((file['name'], file['state'], file['percent'], file['studied']), ('photo.pdf', 'ready', 40, 1))
@@ -168,6 +168,12 @@ class CoverageApiTest(CoverageFixture):
         self.assertEqual((data['title'], data['status'], data['file']['name']), ('Light reactions', 'shaky', 'photo.pdf'))
         self.assertEqual(data['reason'], 'You missed 1 of 1 quiz questions on this.')
         self.assertEqual([p['chunk_index'] for p in data['passages']], [0, 1, 2, 3])
+        self.assertTrue(data['text'].startswith('Passage 0 about light. Passage 1'))
+
+    def test_overlapping_passages_are_joined_without_repeats(self):
+        from subjects.coverage_api import joined
+        self.assertEqual(joined(['. The cycle uses ATP to make', 'to make sugar in the stroma.']), 'The cycle uses ATP to make sugar in the stroma.')
+        self.assertEqual(joined(['One.', 'Two.']), 'One. Two.')
 
     @patch('subjects.coverage_api.generate_dynamic_quiz_questions')
     def test_a_section_quiz_asks_five_fresh_questions_about_that_section(self, task):

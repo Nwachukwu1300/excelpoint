@@ -57,7 +57,7 @@ def judge(signals, now=None):
     """(status, reason, last activity) for one section's signals."""
     now = now or timezone.now()
     if signals.empty():
-        reason = "You haven't seen a flashcard, quiz question or explanation from this part yet."
+        reason = "You haven’t seen a flashcard, quiz question or explanation from this part yet."
         if not signals.card_count and not signals.question_count:
             reason += ' It has no flashcards or quiz questions of its own, so take a quiz on it or explain it to XP.'
         return 'not_studied', reason, None
@@ -99,7 +99,7 @@ def judge(signals, now=None):
         return 'fading', (f'{"One of its flashcards is" if overdue == 1 else f"{overdue} of its flashcards are"} overdue. '
                           'Review them before you forget.'), last
     if now - last > timedelta(days=FADING_DAYS):
-        return 'fading', f"You knew this well, but you haven't practised it since {_date(last)}.", last
+        return 'fading', f"You knew this well, but you haven’t practised it since {_date(last)}.", last
     extra = ', including a correct explanation' if good_explains else ''
     return 'solid', f'You got this right on {occasions} separate occasions{extra}. Most recently on {_date(last)}.', last
 
@@ -223,12 +223,12 @@ def _sentence(rows, studied):
     if untouched and not studied:
         return f"Start with {untouched[0]['label']}."
     if untouched:
-        return f"{untouched[0]['label']} hasn't come up yet."
+        return f"{untouched[0]['label']} hasn’t come up yet."
     if fading:
         return f"{fading[0]['label']} is fading. Review it soon."
     if shaky:
         return f"{shaky[0]['label']} needs more practice."
-    return "Everything you've studied is solid."
+    return "Everything you’ve studied is solid."
 
 
 def gaps(user, subjects, limit=3):

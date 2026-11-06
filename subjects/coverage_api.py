@@ -37,6 +37,15 @@ def _own_section(request, section_id):
     return section
 
 
+def joined(texts, overlap=200):
+    """Passages as one text: each one repeats up to 200 characters of the one before, so drop that repeat."""
+    out = ''
+    for t in texts:
+        cut = next((n for n in range(min(len(out), len(t), overlap), 0, -1) if out.endswith(t[:n])), 0)
+        out = f'{out} {t[cut:].lstrip()}'.strip() if not cut else out + t[cut:]
+    return out.lstrip('.,;: ')
+
+
 @api_view(['GET'])
 def section_detail(request, section_id):
     """One section: its status and why, its passages, and what there is to study it with."""
@@ -52,6 +61,7 @@ def section_detail(request, section_id):
         'range': range_label(section, parts), 'status': status_, 'reason': reason, 'last_studied': last,
         'subject_id': material.subject_id, 'file': {'id': material.id, 'name': material.display_name},
         'cards': section.flashcards.count(),
+        'text': joined([p['content'] for p in passages]),
         'passages': [{'chunk_id': p['id'], 'chunk_index': p['chunk_index'], 'material_name': material.display_name,
                       'content': p['content']} for p in passages],
     })

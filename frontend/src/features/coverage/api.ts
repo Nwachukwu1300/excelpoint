@@ -18,7 +18,7 @@ export type Coverage = {
 }
 export type SectionDetail = {
   id: number; title: string; label: string; range: string | null; status: Status; reason: string; last_studied: string | null
-  subject_id: number; file: { id: number; name: string }; cards: number
+  subject_id: number; file: { id: number; name: string }; cards: number; text: string
   passages: { chunk_id: number; chunk_index: number; material_name: string; content: string }[]
 }
 

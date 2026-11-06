@@ -47,7 +47,7 @@ def recommend(user, limit=6):
         recs.append({
             'kind': 'untried_quiz', 'priority': 30,
             'title': f"Test yourself on {_material_name(quiz.material)}",
-            'reason': "You haven't tried this quiz yet.",
+            'reason': "You haven’t tried this quiz yet.",
             'url': reverse('take_quiz', args=[quiz.id]),
             'subject_id': quiz.subject_id, 'quiz_id': quiz.id,
         })

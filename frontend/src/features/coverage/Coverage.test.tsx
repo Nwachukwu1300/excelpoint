@@ -24,6 +24,7 @@ const coverage: Coverage = {
 const section: SectionDetail = {
   id: 42, title: 'Range queries', label: 'Range queries', range: 'Pages 3–4', status: 'shaky', last_studied: now,
   reason: 'You missed 2 of 3 quiz questions on this and you rated one card Hard.', subject_id: 3, file: { id: 10, name: 'indexes.pdf' }, cards: 2,
+  text: 'Leaf nodes are linked in key order, so range queries walk the leaves.',
   passages: [{ chunk_id: 5, chunk_index: 2, material_name: 'indexes.pdf', content: 'Leaf nodes are linked in key order, so range queries walk the leaves.' }],
 }
 const base = { 'GET /api/me/': me, 'GET /api/subjects/summary/': summary, 'GET /api/subjects/3/materials/': materials, 'GET /api/subjects/3/coverage/': coverage }

@@ -8,6 +8,8 @@ import { ProgressRing } from '../../ui/ProgressRing'
 import { Badge, Button, ProgressBar, Skeleton, buttonClass } from '../../ui/primitives'
 import { startSession } from '../explain/api'
 import { LOOK, ORDER, startSectionQuiz, useCoverage, useSection, type Coverage, type FileCoverage, type Status } from './api'
+import '../../styles/chat.css' // the passage block
+import '../../styles/quiz.css' // the progress ring
 import '../../styles/coverage.css'
 
 export function StatusChip({ status }: { status: Status }) {
@@ -159,7 +161,7 @@ function SectionSheet({ id, onClose }: { id: number | null; onClose: () => void 
     }
   }
 
-  const text = s?.passages.map(p => p.content).join(' ') ?? ''
+  const text = s?.text ?? ''
   return (
     <Modal open={!!id} onClose={onClose} labelledBy="section-title" className="section-sheet">
       {section.isPending && <div className="skeleton-stack"><Skeleton /><Skeleton /><Skeleton /></div>}
