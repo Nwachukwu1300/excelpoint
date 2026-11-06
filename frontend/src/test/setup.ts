@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom/vitest'
-import { cleanup } from '@testing-library/react'
+import { cleanup, configure } from '@testing-library/react'
 import { afterEach } from 'vitest'
 
 // Node 25 ships its own localStorage global that shadows jsdom's; use jsdom's (same fix as the widget).
@@ -7,6 +7,9 @@ const jsdomWindow = (globalThis as { jsdom?: { window: Window } }).jsdom?.window
 if (jsdomWindow) {
   Object.defineProperty(globalThis, 'localStorage', { value: jsdomWindow.localStorage, configurable: true })
 }
+
+// Each page is a lazy chunk; when the whole suite runs at once, loading one can take over the 1s default
+configure({ asyncUtilTimeout: 3000 })
 
 window.scrollTo = () => {} // jsdom has no scrolling; ScrollRestoration calls it
 Element.prototype.scrollIntoView = () => {}
