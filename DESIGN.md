@@ -297,6 +297,11 @@ XP's purple 3D icon on the XP gradient in a 30% squircle, 40px (32px small). It 
 ### Answer Evidence (signature)
 Directly under each XP answer: a bordered Card White figure (8px corners, 12px 14px padding). The caption reads "From **file name**" at 14px with a blue file icon. The passage is a 16px quote at 1.6 line height, clamped to three lines until the student asks for the whole passage; the words that match the answer are marked with an 18% Study Blue highlight. Every grounded answer gets one. The "Not in your materials" reply is its honest counterpart: a Blue Wash panel with an info mark and a way to add files.
 
+### Explain it back
+- **Record button:** a 76px circle on the XP gradient with a white mic icon; while recording it turns danger-fill with a soft pulse (off under reduced motion) and a stop icon. Under it, a timer and a 6px track with a mark at 30 seconds. XP never speaks while the student is recording.
+- **Statement marks:** one 8px card per sentence the student said, with a badge first: success "Correct", danger "Not quite" (a mistake, the one place red marks content rather than an error), neutral "Not in your notes". Correct and Not quite cards take a soft tint of their badge colour; there are no side bars. Each card with evidence carries the Answer Evidence block, highlighting the deciding words.
+- **Summary:** two progress rings (covered, accurate) in a 12px hero card, then "What you nailed", "What to fix", "What you missed" and "Not in your notes".
+
 ## Do's and Don'ts
 
 ### Do:

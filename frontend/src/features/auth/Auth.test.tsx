@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react'
+import { screen, within, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { me, mockApi, renderApp, reply } from '../../test/render'
@@ -103,6 +103,16 @@ describe('Landing', () => {
     expect(screen.queryByRole('link', { name: /Start studying free/ })).not.toBeInTheDocument()
   })
 
+  it('shows Explain it back with all three marks and says recordings are not kept', async () => {
+    mockApi(signedOut)
+    renderApp('/welcome')
+    expect(await screen.findByRole('heading', { name: 'Explain it back. XP checks you.' })).toBeInTheDocument()
+    const marks = screen.getByRole('list', { name: 'Each sentence checked against your notes' })
+    expect(within(marks).getAllByRole('listitem').map(li => li.querySelector('b')?.textContent)).toEqual(['Correct', 'Not quite', 'Not in your notes'])
+    expect(screen.getByText(/XP never marks you wrong for that/)).toBeInTheDocument()
+    expect(screen.getByText(/Your recording is turned into text and then deleted/)).toBeInTheDocument()
+  })
+
   it('confirms a deleted account', async () => {
     mockApi(signedOut)
     renderApp('/welcome?deleted=1')
@@ -117,6 +127,7 @@ describe('Landing', () => {
     expect(await screen.findByRole('heading', { name: 'Privacy', level: 1 })).toBeInTheDocument()
     expect(screen.getByText(/text of your files and your questions is sent to OpenAI/)).toBeInTheDocument()
     expect(screen.getByText(/recordings are sent to OpenAI to be turned into text/)).toBeInTheDocument()
+    expect(screen.getByText(/When you explain a topic out loud, the recording is sent to OpenAI/)).toBeInTheDocument()
     expect(screen.getByText(/Delete account removes your account/)).toBeInTheDocument()
     expect(screen.getByText(/does not use data sent through its API to train/)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'mnfinance664@gmail.com' })).toHaveAttribute('href', 'mailto:mnfinance664@gmail.com')

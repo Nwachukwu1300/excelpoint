@@ -90,7 +90,7 @@ function AnswerDemo() {
 const STEPS = [
   { title: 'Upload', text: 'Add your notes or a lecture recording: PDF, Word, MP3, WAV, M4A, MP4, MOV or AVI, up to 100 MB. Recordings can be up to 3 hours.' },
   { title: 'Ask XP', text: 'Ask anything about your class. XP answers only from your files and shows the passage it used, so you can check it.' },
-  { title: 'Review', text: 'Flashcards come back just before you would forget them. Quizzes show what you know and what to study next.' },
+  { title: 'Review', text: 'Flashcards come back just before you would forget them. Quizzes, and explaining a topic back to XP, show what you know and what to study next.' },
 ]
 const GRADES: [string, string][] = [['Again', 'This session'], ['Hard', '1 day'], ['Good', '3 days'], ['Easy', '7 days']]
 const PROMISES: [string, string][] = [
@@ -99,10 +99,17 @@ const PROMISES: [string, string][] = [
   ['Delete anything, any time', 'One file, one subject or your whole account. Download everything as a zip first.'],
   ['No ads. No selling data.', 'We never sell what you upload.'],
 ]
+// Explain it back, as the app shows it: what the student said, XP's short reply, then each sentence marked
+const MARKS: [string, string, string, string?][] = [
+  ['is-correct', 'Correct', 'Photosynthesis happens in the chloroplasts.'],
+  ['is-wrong', 'Not quite', 'The light reactions take place in the stroma.', 'Your notes say: they take place in the thylakoid membranes.'],
+  ['is-unknown', 'Not in your notes', 'It was first described in 1779.'],
+]
 const FAQ: [string, string][] = [
   ['Is it free?', 'Yes. ExcelPoint is free while it is in beta (early testing). You do not need a credit card.'],
   ['What files work?', 'PDF and Word (.docx) notes, audio (MP3, WAV, M4A) and video (MP4, MOV, AVI). Each file can be up to 100 MB, and recordings up to 3 hours. Scanned PDFs (pictures of text) do not work yet.'],
   ['Where do my files go?', 'We store them privately in your account. To write answers, we send their text and recordings to OpenAI. OpenAI says it does not train its models on this data.'],
+  ['Can I practise out loud?', 'Yes. With Explain it back, you explain a topic by speaking or typing, and XP checks each sentence against your notes. Your recording is turned into text and then deleted. Only the text is kept. You can do up to 30 checks a day.'],
   ['Can I delete my data?', 'Yes, any time. Delete one file, a subject, a chat or your whole account. You can also download everything as a zip first.'],
 ]
 
@@ -206,6 +213,38 @@ export function Landing() {
                 <p>Ask follow-up questions and see the source each time.</p>
               </article>
             </div>
+          </div>
+        </section>
+
+        <section className="landing-wrap landing-trust landing-explain">
+          <div>
+            <h2>Explain it back. XP checks you.</h2>
+            <p>Explain a topic out loud or in writing, as if you were teaching it. XP checks every sentence against your notes, corrects one thing at a time and asks about what you left out.</p>
+            <ul className="explain-verdicts">
+              <li><b>Correct</b>, with the passage from your notes that backs it up.</li>
+              <li><b>Not quite</b>, with the passage that shows the right answer.</li>
+              <li><b>Not in your notes</b>, when your files don’t cover it. XP never marks you wrong for that.</li>
+            </ul>
+            <p>At the end you see what you got right, what to fix and what you missed, so you can explain it again and do better.</p>
+          </div>
+          <div className="trust-demo explain-demo">
+            <p className="demo-question"><span className="demo-said"><Icon name="mic" size={14} />You said</span>Photosynthesis happens in the chloroplasts. The light reactions take place in the stroma. It was first described in 1779.</p>
+            <div className="demo-answer">
+              <XpAvatar small />
+              <div>
+                <strong>XP</strong>
+                <div className="demo-reply">Right, it happens in the chloroplasts. The light reactions are in the thylakoid membranes, though, not the stroma. What do they make for the next stage?</div>
+              </div>
+            </div>
+            <ul className="demo-marks" aria-label="Each sentence checked against your notes">
+              {MARKS.map(([tone, label, sentence, note]) => (
+                <li key={label} className={tone}>
+                  <b>{label}</b>
+                  <span>{sentence}</span>
+                  {note && <small>{note}</small>}
+                </li>
+              ))}
+            </ul>
           </div>
         </section>
 

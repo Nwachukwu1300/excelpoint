@@ -83,6 +83,20 @@
 .trust-promises h3 { font-size: 17px; font-weight: 700; }
 .trust-promises p { margin: 6px 0 0; color: var(--muted); font-size: 15px; line-height: 1.55; }
 
+.landing-explain { padding-bottom: 0; } /* the FAQ below brings its own top space */
+.landing-explain > div:first-child p + p { margin-top: 16px; }
+.explain-verdicts { display: grid; gap: 10px; margin: 20px 0 0; padding: 0; list-style: none; font-size: 16px; line-height: 1.55; }
+.explain-verdicts b { font-weight: 700; }
+.demo-said { display: flex; align-items: center; gap: 5px; margin-bottom: 4px; color: var(--muted); font-size: var(--text-meta); }
+.demo-reply { font-size: var(--text-body); line-height: 1.65; }
+.demo-marks { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.demo-marks li { display: grid; grid-template-columns: auto 1fr; align-items: baseline; gap: 4px 10px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 15px; line-height: 1.5; }
+.demo-marks b { padding: 2px 8px; border-radius: 20px; background: var(--hover); color: var(--muted); font-size: var(--text-meta); white-space: nowrap; }
+.demo-marks small { grid-column: 2; color: var(--text); font-size: var(--text-ui); }
+.demo-marks .is-correct { background: color-mix(in srgb, var(--success-soft) 70%, var(--card)); }
+.demo-marks .is-correct b { background: var(--success-soft); color: var(--success-text); }
+.demo-marks .is-wrong { background: color-mix(in srgb, var(--danger-soft) 70%, var(--card)); }
+.demo-marks .is-wrong b { background: var(--danger-soft); color: var(--danger-text); }
 .landing-lede { margin: 16px 0 0; color: var(--muted); font-size: 18px; line-height: 1.6; }
 .landing-outputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-top: 40px; }
 .landing-outputs article { padding: 22px; border: 1px solid var(--border); border-radius: 12px; background: var(--background); }
@@ -134,6 +148,9 @@
 .landing-foot a { color: var(--primary); font-weight: 600; }
 
 @media (max-width: 640px) {
+  .demo-marks li { grid-template-columns: 1fr; }
+  .demo-marks b { justify-self: start; }
+  .demo-marks small { grid-column: 1; }
   .landing-bar { padding-block: 14px; }
   .landing-signin { display: none; } /* Sign in sits under the headline on phones */
   .landing-bar nav .button { min-height: 40px; padding: 0 14px; font-size: 15px; }

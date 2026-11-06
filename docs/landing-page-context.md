@@ -8,7 +8,7 @@ Design the marketing landing page for ExcelPoint as working front-end code we ca
 
 ## The product in one paragraph
 
-ExcelPoint is a free study app for school and university students. A student uploads their own class material (PDF or Word notes, or lecture recordings), and every file becomes a summary, flashcards and a quiz. **XP**, the AI study assistant, answers questions using only those files, shows the exact passage behind each answer, and says "Not in your materials" when a question isn't covered. Flashcards come back on a spaced-repetition schedule, and a Today page shows the most useful thing to study next.
+ExcelPoint is a free study app for school and university students. A student uploads their own class material (PDF or Word notes, or lecture recordings), and every file becomes a summary, flashcards and a quiz. **XP**, the AI study assistant, answers questions using only those files, shows the exact passage behind each answer, and says "Not in your materials" when a question isn't covered. Flashcards come back on a spaced-repetition schedule, and a Today page shows the most useful thing to study next. With **Explain it back**, the student explains a topic out loud or in writing, and XP checks every sentence against their notes: Correct, Not quite (with the right passage) or Not in your notes.
 
 **Promise:** learn faster from your own notes.
 
@@ -32,9 +32,10 @@ Get a visitor to sign up and upload their first file. Every section should push 
    - Every answer shows its source.
    - Privacy in plain words: only you can see your files; you can download or delete everything at any time; no ads, no selling data.
 5. **What you get from every file:** a summary, 5 flashcards, a 10-question quiz, and chat.
-6. **For the skeptic (short FAQ):** Is it free? (Yes, during the beta, no credit card.) What files work? Where do my files go? (Stored privately; their text and recordings are sent to OpenAI to write answers, and OpenAI says it doesn't train on that data.) Can I delete my data? (Yes, any time.)
-7. **Final call to action**, repeated: "Start studying free".
-8. **Footer:** the logo, links to Privacy (`/app/privacy`) and Terms (`/app/terms`), "Free while in beta (early testing)", © ExcelPoint, contact mnfinance664@gmail.com.
+6. **Explain it back:** a static example of a student's spoken explanation, XP's short reply, and each sentence marked Correct, Not quite or Not in your notes. Say that XP never marks something wrong just because the notes don't mention it.
+7. **For the skeptic (short FAQ):** Is it free? (Yes, during the beta, no credit card.) What files work? Where do my files go? (Stored privately; their text and recordings are sent to OpenAI to write answers, and OpenAI says it doesn't train on that data.) Can I delete my data? (Yes, any time.) Can I practise out loud? (Yes, with Explain it back; recordings are turned into text and deleted.)
+8. **Final call to action**, repeated: "Start studying free".
+9. **Footer:** the logo, links to Privacy (`/app/privacy`) and Terms (`/app/terms`), "Free while in beta (early testing)", © ExcelPoint, contact mnfinance664@gmail.com.
 
 ## Facts you can use (all true today)
 
@@ -43,6 +44,7 @@ Get a visitor to sign up and upload their first file. Every section should push 
 - XP answers only from that subject's files, shows the source passage, and checks each statement against it.
 - Flashcards: Again, Hard, Good, Easy. On a new card, Hard comes back in 1 day, Good in 3, Easy in 7.
 - Quizzes can be saved and resumed, and you can ask for fresh questions.
+- Explain it back: explain a topic by voice (30 seconds to 3 minutes) or by typing; each sentence is marked Correct, Not quite or Not in your notes, with the passage; XP lists key points you missed, replies briefly out loud, and ends with what you got right, what to fix and what you missed. Up to 30 checks a day. Recordings are never kept, only the text.
 - Works on phones and in light and dark themes.
 - Download all your data as a zip, or delete any file, subject, chat or the whole account.
 - Free while in beta. No credit card.

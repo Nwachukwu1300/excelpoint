@@ -106,6 +106,20 @@ docker compose exec backup sh -c 'pg_restore --clean --if-exists -d "$PGDATABASE
 docker compose start web worker beat
 ```
 
+## Costs and limits you can change
+
+Set these in `.env`, then run `docker compose up -d`:
+
+| Setting | Default | What it does |
+|---|---|---|
+| `LLM_RATE_LIMIT` | `60/hour` | Questions to XP per student |
+| `EXPLAIN_DAILY_LIMIT` | `30` | Explain it back checks per student per 24 hours (each is one AI call) |
+| `EXPLAIN_AUDIO_RATE_LIMIT` | `90/day` | Spoken explanations turned into text, and spoken replies, per student |
+| `EXPLAIN_TRANSCRIBE_MODEL` | `gpt-4o-mini-transcribe` | OpenAI's cheapest transcription model |
+| `XP_VOICE` | `browser` | XP's spoken replies: `browser` is free; `openai` sounds the same on every device and costs a little per reply (`XP_VOICE_MODEL`, `XP_VOICE_NAME`) |
+
+The microphone only works over HTTPS, which Caddy already provides.
+
 ## Later: your own domain and Resend
 
 1. Buy a domain (about £10 a year) and point an A record at the server.

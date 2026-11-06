@@ -121,3 +121,7 @@ Add notification and reminder system for learning tasks.
 
 Expected Outcome:
 ExcelPoint evolves into a fully orchestrated AI learning platform with automation, personalization, and intelligent workflow management.
+
+Built on these stages: Explain it back
+
+The student explains a topic and the same machinery checks them instead of XP: the Stage 1 search finds the passages, a Stage 2-style verification marks each statement correct, wrong or not in the notes (one JSON call), Stage 4 stores a trace for each check (kind "explain") that opens in Insights, and Stage 5's suggestions offer a file to explain back on the Today page. See README, "How Explain it back checks a student".

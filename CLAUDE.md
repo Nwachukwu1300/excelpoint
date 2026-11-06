@@ -107,6 +107,7 @@ venv/bin/python manage.py judge_answers    # optional LLM judge backlog
 
 - Fixed the original bugs: quiz FK, Whisper import, OAuth (state check, open redirect, verified email), IDOR in the APIs, S3 handling, secrets moved to env, test discovery.
 - Completed all 5 stages of `docs/stages.md`: retrieval (pgvector + HNSW, benchmark); reasoning pipeline; evaluation (heuristic + optional judge, quality API); observability (AI Insights pages, traces, JSON logs); workflows (upload chord → flashcards, quiz and summary + notification, SM-2 review, reminders, suggestions).
+- Explain it back (Nov 2026): `explain/` app, the app pages in `frontend/src/features/explain/`, a subject Explain tab, Today entry points, traces in Insights, export, Privacy and landing sections.
 - Streaming answers, LLM rate limit, consistent verifier, confidence fixes, background dynamic quizzes, change-password fix, ~1,300 lines of dead code removed, frontend tests repaired (108 then; the new app has 59).
 
 ## Backlog
